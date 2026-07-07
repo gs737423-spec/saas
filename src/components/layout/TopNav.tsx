@@ -3,7 +3,7 @@ import { Search, Bell, Upload, ChevronDown } from 'lucide-react'
 export default function TopNav() {
   return (
     <header className="fixed left-16 right-0 top-0 z-30 h-16 border-b border-border-subtle bg-bg-secondary/75 backdrop-blur-2xl">
-      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-8">
+      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex flex-col">
           <div className="flex items-center gap-2.5">
@@ -18,11 +18,11 @@ export default function TopNav() {
               Tempo real
             </span>
           </div>
-          <p className="text-xs text-text-muted">Inteligência de e-commerce · 4 marketplaces</p>
+          <p className="hidden text-xs text-text-muted sm:block">Inteligência de e-commerce · 4 marketplaces</p>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <div className="group hidden h-11 items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 transition-all duration-200 focus-within:border-accent-blue/50 focus-within:bg-bg-card md:flex md:w-48 lg:w-72 xl:w-80">
           <Search className="h-4 w-4 text-text-muted transition-colors group-focus-within:text-accent-blue" />
           <input
@@ -33,11 +33,14 @@ export default function TopNav() {
           <kbd className="rounded-md border border-border-default bg-bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text-muted">⌘K</kbd>
         </div>
 
-        <button className="group relative flex h-11 cursor-pointer items-center gap-2 overflow-hidden rounded-xl px-5 text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(76,130,247,0.6)]">
+        <button
+          title="Importar Dados"
+          className="group relative flex h-11 w-11 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(76,130,247,0.6)] sm:w-auto sm:justify-start sm:px-5"
+        >
           <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#6C6CF5] to-accent-violet" />
           <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#6C6CF5] to-accent-violet opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-70" />
-          <Upload className="relative h-4 w-4" />
-          <span className="relative">Importar Dados</span>
+          <Upload className="relative h-4 w-4 shrink-0" />
+          <span className="relative hidden sm:inline">Importar Dados</span>
         </button>
 
         <button className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:border-border-default hover:text-text-primary">

@@ -205,6 +205,48 @@ Include:
 - Accepted formats
 - Validation errors and warnings
 
+## Responsive design rules
+
+The entire SaaS interface must be fully responsive and adaptive across every screen size. Responsiveness is a hard requirement, not an afterthought — treat any layout that breaks, overflows, or becomes unreadable on a supported device as a bug.
+
+### Core principles
+
+- The platform must work well on large monitors, small notebooks, tablets and mobile phones.
+- No chart, table, search bar, sidebar, card, header or button can break, overflow or become unreadable on any device.
+- Avoid fixed widths that cause horizontal scroll. Prefer `min-w-0`, `max-w-*`, fluid/percentage widths and `minmax()` grid tracks over hardcoded pixel widths.
+- Use responsive grids and breakpoints (Tailwind `sm md lg xl 2xl`) instead of single fixed layouts.
+- Text must never overlap or collide. Use truncation (`truncate`), wrapping, or `min-w-0` on flex/grid children so long labels, product names and SKUs degrade gracefully.
+- Cards must keep consistent spacing and a readable hierarchy at every width; scale padding and gaps down on smaller screens rather than letting content touch edges.
+- The dashboard must preserve the premium dark Acelera aesthetic on every device — the mobile layout is a re-flow of the same design system, never a stripped-down or generic version.
+
+### Component-specific rules
+
+- **KPI cards** must reflow properly on smaller screens: 4 columns on desktop → 2 on tablet → 1 on small mobile, keeping glow, spacing and readable numbers.
+- **Product ranking and tables** must become horizontally scrollable only inside their own card (wrap the table in an `overflow-x-auto` container with a sensible `min-w`), never breaking or scrolling the whole page.
+- **Charts** must resize correctly and never overflow their containers. Always use responsive chart containers (e.g. Recharts `ResponsiveContainer` at `width="100%"`) and reserve height to avoid layout shift.
+- **Sidebar** must adapt on mobile: collapse to icon-only, or switch to a hamburger/drawer or bottom navigation when horizontal space is scarce. It must never cover content or force horizontal scroll.
+- **Top bar search** must shrink or hide gracefully on smaller screens (e.g. reduce width across breakpoints, then collapse to a search icon on mobile) without pushing other controls off-screen.
+- **Import buttons, filters, profile menu and notifications** must remain accessible on all devices — condense to icons, move into an overflow/more menu, or wrap, but never disappear entirely.
+
+### Breakpoints to test
+
+Every screen must be verified at these widths, with no horizontal page overflow and no broken components at any of them:
+
+- **≥1440px** — large desktop (full multi-column executive layout)
+- **1280px** — notebook
+- **1024px** — small laptop / tablet landscape
+- **768px** — tablet (multi-column collapses toward 1–2 columns)
+- **430px** — mobile
+- **390px** — small mobile
+
+### Verification checklist
+
+- No horizontal scroll on the page (`document.scrollWidth <= innerWidth`) at any breakpoint.
+- Sidebar, top bar and all controls reachable and tappable (≥44px targets) on mobile.
+- Tables/charts contained within their cards; only the card scrolls, not the page.
+- No overlapping or clipped text; numbers and labels remain legible.
+- Premium dark styling, spacing and glow intact on mobile.
+
 ## Working rules
 
 Work one screen at a time.
