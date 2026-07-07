@@ -1,6 +1,14 @@
 import { Search, Bell, Upload, ChevronDown } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+
+const pageMeta: Record<string, { title: string; subtitle: string }> = {
+  '/': { title: 'Visão Geral', subtitle: 'Inteligência de e-commerce · 4 marketplaces' },
+  '/produtos': { title: 'Produtos', subtitle: 'Catálogo, vendas, margem e desempenho dos produtos por marketplace' },
+}
 
 export default function TopNav() {
+  const { pathname } = useLocation()
+  const meta = pageMeta[pathname] ?? pageMeta['/']
   return (
     <header className="fixed left-16 right-0 top-0 z-30 h-16 border-b border-border-subtle bg-bg-secondary/75 backdrop-blur-2xl">
       <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -8,7 +16,7 @@ export default function TopNav() {
         <div className="flex flex-col">
           <div className="flex items-center gap-2.5">
             <h1 className="text-[19px] font-semibold tracking-tight text-text-primary">
-              Visão Geral
+              {meta.title}
             </h1>
             <span className="flex items-center gap-1.5 rounded-full border border-accent-emerald/20 bg-accent-emerald/10 px-2.5 py-1 text-[11px] font-medium text-accent-emerald">
               <span className="relative flex h-1.5 w-1.5">
@@ -18,7 +26,7 @@ export default function TopNav() {
               Tempo real
             </span>
           </div>
-          <p className="hidden text-xs text-text-muted sm:block">Inteligência de e-commerce · 4 marketplaces</p>
+          <p className="hidden truncate text-xs text-text-muted sm:block">{meta.subtitle}</p>
         </div>
       </div>
 

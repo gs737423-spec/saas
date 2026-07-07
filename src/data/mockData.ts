@@ -21,9 +21,11 @@ export interface Product {
   id: number
   name: string
   sku: string
+  category: string
   marketplace: Marketplace
   revenue: number
   units: number
+  stock: number
   margin: number
   trend: number
   goalPct: number
@@ -78,16 +80,53 @@ export const revenueData: RevenueMonth[] = [
 ]
 
 export const products: Product[] = [
-  { id: 1, name: 'Kit Skincare Premium 5 Peças', sku: 'SKN-PRM-005', marketplace: 'Mercado Livre', revenue: 45200, units: 312, margin: 42, trend: 15.3, goalPct: 112, sharePct: 18.4 },
-  { id: 2, name: 'Fone Bluetooth ANC Pro', sku: 'AUD-ANC-220', marketplace: 'Amazon', revenue: 38900, units: 245, margin: 35, trend: 22.1, goalPct: 97, sharePct: 15.8 },
-  { id: 3, name: 'Camiseta Dry-Fit Pack 3un', sku: 'VST-DRY-3PK', marketplace: 'Shopee', revenue: 32100, units: 890, margin: 55, trend: 8.7, goalPct: 88, sharePct: 13.1 },
-  { id: 4, name: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', marketplace: 'Loja Própria', revenue: 28400, units: 42, margin: 48, trend: -3.2, goalPct: 71, sharePct: 11.6 },
-  { id: 5, name: 'Luminária LED Inteligente RGB', sku: 'ILU-RGB-114', marketplace: 'Mercado Livre', revenue: 24800, units: 198, margin: 38, trend: 31.5, goalPct: 104, sharePct: 10.1 },
-  { id: 6, name: 'Mochila Executiva Couro Sintético', sku: 'BAG-EXE-042', marketplace: 'Shopee', revenue: 21300, units: 367, margin: 52, trend: 12.4, goalPct: 83, sharePct: 8.7 },
-  { id: 7, name: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', revenue: 19700, units: 156, margin: 30, trend: -5.8, goalPct: 64, sharePct: 8.0 },
-  { id: 8, name: 'Organizador de Mesa Modular', sku: 'ORG-MOD-021', marketplace: 'Loja Própria', revenue: 16500, units: 220, margin: 62, trend: 18.9, goalPct: 95, sharePct: 6.7 },
-  { id: 9, name: 'Garrafa Térmica 1L Inox', sku: 'GRF-INX-100', marketplace: 'Mercado Livre', revenue: 14200, units: 445, margin: 45, trend: 6.1, goalPct: 79, sharePct: 5.8 },
-  { id: 10, name: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', marketplace: 'Shopee', revenue: 11800, units: 134, margin: 40, trend: 42.3, goalPct: 118, sharePct: 4.8 },
+  { id: 1, name: 'Kit Skincare Premium 5 Peças', sku: 'SKN-PRM-005', category: 'Beleza', marketplace: 'Mercado Livre', revenue: 45200, units: 312, stock: 184, margin: 42, trend: 15.3, goalPct: 112, sharePct: 18.4 },
+  { id: 2, name: 'Fone Bluetooth ANC Pro', sku: 'AUD-ANC-220', category: 'Eletrônicos', marketplace: 'Amazon', revenue: 38900, units: 245, stock: 96, margin: 35, trend: 22.1, goalPct: 97, sharePct: 15.8 },
+  { id: 3, name: 'Camiseta Dry-Fit Pack 3un', sku: 'VST-DRY-3PK', category: 'Vestuário', marketplace: 'Shopee', revenue: 32100, units: 890, stock: 34, margin: 55, trend: 8.7, goalPct: 88, sharePct: 13.1 },
+  { id: 4, name: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', category: 'Móveis', marketplace: 'Loja Própria', revenue: 28400, units: 42, stock: 58, margin: 48, trend: -3.2, goalPct: 71, sharePct: 11.6 },
+  { id: 5, name: 'Luminária LED Inteligente RGB', sku: 'ILU-RGB-114', category: 'Casa', marketplace: 'Mercado Livre', revenue: 24800, units: 198, stock: 240, margin: 38, trend: 31.5, goalPct: 104, sharePct: 10.1 },
+  { id: 6, name: 'Mochila Executiva Couro Sintético', sku: 'BAG-EXE-042', category: 'Acessórios', marketplace: 'Shopee', revenue: 21300, units: 367, stock: 128, margin: 52, trend: 12.4, goalPct: 83, sharePct: 8.7 },
+  { id: 7, name: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', category: 'Eletrônicos', marketplace: 'Amazon', revenue: 19700, units: 156, stock: 22, margin: 30, trend: -5.8, goalPct: 64, sharePct: 8.0 },
+  { id: 8, name: 'Organizador de Mesa Modular', sku: 'ORG-MOD-021', category: 'Casa', marketplace: 'Loja Própria', revenue: 16500, units: 220, stock: 312, margin: 62, trend: 18.9, goalPct: 95, sharePct: 6.7 },
+  { id: 9, name: 'Garrafa Térmica 1L Inox', sku: 'GRF-INX-100', category: 'Casa', marketplace: 'Mercado Livre', revenue: 14200, units: 445, stock: 176, margin: 45, trend: 6.1, goalPct: 79, sharePct: 5.8 },
+  { id: 10, name: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', category: 'Eletrônicos', marketplace: 'Shopee', revenue: 11800, units: 134, stock: 12, margin: 40, trend: 42.3, goalPct: 118, sharePct: 4.8 },
+  { id: 11, name: 'Tênis Casual Unissex Comfort', sku: 'CAL-CMF-055', category: 'Vestuário', marketplace: 'Shopee', revenue: 10400, units: 208, stock: 90, margin: 47, trend: 9.4, goalPct: 86, sharePct: 4.2 },
+  { id: 12, name: 'Panela Antiaderente Cerâmica', sku: 'COZ-CER-018', category: 'Casa', marketplace: 'Mercado Livre', revenue: 9200, units: 176, stock: 41, margin: 51, trend: -8.1, goalPct: 68, sharePct: 3.7 },
+]
+
+export const productCategories = ['Beleza', 'Eletrônicos', 'Vestuário', 'Móveis', 'Casa', 'Acessórios'] as const
+
+export interface CategoryPerf {
+  category: string
+  revenue: number
+  sharePct: number
+  trend: number
+}
+
+export const categoryPerformance: CategoryPerf[] = [
+  { category: 'Beleza', revenue: 45200, sharePct: 20.2, trend: 15.3 },
+  { category: 'Eletrônicos', revenue: 70400, sharePct: 31.4, trend: 11.8 },
+  { category: 'Casa', revenue: 64700, sharePct: 28.9, trend: 7.2 },
+  { category: 'Vestuário', revenue: 42500, sharePct: 19.0, trend: 9.1 },
+  { category: 'Móveis', revenue: 28400, sharePct: 12.7, trend: -3.2 },
+  { category: 'Acessórios', revenue: 21300, sharePct: 9.5, trend: 12.4 },
+]
+
+export interface ProductAlert {
+  id: number
+  product: string
+  sku: string
+  marketplace: Marketplace
+  type: 'low_stock' | 'low_margin' | 'falling_sales'
+  detail: string
+}
+
+export const productAlerts: ProductAlert[] = [
+  { id: 1, product: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', marketplace: 'Shopee', type: 'low_stock', detail: 'Apenas 12 un. em estoque · ruptura em ~3 dias' },
+  { id: 2, product: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', type: 'low_stock', detail: '22 un. restantes · giro alto' },
+  { id: 3, product: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', type: 'low_margin', detail: 'Margem de 30% · abaixo da meta de 38%' },
+  { id: 4, product: 'Panela Antiaderente Cerâmica', sku: 'COZ-CER-018', marketplace: 'Mercado Livre', type: 'falling_sales', detail: 'Vendas -8,1% no período · tendência de queda' },
+  { id: 5, product: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', marketplace: 'Loja Própria', type: 'falling_sales', detail: 'Vendas -3,2% · giro baixo (42 un.)' },
 ]
 
 export interface PerformanceSummary {

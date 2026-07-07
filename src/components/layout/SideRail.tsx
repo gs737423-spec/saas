@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Store,
@@ -15,10 +16,12 @@ import {
   PanelLeftClose,
 } from 'lucide-react'
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Visão Geral', active: true },
+type Item = { icon: typeof Zap; label: string; to?: string }
+
+const navItems: Item[] = [
+  { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
   { icon: Store, label: 'Marketplaces' },
-  { icon: Package, label: 'Produtos' },
+  { icon: Package, label: 'Produtos', to: '/produtos' },
   { icon: Boxes, label: 'Estoque' },
   { icon: Wallet, label: 'Financeiro' },
   { icon: Megaphone, label: 'Marketing' },
@@ -27,34 +30,73 @@ const navItems = [
   { icon: FileBarChart2, label: 'Relatórios' },
 ]
 
-const bottomItem = { icon: Settings, label: 'Configurações' }
+const bottomItem: Item = { icon: Settings, label: 'Configurações' }
 
 export default function SideRail() {
   const [expanded, setExpanded] = useState(false)
 
-  const NavButton = ({ item }: { item: { icon: typeof Zap; label: string; active?: boolean } }) => (
-    <button
-      title={expanded ? undefined : item.label}
-      className={`group relative flex h-11 cursor-pointer items-center rounded-xl transition-all duration-200 ${
-        expanded ? 'w-full gap-3 px-3' : 'w-11 justify-center'
-      } ${
-        item.active
-          ? 'bg-accent-blue/15 text-accent-blue'
-          : 'text-text-muted hover:bg-bg-card-hover hover:text-text-secondary'
-      }`}
-    >
-      <item.icon className="h-5 w-5 shrink-0" />
-      {expanded && <span className="truncate text-sm font-medium">{item.label}</span>}
-      {item.active && !expanded && (
-        <span className="absolute -left-[9px] h-5 w-1 rounded-full bg-accent-blue" />
-      )}
-      {!expanded && (
-        <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg border border-border-subtle bg-bg-card px-3 py-1.5 text-xs font-medium text-text-primary opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
-          {item.label}
-        </span>
-      )}
-    </button>
-  )
+  const rowClass = (active: boolean) =>
+    `group relative flex h-11 cursor-pointer items-center rounded-xl transition-all duration-200 ${
+      expanded ? 'w-full gap-3 px-3' : 'w-11 justify-center'
+    } ${
+      active
+        ? 'bg-accent-blue/15 text-accent-blue'
+        : 'text-text-muted hover:bg-bg-card-hover hover:text-text-secondary'
+    }`
+
+  const Tooltip = ({ label }: { label: string }) =>
+    !expanded ? (
+      <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg border border-border-subtle bg-bg-card px-3 py-1.5 text-xs font-medium text-text-primary opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+        {label}
+      </span>
+    ) : null
+
+  const ActiveBar = ({ active }: { active: boolean }) =>
+    active && !expanded ? (
+      <span className="absolute -left-[9px] h-5 w-1 rounded-full bg-accent-blue" />
+    ) : null
+
+  const renderItem = (item: Item) => {
+    if (item.to) {
+      return (
+        <NavLink
+          key={item.label}
+          to={item.to}
+          end={item.to === '/'}
+          title={expanded ? undefined : item.label}
+          className={({ isActive }) => rowClass(isActive)}
+        >
+          {({ isActive }) => (
+            <>
+              <item.icon className="h-5 w-5 shrink-0" />
+              {expanded && <span className="truncate text-sm font-medium">{item.label}</span>}
+              <ActiveBar active={isActive} />
+              <Tooltip label={item.label} />
+            </>
+          )}
+        </NavLink>
+      )
+    }
+    // Placeholder sections (not built yet)
+    return (
+      <button
+        key={item.label}
+        title={expanded ? undefined : `${item.label} (em breve)`}
+        className={rowClass(false)}
+      >
+        <item.icon className="h-5 w-5 shrink-0" />
+        {expanded && (
+          <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+            <span className="truncate text-sm font-medium">{item.label}</span>
+            <span className="shrink-0 rounded-md bg-bg-card-hover px-1.5 py-0.5 text-[9px] font-medium text-text-muted">
+              em breve
+            </span>
+          </span>
+        )}
+        <Tooltip label={`${item.label} · em breve`} />
+      </button>
+    )
+  }
 
   return (
     <aside
@@ -77,14 +119,12 @@ export default function SideRail() {
 
       {/* Main navigation */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => (
-          <NavButton key={item.label} item={item} />
-        ))}
+        {navItems.map(renderItem)}
       </nav>
 
       {/* Bottom: settings + collapse toggle */}
       <div className="mt-2 flex flex-col gap-1 border-t border-border-subtle pt-2">
-        <NavButton item={bottomItem} />
+        {renderItem(bottomItem)}
         <button
           onClick={() => setExpanded((v) => !v)}
           title={expanded ? undefined : 'Expandir'}
