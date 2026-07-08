@@ -1,11 +1,15 @@
 import { FileCheck2 } from 'lucide-react'
 import ImportacaoCards from '@/components/importacoes/ImportacaoCards'
+import ComoFunciona from '@/components/importacoes/ComoFunciona'
 import ImportacaoHistorico from '@/components/importacoes/ImportacaoHistorico'
+import ImportacaoIA from '@/components/importacoes/ImportacaoIA'
 
 export default function Importacoes() {
   return (
     <div className="space-y-3 sm:space-y-4">
       <ImportacaoCards />
+
+      <ComoFunciona />
 
       <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-emerald/10 text-accent-emerald">
@@ -24,6 +28,8 @@ export default function Importacoes() {
       </div>
 
       <ImportacaoHistorico />
+
+      <ImportacaoIA />
     </div>
   )
 }

@@ -245,6 +245,20 @@ export const stockAlerts: StockAlert[] = [
   { id: 4, product: 'Organizador de Mesa Modular', sku: 'ORG-MOD-021', message: '312 un. em estoque com giro de apenas 1,1x · excesso', type: 'excesso' },
 ]
 
+export interface ImportSourceStatus {
+  marketplace: Marketplace
+  status: 'conectado' | 'pendente' | 'erro' | 'atualizado'
+  lastImport: string
+  recordsImported: number
+}
+
+export const importSourceStatus: ImportSourceStatus[] = [
+  { marketplace: 'Mercado Livre', status: 'atualizado', lastImport: '08/07/2026 09:14', recordsImported: 892 },
+  { marketplace: 'Shopee', status: 'conectado', lastImport: '07/07/2026 18:32', recordsImported: 634 },
+  { marketplace: 'Amazon', status: 'erro', lastImport: '07/07/2026 11:05', recordsImported: 321 },
+  { marketplace: 'Loja Própria', status: 'pendente', lastImport: '06/07/2026 20:47', recordsImported: 245 },
+]
+
 export interface ImportRecord {
   id: number
   marketplace: Marketplace
