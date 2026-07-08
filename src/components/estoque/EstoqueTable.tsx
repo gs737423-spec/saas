@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { stockItems, getMarketplaceColor, type StockItem } from '@/data/mockData'
 
 const statusConfig: Record<StockItem['status'], { label: string; color: string; bg: string; bar: string; rank: number }> = {
@@ -26,7 +27,7 @@ export default function EstoqueTable() {
             <div key={s.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5" style={{ borderLeft: `3px solid ${cfg.bar}` }}>
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-medium text-text-primary">{s.name}</p>
+                  <Link to={`/produto/${s.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{s.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{s.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -75,7 +76,9 @@ export default function EstoqueTable() {
               return (
                 <tr key={s.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50" style={{ boxShadow: `inset 3px 0 0 ${cfg.bar}` }}>
                   <td className="py-3 pr-4 pl-2 font-mono text-[11px] text-text-muted">{s.sku}</td>
-                  <td className="py-3 pr-4 font-medium text-text-primary">{s.name}</td>
+                  <td className="py-3 pr-4">
+                    <Link to={`/produto/${s.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{s.name}</Link>
+                  </td>
                   <td className="py-3 pr-4">
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: `${mp}15`, color: mp }}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: mp }} />

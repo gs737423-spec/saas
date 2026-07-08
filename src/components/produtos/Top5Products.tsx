@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { products, getMarketplaceColor } from '@/data/mockData'
 
 const top5 = [...products].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
@@ -21,7 +22,7 @@ export default function Top5Products() {
               <span className="w-5 shrink-0 text-center font-mono text-xs font-bold text-text-muted">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="truncate text-[13px] font-medium text-text-primary">{p.name}</span>
+                  <Link to={`/produto/${p.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <span className="shrink-0 font-mono text-[13px] font-semibold text-text-primary">
                     R$ {p.revenue.toLocaleString('pt-BR')}
                   </span>

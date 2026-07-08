@@ -8,6 +8,7 @@ import Estoque from '@/pages/Estoque'
 import Importacoes from '@/pages/Importacoes'
 import Marketplaces from '@/pages/Marketplaces'
 import Placeholder from '@/pages/Placeholder'
+import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/produtos" element={<Produtos />} />
+            <Route path="/produto/:sku" element={<ProdutoDetalhe />} />
             <Route path="/marketplaces" element={<Marketplaces />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/importacoes" element={<Importacoes />} />

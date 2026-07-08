@@ -1,5 +1,6 @@
 import { Search, Bell, Upload, ChevronDown } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { products } from '@/data/mockData'
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Visão Geral', subtitle: 'Inteligência de e-commerce · 4 marketplaces' },
@@ -16,7 +17,14 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
 
 export default function TopNav() {
   const { pathname } = useLocation()
-  const meta = pageMeta[pathname] ?? pageMeta['/']
+  const produtoMatch = pathname.match(/^\/produto\/(.+)$/)
+  const produtoDetalheMeta = produtoMatch
+    ? (() => {
+        const product = products.find((p) => p.sku === produtoMatch[1])
+        return { title: product ? product.name : 'Produto 360', subtitle: 'Produto 360 · Saúde e desempenho do produto' }
+      })()
+    : null
+  const meta = produtoDetalheMeta ?? pageMeta[pathname] ?? pageMeta['/']
   return (
     <header className="fixed left-0 right-0 top-0 z-30 h-14 border-b border-border-subtle bg-bg-secondary/75 backdrop-blur-2xl md:left-16 md:h-16">
       <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-3 sm:px-6 lg:px-8">

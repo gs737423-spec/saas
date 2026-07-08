@@ -1,4 +1,5 @@
 import { PackagePlus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { restockRecommendations, getMarketplaceColor } from '@/data/mockData'
 
 const urgencyColor = { alta: 'text-accent-rose bg-accent-rose/10', média: 'text-accent-amber bg-accent-amber/10', baixa: 'text-accent-emerald bg-accent-emerald/10' }
@@ -20,7 +21,7 @@ export default function ReposicaoRecomendacoes() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-1.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-                  <span className="truncate text-[13px] font-medium text-text-primary">{r.product}</span>
+                  <Link to={`/produto/${r.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{r.product}</Link>
                   <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${urgencyColor[r.urgency]}`}>
                     Urgência {r.urgency}
                   </span>

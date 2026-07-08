@@ -1,4 +1,5 @@
 import { PackageX, PauseCircle, Layers } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { stockAlerts } from '@/data/mockData'
 
 const typeConfig = {
@@ -27,7 +28,7 @@ export default function EstoqueAlerts() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="truncate text-[12.5px] font-medium text-text-primary">{a.product}</span>
+                  <Link to={`/produto/${a.sku}`} className="truncate text-[12.5px] font-medium text-text-primary hover:text-accent-blue hover:underline">{a.product}</Link>
                 </div>
                 <p className="truncate text-[11px] text-text-muted">{a.message}</p>
               </div>
