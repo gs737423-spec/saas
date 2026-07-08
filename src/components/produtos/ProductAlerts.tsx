@@ -9,7 +9,7 @@ const typeConfig = {
 
 export default function ProductAlerts() {
   return (
-    <div className="glass-panel rounded-2xl p-5">
+    <div className="glass-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4 flex items-center gap-2">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Produtos com Alerta</h3>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-rose/15 px-1.5 text-[10px] font-bold text-accent-rose">

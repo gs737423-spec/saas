@@ -100,7 +100,7 @@ export default function SideRail() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border-subtle bg-bg-secondary py-4 transition-[width] duration-300 ease-out ${
+      className={`fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border-subtle bg-bg-secondary py-4 transition-[width] duration-300 ease-out md:flex ${
         expanded ? 'w-56 px-3 shadow-2xl shadow-black/50' : 'w-16 items-center px-0'
       }`}
     >

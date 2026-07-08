@@ -10,12 +10,12 @@ export default function TopNav() {
   const { pathname } = useLocation()
   const meta = pageMeta[pathname] ?? pageMeta['/']
   return (
-    <header className="fixed left-16 right-0 top-0 z-30 h-16 border-b border-border-subtle bg-bg-secondary/75 backdrop-blur-2xl">
-      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="fixed left-0 right-0 top-0 z-30 h-14 border-b border-border-subtle bg-bg-secondary/75 backdrop-blur-2xl md:left-16 md:h-16">
+      <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between px-3 sm:px-6 lg:px-8">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-2.5">
-            <h1 className="truncate whitespace-nowrap text-[17px] font-semibold tracking-tight text-text-primary sm:text-[19px]">
+            <h1 className="truncate whitespace-nowrap text-[15px] font-semibold tracking-tight text-text-primary sm:text-[19px]">
               {meta.title}
             </h1>
             <span className="hidden items-center gap-1.5 rounded-full border border-accent-emerald/20 bg-accent-emerald/10 px-2.5 py-1 text-[11px] font-medium text-accent-emerald sm:flex">
@@ -41,30 +41,38 @@ export default function TopNav() {
           <kbd className="rounded-md border border-border-default bg-bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text-muted">⌘K</kbd>
         </div>
 
+        {/* Mobile search icon */}
+        <button
+          title="Buscar"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary md:hidden"
+        >
+          <Search className="h-[18px] w-[18px]" />
+        </button>
+
         <button
           title="Importar Dados"
-          className="group relative flex h-11 w-11 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(76,130,247,0.6)] sm:w-auto sm:justify-start sm:px-5"
+          className="group relative flex h-10 w-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(76,130,247,0.6)] md:h-11 md:w-auto md:justify-start md:px-5"
         >
           <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#6C6CF5] to-accent-violet" />
           <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#6C6CF5] to-accent-violet opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-70" />
           <Upload className="relative h-4 w-4 shrink-0" />
-          <span className="relative hidden sm:inline">Importar Dados</span>
+          <span className="relative hidden md:inline">Importar Dados</span>
         </button>
 
-        <button className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:border-border-default hover:text-text-primary">
+        <button className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:border-border-default hover:text-text-primary md:h-11 md:w-11">
           <Bell className="h-[18px] w-[18px]" />
           <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-bg-secondary bg-accent-rose" />
         </button>
 
-        <button className="flex h-11 w-11 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 transition-colors hover:border-border-default hover:bg-bg-card sm:w-auto sm:px-2.5">
+        <button className="flex h-10 w-10 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 transition-colors hover:border-border-default hover:bg-bg-card md:h-11 md:w-auto md:px-2.5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent-blue to-accent-violet text-xs font-bold text-white">
             GA
           </div>
-          <div className="hidden flex-col items-start leading-none sm:flex">
+          <div className="hidden flex-col items-start leading-none md:flex">
             <span className="text-xs font-medium text-text-primary">Gabriel</span>
             <span className="text-[10px] text-text-muted">Admin</span>
           </div>
-          <ChevronDown className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
+          <ChevronDown className="hidden h-3.5 w-3.5 text-text-muted md:block" />
         </button>
       </div>
       </div>

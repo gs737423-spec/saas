@@ -6,7 +6,7 @@ const maxRevenue = top5[0].revenue
 
 export default function Top5Products() {
   return (
-    <div className="glass-panel rounded-2xl p-5">
+    <div className="glass-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Top 5 Produtos</h3>
         <p className="mt-0.5 text-xs text-text-muted">Maiores faturamentos do período</p>

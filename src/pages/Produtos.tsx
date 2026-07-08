@@ -8,7 +8,7 @@ import ProductOpportunities from '@/components/produtos/ProductOpportunities'
 
 export default function Produtos() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <ProductFilters />
 
       <ProductKPIs />

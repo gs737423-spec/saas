@@ -8,7 +8,7 @@ import MarketplaceStatus from '@/components/dashboard/MarketplaceStatus'
 
 export default function Dashboard() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <KPICards />
 
       {/* Flagship performance block: horizontal ranking + summary rail */}

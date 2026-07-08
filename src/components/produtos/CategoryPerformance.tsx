@@ -6,7 +6,7 @@ const palette = ['#4C82F7', '#22D3EE', '#16C784', '#9061F9', '#F5A524', '#F9603C
 
 export default function CategoryPerformance() {
   return (
-    <div className="glass-panel rounded-2xl p-5">
+    <div className="glass-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Desempenho por Categoria</h3>
         <p className="mt-0.5 text-xs text-text-muted">Faturamento e participação por categoria</p>
