@@ -321,7 +321,7 @@ export function getProductStatus(sku: string): ProductStatus {
 
 export interface ProductActivity {
   sku: string
-  type: 'venda' | 'alerta' | 'avaliacao' | 'importacao'
+  type: 'venda' | 'alerta' | 'avaliacao' | 'importacao' | 'campanha'
   message: string
   time: string
 }
@@ -329,12 +329,16 @@ export interface ProductActivity {
 export const productActivity: ProductActivity[] = [
   { sku: 'DEC-DIG-070', type: 'alerta', message: 'Estoque crítico detectado · 12 un. restantes', time: 'Há 2h' },
   { sku: 'DEC-DIG-070', type: 'venda', message: '8 unidades vendidas na Shopee nas últimas 24h', time: 'Há 5h' },
+  { sku: 'DEC-DIG-070', type: 'campanha', message: 'Campanha patrocinada pausada por orçamento esgotado', time: 'Há 9h' },
   { sku: 'DEC-DIG-070', type: 'importacao', message: 'Dados atualizados via importação Shopee', time: 'Ontem' },
   { sku: 'WCH-FIT-330', type: 'alerta', message: 'Margem abaixo da meta · revisar precificação', time: 'Há 6h' },
   { sku: 'WCH-FIT-330', type: 'avaliacao', message: '2 novas avaliações negativas na Amazon', time: 'Há 1 dia' },
+  { sku: 'WCH-FIT-330', type: 'campanha', message: 'ROAS da campanha caiu para 1,8x na última semana', time: 'Há 2 dias' },
   { sku: 'MOV-ERG-800', type: 'alerta', message: 'Sem giro relevante há 82 dias', time: 'Há 3 dias' },
+  { sku: 'MOV-ERG-800', type: 'venda', message: '1 unidade vendida na Loja Própria', time: 'Há 5 dias' },
   { sku: 'SKN-PRM-005', type: 'venda', message: '24 unidades vendidas no Mercado Livre', time: 'Há 3h' },
   { sku: 'SKN-PRM-005', type: 'avaliacao', message: 'Nova avaliação 5 estrelas recebida', time: 'Há 8h' },
+  { sku: 'SKN-PRM-005', type: 'campanha', message: 'Campanha patrocinada com ROAS de 4,2x', time: 'Há 1 dia' },
 ]
 
 function seedFromSku(sku: string): number {
@@ -411,38 +415,87 @@ export function getProductMarketplaceBreakdown(product: Product): ProductMarketp
   return [main, ...rest].sort((a, b) => b.revenue - a.revenue)
 }
 
+export type InsightSeverity = 'Crítico' | 'Atenção' | 'Oportunidade' | 'Saudável'
+
 export interface ProductInsight {
   label: string
   detail: string
   tone: 'positive' | 'warning' | 'danger'
+  severity: InsightSeverity
+  priority: number
 }
 
 export function getProductInsights(product: Product, stock: StockItem | undefined): ProductInsight[] {
   const insights: ProductInsight[] = []
+
+  if (stock && stock.coverageDays <= 10) {
+    insights.push({ label: 'Risco de ruptura', detail: `Cobertura de apenas ${stock.coverageDays} dias · repor com urgência para não perder vendas`, tone: 'danger', severity: 'Crítico', priority: 0 })
+  }
+
   insights.push(
     product.trend >= 0
-      ? { label: 'Crescimento consistente', detail: `Vendas +${product.trend}% no período · tendência positiva`, tone: 'positive' }
-      : { label: 'Vendas em queda', detail: `Vendas ${product.trend}% no período · atenção necessária`, tone: 'danger' }
+      ? { label: 'Crescimento consistente', detail: `Vendas +${product.trend}% no período · manter investimento atual em anúncios`, tone: 'positive', severity: 'Saudável', priority: 3 }
+      : { label: 'Vendas em queda', detail: `Vendas ${product.trend}% no período · reduzir preço ou reforçar campanha para reverter a tendência`, tone: 'danger', severity: 'Crítico', priority: 1 }
   )
+
   if (product.margin < 35) {
-    insights.push({ label: 'Risco de margem', detail: `Margem de ${product.margin}% abaixo do ideal para a categoria`, tone: 'warning' })
+    insights.push({ label: 'Risco de margem', detail: `Margem de ${product.margin}% abaixo do ideal para a categoria · revisar custos ou precificação`, tone: 'warning', severity: 'Atenção', priority: 2 })
   } else {
-    insights.push({ label: 'Margem saudável', detail: `Margem de ${product.margin}% dentro da meta`, tone: 'positive' })
+    insights.push({ label: 'Margem saudável', detail: `Margem de ${product.margin}% dentro da meta · produto pode receber mais tráfego`, tone: 'positive', severity: 'Oportunidade', priority: 3 })
   }
+
   if (stock) {
-    if (stock.coverageDays <= 10) {
-      insights.push({ label: 'Risco de ruptura', detail: `Cobertura de apenas ${stock.coverageDays} dias · repor com urgência`, tone: 'danger' })
-    } else if (stock.status === 'stalled') {
-      insights.push({ label: 'Capital parado', detail: `Giro de ${stock.turnover}x · considerar promoção ou liquidação`, tone: 'warning' })
-    } else {
-      insights.push({ label: 'Estoque sob controle', detail: `Cobertura de ${stock.coverageDays} dias · giro de ${stock.turnover}x`, tone: 'positive' })
+    if (stock.status === 'stalled') {
+      insights.push({ label: 'Capital parado', detail: `Giro de ${stock.turnover}x indica necessidade de promoção ou liquidação`, tone: 'warning', severity: 'Atenção', priority: 2 })
+    } else if (stock.coverageDays > 10) {
+      insights.push({ label: 'Estoque sob controle', detail: `Cobertura de ${stock.coverageDays} dias · giro de ${stock.turnover}x dentro do esperado`, tone: 'positive', severity: 'Saudável', priority: 4 })
     }
   }
+
   if (product.goalPct < 90) {
-    insights.push({ label: 'Oportunidade de marketing', detail: `Meta em ${product.goalPct}% · aumentar investimento em anúncios pode acelerar vendas`, tone: 'warning' })
+    insights.push({ label: 'Oportunidade de marketing', detail: `Meta em ${product.goalPct}% · aumentar investimento em anúncios pode acelerar vendas`, tone: 'warning', severity: 'Oportunidade', priority: 3 })
   }
-  insights.push({ label: 'Dependência de canal', detail: `${product.sharePct.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% da receita concentrada em ${product.marketplace}`, tone: product.sharePct > 60 ? 'warning' : 'positive' })
-  return insights
+
+  insights.push({
+    label: 'Dependência de canal',
+    detail: `${product.sharePct.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% da receita concentrada em ${product.marketplace} · diversificar reduz risco`,
+    tone: product.sharePct > 60 ? 'warning' : 'positive',
+    severity: product.sharePct > 60 ? 'Atenção' : 'Saudável',
+    priority: product.sharePct > 60 ? 2 : 4,
+  })
+
+  return insights.sort((a, b) => a.priority - b.priority)
+}
+
+export interface HealthScoreBreakdown {
+  label: string
+  score: number
+  color: string
+}
+
+export interface ProductHealthScore {
+  score: number
+  status: ProductStatus
+  breakdown: HealthScoreBreakdown[]
+}
+
+export function getProductHealthScore(product: Product, stock: StockItem | undefined, status: ProductStatus): ProductHealthScore {
+  const vendas = Math.max(10, Math.min(100, 60 + product.trend * 1.5))
+  const margem = Math.max(10, Math.min(100, (product.margin / 60) * 100))
+  const estoque = stock ? Math.max(5, Math.min(100, (stock.coverageDays / 45) * 100)) : 70
+  const marketing = Math.max(10, Math.min(100, product.goalPct))
+  const reputacao = Math.max(20, Math.min(100, 100 - Math.abs(product.trend < 0 ? 25 : 5)))
+
+  const breakdown: HealthScoreBreakdown[] = [
+    { label: 'Vendas', score: Math.round(vendas), color: '#4C82F7' },
+    { label: 'Margem', score: Math.round(margem), color: '#F5A524' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#22D3EE' },
+    { label: 'Marketing', score: Math.round(marketing), color: '#9061F9' },
+    { label: 'Reputação', score: Math.round(reputacao), color: '#16C784' },
+  ]
+
+  const score = Math.round(breakdown.reduce((s, b) => s + b.score, 0) / breakdown.length)
+  return { score, status, breakdown }
 }
 
 export function getMarketplaceColor(mp: Marketplace): string {

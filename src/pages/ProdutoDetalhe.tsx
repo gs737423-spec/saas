@@ -1,8 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
-import { products, stockItems, getProductStatus, getProductInsights } from '@/data/mockData'
+import { products, stockItems, getProductStatus, getProductInsights, getProductHealthScore } from '@/data/mockData'
 import ProdutoHeader from '@/components/produto-detalhe/ProdutoHeader'
 import ProdutoKPIs from '@/components/produto-detalhe/ProdutoKPIs'
 import SalesTrendChart from '@/components/produto-detalhe/SalesTrendChart'
+import ProdutoHealthScore from '@/components/produto-detalhe/ProdutoHealthScore'
 import MarketplacePerformanceBreakdown from '@/components/produto-detalhe/MarketplacePerformanceBreakdown'
 import StockHealth from '@/components/produto-detalhe/StockHealth'
 import ProdutoDiagnostico from '@/components/produto-detalhe/ProdutoDiagnostico'
@@ -27,12 +28,14 @@ export default function ProdutoDetalhe() {
   const stock = stockItems.find((s) => s.sku === product.sku)
   const status = getProductStatus(product.sku)
   const insights = getProductInsights(product, stock)
+  const health = getProductHealthScore(product, stock, status)
 
   return (
     <div className="space-y-3 sm:space-y-4">
       <ProdutoHeader product={product} status={status} stock={stock} />
       <ProdutoKPIs product={product} stock={stock} />
       <SalesTrendChart sku={product.sku} />
+      <ProdutoHealthScore health={health} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <MarketplacePerformanceBreakdown product={product} />

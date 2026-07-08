@@ -1,27 +1,45 @@
+import { Crown } from 'lucide-react'
 import { getMarketplaceColor, type Product, getProductMarketplaceBreakdown } from '@/data/mockData'
 
 export default function MarketplacePerformanceBreakdown({ product }: { product: Product }) {
   const breakdown = getProductMarketplaceBreakdown(product)
+  const totalRevenue = breakdown.reduce((s, b) => s + b.revenue, 0)
+  const topChannel = breakdown[0]?.marketplace
 
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">
-      <div className="mb-4">
-        <h3 className="text-base font-semibold tracking-tight text-text-primary">Desempenho por Marketplace</h3>
-        <p className="mt-0.5 text-xs text-text-muted">Receita, pedidos, margem e ticket médio deste produto por canal</p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-text-primary">Desempenho por Marketplace</h3>
+          <p className="mt-0.5 text-xs text-text-muted">Receita, pedidos, margem e ticket médio deste produto por canal</p>
+        </div>
+        {topChannel && (
+          <span className="flex items-center gap-1.5 rounded-full border border-accent-amber/20 bg-accent-amber/10 px-2.5 py-1 text-[11px] font-semibold text-accent-amber">
+            <Crown className="h-3 w-3" />
+            Canal principal: {topChannel}
+          </span>
+        )}
       </div>
 
       {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
         {breakdown.map((b) => {
           const mp = getMarketplaceColor(b.marketplace)
+          const share = Math.round((b.revenue / totalRevenue) * 100)
           return (
             <div key={b.marketplace} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
-              <div className="mb-2.5 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="flex items-center gap-2 text-[13px] font-medium text-text-primary">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: mp }} />
                   {b.marketplace}
                 </span>
                 <span className="font-mono text-[13px] font-semibold text-text-primary">R$ {b.revenue.toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="mb-2.5 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border-subtle">
+                  <div className="h-full rounded-full" style={{ width: `${share}%`, background: mp }} />
+                </div>
+                <span className="w-9 shrink-0 text-right font-mono text-[10px] text-text-muted">{share}%</span>
               </div>
               <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-border-subtle/50 pt-2.5">
                 <div>
@@ -42,12 +60,13 @@ export default function MarketplacePerformanceBreakdown({ product }: { product: 
         })}
       </div>
 
-      {/* Desktop: table */}
+      {/* Desktop: table with participation bars */}
       <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[520px] text-sm">
+        <table className="w-full min-w-[600px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               <th className="pb-3 pr-4 font-semibold">Marketplace</th>
+              <th className="pb-3 pr-4 font-semibold">Participação</th>
               <th className="pb-3 pr-4 text-right font-semibold">Receita</th>
               <th className="pb-3 pr-4 text-right font-semibold">Pedidos</th>
               <th className="pb-3 pr-4 text-right font-semibold">Margem</th>
@@ -57,6 +76,7 @@ export default function MarketplacePerformanceBreakdown({ product }: { product: 
           <tbody>
             {breakdown.map((b) => {
               const mp = getMarketplaceColor(b.marketplace)
+              const share = Math.round((b.revenue / totalRevenue) * 100)
               return (
                 <tr key={b.marketplace} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4">
@@ -64,6 +84,14 @@ export default function MarketplacePerformanceBreakdown({ product }: { product: 
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: mp }} />
                       {b.marketplace}
                     </span>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-border-subtle">
+                        <div className="h-full rounded-full" style={{ width: `${share}%`, background: mp }} />
+                      </div>
+                      <span className="font-mono text-[11px] text-text-muted">{share}%</span>
+                    </div>
                   </td>
                   <td className="py-3 pr-4 text-right font-mono font-medium text-text-primary">R$ {b.revenue.toLocaleString('pt-BR')}</td>
                   <td className="py-3 pr-4 text-right font-mono text-text-secondary">{b.orders}</td>
