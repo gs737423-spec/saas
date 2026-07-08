@@ -277,6 +277,8 @@ export const importHistory: ImportRecord[] = [
   { id: 5, marketplace: 'Mercado Livre', fileName: 'pedidos_ml_set2025.xlsx', date: '01/07/2026 08:20', rows: 851, status: 'sucesso' },
 ]
 
+export type ChannelStatus = 'Saudável' | 'Atenção' | 'Crítico'
+
 export interface MarketplaceMetrics {
   marketplace: Marketplace
   revenue: number
@@ -285,14 +287,20 @@ export interface MarketplaceMetrics {
   conversionPct: number
   sharePct: number
   trend: number
+  margin: number
+  status: ChannelStatus
 }
 
 export const marketplaceMetrics: MarketplaceMetrics[] = [
-  { marketplace: 'Mercado Livre', revenue: 95000, orders: 892, avgTicket: 106.5, conversionPct: 5.2, sharePct: 44.2, trend: 11.8 },
-  { marketplace: 'Shopee', revenue: 60000, orders: 634, avgTicket: 94.6, conversionPct: 4.6, sharePct: 27.9, trend: 15.4 },
-  { marketplace: 'Amazon', revenue: 35000, orders: 321, avgTicket: 109.0, conversionPct: 3.8, sharePct: 16.3, trend: -2.1 },
-  { marketplace: 'Loja Própria', revenue: 25000, orders: 245, avgTicket: 102.0, conversionPct: 6.1, sharePct: 11.6, trend: 22.7 },
+  { marketplace: 'Mercado Livre', revenue: 95000, orders: 892, avgTicket: 106.5, conversionPct: 5.2, sharePct: 44.2, trend: 11.8, margin: 38, status: 'Saudável' },
+  { marketplace: 'Shopee', revenue: 60000, orders: 634, avgTicket: 94.6, conversionPct: 4.6, sharePct: 27.9, trend: 15.4, margin: 31, status: 'Saudável' },
+  { marketplace: 'Amazon', revenue: 35000, orders: 321, avgTicket: 109.0, conversionPct: 3.8, sharePct: 16.3, trend: -2.1, margin: 34, status: 'Atenção' },
+  { marketplace: 'Loja Própria', revenue: 25000, orders: 245, avgTicket: 102.0, conversionPct: 6.1, sharePct: 11.6, trend: 22.7, margin: 46, status: 'Saudável' },
 ]
+
+export function getTopProductByMarketplace(mp: Marketplace): Product | undefined {
+  return [...products].filter((p) => p.marketplace === mp).sort((a, b) => b.revenue - a.revenue)[0]
+}
 
 export interface MarketplaceOpportunity {
   id: number

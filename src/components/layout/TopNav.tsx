@@ -5,7 +5,7 @@ import { products } from '@/data/mockData'
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Visão Geral', subtitle: 'Inteligência de e-commerce · 4 marketplaces' },
   '/produtos': { title: 'Produtos', subtitle: 'Catálogo, vendas, margem e desempenho dos produtos por marketplace' },
-  '/marketplaces': { title: 'Marketplaces', subtitle: 'Receita, pedidos e desempenho por canal de venda' },
+  '/marketplaces': { title: 'Canais', subtitle: 'Compare faturamento, pedidos, ticket médio, margem e oportunidades por marketplace' },
   '/estoque': { title: 'Estoque', subtitle: 'Cobertura, giro e alertas de reposição por produto' },
   '/importacoes': { title: 'Importações', subtitle: 'Envie planilhas, valide dados e acompanhe o histórico de importações' },
   '/financeiro': { title: 'Financeiro', subtitle: 'Fluxo de caixa e resultados consolidados' },
