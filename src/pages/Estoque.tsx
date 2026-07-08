@@ -1,6 +1,7 @@
 import EstoqueKPIs from '@/components/estoque/EstoqueKPIs'
 import EstoqueTable from '@/components/estoque/EstoqueTable'
 import EstoqueAlerts from '@/components/estoque/EstoqueAlerts'
+import GiroEstoqueChart from '@/components/estoque/GiroEstoqueChart'
 import ReposicaoRecomendacoes from '@/components/estoque/ReposicaoRecomendacoes'
 
 export default function Estoque() {
@@ -15,7 +16,10 @@ export default function Estoque() {
         </div>
       </div>
 
-      <ReposicaoRecomendacoes />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <GiroEstoqueChart />
+        <ReposicaoRecomendacoes />
+      </div>
     </div>
   )
 }

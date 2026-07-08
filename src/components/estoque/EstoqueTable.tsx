@@ -1,11 +1,13 @@
 import { stockItems, getMarketplaceColor, type StockItem } from '@/data/mockData'
 
-const statusConfig: Record<StockItem['status'], { label: string; color: string; bg: string }> = {
-  ok: { label: 'Saudável', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
-  low: { label: 'Baixo', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
-  critical: { label: 'Crítico', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
-  stalled: { label: 'Parado', color: 'text-accent-violet', bg: 'bg-accent-violet/10' },
+const statusConfig: Record<StockItem['status'], { label: string; color: string; bg: string; bar: string; rank: number }> = {
+  critical: { label: 'Crítico', color: 'text-accent-rose', bg: 'bg-accent-rose/10', bar: '#F4436C', rank: 0 },
+  stalled: { label: 'Parado', color: 'text-accent-violet', bg: 'bg-accent-violet/10', bar: '#9061F9', rank: 1 },
+  low: { label: 'Baixo', color: 'text-accent-amber', bg: 'bg-accent-amber/10', bar: '#F5C24B', rank: 2 },
+  ok: { label: 'Saudável', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', bar: '#16C784', rank: 3 },
 }
+
+const sortedItems = [...stockItems].sort((a, b) => statusConfig[a.status].rank - statusConfig[b.status].rank)
 
 export default function EstoqueTable() {
   return (
@@ -17,11 +19,11 @@ export default function EstoqueTable() {
 
       {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
-        {stockItems.map((s) => {
+        {sortedItems.map((s) => {
           const cfg = statusConfig[s.status]
           const mp = getMarketplaceColor(s.marketplace)
           return (
-            <div key={s.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
+            <div key={s.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5" style={{ borderLeft: `3px solid ${cfg.bar}` }}>
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-medium text-text-primary">{s.name}</p>
@@ -67,12 +69,12 @@ export default function EstoqueTable() {
             </tr>
           </thead>
           <tbody>
-            {stockItems.map((s) => {
+            {sortedItems.map((s) => {
               const cfg = statusConfig[s.status]
               const mp = getMarketplaceColor(s.marketplace)
               return (
-                <tr key={s.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
-                  <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{s.sku}</td>
+                <tr key={s.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50" style={{ boxShadow: `inset 3px 0 0 ${cfg.bar}` }}>
+                  <td className="py-3 pr-4 pl-2 font-mono text-[11px] text-text-muted">{s.sku}</td>
                   <td className="py-3 pr-4 font-medium text-text-primary">{s.name}</td>
                   <td className="py-3 pr-4">
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: `${mp}15`, color: mp }}>
