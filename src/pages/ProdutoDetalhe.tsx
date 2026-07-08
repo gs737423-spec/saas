@@ -30,7 +30,7 @@ export default function ProdutoDetalhe() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      <ProdutoHeader product={product} status={status} />
+      <ProdutoHeader product={product} status={status} stock={stock} />
       <ProdutoKPIs product={product} stock={stock} />
       <SalesTrendChart sku={product.sku} />
 

@@ -343,14 +343,45 @@ function seedFromSku(sku: string): number {
   return h
 }
 
-export function getSalesTrend(sku: string): { label: string; value: number }[] {
+export type TrendPeriod = '7D' | '30D' | '3M' | '12M'
+
+const trendPeriodConfig: Record<TrendPeriod, { points: number; labelFn: (i: number) => string }> = {
+  '7D': { points: 7, labelFn: (i) => ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i] },
+  '30D': { points: 10, labelFn: (i) => `D${(i + 1) * 3}` },
+  '3M': { points: 12, labelFn: (i) => `S${i + 1}` },
+  '12M': { points: 12, labelFn: (i) => ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][i] },
+}
+
+export interface TrendPoint {
+  label: string
+  units: number
+  revenue: number
+}
+
+export function getSalesTrend(sku: string, period: TrendPeriod = '30D'): TrendPoint[] {
   const seed = seedFromSku(sku)
-  const labels = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']
-  return labels.map((label, i) => {
-    const wave = Math.sin((seed % 100) / 15 + i * 0.6) * 0.5 + 0.5
-    const value = Math.round(40 + wave * 60 + i * 3)
-    return { label, value }
+  const { points, labelFn } = trendPeriodConfig[period]
+  const avgTicket = 60 + (seed % 80)
+  return Array.from({ length: points }, (_, i) => {
+    const wave = Math.sin((seed % 100) / 15 + i * 0.55) * 0.5 + 0.5
+    const units = Math.round(30 + wave * 70 + i * (period === '12M' ? 4 : 2))
+    const revenue = Math.round(units * avgTicket)
+    return { label: labelFn(i), units, revenue }
   })
+}
+
+export function getProductHealthSummary(product: Product, status: ProductStatus, stock: StockItem | undefined): string {
+  const trendWord = product.trend >= 0 ? `crescendo ${product.trend}%` : `caindo ${Math.abs(product.trend)}%`
+  if (status === 'Crítico' && stock) {
+    return `Vendas ${trendWord}, mas estoque crítico com ruptura estimada em ${stock.coverageDays} dias — ação recomendada.`
+  }
+  if (status === 'Parado') {
+    return `Produto sem giro relevante · vendas ${trendWord} · considerar promoção ou reposicionamento.`
+  }
+  if (status === 'Atenção') {
+    return `Vendas ${trendWord}, estoque em nível de atenção · monitorar cobertura nos próximos dias.`
+  }
+  return `Produto saudável · vendas ${trendWord} · margem de ${product.margin}% dentro da meta.`
 }
 
 export interface ProductMarketplaceBreakdown {

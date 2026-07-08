@@ -1,4 +1,4 @@
-import { Boxes, AlertTriangle, PackagePlus } from 'lucide-react'
+import { Boxes, AlertTriangle, PackagePlus, Gauge } from 'lucide-react'
 import type { StockItem } from '@/data/mockData'
 
 export default function StockHealth({ stock }: { stock: StockItem | undefined }) {
@@ -13,8 +13,9 @@ export default function StockHealth({ stock }: { stock: StockItem | undefined })
 
   const minStock = Math.round(stock.stock / (stock.coverageDays / 7 || 1))
   const ruptureRisk = stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo'
-  const riskColor = ruptureRisk === 'Alto' ? 'text-accent-rose bg-accent-rose/10' : ruptureRisk === 'Médio' ? 'text-accent-amber bg-accent-amber/10' : 'text-accent-emerald bg-accent-emerald/10'
+  const riskColor = ruptureRisk === 'Alto' ? '#F4436C' : ruptureRisk === 'Médio' ? '#F5C24B' : '#16C784'
   const recommended = ruptureRisk !== 'Baixo' ? Math.max(50, Math.round(stock.stock * 1.5)) : 0
+  const coveragePct = Math.min(100, Math.round((stock.coverageDays / 60) * 100))
 
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">
@@ -23,22 +24,46 @@ export default function StockHealth({ stock }: { stock: StockItem | undefined })
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Saúde do Estoque</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque Atual</p>
-          <p className="mt-1 font-mono text-lg font-bold text-text-primary">{stock.stock}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        {/* Coverage gauge */}
+        <div className="flex shrink-0 items-center justify-center">
+          <div className="relative flex h-28 w-28 items-center justify-center">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border-subtle, #2a3548)" strokeWidth="8" />
+              <circle
+                cx="50" cy="50" r="42" fill="none" stroke={riskColor} strokeWidth="8" strokeLinecap="round"
+                strokeDasharray={`${coveragePct * 2.64} 264`}
+                style={{ transition: 'stroke-dasharray 0.6s ease', filter: `drop-shadow(0 0 6px ${riskColor}88)` }}
+              />
+            </svg>
+            <div className="absolute flex flex-col items-center">
+              <span className="font-mono text-xl font-bold text-text-primary">{stock.coverageDays}d</span>
+              <span className="text-[10px] text-text-muted">cobertura</span>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque Mínimo</p>
-          <p className="mt-1 font-mono text-lg font-bold text-text-primary">{minStock}</p>
-        </div>
-        <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-text-muted">Cobertura</p>
-          <p className="mt-1 font-mono text-lg font-bold text-text-primary">{stock.coverageDays}d</p>
-        </div>
-        <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-text-muted">Risco de Ruptura</p>
-          <span className={`mt-1 inline-block rounded-md px-1.5 py-0.5 text-[12px] font-bold ${riskColor}`}>{ruptureRisk}</span>
+
+        {/* Stats grid */}
+        <div className="grid flex-1 grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque Atual</p>
+            <p className="mt-1 font-mono text-lg font-bold text-text-primary">{stock.stock}</p>
+          </div>
+          <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque Mínimo</p>
+            <p className="mt-1 font-mono text-lg font-bold text-text-primary">{minStock}</p>
+          </div>
+          <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted">Giro</p>
+            <p className="mt-1 flex items-center gap-1 font-mono text-lg font-bold text-text-primary">
+              <Gauge className="h-4 w-4 text-accent-cyan" />
+              {stock.turnover}x
+            </p>
+          </div>
+          <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted">Risco de Ruptura</p>
+            <span className="mt-1 inline-block rounded-md px-1.5 py-0.5 text-[12px] font-bold" style={{ color: riskColor, background: `${riskColor}1a` }}>{ruptureRisk}</span>
+          </div>
         </div>
       </div>
 
