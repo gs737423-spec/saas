@@ -138,12 +138,23 @@ export default function RevenueByChannelChart() {
                   vectorEffect="non-scaling-stroke"
                   style={{ filter: `drop-shadow(0 0 3px ${color}66)` }}
                 />
-                {hoverIdx !== null && l.points[hoverIdx] && (
-                  <circle cx={l.points[hoverIdx].x} cy={l.points[hoverIdx].y} r="1.6" fill={color} stroke="#04101c" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
-                )}
               </g>
             )
           })}
+
+          {/* Subtle vertical hover cursor */}
+          {hoverIdx !== null && linesData[0]?.points[hoverIdx] && (
+            <line
+              x1={linesData[0].points[hoverIdx].x}
+              y1="0"
+              x2={linesData[0].points[hoverIdx].x}
+              y2="100"
+              stroke="rgba(255,255,255,0.18)"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
 
         {/* Hover targets + x-axis labels */}
