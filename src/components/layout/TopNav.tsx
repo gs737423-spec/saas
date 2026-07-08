@@ -4,6 +4,14 @@ import { useLocation } from 'react-router-dom'
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Visão Geral', subtitle: 'Inteligência de e-commerce · 4 marketplaces' },
   '/produtos': { title: 'Produtos', subtitle: 'Catálogo, vendas, margem e desempenho dos produtos por marketplace' },
+  '/marketplaces': { title: 'Marketplaces', subtitle: 'Receita, pedidos e desempenho por canal de venda' },
+  '/estoque': { title: 'Estoque', subtitle: 'Cobertura, giro e alertas de reposição por produto' },
+  '/importacoes': { title: 'Importações', subtitle: 'Upload, histórico e validação de arquivos por marketplace' },
+  '/financeiro': { title: 'Financeiro', subtitle: 'Fluxo de caixa e resultados consolidados' },
+  '/marketing': { title: 'Marketing', subtitle: 'Campanhas, ROI e investimento em anúncios' },
+  '/avaliacoes': { title: 'Avaliações', subtitle: 'Reputação e reviews por marketplace' },
+  '/relatorios': { title: 'Relatórios', subtitle: 'Relatórios customizáveis de desempenho' },
+  '/configuracoes': { title: 'Configurações', subtitle: 'Conta, integrações e preferências' },
 }
 
 export default function TopNav() {

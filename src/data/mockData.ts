@@ -187,6 +187,113 @@ export const marketplaceConnections: MarketplaceConnection[] = [
   { name: 'Loja Própria', connected: true, lastSync: 'Tempo real', products: 156, orders: 245 },
 ]
 
+export interface StockItem {
+  id: number
+  name: string
+  sku: string
+  marketplace: Marketplace
+  stock: number
+  coverageDays: number
+  turnover: number
+  status: 'ok' | 'low' | 'critical' | 'stalled'
+}
+
+export const stockItems: StockItem[] = [
+  { id: 1, name: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', marketplace: 'Shopee', stock: 12, coverageDays: 3, turnover: 8.4, status: 'critical' },
+  { id: 2, name: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', stock: 22, coverageDays: 6, turnover: 6.1, status: 'critical' },
+  { id: 3, name: 'Camiseta Dry-Fit Pack 3un', sku: 'VST-DRY-3PK', marketplace: 'Shopee', stock: 34, coverageDays: 9, turnover: 5.3, status: 'low' },
+  { id: 4, name: 'Panela Antiaderente Cerâmica', sku: 'COZ-CER-018', marketplace: 'Mercado Livre', stock: 41, coverageDays: 18, turnover: 2.1, status: 'low' },
+  { id: 5, name: 'Fone Bluetooth ANC Pro', sku: 'AUD-ANC-220', marketplace: 'Amazon', stock: 96, coverageDays: 24, turnover: 3.2, status: 'ok' },
+  { id: 6, name: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', marketplace: 'Loja Própria', stock: 58, coverageDays: 82, turnover: 0.7, status: 'stalled' },
+  { id: 7, name: 'Tênis Casual Unissex Comfort', sku: 'CAL-CMF-055', marketplace: 'Shopee', stock: 90, coverageDays: 27, turnover: 2.8, status: 'ok' },
+  { id: 8, name: 'Mochila Executiva Couro Sintético', sku: 'BAG-EXE-042', marketplace: 'Shopee', stock: 128, coverageDays: 21, turnover: 3.5, status: 'ok' },
+  { id: 9, name: 'Kit Skincare Premium 5 Peças', sku: 'SKN-PRM-005', marketplace: 'Mercado Livre', stock: 184, coverageDays: 35, turnover: 4.4, status: 'ok' },
+  { id: 10, name: 'Garrafa Térmica 1L Inox', sku: 'GRF-INX-100', marketplace: 'Mercado Livre', stock: 176, coverageDays: 23, turnover: 3.9, status: 'ok' },
+  { id: 11, name: 'Organizador de Mesa Modular', sku: 'ORG-MOD-021', marketplace: 'Loja Própria', stock: 312, coverageDays: 91, turnover: 1.1, status: 'stalled' },
+  { id: 12, name: 'Luminária LED Inteligente RGB', sku: 'ILU-RGB-114', marketplace: 'Mercado Livre', stock: 240, coverageDays: 42, turnover: 3.0, status: 'ok' },
+]
+
+export interface RestockRecommendation {
+  id: number
+  product: string
+  sku: string
+  marketplace: Marketplace
+  suggestedUnits: number
+  reason: string
+  urgency: 'alta' | 'média' | 'baixa'
+}
+
+export const restockRecommendations: RestockRecommendation[] = [
+  { id: 1, product: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', marketplace: 'Shopee', suggestedUnits: 150, reason: 'Ruptura em ~3 dias · demanda em alta (+42,3%)', urgency: 'alta' },
+  { id: 2, product: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', suggestedUnits: 120, reason: 'Giro alto e cobertura de apenas 6 dias', urgency: 'alta' },
+  { id: 3, product: 'Camiseta Dry-Fit Pack 3un', sku: 'VST-DRY-3PK', marketplace: 'Shopee', suggestedUnits: 200, reason: 'Cobertura de 9 dias · pico de vendas recorrente', urgency: 'média' },
+  { id: 4, product: 'Panela Antiaderente Cerâmica', sku: 'COZ-CER-018', marketplace: 'Mercado Livre', suggestedUnits: 60, reason: 'Cobertura de 18 dias e vendas em queda', urgency: 'baixa' },
+]
+
+export interface StockAlert {
+  id: number
+  product: string
+  sku: string
+  message: string
+  type: 'ruptura' | 'parado' | 'excesso'
+}
+
+export const stockAlerts: StockAlert[] = [
+  { id: 1, product: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', message: 'Ruptura estimada em 3 dias no ritmo de vendas atual', type: 'ruptura' },
+  { id: 2, product: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', message: 'Ruptura estimada em 6 dias', type: 'ruptura' },
+  { id: 3, product: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', message: 'Sem giro relevante há 82 dias · capital parado', type: 'parado' },
+  { id: 4, product: 'Organizador de Mesa Modular', sku: 'ORG-MOD-021', message: '312 un. em estoque com giro de apenas 1,1x · excesso', type: 'excesso' },
+]
+
+export interface ImportRecord {
+  id: number
+  marketplace: Marketplace
+  fileName: string
+  date: string
+  rows: number
+  status: 'sucesso' | 'erro' | 'processando'
+  errors?: number
+}
+
+export const importHistory: ImportRecord[] = [
+  { id: 1, marketplace: 'Mercado Livre', fileName: 'pedidos_ml_out2025.xlsx', date: '08/07/2026 09:14', rows: 892, status: 'sucesso' },
+  { id: 2, marketplace: 'Shopee', fileName: 'shopee_vendas_semana28.csv', date: '07/07/2026 18:32', rows: 634, status: 'sucesso' },
+  { id: 3, marketplace: 'Amazon', fileName: 'amazon_orders_jul.xlsx', date: '07/07/2026 11:05', rows: 321, status: 'erro', errors: 4 },
+  { id: 4, marketplace: 'Loja Própria', fileName: 'export_loja_propria.csv', date: '06/07/2026 20:47', rows: 245, status: 'sucesso' },
+  { id: 5, marketplace: 'Mercado Livre', fileName: 'pedidos_ml_set2025.xlsx', date: '01/07/2026 08:20', rows: 851, status: 'sucesso' },
+]
+
+export interface MarketplaceMetrics {
+  marketplace: Marketplace
+  revenue: number
+  orders: number
+  avgTicket: number
+  conversionPct: number
+  sharePct: number
+  trend: number
+}
+
+export const marketplaceMetrics: MarketplaceMetrics[] = [
+  { marketplace: 'Mercado Livre', revenue: 95000, orders: 892, avgTicket: 106.5, conversionPct: 5.2, sharePct: 44.2, trend: 11.8 },
+  { marketplace: 'Shopee', revenue: 60000, orders: 634, avgTicket: 94.6, conversionPct: 4.6, sharePct: 27.9, trend: 15.4 },
+  { marketplace: 'Amazon', revenue: 35000, orders: 321, avgTicket: 109.0, conversionPct: 3.8, sharePct: 16.3, trend: -2.1 },
+  { marketplace: 'Loja Própria', revenue: 25000, orders: 245, avgTicket: 102.0, conversionPct: 6.1, sharePct: 11.6, trend: 22.7 },
+]
+
+export interface MarketplaceOpportunity {
+  id: number
+  marketplace: Marketplace
+  title: string
+  detail: string
+  potential: string
+}
+
+export const marketplaceOpportunities: MarketplaceOpportunity[] = [
+  { id: 1, marketplace: 'Loja Própria', title: 'Canal com maior crescimento', detail: 'Receita própria cresceu 22,7% · menor dependência de taxas de marketplace', potential: '+R$ 5.500/mês' },
+  { id: 2, marketplace: 'Amazon', title: 'Conversão abaixo da média', detail: 'Taxa de 3,8% vs 5,2% no Mercado Livre · revisar fichas de produto', potential: '+1,2 p.p. conversão' },
+  { id: 3, marketplace: 'Shopee', title: 'Ticket médio pode subir', detail: 'Volume alto de pedidos com ticket 11% abaixo da média geral', potential: '+R$ 3.100/mês' },
+]
+
 export function getMarketplaceColor(mp: Marketplace): string {
   const colors: Record<Marketplace, string> = {
     'Mercado Livre': '#FFE600',

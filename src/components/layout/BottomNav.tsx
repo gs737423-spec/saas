@@ -21,18 +21,18 @@ type Primary = { icon: typeof Package; label: string; to?: string }
 const primary: Primary[] = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
   { icon: Package, label: 'Produtos', to: '/produtos' },
-  { icon: Store, label: 'Canais' },
-  { icon: FileBarChart2, label: 'Relatórios' },
+  { icon: Store, label: 'Canais', to: '/marketplaces' },
+  { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
 ]
 
 const secondary = [
-  { icon: Boxes, label: 'Estoque' },
-  { icon: Wallet, label: 'Financeiro' },
-  { icon: Megaphone, label: 'Marketing' },
-  { icon: Star, label: 'Avaliações' },
-  { icon: DownloadCloud, label: 'Importações' },
-  { icon: Settings, label: 'Configurações' },
-  { icon: HelpCircle, label: 'Ajuda' },
+  { icon: Boxes, label: 'Estoque', to: '/estoque' },
+  { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
+  { icon: Megaphone, label: 'Marketing', to: '/marketing' },
+  { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
+  { icon: DownloadCloud, label: 'Importações', to: '/importacoes' },
+  { icon: Settings, label: 'Configurações', to: '/configuracoes' },
+  { icon: HelpCircle, label: 'Ajuda', to: '/configuracoes' },
 ]
 
 export default function BottomNav() {
@@ -60,8 +60,9 @@ export default function BottomNav() {
               {secondary.map((s) => {
                 const Icon = s.icon
                 return (
-                  <button
+                  <NavLink
                     key={s.label}
+                    to={s.to}
                     onClick={() => setOpen(false)}
                     className="flex flex-col items-center gap-2 rounded-xl border border-border-subtle/60 bg-bg-card/40 p-3 text-[11px] font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary"
                   >
@@ -69,7 +70,7 @@ export default function BottomNav() {
                       <Icon className="h-[18px] w-[18px]" />
                     </span>
                     {s.label}
-                  </button>
+                  </NavLink>
                 )
               })}
             </div>

@@ -20,17 +20,17 @@ type Item = { icon: typeof Zap; label: string; to?: string }
 
 const navItems: Item[] = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
-  { icon: Store, label: 'Marketplaces' },
+  { icon: Store, label: 'Marketplaces', to: '/marketplaces' },
   { icon: Package, label: 'Produtos', to: '/produtos' },
-  { icon: Boxes, label: 'Estoque' },
-  { icon: Wallet, label: 'Financeiro' },
-  { icon: Megaphone, label: 'Marketing' },
-  { icon: Star, label: 'Avaliações' },
-  { icon: DownloadCloud, label: 'Importações' },
-  { icon: FileBarChart2, label: 'Relatórios' },
+  { icon: Boxes, label: 'Estoque', to: '/estoque' },
+  { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
+  { icon: Megaphone, label: 'Marketing', to: '/marketing' },
+  { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
+  { icon: DownloadCloud, label: 'Importações', to: '/importacoes' },
+  { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
 ]
 
-const bottomItem: Item = { icon: Settings, label: 'Configurações' }
+const bottomItem: Item = { icon: Settings, label: 'Configurações', to: '/configuracoes' }
 
 export default function SideRail() {
   const [expanded, setExpanded] = useState(false)
