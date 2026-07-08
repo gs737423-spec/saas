@@ -20,7 +20,58 @@ export default function ProductTable() {
         </span>
       </div>
 
-      <div className="-mx-1 overflow-x-auto px-1">
+      {/* Mobile: stacked cards (no sideways scroll) */}
+      <div className="space-y-2.5 md:hidden">
+        {products.map((p) => {
+          const positive = p.trend >= 0
+          const mp = getMarketplaceColor(p.marketplace)
+          return (
+            <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
+              <div className="mb-2.5 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-medium text-text-primary">{p.name}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
+                    <span className="text-text-muted">·</span>
+                    <span className="text-[10px] font-medium" style={{ color: mp }}>{p.marketplace}</span>
+                  </div>
+                </div>
+                <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
+                  {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {positive ? '+' : ''}{p.trend}%
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-border-subtle/50 pt-2.5">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Faturamento</p>
+                  <p className="mt-0.5 font-mono text-[13px] font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Margem</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border-subtle">
+                      <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${p.margin}%` }} />
+                    </div>
+                    <span className="font-mono text-[11px] text-text-secondary">{p.margin}%</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Vendas</p>
+                  <p className="mt-0.5 font-mono text-[13px] text-text-secondary">{p.units.toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque</p>
+                  <p className={`mt-0.5 font-mono text-[13px] ${stockTone(p.stock)}`}>{p.stock}</p>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop / notebook: premium table */}
+      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
