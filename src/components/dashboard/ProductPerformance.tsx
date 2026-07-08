@@ -33,7 +33,61 @@ export default function ProductPerformance() {
         </div>
       </div>
 
-      <div className="-mx-1 overflow-x-auto px-1">
+      {/* Mobile: stacked cards (no horizontal scroll) */}
+      <div className="space-y-2 md:hidden">
+        {products.map((p, i) => {
+          const positive = p.trend >= 0
+          const mpColor = getMarketplaceColor(p.marketplace)
+          const pf = perf(p.goalPct)
+          const fillPct = (Math.min(p.goalPct, SCALE) / SCALE) * 100
+          return (
+            <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
+              <div className="mb-2.5 flex items-start gap-2.5">
+                <span className="mt-0.5 font-mono text-xs font-bold text-text-muted">{String(i + 1).padStart(2, '0')}</span>
+                <span className="mt-0.5 h-8 w-1 shrink-0 rounded-full" style={{ background: mpColor }} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-medium leading-tight text-text-primary">{p.name}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
+                    <span className="text-text-muted">·</span>
+                    <span className="text-[10px] font-medium" style={{ color: mpColor }}>{p.marketplace}</span>
+                  </div>
+                </div>
+                <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
+                  {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {positive ? '+' : ''}{p.trend}%
+                </span>
+              </div>
+
+              <div className="relative mb-2 flex h-6 items-center">
+                <div className="relative h-6 w-full overflow-hidden rounded-lg bg-bg-primary/70 ring-1 ring-inset ring-border-subtle">
+                  <div
+                    className="flex h-full items-center rounded-lg"
+                    style={{ width: `${fillPct}%`, background: `linear-gradient(90deg, ${pf.color}55, ${pf.color})`, boxShadow: `0 0 16px -2px ${pf.color}66` }}
+                  >
+                    <span className="ml-auto pr-2 font-mono text-[11px] font-bold text-[#04101c]">{p.goalPct}%</span>
+                  </div>
+                </div>
+                <div className="pointer-events-none absolute inset-y-0" style={{ left: `${GOAL_LINE}%` }}>
+                  <div className="h-full w-px border-l border-dashed border-text-secondary/50" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-mono font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</span>
+                <span className="text-text-muted">Part. <span className="font-mono text-text-secondary">{p.sharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%</span></span>
+              </div>
+            </div>
+          )
+        })}
+        <div className="flex items-center gap-2 pt-1 text-[10px] text-text-muted">
+          <span className="inline-block h-3 w-px border-l border-dashed border-text-secondary/50" />
+          Linha tracejada = meta (100%)
+        </div>
+      </div>
+
+      {/* Desktop: full ranking table */}
+      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
         <div className="min-w-[720px]">
           {/* Column headers */}
           <div className="mb-2 grid grid-cols-[26px_minmax(150px,1.1fr)_minmax(220px,2fr)_96px_74px_58px] items-center gap-3 px-1 pb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">

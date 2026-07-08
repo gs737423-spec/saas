@@ -15,10 +15,10 @@ export default function TopNav() {
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex flex-col">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-[19px] font-semibold tracking-tight text-text-primary">
+            <h1 className="truncate whitespace-nowrap text-[17px] font-semibold tracking-tight text-text-primary sm:text-[19px]">
               {meta.title}
             </h1>
-            <span className="flex items-center gap-1.5 rounded-full border border-accent-emerald/20 bg-accent-emerald/10 px-2.5 py-1 text-[11px] font-medium text-accent-emerald">
+            <span className="hidden items-center gap-1.5 rounded-full border border-accent-emerald/20 bg-accent-emerald/10 px-2.5 py-1 text-[11px] font-medium text-accent-emerald sm:flex">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-emerald" />
@@ -56,15 +56,15 @@ export default function TopNav() {
           <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-bg-secondary bg-accent-rose" />
         </button>
 
-        <button className="flex h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-2.5 transition-colors hover:border-border-default hover:bg-bg-card">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-accent-blue to-accent-violet text-xs font-bold text-white">
+        <button className="flex h-11 w-11 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 transition-colors hover:border-border-default hover:bg-bg-card sm:w-auto sm:px-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent-blue to-accent-violet text-xs font-bold text-white">
             GA
           </div>
           <div className="hidden flex-col items-start leading-none sm:flex">
             <span className="text-xs font-medium text-text-primary">Gabriel</span>
             <span className="text-[10px] text-text-muted">Admin</span>
           </div>
-          <ChevronDown className="h-3.5 w-3.5 text-text-muted" />
+          <ChevronDown className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
         </button>
       </div>
       </div>
