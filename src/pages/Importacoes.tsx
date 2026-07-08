@@ -1,12 +1,18 @@
-import { FileCheck2 } from 'lucide-react'
+import { FileCheck2, FileSpreadsheet, Link2 } from 'lucide-react'
 import ImportacaoCards from '@/components/importacoes/ImportacaoCards'
 import ComoFunciona from '@/components/importacoes/ComoFunciona'
 import ImportacaoHistorico from '@/components/importacoes/ImportacaoHistorico'
 import ImportacaoIA from '@/components/importacoes/ImportacaoIA'
+import MarketplaceConnections from '@/components/importacoes/MarketplaceConnections'
 
 export default function Importacoes() {
   return (
     <div className="space-y-3 sm:space-y-4">
+      <div className="flex items-center gap-2 pt-1">
+        <FileSpreadsheet className="h-4 w-4 text-accent-blue" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Importação manual por planilha</span>
+      </div>
+
       <ImportacaoCards />
 
       <ComoFunciona />
@@ -28,6 +34,13 @@ export default function Importacoes() {
       </div>
 
       <ImportacaoHistorico />
+
+      <div className="flex items-center gap-2 pt-2">
+        <Link2 className="h-4 w-4 text-accent-cyan" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Conexão direta com marketplaces</span>
+      </div>
+
+      <MarketplaceConnections />
 
       <ImportacaoIA />
     </div>
