@@ -34,8 +34,10 @@ export default function ProdutoDetalhe() {
     <div className="space-y-3 sm:space-y-4">
       <ProdutoHeader product={product} status={status} stock={stock} />
       <ProdutoKPIs product={product} stock={stock} />
-      <SalesTrendChart sku={product.sku} />
-      <ProdutoHealthScore health={health} />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <SalesTrendChart sku={product.sku} />
+        <ProdutoHealthScore health={health} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <MarketplacePerformanceBreakdown product={product} />
