@@ -4,6 +4,7 @@ import ProductTable from '@/components/produtos/ProductTable'
 import Top5Products from '@/components/produtos/Top5Products'
 import CategoryPerformance from '@/components/produtos/CategoryPerformance'
 import ProductAlerts from '@/components/produtos/ProductAlerts'
+import ProductOpportunities from '@/components/produtos/ProductOpportunities'
 
 export default function Produtos() {
   return (
@@ -21,8 +22,11 @@ export default function Produtos() {
         </div>
       </div>
 
-      {/* Category performance full width */}
-      <CategoryPerformance />
+      {/* Category performance + product opportunities */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <CategoryPerformance />
+        <ProductOpportunities />
+      </div>
     </div>
   )
 }

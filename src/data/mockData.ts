@@ -129,6 +129,25 @@ export const productAlerts: ProductAlert[] = [
   { id: 5, product: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', marketplace: 'Loja Própria', type: 'falling_sales', detail: 'Vendas -3,2% · giro baixo (42 un.)' },
 ]
 
+export interface ProductOpportunity {
+  id: number
+  product: string
+  sku: string
+  marketplace: Marketplace
+  type: 'scale_investment' | 'price_adjust' | 'expand_channel'
+  action: string
+  detail: string
+  potential: string
+}
+
+export const productOpportunities: ProductOpportunity[] = [
+  { id: 1, product: 'Porta-Retrato Digital Wi-Fi', sku: 'DEC-DIG-070', marketplace: 'Shopee', type: 'scale_investment', action: 'Aumentar investimento', detail: 'Vendas +42,3% e meta em 118% · demanda acima da oferta', potential: '+R$ 6.400/mês' },
+  { id: 2, product: 'Luminária LED Inteligente RGB', sku: 'ILU-RGB-114', marketplace: 'Mercado Livre', type: 'scale_investment', action: 'Escalar anúncios', detail: 'Crescimento +31,5% com margem saudável de 38%', potential: '+R$ 4.900/mês' },
+  { id: 3, product: 'Cadeira Ergonômica Home Office', sku: 'MOV-ERG-800', marketplace: 'Loja Própria', type: 'price_adjust', action: 'Rever preço', detail: 'Meta em 71% e queda -3,2% · preço 12% acima da concorrência', potential: '+18% conversão' },
+  { id: 4, product: 'Smartwatch Fitness Tracker', sku: 'WCH-FIT-330', marketplace: 'Amazon', type: 'price_adjust', action: 'Ajustar margem', detail: 'Margem 30% abaixo da meta · reposicionar para recuperar giro', potential: '+8 p.p. margem' },
+  { id: 5, product: 'Kit Skincare Premium 5 Peças', sku: 'SKN-PRM-005', marketplace: 'Mercado Livre', type: 'expand_channel', action: 'Expandir canais', detail: 'Top de faturamento só no ML · potencial em Shopee e Amazon', potential: '+R$ 9.200/mês' },
+]
+
 export interface PerformanceSummary {
   label: string
   primary: string
