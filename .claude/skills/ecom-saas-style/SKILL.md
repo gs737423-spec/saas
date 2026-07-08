@@ -241,9 +241,13 @@ Every screen must be verified at these widths, with no horizontal page overflow 
 
 ### Verification checklist
 
+- **Always take a real visual screenshot at 390px, not only DOM measurements.** `document.scrollWidth <= innerWidth` returning "no overflow" DOES NOT mean the layout is correct — content can still be cramped, clipped inside a scroll container, or a chart/tooltip/legend can overlap while the page reports no overflow. Look at every section with your eyes before claiming it works.
 - No horizontal scroll on the page (`document.scrollWidth <= innerWidth`) at any breakpoint.
 - Sidebar, top bar and all controls reachable and tappable (≥44px targets) on mobile.
 - Tables/charts contained within their cards; only the card scrolls, not the page.
+- Chart tooltips and legends must be compact and wrap on mobile (small `max-width`, `flex-wrap`) so they never cover the plot area.
+- Reduce card padding on mobile (`p-4 sm:p-7`) so panels don't eat the narrow width.
+- Inner card grids (marketplace tiles, sub-cards) collapse to 1 column on small mobile before they get cramped.
 - No overlapping or clipped text; numbers and labels remain legible.
 - Premium dark styling, spacing and glow intact on mobile.
 

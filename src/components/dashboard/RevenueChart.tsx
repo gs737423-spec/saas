@@ -16,15 +16,15 @@ const formatCurrency = (v: number) =>
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload) return null
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-card p-4 shadow-2xl">
-      <p className="mb-2 text-sm font-semibold text-text-primary">{label}</p>
+    <div className="max-w-[220px] rounded-xl border border-border-subtle bg-bg-card p-3 shadow-2xl">
+      <p className="mb-1.5 text-xs font-semibold text-text-primary">{label}</p>
       {payload.map((p: any) => (
-        <div key={p.dataKey} className="flex items-center justify-between gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
-            <span className="text-text-secondary">{p.name}</span>
+        <div key={p.dataKey} className="flex items-center justify-between gap-4 text-xs">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: p.color }} />
+            <span className="truncate text-text-secondary">{p.name}</span>
           </div>
-          <span className="font-mono font-medium text-text-primary">
+          <span className="shrink-0 font-mono font-medium text-text-primary">
             R$ {p.value.toLocaleString('pt-BR')}
           </span>
         </div>
@@ -35,17 +35,17 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function RevenueChart() {
   return (
-    <div className="glass-panel rounded-3xl p-7">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
+    <div className="glass-panel rounded-2xl p-4 sm:rounded-3xl sm:p-7">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h3 className="text-base font-semibold text-text-primary">Receita por Marketplace</h3>
-          <p className="text-sm text-text-muted">Evolução mensal — 2024</p>
+          <p className="truncate text-sm text-text-muted">Evolução mensal — 2024</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-1 sm:gap-2">
           {['12M', '6M', '3M', '1M'].map((period, i) => (
             <button
               key={period}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
                 i === 0
                   ? 'bg-accent-blue/15 text-accent-blue'
                   : 'text-text-muted hover:text-text-secondary'
@@ -94,14 +94,14 @@ export default function RevenueChart() {
         </AreaChart>
       </ResponsiveContainer>
 
-      <div className="mt-4 flex items-center justify-center gap-6">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
         {[
           { name: 'Mercado Livre', color: '#FFE600' },
           { name: 'Shopee', color: '#EE4D2D' },
           { name: 'Amazon', color: '#FF9900' },
           { name: 'Loja Própria', color: '#3B82F6' },
         ].map((mp) => (
-          <div key={mp.name} className="flex items-center gap-2 text-sm text-text-secondary">
+          <div key={mp.name} className="flex items-center gap-2 text-xs text-text-secondary sm:text-sm">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: mp.color }} />
             {mp.name}
           </div>

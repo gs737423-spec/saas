@@ -3,7 +3,7 @@ import { marketplaceConnections, getMarketplaceColor } from '@/data/mockData'
 
 export default function MarketplaceStatus() {
   return (
-    <div className="glass-panel rounded-3xl p-7">
+    <div className="glass-panel rounded-2xl p-4 sm:rounded-3xl sm:p-7">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-text-primary">Marketplaces Conectados</h3>
@@ -15,7 +15,7 @@ export default function MarketplaceStatus() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
         {marketplaceConnections.map((mp) => {
           const color = getMarketplaceColor(mp.name)
           return (
