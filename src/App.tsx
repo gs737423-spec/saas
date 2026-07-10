@@ -13,7 +13,7 @@ import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
 export default function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-bg-primary">
+    <div className="app-bg min-h-screen overflow-x-hidden bg-bg-primary">
       <SideRail />
       <TopNav />
       <main className="pt-12 md:ml-16 md:pt-0">

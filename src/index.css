@@ -60,26 +60,36 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #33334a; }
 
 @layer utilities {
-  /* Premium glass panel */
+  /* Premium glass panel — promovido para a linguagem de profundidade validada
+     na Visão Geral. Agora padrão global (todas as páginas herdam). */
   .glass-panel {
+    position: relative;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0) 40%),
-      var(--color-bg-card);
-    border: 1px solid var(--color-border-subtle);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 20%, rgba(255, 255, 255, 0) 52%),
+      linear-gradient(180deg, #111C33 0%, #0A1120 100%);
+    border: 1px solid #263758;
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
-      0 2px 6px -2px rgba(0, 0, 0, 0.5),
-      0 24px 60px -28px rgba(2, 6, 20, 0.95);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      inset 0 -14px 30px -20px rgba(0, 0, 0, 0.6),
+      0 2px 5px -1px rgba(0, 0, 0, 0.5),
+      0 14px 30px -12px rgba(0, 0, 0, 0.6),
+      0 44px 80px -32px rgba(2, 6, 20, 0.85);
   }
 
   .glass-panel-hover {
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
   }
   .glass-panel-hover:hover {
-    border-color: var(--color-border-default);
+    transform: translateY(-4px);
+    border-color: #3A4E78;
     box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-      0 24px 60px -28px rgba(0, 0, 0, 0.95);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 26px 54px -14px rgba(0, 0, 0, 0.72),
+      0 80px 130px -40px rgba(4, 10, 30, 0.95);
   }
 
   .glow-blue {
@@ -101,8 +111,8 @@ body {
    * ======================================================================== */
 
   /* Atmosfera de fundo — glows ambientais + grid sutil + vinheta.
-     Fixo no viewport pra dar sensação de ambiente tecnológico, não parede morta. */
-  .overview-scope::before {
+     Fixo no viewport, aplicado GLOBALMENTE (todas as páginas) via .app-bg. */
+  .app-bg::before {
     content: '';
     position: fixed;
     inset: 0;
@@ -114,7 +124,7 @@ body {
       radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.08), transparent 60%),
       radial-gradient(700px 500px at 78% 60%, rgba(22, 199, 132, 0.05), transparent 62%);
   }
-  .overview-scope::after {
+  .app-bg::after {
     content: '';
     position: fixed;
     inset: 0;

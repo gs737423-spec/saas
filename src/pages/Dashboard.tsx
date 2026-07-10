@@ -5,7 +5,7 @@ import DecisionPanel from '@/components/dashboard/DecisionPanel'
 
 export default function Dashboard() {
   return (
-    <div className="overview-scope space-y-3.5">
+    <div className="space-y-3.5">
       {/* Faixa compacta: período + status dos canais */}
       <ExecutiveHeader />
 
