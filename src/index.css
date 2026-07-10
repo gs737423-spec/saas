@@ -92,4 +92,234 @@ body {
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* ==========================================================================
+   * VISÃO GERAL — linguagem visual ISOLADA (não altera tokens globais nem
+   * .glass-panel). Profundidade real: rampa tonal mais clara que o fundo,
+   * rim light no topo, sombra em 3 camadas, gradiente interno nobre.
+   * Se validar, vira padrão global depois.
+   * ======================================================================== */
+
+  /* Atmosfera de fundo — glows ambientais + grid sutil + vinheta.
+     Fixo no viewport pra dar sensação de ambiente tecnológico, não parede morta. */
+  .overview-scope::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.16), transparent 58%),
+      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.13), transparent 56%),
+      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.08), transparent 60%),
+      radial-gradient(700px 500px at 78% 60%, rgba(22, 199, 132, 0.05), transparent 62%);
+  }
+  .overview-scope::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(125, 155, 215, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125, 155, 215, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+  }
+
+  /* ---- Sistema de profundidade em 3 níveis --------------------------------
+     Nível 1 (estrutural): overview-glass · Nível 2 (primário): -elevated
+     Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
+     definida, sombra de contato + longa mais forte → mais "flutuando". */
+
+  /* Nível 1 — painel estrutural */
+  .overview-glass {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 20%, rgba(255, 255, 255, 0) 52%),
+      linear-gradient(180deg, #111C33 0%, #0A1120 100%);
+    border: 1px solid #263758;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      inset 0 -14px 30px -20px rgba(0, 0, 0, 0.6),
+      0 2px 5px -1px rgba(0, 0, 0, 0.5),
+      0 14px 30px -12px rgba(0, 0, 0, 0.6),
+      0 44px 80px -32px rgba(2, 6, 20, 0.85);
+  }
+
+  /* Nível 2 — painel primário (comparativo, painel de decisão) */
+  .overview-glass-elevated {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.095) 0%, rgba(255, 255, 255, 0.02) 22%, rgba(255, 255, 255, 0) 58%),
+      radial-gradient(130% 90% at 50% -12%, rgba(76, 130, 247, 0.13), transparent 60%),
+      linear-gradient(180deg, #16233F 0%, #0C1527 100%);
+    border: 1px solid #31456E;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
+      inset 0 -16px 34px -22px rgba(0, 0, 0, 0.6),
+      0 2px 6px -1px rgba(0, 0, 0, 0.5),
+      0 20px 44px -14px rgba(0, 0, 0, 0.66),
+      0 60px 104px -36px rgba(4, 10, 30, 0.9);
+  }
+
+  /* Nível 3 — hero (Faturamento Líquido): mais elevado, rim emerald */
+  .overview-hero-card {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 24%, rgba(255, 255, 255, 0) 60%),
+      radial-gradient(150% 110% at 50% -16%, rgba(22, 199, 132, 0.18), transparent 58%),
+      linear-gradient(180deg, #12273E 0%, #0A1728 100%);
+    border: 1px solid #235650;
+    box-shadow:
+      inset 0 1px 0 0 rgba(190, 255, 232, 0.2),
+      inset 0 -16px 36px -22px rgba(0, 0, 0, 0.55),
+      0 2px 6px -1px rgba(0, 0, 0, 0.5),
+      0 22px 48px -14px rgba(0, 0, 0, 0.66),
+      0 64px 112px -36px rgba(4, 26, 20, 0.88);
+  }
+
+  /* Hover tátil — elevação + borda aquece + glow (todos os níveis) */
+  .overview-card-hover {
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+    will-change: transform;
+  }
+  .overview-card-hover:hover {
+    transform: translateY(-4px);
+    border-color: #3A4E78;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 26px 54px -14px rgba(0, 0, 0, 0.72),
+      0 80px 130px -40px rgba(4, 10, 30, 0.95);
+  }
+  .overview-hero-card.overview-card-hover:hover {
+    border-color: #2E6A5F;
+    box-shadow:
+      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 28px 58px -14px rgba(0, 0, 0, 0.72),
+      0 84px 140px -40px rgba(4, 26, 20, 0.92);
+  }
+
+  /* Linha de marketplace — camada sobre o painel pai */
+  .overview-marketplace-row {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0) 46%),
+      linear-gradient(180deg, #0F1B30 0%, #0A101F 100%);
+    border: 1px solid #1F2C49;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+      0 8px 20px -12px rgba(0, 0, 0, 0.6);
+    transition:
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.24s ease,
+      border-color 0.24s ease;
+  }
+  .overview-marketplace-row:hover {
+    transform: translateY(-2px);
+    border-color: #31446B;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 16px 34px -12px rgba(0, 0, 0, 0.72);
+  }
+  /* Canal Nº1 — destaque, mais corpo */
+  .overview-marketplace-row-lead {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 50%),
+      radial-gradient(120% 100% at 50% -20%, rgba(76, 130, 247, 0.1), transparent 62%),
+      linear-gradient(180deg, #142744 0%, #0B1526 100%);
+    border: 1px solid #35496F;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.11),
+      inset 0 -14px 30px -22px rgba(0, 0, 0, 0.5),
+      0 16px 36px -12px rgba(0, 0, 0, 0.68);
+  }
+
+  /* Trilho das barras de participação */
+  .overview-track {
+    background: linear-gradient(180deg, #050912 0%, #0A1120 100%);
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  /* ---- Sidebar premium ----------------------------------------------------
+     Item de navegação com hover vivo (glow + shift), ativo sofisticado, e
+     foco acessível — elimina o outline branco padrão do browser. */
+  .rail-item {
+    position: relative;
+    outline: none;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.25s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .rail-item:hover {
+    background: linear-gradient(180deg, rgba(76, 130, 247, 0.12), rgba(76, 130, 247, 0.04));
+    box-shadow:
+      inset 0 0 0 1px rgba(76, 130, 247, 0.16),
+      0 0 20px -6px rgba(76, 130, 247, 0.45);
+  }
+  .rail-item:hover :is(svg) {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 6px rgba(76, 130, 247, 0.5));
+  }
+  .rail-item :is(svg) {
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+  }
+  .rail-item:focus-visible {
+    box-shadow: 0 0 0 2px rgba(76, 130, 247, 0.55), 0 0 20px -6px rgba(76, 130, 247, 0.5);
+  }
+  .rail-item-active {
+    background: linear-gradient(180deg, rgba(76, 130, 247, 0.2), rgba(76, 130, 247, 0.07));
+    box-shadow:
+      inset 0 0 0 1px rgba(76, 130, 247, 0.28),
+      0 0 22px -6px rgba(76, 130, 247, 0.5);
+  }
+  /* Barra de acento do item ativo — interna, com glow (sem sobrar pra fora) */
+  .rail-item-active::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    height: 18px;
+    width: 3px;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #6FA0FF, #4C82F7);
+    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+  }
+
+  /* Superfície da própria sidebar — camada com profundidade + glow ambiental */
+  .rail-surface {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 30%),
+      linear-gradient(180deg, #0C1424 0%, #080D18 100%);
+    box-shadow:
+      inset -1px 0 0 0 rgba(255, 255, 255, 0.04),
+      2px 0 24px -12px rgba(0, 0, 0, 0.8);
+  }
+  .rail-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 220px;
+    pointer-events: none;
+    background: radial-gradient(130% 100% at 50% -10%, rgba(76, 130, 247, 0.12), transparent 72%);
+  }
+  .rail-surface::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 200px;
+    pointer-events: none;
+    background: radial-gradient(120% 100% at 50% 120%, rgba(144, 97, 249, 0.08), transparent 74%);
+  }
 }

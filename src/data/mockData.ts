@@ -515,3 +515,399 @@ export function getMarketplaceColor(mp: Marketplace): string {
   }
   return colors[mp]
 }
+
+/* ============================================================================
+ * VISÃO GERAL — camada executiva (E0)
+ *
+ * Métricas derivadas SOMENTE de dados que viriam direto dos marketplaces.
+ * Sem CMV, margem real ou lucro real — esses dependem de custo de produto e
+ * ficam para uma fase futura. O "faturamento líquido" aqui é ESTIMADO a partir
+ * de taxas/encargos mockados; não é lucro.
+ * ========================================================================= */
+
+/**
+ * Faixas de taxa/encargo por marketplace — apenas MOCK para demonstração.
+ * Taxas reais variam por categoria, plano, modalidade de anúncio, frete,
+ * parcelamento e promoções. Não tratar como regra oficial fixa.
+ *  ML 16–19% · Shopee 20–22% · Amazon 10–15% · Loja Própria 3–6%
+ */
+const FEE_RATES: Record<Marketplace, number> = {
+  'Mercado Livre': 0.175,
+  'Shopee': 0.215,
+  'Amazon': 0.13,
+  'Loja Própria': 0.05,
+}
+
+export interface ChannelOverview extends MarketplaceMetrics {
+  /** Faturamento líquido ESTIMADO (bruto − taxas). Não é lucro. */
+  netRevenue: number
+  /** Total retido pelo marketplace em R$ (mock). */
+  fees: number
+  /** Impacto de taxas em % do bruto. */
+  feePct: number
+  /** Participação no faturamento LÍQUIDO estimado. */
+  netSharePct: number
+  /** Eficiência líquida do canal (líquido ÷ bruto). */
+  netEfficiencyPct: number
+}
+
+const _grossTotal = marketplaceMetrics.reduce((s, m) => s + m.revenue, 0)
+const _withNet = marketplaceMetrics.map((m) => {
+  const rate = FEE_RATES[m.marketplace]
+  const fees = Math.round(m.revenue * rate)
+  const netRevenue = m.revenue - fees
+  return { ...m, fees, feePct: Math.round(rate * 1000) / 10, netRevenue }
+})
+const _netTotal = _withNet.reduce((s, m) => s + m.netRevenue, 0)
+
+/** Comparativo por marketplace enriquecido com líquido estimado, taxas e participação. */
+export const channelOverview: ChannelOverview[] = _withNet
+  .map((m) => ({
+    ...m,
+    netSharePct: Math.round((m.netRevenue / _netTotal) * 1000) / 10,
+    netEfficiencyPct: Math.round((m.netRevenue / m.revenue) * 1000) / 10,
+  }))
+  .sort((a, b) => b.netRevenue - a.netRevenue)
+
+/* --- KPIs globais da Visão Geral --------------------------------------- */
+
+const _ordersTotal = marketplaceMetrics.reduce((s, m) => s + m.orders, 0)
+const _feesTotal = _withNet.reduce((s, m) => s + m.fees, 0)
+const _avgTicket = _grossTotal / _ordersTotal
+const _netEfficiency = (_netTotal / _grossTotal) * 100
+
+export type KpiTone = 'blue' | 'emerald' | 'cyan' | 'amber' | 'violet' | 'neutral'
+
+export interface OverviewKpi {
+  key: string
+  label: string
+  value: string
+  prefix?: string
+  suffix?: string
+  change: number
+  /** Contexto curto sob o número. */
+  context: string
+  /** Micro-tag de transparência de dado (ex.: "estimado"). */
+  tag?: string
+  tone: KpiTone
+  /** true = número âncora, ganha mais destaque visual. */
+  hero?: boolean
+}
+
+export const overviewKpis: OverviewKpi[] = [
+  {
+    key: 'gross',
+    label: 'Faturamento Bruto',
+    value: _grossTotal.toLocaleString('pt-BR'),
+    prefix: 'R$',
+    change: 12.5,
+    context: 'Total dos 4 canais',
+    tone: 'cyan',
+  },
+  {
+    key: 'net',
+    label: 'Faturamento Líquido',
+    value: _netTotal.toLocaleString('pt-BR'),
+    prefix: 'R$',
+    change: 11.2,
+    context: 'Após taxas dos marketplaces',
+    tag: 'estimado',
+    tone: 'emerald',
+    hero: true,
+  },
+  {
+    key: 'orders',
+    label: 'Pedidos',
+    value: _ordersTotal.toLocaleString('pt-BR'),
+    change: 8.3,
+    context: 'Volume consolidado',
+    tone: 'blue',
+  },
+  {
+    key: 'ticket',
+    label: 'Ticket Médio',
+    value: _avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    prefix: 'R$',
+    change: 3.8,
+    context: 'Bruto por pedido',
+    tone: 'violet',
+  },
+  {
+    key: 'fees',
+    label: 'Taxas / Encargos',
+    value: _feesTotal.toLocaleString('pt-BR'),
+    prefix: 'R$',
+    change: 1.4,
+    context: `${Math.round((_feesTotal / _grossTotal) * 1000) / 10}% do bruto`,
+    tag: 'estimado',
+    tone: 'amber',
+  },
+  {
+    key: 'efficiency',
+    label: 'Eficiência Líquida',
+    value: (Math.round(_netEfficiency * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    suffix: '%',
+    change: 0.6,
+    context: 'Quanto do bruto entra',
+    tone: 'cyan',
+  },
+]
+
+/* --- Selo de status de dados (faixa de confiança no cabeçalho) ---------- */
+
+export type DataSignalStatus = 'ok' | 'pendente' | 'nao_conectado'
+
+export interface ChannelDataSignal {
+  marketplace: Marketplace
+  status: DataSignalStatus
+  label: string
+}
+
+const _importStatusMap: Record<ImportSourceStatus['status'], DataSignalStatus> = {
+  atualizado: 'ok',
+  conectado: 'ok',
+  pendente: 'pendente',
+  erro: 'pendente',
+}
+
+export const channelDataSignals: ChannelDataSignal[] = importSourceStatus.map((s) => ({
+  marketplace: s.marketplace,
+  status: _importStatusMap[s.status],
+  label:
+    _importStatusMap[s.status] === 'ok'
+      ? 'ok'
+      : _importStatusMap[s.status] === 'pendente'
+        ? 'pendente'
+        : 'não conectado',
+}))
+
+export const lastUpdatedLabel = 'há 8 min'
+
+/* --- Resumo Executivo (frases por regra) ------------------------------- */
+
+/** Conta produtos que exigem atenção: estoque crítico OU vendas em queda. */
+export function getAttentionProductCount(): number {
+  const skus = new Set<string>()
+  stockItems.forEach((s) => {
+    if (s.status === 'critical') skus.add(s.sku)
+  })
+  products.forEach((p) => {
+    if (p.trend < 0) skus.add(p.sku)
+  })
+  return skus.size
+}
+
+export interface ExecutiveSummaryLine {
+  text: string
+  tone: 'neutral' | 'positive' | 'warning' | 'danger'
+}
+
+export function getExecutiveSummary(): ExecutiveSummaryLine[] {
+  const byNet = [...channelOverview].sort((a, b) => b.netRevenue - a.netRevenue)
+  const topNet = byNet[0]
+  const bestTicket = [...channelOverview].sort((a, b) => b.avgTicket - a.avgTicket)[0]
+  const highestFee = [...channelOverview].sort((a, b) => b.feePct - a.feePct)[0]
+  const attention = getAttentionProductCount()
+
+  return [
+    {
+      text: `${topNet.marketplace} concentra ${topNet.netSharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do faturamento líquido estimado.`,
+      tone: topNet.netSharePct > 45 ? 'warning' : 'neutral',
+    },
+    {
+      text: `${bestTicket.marketplace} tem o melhor ticket médio (R$ ${bestTicket.avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}), mas ${bestTicket.sharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do volume.`,
+      tone: 'neutral',
+    },
+    {
+      text: `${highestFee.marketplace} tem o maior impacto de taxas: ${highestFee.feePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do bruto.`,
+      tone: 'warning',
+    },
+    {
+      text: `${attention} ${attention === 1 ? 'produto exige' : 'produtos exigem'} atenção (estoque crítico ou queda de vendas).`,
+      tone: attention > 0 ? 'danger' : 'positive',
+    },
+  ]
+}
+
+/* --- Alertas executivos por regra -------------------------------------- */
+
+export type ExecutiveAlertSeverity = 'danger' | 'warning' | 'info'
+
+export interface ExecutiveAlert {
+  id: string
+  /** Regra que disparou o alerta (gatilho visível). */
+  rule: string
+  message: string
+  severity: ExecutiveAlertSeverity
+  marketplace?: Marketplace
+  sku?: string
+}
+
+export function getExecutiveAlerts(): ExecutiveAlert[] {
+  const alerts: ExecutiveAlert[] = []
+  const avgTicket = _avgTicket
+  const avgFeePct = channelOverview.reduce((s, m) => s + m.feePct, 0) / channelOverview.length
+
+  // Canal com queda de faturamento
+  channelOverview
+    .filter((m) => m.trend < 0)
+    .forEach((m) =>
+      alerts.push({
+        id: `drop-${m.marketplace}`,
+        rule: 'Queda de faturamento no canal',
+        message: `${m.marketplace}: faturamento ${m.trend.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% no período.`,
+        severity: 'danger',
+        marketplace: m.marketplace,
+      })
+    )
+
+  // Canal com taxas/encargos acima da média
+  channelOverview
+    .filter((m) => m.feePct > avgFeePct + 2)
+    .forEach((m) =>
+      alerts.push({
+        id: `fee-${m.marketplace}`,
+        rule: 'Impacto de taxas acima da média',
+        message: `${m.marketplace}: taxas consomem ${m.feePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do bruto, acima da média de ${avgFeePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%.`,
+        severity: 'warning',
+        marketplace: m.marketplace,
+      })
+    )
+
+  // Canal com ticket abaixo da média geral
+  channelOverview
+    .filter((m) => m.avgTicket < avgTicket * 0.95)
+    .forEach((m) =>
+      alerts.push({
+        id: `ticket-${m.marketplace}`,
+        rule: 'Ticket médio abaixo da média',
+        message: `${m.marketplace}: ticket R$ ${m.avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} vs média R$ ${avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`,
+        severity: 'info',
+        marketplace: m.marketplace,
+      })
+    )
+
+  // Dependência alta de um marketplace (share líquido > 45%)
+  channelOverview
+    .filter((m) => m.netSharePct > 45)
+    .forEach((m) =>
+      alerts.push({
+        id: `dep-${m.marketplace}`,
+        rule: 'Dependência alta de um canal',
+        message: `${m.netSharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do líquido em ${m.marketplace} — dependência alta de um único canal.`,
+        severity: 'warning',
+        marketplace: m.marketplace,
+      })
+    )
+
+  // Produto em queda (pior tendência)
+  const falling = [...products].filter((p) => p.trend < 0).sort((a, b) => a.trend - b.trend)[0]
+  if (falling) {
+    alerts.push({
+      id: `prod-drop-${falling.sku}`,
+      rule: 'Produto em queda',
+      message: `${falling.name}: vendas ${falling.trend.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% no período.`,
+      severity: 'warning',
+      marketplace: falling.marketplace,
+      sku: falling.sku,
+    })
+  }
+
+  // Estoque crítico (ruptura iminente)
+  stockItems
+    .filter((s) => s.status === 'critical')
+    .sort((a, b) => a.coverageDays - b.coverageDays)
+    .forEach((s) =>
+      alerts.push({
+        id: `stock-${s.sku}`,
+        rule: 'Estoque crítico',
+        message: `${s.name}: ruptura estimada em ~${s.coverageDays} dias.`,
+        severity: 'danger',
+        marketplace: s.marketplace,
+        sku: s.sku,
+      })
+    )
+
+  // Marketplace com dados pendentes
+  channelDataSignals
+    .filter((s) => s.status !== 'ok')
+    .forEach((s) =>
+      alerts.push({
+        id: `data-${s.marketplace}`,
+        rule: 'Dados pendentes',
+        message: `${s.marketplace}: dados ${s.label} — informação pode estar defasada.`,
+        severity: 'info',
+        marketplace: s.marketplace,
+      })
+    )
+
+  const order: Record<ExecutiveAlertSeverity, number> = { danger: 0, warning: 1, info: 2 }
+  return alerts.sort((a, b) => order[a.severity] - order[b.severity])
+}
+
+/* --- Destaques executivos (cards-veredito) ----------------------------- */
+
+export interface ExecutiveHighlight {
+  key: string
+  label: string
+  channel: Marketplace
+  value: string
+  detail: string
+  tone: 'emerald' | 'violet' | 'blue' | 'cyan' | 'amber'
+}
+
+export function getExecutiveHighlights(): ExecutiveHighlight[] {
+  const topNet = [...channelOverview].sort((a, b) => b.netRevenue - a.netRevenue)[0]
+  const bestTicket = [...channelOverview].sort((a, b) => b.avgTicket - a.avgTicket)[0]
+  const topVolume = [...channelOverview].sort((a, b) => b.orders - a.orders)[0]
+  const lowestFee = [...channelOverview].sort((a, b) => a.feePct - b.feePct)[0]
+  const attention =
+    channelOverview.find((m) => m.status !== 'Saudável') ??
+    [...channelOverview].sort((a, b) => a.trend - b.trend)[0]
+
+  return [
+    {
+      key: 'net',
+      label: 'Maior faturamento líquido',
+      channel: topNet.marketplace,
+      value: `R$ ${topNet.netRevenue.toLocaleString('pt-BR')}`,
+      detail: `${topNet.netSharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do líquido total`,
+      tone: 'emerald',
+    },
+    {
+      key: 'ticket',
+      label: 'Melhor ticket médio',
+      channel: bestTicket.marketplace,
+      value: `R$ ${bestTicket.avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      detail: `${bestTicket.sharePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do volume`,
+      tone: 'violet',
+    },
+    {
+      key: 'volume',
+      label: 'Maior volume de pedidos',
+      channel: topVolume.marketplace,
+      value: topVolume.orders.toLocaleString('pt-BR'),
+      detail: 'pedidos no período',
+      tone: 'blue',
+    },
+    {
+      key: 'fee',
+      label: 'Menor impacto de taxas',
+      channel: lowestFee.marketplace,
+      value: `${lowestFee.feePct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
+      detail: 'do bruto em encargos',
+      tone: 'cyan',
+    },
+    {
+      key: 'attention',
+      label: 'Canal com atenção',
+      channel: attention.marketplace,
+      value: attention.status,
+      detail:
+        attention.trend < 0
+          ? `faturamento ${attention.trend.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+          : 'revisar desempenho',
+      tone: 'amber',
+    },
+  ]
+}

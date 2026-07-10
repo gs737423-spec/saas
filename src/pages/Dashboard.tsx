@@ -1,35 +1,25 @@
+import ExecutiveHeader from '@/components/dashboard/ExecutiveHeader'
 import KPICards from '@/components/dashboard/KPICards'
-import RevenueChart from '@/components/dashboard/RevenueChart'
-import ProductPerformance from '@/components/dashboard/ProductPerformance'
-import PerformanceSummary from '@/components/dashboard/PerformanceSummary'
-import Opportunities from '@/components/dashboard/Opportunities'
-import AlertsPanel from '@/components/dashboard/AlertsPanel'
-import MarketplaceStatus from '@/components/dashboard/MarketplaceStatus'
+import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
+import DecisionPanel from '@/components/dashboard/DecisionPanel'
 
 export default function Dashboard() {
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="overview-scope space-y-3.5">
+      {/* Faixa compacta: período + status dos canais */}
+      <ExecutiveHeader />
+
+      {/* KPIs com hierarquia: hero Líquido + secundários + Taxas (atenção) */}
       <KPICards />
 
-      {/* Flagship performance block: horizontal ranking + summary rail */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <ProductPerformance />
-        <PerformanceSummary />
+      {/* Dobra central: comparativo (coração) + painel de decisão */}
+      <div className="grid grid-cols-1 gap-3.5 xl:grid-cols-[2fr_1fr]">
+        <MarketplaceComparison />
+        <DecisionPanel />
       </div>
 
-      {/* Monthly revenue + connected marketplaces */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RevenueChart />
-        </div>
-        <MarketplaceStatus />
-      </div>
-
-      {/* Marketplace opportunities + intelligent alerts */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Opportunities />
-        <AlertsPanel />
-      </div>
+      {/* E5, E6, E7 (produtos em atenção, gráfico bruto vs líquido, alertas completos)
+          entram após aprovação desta prévia. */}
     </div>
   )
 }
