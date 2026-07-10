@@ -306,9 +306,12 @@ body {
     box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
   }
 
-  /* Superfície da própria sidebar — camada com profundidade + glow ambiental */
+  /* Superfície da própria sidebar — camada com profundidade + glow ambiental.
+     NÃO definir position aqui: a classe .fixed do Tailwind já posiciona o
+     aside, e um position custom aqui sobrescreveria o fixed (mesma camada,
+     ordem posterior) — foi o que quebrou o layout. O fixed já ancora os
+     pseudo-elementos absolutos abaixo. */
   .rail-surface {
-    position: relative;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 30%),
       linear-gradient(180deg, #0C1424 0%, #080D18 100%);
