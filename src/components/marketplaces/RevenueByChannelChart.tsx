@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Crown, Rocket } from 'lucide-react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { revenueData, getMarketplaceColor, type Marketplace } from '@/data/mockData'
 
 type Period = '6M' | '3M' | '1M'
@@ -12,6 +12,9 @@ const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; lab
   { key: 'amazon', label: 'Amazon' },
   { key: 'lojaPropria', label: 'Loja Própria' },
 ]
+
+const brl = (v: number) => v.toLocaleString('pt-BR')
+const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 function smoothPath(points: { x: number; y: number }[]): string {
   if (points.length < 2) return ''
@@ -31,17 +34,19 @@ export default function RevenueByChannelChart() {
 
   const months = useMemo(() => revenueData.slice(-periodMonths[period]), [period])
   const maxValue = Math.max(...months.flatMap((m) => channels.map((c) => m[c.key])), 1)
-
   const totalRevenue = months.reduce((s, m) => s + m.total, 0)
-  const perChannelTotal = channels.map((c) => ({ ...c, total: months.reduce((s, m) => s + m[c.key], 0) }))
-  const bestChannel = [...perChannelTotal].sort((a, b) => b.total - a.total)[0]
-  const growthChannel = useMemo(() => {
-    if (months.length < 2) return perChannelTotal[0]
-    const first = months[0]
-    const last = months[months.length - 1]
-    const growth = channels.map((c) => ({ ...c, growth: first[c.key] > 0 ? ((last[c.key] - first[c.key]) / first[c.key]) * 100 : 0 }))
-    return [...growth].sort((a, b) => b.growth - a.growth)[0]
-  }, [months, perChannelTotal])
+
+  const channelSummary = useMemo(() => {
+    return channels
+      .map((c) => {
+        const total = months.reduce((s, m) => s + m[c.key], 0)
+        const first = months[0]?.[c.key] ?? 0
+        const last = months[months.length - 1]?.[c.key] ?? 0
+        const growth = first > 0 ? ((last - first) / first) * 100 : 0
+        return { ...c, total, growth }
+      })
+      .sort((a, b) => b.total - a.total)
+  }, [months])
 
   const linesData = useMemo(
     () =>
@@ -56,23 +61,11 @@ export default function RevenueByChannelChart() {
   )
 
   return (
-    <div className="overview-hero-card relative overflow-hidden rounded-[22px] p-4 sm:p-5">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-emerald/40 to-transparent" />
-
-      <div className="relative mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
+      <div className="relative mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-            <span className="text-text-muted">Total: <span className="font-mono text-text-secondary">R$ {totalRevenue.toLocaleString('pt-BR')}</span></span>
-            <span className="flex items-center gap-1 text-text-muted">
-              <Crown className="h-3 w-3 text-accent-amber" />
-              Líder: <span className="font-medium text-text-secondary">{bestChannel.label}</span>
-            </span>
-            <span className="flex items-center gap-1 text-text-muted">
-              <Rocket className="h-3 w-3 text-accent-emerald" />
-              Maior crescimento: <span className="font-medium text-text-secondary">{growthChannel.label}</span>
-            </span>
-          </div>
+          <p className="mt-0.5 text-xs text-text-muted">Total do período: <span className="font-mono text-text-secondary">R$ {brl(totalRevenue)}</span></p>
         </div>
         <div className="flex shrink-0 gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-1">
           {periods.map((p) => (
@@ -89,19 +82,29 @@ export default function RevenueByChannelChart() {
         </div>
       </div>
 
-      <div className="relative mb-2.5 flex flex-wrap items-center gap-2">
-        {channels.map((c) => (
-          <span
-            key={c.key}
-            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/40 px-2.5 py-1 text-[10.5px] font-medium text-text-secondary"
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: getMarketplaceColor(c.label) }} />
-            {c.label}
-          </span>
-        ))}
+      {/* Resposta imediata: quem lidera, quem cresce, quem cai */}
+      <div className="relative mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {channelSummary.map((c) => {
+          const brand = getMarketplaceColor(c.label)
+          const positive = c.growth >= 0
+          return (
+            <div key={c.key} className="overview-glass relative overflow-hidden rounded-xl px-3 py-2.5">
+              <div className="absolute inset-y-0 left-0 w-[3px]" style={{ background: brand }} />
+              <div className="flex items-center gap-1.5 pl-1.5">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: brand }} />
+                <span className="truncate text-[10.5px] font-medium text-text-secondary">{c.label}</span>
+              </div>
+              <div className="mt-1 pl-1.5 font-mono text-[15px] font-bold leading-none text-text-primary">R$ {brl(c.total)}</div>
+              <div className={`mt-1 flex items-center gap-1 pl-1.5 text-[11px] font-semibold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {positive ? '+' : ''}{pct(c.growth)}%
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="overview-track relative h-40 overflow-hidden rounded-xl sm:h-44" onMouseLeave={() => setHoverIdx(null)}>
+      <div className="overview-track relative h-36 overflow-hidden rounded-xl sm:h-40" onMouseLeave={() => setHoverIdx(null)}>
         <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-px w-full bg-white/[0.05]" />
@@ -112,7 +115,7 @@ export default function RevenueByChannelChart() {
           <defs>
             {linesData.map((l) => (
               <linearGradient key={l.key} id={`fill-${l.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0.32" />
+                <stop offset="0%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0.28" />
                 <stop offset="100%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0" />
               </linearGradient>
             ))}
