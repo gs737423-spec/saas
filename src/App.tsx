@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
-import PageHeader from '@/components/layout/PageHeader'
 import Dashboard from '@/pages/Dashboard'
 import Produtos from '@/pages/Produtos'
 import Estoque from '@/pages/Estoque'
@@ -16,7 +15,6 @@ export default function App() {
       <TopNav />
       <main className="pt-12 md:pt-14">
         <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-5 lg:px-8 xl:px-10">
-          <PageHeader />
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/produtos" element={<Produtos />} />
