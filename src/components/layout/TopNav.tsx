@@ -7,8 +7,8 @@ export default function TopNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border-subtle bg-bg-secondary/80 px-3 backdrop-blur-2xl md:hidden">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-accent-blue/25 bg-[#0a0e1c]">
-          <img src={logoUrl} alt="Acelera" className="h-full w-full scale-[1.62] object-cover" draggable={false} />
+        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[#0a0e1c]">
+          <img src={logoUrl} alt="Acelera" className="brand-logo h-full w-full scale-[1.6] object-cover" draggable={false} />
         </div>
         <span className="text-sm font-semibold text-text-primary">Acelera</span>
       </div>

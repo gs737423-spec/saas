@@ -38,12 +38,12 @@ function HeroCard({ kpi }: { kpi: OverviewKpi }) {
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{kpi.label}</span>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${c}16`, boxShadow: `inset 0 0 0 1px ${c}33` }}>
-          <Icon className="h-[18px] w-[18px]" style={{ color: c }} />
+          <Icon className="icon-halo h-[18px] w-[18px]" style={{ color: c }} />
         </div>
       </div>
       <div>
         <div className="mt-4 flex items-center gap-2">
-          <div className="font-mono text-[34px] font-bold leading-none tracking-tight text-text-primary">
+          <div className="num-glow font-mono text-[34px] font-bold leading-none tracking-tight text-text-primary">
             {kpi.prefix && <span className="text-lg font-semibold text-text-secondary">{kpi.prefix} </span>}
             {kpi.value}
             {kpi.suffix && <span className="text-lg font-semibold text-text-secondary">{kpi.suffix}</span>}

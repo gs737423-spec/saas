@@ -66,7 +66,7 @@ function LeaderCard({ m }: { m: ChannelOverview }) {
 
         <div className="flex items-end justify-between gap-4">
           <div>
-            <div className="font-mono text-[30px] font-bold leading-none tracking-tight text-text-primary">
+            <div className="num-glow font-mono text-[30px] font-bold leading-none tracking-tight text-text-primary">
               R$ {brl(m.netRevenue)}
             </div>
             <div className="mt-1 font-mono text-[11px] text-text-muted">líquido est. · bruto R$ {brl(m.revenue)}</div>

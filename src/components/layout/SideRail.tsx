@@ -57,9 +57,9 @@ export default function SideRail() {
     >
       {/* Brand */}
       <div className={`mb-3 flex items-center ${expanded ? 'w-full gap-3 px-1' : 'justify-center'}`}>
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-accent-blue/25 bg-[#0a0e1c] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_6px_18px_-6px_rgba(76,130,247,0.55)]">
-          <img src={logoUrl} alt="Acelera" className="h-full w-full scale-[1.62] object-cover" draggable={false} />
-          <span className="pointer-events-none absolute inset-0 rounded-xl" style={{ boxShadow: 'inset 0 0 12px -4px rgba(76,130,247,0.5)' }} />
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#0a0e1c] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_12px_-4px_rgba(0,0,0,0.65)]">
+          <img src={logoUrl} alt="Acelera" className="brand-logo h-full w-full scale-[1.6] object-cover" draggable={false} />
+          <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/[0.06]" />
         </div>
         {expanded && (
           <div className="flex min-w-0 flex-col leading-none">
