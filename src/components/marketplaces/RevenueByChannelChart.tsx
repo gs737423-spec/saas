@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { revenueData, getMarketplaceColor, type Marketplace } from '@/data/mockData'
-
-type Period = '6M' | '3M' | '1M'
-const periods: Period[] = ['6M', '3M', '1M']
-const periodMonths: Record<Period, number> = { '6M': 6, '3M': 3, '1M': 1 }
 
 const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; label: Marketplace }[] = [
   { key: 'mercadoLivre', label: 'Mercado Livre' },
@@ -16,24 +13,34 @@ const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; lab
 const brl = (v: number) => v.toLocaleString('pt-BR')
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-function smoothPath(points: { x: number; y: number }[]): string {
-  if (points.length < 2) return ''
-  let d = `M ${points[0].x} ${points[0].y}`
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i]
-    const p1 = points[i + 1]
-    const midX = (p0.x + p1.x) / 2
-    d += ` C ${midX} ${p0.y}, ${midX} ${p1.y}, ${p1.x} ${p1.y}`
-  }
-  return d
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-lg border border-border-subtle bg-bg-card px-3 py-2 shadow-xl">
+      <p className="mb-1 text-[10px] font-semibold text-text-muted">{label}</p>
+      {channels.map((c) => {
+        const entry = payload.find((p: any) => p.dataKey === c.key)
+        if (!entry) return null
+        return (
+          <div key={c.key} className="flex items-center justify-between gap-3 text-[11px]">
+            <span className="flex items-center gap-1.5 text-text-secondary">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: getMarketplaceColor(c.label) }} />
+              {c.label}
+            </span>
+            <span className="font-mono font-medium text-text-primary">R$ {brl(entry.value)}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function RevenueByChannelChart() {
-  const [period, setPeriod] = useState<Period>('6M')
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
+  const allMonths = revenueData.map((m) => m.month)
+  const [fromIdx, setFromIdx] = useState(Math.max(0, allMonths.length - 6))
+  const [toIdx, setToIdx] = useState(allMonths.length - 1)
 
-  const months = useMemo(() => revenueData.slice(-periodMonths[period]), [period])
-  const maxValue = Math.max(...months.flatMap((m) => channels.map((c) => m[c.key])), 1)
+  const months = useMemo(() => revenueData.slice(fromIdx, toIdx + 1), [fromIdx, toIdx])
   const totalRevenue = months.reduce((s, m) => s + m.total, 0)
 
   const channelSummary = useMemo(() => {
@@ -48,18 +55,6 @@ export default function RevenueByChannelChart() {
       .sort((a, b) => b.total - a.total)
   }, [months])
 
-  const linesData = useMemo(
-    () =>
-      channels.map((c) => ({
-        ...c,
-        points: months.map((m, i) => ({
-          x: months.length > 1 ? (i / (months.length - 1)) * 100 : 50,
-          y: 100 - (m[c.key] / maxValue) * 92,
-        })),
-      })),
-    [months, maxValue]
-  )
-
   return (
     <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
       <div className="relative mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -67,18 +62,35 @@ export default function RevenueByChannelChart() {
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
           <p className="mt-0.5 text-xs text-text-muted">Total do período: <span className="font-mono text-text-secondary">R$ {brl(totalRevenue)}</span></p>
         </div>
-        <div className="flex shrink-0 gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-1">
-          {periods.map((p) => (
-            <button
-              key={p}
-              onClick={() => { setPeriod(p); setHoverIdx(null) }}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                period === p ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-muted hover:text-text-secondary'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
+        <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">De</span>
+          <select
+            value={fromIdx}
+            onChange={(e) => {
+              const v = Number(e.target.value)
+              setFromIdx(v)
+              if (v > toIdx) setToIdx(v)
+            }}
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-1.5 py-0.5 text-[11px] font-medium text-text-secondary"
+          >
+            {allMonths.map((m, i) => (
+              <option key={m} value={i}>{m}</option>
+            ))}
+          </select>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">até</span>
+          <select
+            value={toIdx}
+            onChange={(e) => {
+              const v = Number(e.target.value)
+              setToIdx(v)
+              if (v < fromIdx) setFromIdx(v)
+            }}
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-1.5 py-0.5 text-[11px] font-medium text-text-secondary"
+          >
+            {allMonths.map((m, i) => (
+              <option key={m} value={i}>{m}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -104,89 +116,54 @@ export default function RevenueByChannelChart() {
         })}
       </div>
 
-      <div className="overview-track relative h-36 overflow-hidden rounded-xl sm:h-40" onMouseLeave={() => setHoverIdx(null)}>
-        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-px w-full bg-white/[0.05]" />
-          ))}
-        </div>
-
-        <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <defs>
-            {linesData.map((l) => (
-              <linearGradient key={l.key} id={`fill-${l.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0.28" />
-                <stop offset="100%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0" />
-              </linearGradient>
-            ))}
-          </defs>
-          {linesData.map((l) => {
-            const color = getMarketplaceColor(l.label)
-            if (l.points.length < 2) {
-              const p = l.points[0]
-              return (
-                <circle key={l.key} cx={p.x} cy={p.y} r="2.2" fill={color} stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" style={{ filter: `drop-shadow(0 0 5px ${color}bb)` }} />
-              )
-            }
-            const path = smoothPath(l.points)
-            const areaPath = `${path} L ${l.points[l.points.length - 1].x} 100 L ${l.points[0].x} 100 Z`
-            return (
-              <g key={l.key}>
-                <path d={areaPath} fill={`url(#fill-${l.key})`} stroke="none" />
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth="1.7"
-                  strokeOpacity="0.95"
-                  vectorEffect="non-scaling-stroke"
-                  style={{ filter: `drop-shadow(0 0 4px ${color}99)` }}
-                />
-              </g>
-            )
-          })}
-
-          {hoverIdx !== null && linesData[0]?.points[hoverIdx] && (
-            <line
-              x1={linesData[0].points[hoverIdx].x}
-              y1="0"
-              x2={linesData[0].points[hoverIdx].x}
-              y2="100"
-              stroke="rgba(255,255,255,0.18)"
-              strokeWidth="1"
-              strokeDasharray="2,2"
-              vectorEffect="non-scaling-stroke"
+      <div className="h-52 sm:h-60">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={months} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+            <defs>
+              {channels.map((c) => (
+                <linearGradient key={c.key} id={`fill-${c.key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={getMarketplaceColor(c.label)} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={getMarketplaceColor(c.label)} stopOpacity={0} />
+                </linearGradient>
+              ))}
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="month" tick={{ fill: '#8593B8', fontSize: 10.5 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} tickLine={false} />
+            <YAxis
+              tick={{ fill: '#8593B8', fontSize: 10.5 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+              width={36}
             />
-          )}
-        </svg>
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.18)', strokeDasharray: '3 3' }} />
+            {channels.map((c) => (
+              <Area
+                key={c.key}
+                type="monotone"
+                dataKey={c.key}
+                name={c.label}
+                stroke={getMarketplaceColor(c.label)}
+                strokeWidth={2}
+                fill={`url(#fill-${c.key})`}
+                dot={false}
+                activeDot={{ r: 3.5, strokeWidth: 0 }}
+              />
+            ))}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
 
-        <div className="flex h-full items-stretch">
-          {months.map((m, i) => (
-            <div
-              key={m.month}
-              className="relative flex flex-1 flex-col justify-end"
-              onMouseEnter={() => setHoverIdx(i)}
-            >
-              <div className="flex-1" />
-              <span className="pb-0.5 text-center text-[9.5px] text-text-muted">{m.month}</span>
-
-              {hoverIdx === i && (
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[190px] -translate-x-1/2 rounded-lg border border-border-subtle bg-bg-card px-3 py-2 shadow-xl">
-                  <p className="mb-1 text-[10px] font-semibold text-text-muted">{m.month}</p>
-                  {channels.map((c) => (
-                    <div key={c.key} className="flex items-center justify-between gap-3 text-[11px]">
-                      <span className="flex items-center gap-1.5 text-text-secondary">
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: getMarketplaceColor(c.label) }} />
-                        {c.label}
-                      </span>
-                      <span className="font-mono font-medium text-text-primary">R$ {m[c.key].toLocaleString('pt-BR')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      <div className="relative mt-3 flex flex-wrap items-center gap-2">
+        {channels.map((c) => (
+          <span
+            key={c.key}
+            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/40 px-2.5 py-1 text-[10.5px] font-medium text-text-secondary"
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: getMarketplaceColor(c.label) }} />
+            {c.label}
+          </span>
+        ))}
       </div>
     </div>
   )
