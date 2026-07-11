@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
+import { ConnectionProvider } from '@/contexts/ConnectionContext'
+import { useAuth } from '@/contexts/AuthContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
+import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import Produtos from '@/pages/Produtos'
 import Estoque from '@/pages/Estoque'
@@ -10,7 +13,14 @@ import Placeholder from '@/pages/Placeholder'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
 export default function App() {
+  const { isAuthenticated } = useAuth()
+
+  if (!isAuthenticated) {
+    return <Login />
+  }
+
   return (
+    <ConnectionProvider>
     <div className="app-bg min-h-screen overflow-x-hidden bg-bg-primary">
       <TopNav />
       <main className="pt-12 md:pt-14">
@@ -32,5 +42,6 @@ export default function App() {
       </main>
       <BottomNav />
     </div>
+    </ConnectionProvider>
   )
 }

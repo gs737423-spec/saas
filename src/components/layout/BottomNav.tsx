@@ -10,7 +10,7 @@ import {
   Wallet,
   Megaphone,
   Star,
-  DownloadCloud,
+  Link2,
   Settings,
   HelpCircle,
   X,
@@ -30,7 +30,7 @@ const secondary = [
   { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
   { icon: Megaphone, label: 'Marketing', to: '/marketing' },
   { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
-  { icon: DownloadCloud, label: 'Importações', to: '/importacoes' },
+  { icon: Link2, label: 'Conexões', to: '/importacoes' },
   { icon: Settings, label: 'Configurações', to: '/configuracoes' },
   { icon: HelpCircle, label: 'Ajuda', to: '/configuracoes' },
 ]

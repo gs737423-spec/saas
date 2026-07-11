@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -7,13 +8,15 @@ import {
   Wallet,
   Megaphone,
   Star,
-  DownloadCloud,
+  Link2,
   FileBarChart2,
   Settings,
   Search,
-  Upload,
   Bell,
+  LogOut,
+  User,
 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import logoUrl from '@/assets/acelera-logo.png'
 
 type Item = { icon: typeof Package; label: string; to: string }
@@ -26,7 +29,7 @@ const navItems: Item[] = [
   { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
   { icon: Megaphone, label: 'Marketing', to: '/marketing' },
   { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
-  { icon: DownloadCloud, label: 'Importações', to: '/importacoes' },
+  { icon: Link2, label: 'Conexões', to: '/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
 ]
 
@@ -34,6 +37,22 @@ const navItems: Item[] = [
 // desktop, and the slim brand-only bar on mobile. Mobile section links still
 // live in BottomNav; here on mobile we only show brand + actions.
 export default function TopNav() {
+  const { user, logout } = useAuth()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowUserMenu(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [])
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : 'US'
+
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rail-item group relative flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors ${
       isActive ? 'topnav-item-active text-accent-blue' : 'text-text-muted hover:text-text-primary'
@@ -78,19 +97,21 @@ export default function TopNav() {
           <Search className="h-[18px] w-[18px]" />
         </button>
 
-        <button
-          title="Importar / Conectar"
+        <NavLink
+          to="/importacoes"
+          title="Conexões"
           className="hidden items-center gap-2 rounded-lg border border-accent-violet/25 bg-accent-violet/[0.12] px-3 text-accent-violet shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] transition-all duration-200 hover:border-accent-violet/45 hover:bg-accent-violet/[0.18] lg:flex lg:h-9"
         >
-          <Upload className="h-[17px] w-[17px]" />
-          <span className="whitespace-nowrap text-sm font-semibold text-text-primary">Importar dados</span>
-        </button>
-        <button
-          title="Importar / Conectar"
+          <Link2 className="h-[17px] w-[17px]" />
+          <span className="whitespace-nowrap text-sm font-semibold text-text-primary">Conexões</span>
+        </NavLink>
+        <NavLink
+          to="/importacoes"
+          title="Conexões"
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-violet/25 bg-accent-violet/[0.12] text-accent-violet transition-colors hover:bg-accent-violet/[0.18] lg:hidden"
         >
-          <Upload className="h-[18px] w-[18px]" />
-        </button>
+          <Link2 className="h-[18px] w-[18px]" />
+        </NavLink>
 
         <button title="Notificações" className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary">
           <Bell className="h-[18px] w-[18px]" />
@@ -111,9 +132,38 @@ export default function TopNav() {
           <Settings className="h-[18px] w-[18px]" />
         </NavLink>
 
-        <button title="Gabriel · Admin" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet">
-          GA
-        </button>
+        <div ref={menuRef} className="relative">
+          <button
+            onClick={() => setShowUserMenu(v => !v)}
+            title={user?.name ?? 'Usuário'}
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet"
+          >
+            {initials}
+          </button>
+          {showUserMenu && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+              <div className="border-b border-border-subtle px-4 py-3">
+                <p className="truncate text-sm font-medium text-text-primary">{user?.name}</p>
+                <p className="truncate text-[11px] text-text-muted">{user?.email}</p>
+              </div>
+              <NavLink
+                to="/configuracoes"
+                onClick={() => setShowUserMenu(false)}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+              >
+                <User className="h-4 w-4" />
+                Minha Conta
+              </NavLink>
+              <button
+                onClick={() => { setShowUserMenu(false); logout() }}
+                className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

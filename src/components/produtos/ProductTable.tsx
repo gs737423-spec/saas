@@ -1,6 +1,11 @@
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { useState } from 'react'
+import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { products, getMarketplaceColor } from '@/data/mockData'
+import { getMarketplaceColor } from '@/data/mockData'
+import type { Product } from '@/data/mockData'
+
+type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
+type SortDir = 'asc' | 'desc'
 
 function stockTone(stock: number) {
   if (stock <= 25) return 'text-accent-rose'
@@ -8,22 +13,76 @@ function stockTone(stock: number) {
   return 'text-text-secondary'
 }
 
-export default function ProductTable() {
+function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[] {
+  const sorted = [...products].sort((a, b) => {
+    let cmp = 0
+    switch (key) {
+      case 'sku': cmp = a.sku.localeCompare(b.sku); break
+      case 'name': cmp = a.name.localeCompare(b.name); break
+      case 'marketplace': cmp = a.marketplace.localeCompare(b.marketplace); break
+      case 'units': cmp = a.units - b.units; break
+      case 'stock': cmp = a.stock - b.stock; break
+      case 'revenue': cmp = a.revenue - b.revenue; break
+      case 'margin': cmp = a.margin - b.margin; break
+      case 'trend': cmp = a.trend - b.trend; break
+    }
+    return dir === 'asc' ? cmp : -cmp
+  })
+  return sorted
+}
+
+interface Props {
+  filteredProducts: Product[]
+}
+
+const columns: { key: SortKey; label: string; align?: 'right' }[] = [
+  { key: 'sku', label: 'SKU' },
+  { key: 'name', label: 'Produto' },
+  { key: 'marketplace', label: 'Marketplace' },
+  { key: 'units', label: 'Vendas', align: 'right' },
+  { key: 'stock', label: 'Estoque', align: 'right' },
+  { key: 'revenue', label: 'Faturamento', align: 'right' },
+  { key: 'margin', label: 'Margem', align: 'right' },
+  { key: 'trend', label: 'Tendência', align: 'right' },
+]
+
+export default function ProductTable({ filteredProducts }: Props) {
+  const [sortKey, setSortKey] = useState<SortKey>('revenue')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir(key === 'name' || key === 'sku' || key === 'marketplace' ? 'asc' : 'desc')
+    }
+  }
+
+  const sorted = sortProducts(filteredProducts, sortKey, sortDir)
+
+  function SortIcon({ col }: { col: SortKey }) {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-accent-blue" /> : <ArrowDown className="h-3 w-3 text-accent-blue" />
+  }
+
+  const sortLabel = columns.find((c) => c.key === sortKey)?.label ?? ''
+
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-text-primary">Catálogo de Produtos</h3>
-          <p className="mt-0.5 text-xs text-text-muted">{products.length} produtos · vendas, estoque, margem e tendência</p>
+          <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
+          <p className="mt-0.5 text-xs text-text-muted">{filteredProducts.length} produtos · vendas, estoque, margem e tendencia</p>
         </div>
         <span className="hidden rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary sm:inline">
-          Ordenado por faturamento
+          Ordenado por {sortLabel} {sortDir === 'asc' ? '(crescente)' : '(decrescente)'}
         </span>
       </div>
 
-      {/* Mobile: stacked cards (no sideways scroll) */}
+      {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
-        {products.map((p) => {
+        {sorted.map((p) => {
           const positive = p.trend >= 0
           const mp = getMarketplaceColor(p.marketplace)
           return (
@@ -71,23 +130,27 @@ export default function ProductTable() {
         })}
       </div>
 
-      {/* Desktop / notebook: premium table */}
+      {/* Desktop table */}
       <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-              <th className="pb-3 pr-4 font-semibold">SKU</th>
-              <th className="pb-3 pr-4 font-semibold">Produto</th>
-              <th className="pb-3 pr-4 font-semibold">Marketplace</th>
-              <th className="pb-3 pr-4 text-right font-semibold">Vendas</th>
-              <th className="pb-3 pr-4 text-right font-semibold">Estoque</th>
-              <th className="pb-3 pr-4 text-right font-semibold">Faturamento</th>
-              <th className="pb-3 pr-4 text-right font-semibold">Margem</th>
-              <th className="pb-3 text-right font-semibold">Tendência</th>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={`group cursor-pointer pb-3 pr-4 font-semibold select-none transition-colors hover:text-text-secondary ${col.key === 'trend' ? 'pr-0' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                  onClick={() => handleSort(col.key)}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {col.label}
+                    <SortIcon col={col.key} />
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
+            {sorted.map((p) => {
               const positive = p.trend >= 0
               const mp = getMarketplaceColor(p.marketplace)
               return (
@@ -129,6 +192,10 @@ export default function ProductTable() {
           </tbody>
         </table>
       </div>
+
+      {sorted.length === 0 && (
+        <div className="py-12 text-center text-sm text-text-muted">Nenhum produto encontrado com os filtros aplicados.</div>
+      )}
     </div>
   )
 }
