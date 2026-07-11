@@ -56,8 +56,10 @@ export default function RevenueByChannelChart() {
   )
 
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:p-5">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="overview-hero-card relative overflow-hidden rounded-[22px] p-4 sm:p-5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-emerald/40 to-transparent" />
+
+      <div className="relative mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
@@ -72,7 +74,7 @@ export default function RevenueByChannelChart() {
             </span>
           </div>
         </div>
-        <div className="flex shrink-0 gap-1 rounded-lg border border-border-subtle bg-bg-card/60 p-1">
+        <div className="flex shrink-0 gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-1">
           {periods.map((p) => (
             <button
               key={p}
@@ -87,7 +89,7 @@ export default function RevenueByChannelChart() {
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="relative mb-2.5 flex flex-wrap items-center gap-2">
         {channels.map((c) => (
           <span
             key={c.key}
@@ -99,11 +101,10 @@ export default function RevenueByChannelChart() {
         ))}
       </div>
 
-      <div className="relative h-52 sm:h-60" onMouseLeave={() => setHoverIdx(null)}>
-        {/* Subtle grid */}
-        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+      <div className="overview-track relative h-40 overflow-hidden rounded-xl sm:h-44" onMouseLeave={() => setHoverIdx(null)}>
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-px w-full bg-border-subtle/30" />
+            <div key={i} className="h-px w-full bg-white/[0.05]" />
           ))}
         </div>
 
@@ -111,7 +112,7 @@ export default function RevenueByChannelChart() {
           <defs>
             {linesData.map((l) => (
               <linearGradient key={l.key} id={`fill-${l.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0.22" />
+                <stop offset="0%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0.32" />
                 <stop offset="100%" stopColor={getMarketplaceColor(l.label)} stopOpacity="0" />
               </linearGradient>
             ))}
@@ -121,7 +122,7 @@ export default function RevenueByChannelChart() {
             if (l.points.length < 2) {
               const p = l.points[0]
               return (
-                <circle key={l.key} cx={p.x} cy={p.y} r="2.2" fill={color} stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" style={{ filter: `drop-shadow(0 0 4px ${color}99)` }} />
+                <circle key={l.key} cx={p.x} cy={p.y} r="2.2" fill={color} stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" style={{ filter: `drop-shadow(0 0 5px ${color}bb)` }} />
               )
             }
             const path = smoothPath(l.points)
@@ -133,16 +134,15 @@ export default function RevenueByChannelChart() {
                   d={path}
                   fill="none"
                   stroke={color}
-                  strokeWidth="1.4"
-                  strokeOpacity="0.85"
+                  strokeWidth="1.7"
+                  strokeOpacity="0.95"
                   vectorEffect="non-scaling-stroke"
-                  style={{ filter: `drop-shadow(0 0 3px ${color}66)` }}
+                  style={{ filter: `drop-shadow(0 0 4px ${color}99)` }}
                 />
               </g>
             )
           })}
 
-          {/* Subtle vertical hover cursor */}
           {hoverIdx !== null && linesData[0]?.points[hoverIdx] && (
             <line
               x1={linesData[0].points[hoverIdx].x}
@@ -157,7 +157,6 @@ export default function RevenueByChannelChart() {
           )}
         </svg>
 
-        {/* Hover targets + x-axis labels */}
         <div className="flex h-full items-stretch">
           {months.map((m, i) => (
             <div

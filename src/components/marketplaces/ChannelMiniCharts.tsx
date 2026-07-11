@@ -14,16 +14,16 @@ interface MiniChartProps {
 function MiniBarChart({ title, question, data, maxValue }: MiniChartProps) {
   const max = maxValue ?? Math.max(...data.map((d) => d.value), 1)
   return (
-    <div className="overview-glass rounded-[18px] p-3.5">
+    <div>
       <div className="mb-0.5 text-[11px] font-semibold text-text-primary">{title}</div>
-      <div className="mb-3 text-[10px] text-text-muted">{question}</div>
-      <div className="space-y-2">
+      <div className="mb-2 text-[9.5px] text-text-muted">{question}</div>
+      <div className="space-y-1.5">
         {data.map((d) => {
           const brand = getMarketplaceColor(d.marketplace as any)
           return (
             <div key={d.marketplace} className="flex items-center gap-2">
               <span className="w-16 shrink-0 truncate text-[10px] text-text-secondary">{d.marketplace}</span>
-              <div className="overview-track h-2 flex-1 overflow-hidden rounded-full">
+              <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${(d.value / max) * 100}%`, background: `linear-gradient(90deg, ${brand}66, ${brand})` }}
@@ -64,10 +64,10 @@ export default function ChannelMiniCharts() {
   }))
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <MiniBarChart title="Participação por Canal" question="De quem depende meu faturamento líquido?" data={byShare} maxValue={100} />
-      <MiniBarChart title="Ticket Médio por Canal" question="Quem vende mais caro?" data={byTicket} />
-      <MiniBarChart title="Pedidos por Canal" question="Quem traz mais volume?" data={byOrders} />
+    <div className="grid grid-cols-2 gap-x-5 gap-y-3 border-t border-border-subtle pt-3 sm:grid-cols-4">
+      <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
+      <MiniBarChart title="Ticket Médio" question="Quem vende mais caro?" data={byTicket} />
+      <MiniBarChart title="Pedidos" question="Quem traz mais volume?" data={byOrders} />
       <MiniBarChart title="Taxas × Eficiência" question="Quem consome mais em taxas?" data={byFeeVsEfficiency} maxValue={25} />
     </div>
   )
