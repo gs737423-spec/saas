@@ -5,7 +5,7 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Visão Geral', subtitle: 'Resumo consolidado dos seus marketplaces' },
   '/produtos': { title: 'Produtos', subtitle: 'Catálogo, vendas e desempenho por marketplace' },
   '/marketplaces': { title: 'Canais', subtitle: 'Compare faturamento, pedidos e ticket médio por marketplace' },
-  '/estoque': { title: 'Estoque', subtitle: 'Cobertura, giro e alertas de reposição por produto' },
+  '/estoque': { title: 'Estoque', subtitle: 'Cobertura, giro e Curva ABC por produto' },
   '/importacoes': { title: 'Importações', subtitle: 'Envie planilhas, valide dados e acompanhe o histórico' },
   '/financeiro': { title: 'Financeiro', subtitle: 'Fluxo de caixa e resultados consolidados' },
   '/marketing': { title: 'Marketing', subtitle: 'Campanhas, ROI e investimento em anúncios' },

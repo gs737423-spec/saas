@@ -911,3 +911,238 @@ export function getExecutiveHighlights(): ExecutiveHighlight[] {
     },
   ]
 }
+
+/* ============================================================================
+ * ESTOQUE + CURVA ABC (E0) — camada unificada
+ *
+ * Une stockItems (giro/cobertura) + products (faturamento/share) por SKU,
+ * mais dados operacionais de entrada/custo que viriam de ERP/planilha.
+ * Custo aqui é operacional (custo unitário, custo de entrada) — NÃO é
+ * margem ou lucro real. Essa página não trata de lucro.
+ * ========================================================================= */
+
+export type TurnoverStatus = 'Normal' | 'Lento' | 'Parado' | 'Parado crítico'
+
+interface InventoryExtra {
+  sku: string
+  manufacturerCode: string
+  lastEntryDate: string
+  lastEntryQty: number
+  cost: number
+  lastEntryCost: number
+  previousEntryCost: number
+  turnoverStatus: TurnoverStatus
+}
+
+/** Dados operacionais mock — simulam import de ERP/planilha por SKU. */
+const inventoryExtras: InventoryExtra[] = [
+  { sku: 'SKN-PRM-005', manufacturerCode: 'FAB-10452', lastEntryDate: '28/06/2026', lastEntryQty: 200, cost: 84.03, lastEntryCost: 84.03, previousEntryCost: 84.03, turnoverStatus: 'Normal' },
+  { sku: 'AUD-ANC-220', manufacturerCode: 'FAB-22890', lastEntryDate: '02/07/2026', lastEntryQty: 150, cost: 103.2, lastEntryCost: 103.2, previousEntryCost: 103.2, turnoverStatus: 'Normal' },
+  { sku: 'VST-DRY-3PK', manufacturerCode: 'FAB-33107', lastEntryDate: '15/06/2026', lastEntryQty: 300, cost: 16.23, lastEntryCost: 16.23, previousEntryCost: 16.23, turnoverStatus: 'Normal' },
+  { sku: 'MOV-ERG-800', manufacturerCode: 'FAB-40021', lastEntryDate: '10/04/2026', lastEntryQty: 40, cost: 351.62, lastEntryCost: 351.62, previousEntryCost: 351.62, turnoverStatus: 'Parado' },
+  { sku: 'ILU-RGB-114', manufacturerCode: 'FAB-51334', lastEntryDate: '05/07/2026', lastEntryQty: 180, cost: 77.66, lastEntryCost: 77.66, previousEntryCost: 77.66, turnoverStatus: 'Normal' },
+  { sku: 'BAG-EXE-042', manufacturerCode: 'FAB-60218', lastEntryDate: '20/06/2026', lastEntryQty: 150, cost: 27.86, lastEntryCost: 27.86, previousEntryCost: 27.86, turnoverStatus: 'Normal' },
+  { sku: 'WCH-FIT-330', manufacturerCode: 'FAB-71905', lastEntryDate: '30/06/2026', lastEntryQty: 80, cost: 88.4, lastEntryCost: 96.1, previousEntryCost: 88.4, turnoverStatus: 'Normal' },
+  { sku: 'ORG-MOD-021', manufacturerCode: 'FAB-80467', lastEntryDate: '22/03/2026', lastEntryQty: 250, cost: 28.5, lastEntryCost: 28.5, previousEntryCost: 28.5, turnoverStatus: 'Parado crítico' },
+  { sku: 'GRF-INX-100', manufacturerCode: 'FAB-91023', lastEntryDate: '25/06/2026', lastEntryQty: 200, cost: 17.55, lastEntryCost: 17.55, previousEntryCost: 17.55, turnoverStatus: 'Normal' },
+  { sku: 'DEC-DIG-070', manufacturerCode: 'FAB-13376', lastEntryDate: '10/06/2026', lastEntryQty: 100, cost: 52.83, lastEntryCost: 52.83, previousEntryCost: 52.83, turnoverStatus: 'Normal' },
+  { sku: 'CAL-CMF-055', manufacturerCode: 'FAB-24689', lastEntryDate: '18/06/2026', lastEntryQty: 120, cost: 26.5, lastEntryCost: 26.5, previousEntryCost: 26.5, turnoverStatus: 'Normal' },
+  { sku: 'COZ-CER-018', manufacturerCode: 'FAB-35542', lastEntryDate: '20/05/2026', lastEntryQty: 90, cost: 25.61, lastEntryCost: 27.9, previousEntryCost: 25.61, turnoverStatus: 'Lento' },
+]
+
+export interface InventoryItem {
+  id: number
+  sku: string
+  name: string
+  manufacturerCode: string
+  marketplace: Marketplace
+  stock: number
+  units30d: number
+  coverageDays: number
+  turnover: number
+  turnoverStatus: TurnoverStatus
+  lastEntryDate: string
+  lastEntryQty: number
+  cost: number
+  lastEntryCost: number
+  previousEntryCost: number
+  revenue: number
+  sharePct: number
+  abcClass: 'A' | 'B' | 'C'
+  status: StockItem['status']
+}
+
+/** Curva ABC: A > 2% de share, B > 1%, C ≤ 1% — share sobre faturamento total da base. */
+export function getABCClass(sharePct: number): 'A' | 'B' | 'C' {
+  if (sharePct > 2) return 'A'
+  if (sharePct > 1) return 'B'
+  return 'C'
+}
+
+export interface CoverageStatus {
+  label: string
+  color: string
+}
+
+/** Cobertura tem cor funcional própria — cobertura alta nem sempre é boa (capital parado). */
+export function getCoverageStatus(days: number): CoverageStatus {
+  if (days <= 7) return { label: 'Crítico', color: '#F4436C' }
+  if (days <= 20) return { label: 'Atenção', color: '#F5C24B' }
+  if (days <= 45) return { label: 'Saudável', color: '#16C784' }
+  return { label: 'Excesso', color: '#22D3EE' }
+}
+
+/** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */
+export const turnoverStatusStyle: Record<TurnoverStatus, { color: string; bg: string }> = {
+  'Normal': { color: '#16C784', bg: 'rgba(22,199,132,0.12)' },
+  'Lento': { color: '#F5A524', bg: 'rgba(245,165,36,0.12)' },
+  'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.12)' },
+  'Parado crítico': { color: '#8B2942', bg: 'rgba(139,41,66,0.18)' },
+}
+
+export const inventoryItems: InventoryItem[] = stockItems.map((s) => {
+  const product = products.find((p) => p.sku === s.sku)
+  const extra = inventoryExtras.find((e) => e.sku === s.sku)!
+  const revenue = product?.revenue ?? 0
+  const sharePct = product?.sharePct ?? 0
+  return {
+    id: s.id,
+    sku: s.sku,
+    name: s.name,
+    manufacturerCode: extra.manufacturerCode,
+    marketplace: s.marketplace,
+    stock: s.stock,
+    units30d: product?.units ?? 0,
+    coverageDays: s.coverageDays,
+    turnover: s.turnover,
+    turnoverStatus: extra.turnoverStatus,
+    lastEntryDate: extra.lastEntryDate,
+    lastEntryQty: extra.lastEntryQty,
+    cost: extra.cost,
+    lastEntryCost: extra.lastEntryCost,
+    previousEntryCost: extra.previousEntryCost,
+    revenue,
+    sharePct,
+    abcClass: getABCClass(sharePct),
+    status: s.status,
+  }
+})
+
+/** Valor estimado em estoque = Σ (estoque disponível × custo unitário). Dado operacional, não lucro. */
+export function getEstimatedInventoryValue(): number {
+  return inventoryItems.reduce((s, i) => s + i.stock * i.cost, 0)
+}
+
+/* --- Alertas inteligentes de estoque (E2, preparado em E0) -------------- */
+
+export interface InventoryAlert {
+  id: string
+  rule: string
+  message: string
+  severity: 'danger' | 'warning' | 'info'
+  sku: string
+}
+
+export function getInventoryAlerts(): InventoryAlert[] {
+  const alertsList: InventoryAlert[] = []
+
+  // Curva A com cobertura crítica
+  inventoryItems
+    .filter((i) => i.abcClass === 'A' && i.coverageDays <= 7)
+    .forEach((i) =>
+      alertsList.push({
+        id: `abc-critical-${i.sku}`,
+        rule: 'Curva A com cobertura crítica',
+        message: `${i.name}: curva A com apenas ${i.coverageDays} dias de cobertura — prioridade máxima de reposição.`,
+        severity: 'danger',
+        sku: i.sku,
+      })
+    )
+
+  // Alta venda + baixa cobertura (sem ser já curva A crítico acima)
+  inventoryItems
+    .filter((i) => i.units30d >= 200 && i.coverageDays <= 20 && !(i.abcClass === 'A' && i.coverageDays <= 7))
+    .forEach((i) =>
+      alertsList.push({
+        id: `high-sales-low-cov-${i.sku}`,
+        rule: 'Alta venda com baixa cobertura',
+        message: `${i.name}: ${i.units30d} un. vendidas em 30 dias, cobertura de apenas ${i.coverageDays} dias.`,
+        severity: 'warning',
+        sku: i.sku,
+      })
+    )
+
+  // Parado com estoque alto
+  inventoryItems
+    .filter((i) => (i.turnoverStatus === 'Parado' || i.turnoverStatus === 'Parado crítico') && i.stock >= 100)
+    .forEach((i) =>
+      alertsList.push({
+        id: `stalled-high-stock-${i.sku}`,
+        rule: 'Estoque parado com volume alto',
+        message: `${i.name}: ${i.turnoverStatus.toLowerCase()}, ${i.stock} un. em estoque — capital parado.`,
+        severity: 'warning',
+        sku: i.sku,
+      })
+    )
+
+  // Sem entrada recente (> 60 dias, aproximado por parse de data)
+  inventoryItems
+    .filter((i) => {
+      const [d, m, y] = i.lastEntryDate.split('/').map(Number)
+      const entryDate = new Date(y, m - 1, d)
+      const refDate = new Date(2026, 6, 10)
+      const days = Math.round((refDate.getTime() - entryDate.getTime()) / 86400000)
+      return days > 60
+    })
+    .forEach((i) =>
+      alertsList.push({
+        id: `no-recent-entry-${i.sku}`,
+        rule: 'Sem entrada recente',
+        message: `${i.name}: última entrada em ${i.lastEntryDate} — mais de 60 dias sem reposição.`,
+        severity: 'info',
+        sku: i.sku,
+      })
+    )
+
+  // Custo da última entrada maior que o custo anterior
+  inventoryItems
+    .filter((i) => i.lastEntryCost > i.previousEntryCost)
+    .forEach((i) =>
+      alertsList.push({
+        id: `cost-up-${i.sku}`,
+        rule: 'Custo da última entrada subiu',
+        message: `${i.name}: custo de entrada foi de R$ ${i.previousEntryCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} para R$ ${i.lastEntryCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`,
+        severity: 'warning',
+        sku: i.sku,
+      })
+    )
+
+  // Excesso de estoque (cobertura > 45 dias)
+  inventoryItems
+    .filter((i) => i.coverageDays > 45)
+    .forEach((i) =>
+      alertsList.push({
+        id: `excess-${i.sku}`,
+        rule: 'Excesso de estoque',
+        message: `${i.name}: cobertura de ${i.coverageDays} dias — estoque acima do necessário.`,
+        severity: 'info',
+        sku: i.sku,
+      })
+    )
+
+  // Ruptura prevista (crítico)
+  inventoryItems
+    .filter((i) => i.status === 'critical')
+    .forEach((i) =>
+      alertsList.push({
+        id: `rupture-${i.sku}`,
+        rule: 'Ruptura prevista',
+        message: `${i.name}: ruptura estimada em ~${i.coverageDays} dias no ritmo atual de vendas.`,
+        severity: 'danger',
+        sku: i.sku,
+      })
+    )
+
+  const order: Record<InventoryAlert['severity'], number> = { danger: 0, warning: 1, info: 2 }
+  return alertsList.sort((a, b) => order[a.severity] - order[b.severity])
+}
