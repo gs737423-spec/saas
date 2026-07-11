@@ -112,20 +112,30 @@ body {
    * Se validar, vira padrão global depois.
    * ======================================================================== */
 
-  /* Atmosfera de fundo — glows ambientais + grid sutil + vinheta.
-     Fixo no viewport, aplicado GLOBALMENTE (todas as páginas) via .app-bg. */
+  /* ---- Fundo vivo — orbs orgânicos animados atrás de tudo ----------------
+     Cada orb é uma mancha grande de cor que flutua e respira em ciclos longos.
+     São fixed, ficam abaixo de todo conteúdo, e jamais interferem em interações. */
+
+  .app-bg {
+    position: relative;
+  }
+
+  /* Container dos orbs — fixed full viewport */
   .app-bg::before {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: -2;
+    z-index: -3;
     pointer-events: none;
+    overflow: hidden;
+    /* Base estática de profundidade — sempre presente */
     background:
-      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.16), transparent 58%),
-      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.13), transparent 56%),
-      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.08), transparent 60%),
-      radial-gradient(700px 500px at 78% 60%, rgba(22, 199, 132, 0.05), transparent 62%);
+      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.10), transparent 58%),
+      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.08), transparent 56%),
+      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.06), transparent 60%);
   }
+
+  /* Grid sutil + noise por cima dos orbs */
   .app-bg::after {
     content: '';
     position: fixed;
@@ -137,9 +147,122 @@ body {
       linear-gradient(rgba(130, 160, 220, 0.045) 1px, transparent 1px),
       linear-gradient(90deg, rgba(130, 160, 220, 0.045) 1px, transparent 1px);
     background-size: 160px 160px, 52px 52px, 52px 52px;
-    opacity: 0.5;
+    opacity: 0.45;
     -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
     mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
+  }
+
+  /* ---- Orbs animados (definidos como keyframes puros) ---- */
+  @keyframes orb-drift-1 {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.18; }
+    25%  { transform: translate(120px, -80px) scale(1.25); opacity: 0.25; }
+    50%  { transform: translate(60px, 60px) scale(0.9); opacity: 0.14; }
+    75%  { transform: translate(-100px, 20px) scale(1.15); opacity: 0.22; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.18; }
+  }
+  @keyframes orb-drift-2 {
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
+    30%  { transform: translate(-140px, 100px) scale(1.3) rotate(30deg); opacity: 0.22; }
+    60%  { transform: translate(80px, -60px) scale(0.85) rotate(-20deg); opacity: 0.12; }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
+  }
+  @keyframes orb-drift-3 {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.12; }
+    35%  { transform: translate(100px, 120px) scale(1.2); opacity: 0.20; }
+    65%  { transform: translate(-80px, -40px) scale(0.95); opacity: 0.10; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.12; }
+  }
+  @keyframes orb-drift-4 {
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.10; }
+    40%  { transform: translate(-60px, -120px) scale(1.35) rotate(-40deg); opacity: 0.18; }
+    70%  { transform: translate(120px, 80px) scale(0.8) rotate(20deg); opacity: 0.08; }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.10; }
+  }
+  @keyframes orb-pulse {
+    0%, 100% { filter: blur(80px) brightness(1); }
+    50%      { filter: blur(100px) brightness(1.2); }
+  }
+
+  /* Orbs — manchas de cor vivas. Container criado via JS no componente
+     LiveBackground, mas o fallback via .app-bg-orbs funciona só com CSS. */
+  .app-bg-orbs {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform, opacity;
+  }
+
+  /* Orb 1 — Azul profundo, canto superior esquerdo */
+  .orb-1 {
+    width: 800px;
+    height: 800px;
+    top: -15%;
+    left: -5%;
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.35) 0%, rgba(76, 130, 247, 0) 70%);
+    animation: orb-drift-1 28s ease-in-out infinite, orb-pulse 14s ease-in-out infinite;
+  }
+
+  /* Orb 2 — Violeta, canto superior direito */
+  .orb-2 {
+    width: 700px;
+    height: 700px;
+    top: -10%;
+    right: -8%;
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.30) 0%, rgba(144, 97, 249, 0) 70%);
+    animation: orb-drift-2 34s ease-in-out infinite, orb-pulse 18s ease-in-out infinite 3s;
+  }
+
+  /* Orb 3 — Cyan, centro-inferior */
+  .orb-3 {
+    width: 900px;
+    height: 600px;
+    bottom: -20%;
+    left: 30%;
+    border-radius: 50% / 40%;
+    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.22) 0%, rgba(34, 211, 238, 0) 70%);
+    animation: orb-drift-3 38s ease-in-out infinite, orb-pulse 20s ease-in-out infinite 6s;
+  }
+
+  /* Orb 4 — Esmeralda, canto direito-meio */
+  .orb-4 {
+    width: 500px;
+    height: 500px;
+    top: 40%;
+    right: -3%;
+    background: radial-gradient(circle, rgba(22, 199, 132, 0.18) 0%, rgba(22, 199, 132, 0) 70%);
+    animation: orb-drift-4 32s ease-in-out infinite, orb-pulse 16s ease-in-out infinite 9s;
+  }
+
+  /* Orb 5 — Azul suave, centro flutuante */
+  .orb-5 {
+    width: 650px;
+    height: 650px;
+    top: 20%;
+    left: 15%;
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.12) 0%, rgba(76, 130, 247, 0) 70%);
+    animation: orb-drift-1 42s ease-in-out infinite reverse, orb-pulse 22s ease-in-out infinite 12s;
+  }
+
+  /* Orb 6 — Violeta quente, inferior esquerdo */
+  .orb-6 {
+    width: 550px;
+    height: 550px;
+    bottom: 5%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.14) 0%, rgba(144, 97, 249, 0) 70%);
+    animation: orb-drift-2 36s ease-in-out infinite reverse, orb-pulse 19s ease-in-out infinite 4s;
+  }
+
+  /* Preferência de movimento reduzido — para orbs e removê-los */
+  @media (prefers-reduced-motion: reduce) {
+    .orb { animation: none !important; }
   }
 
   /* ---- Sistema de profundidade em 3 níveis --------------------------------

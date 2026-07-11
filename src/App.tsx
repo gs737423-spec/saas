@@ -22,6 +22,15 @@ export default function App() {
   return (
     <ConnectionProvider>
     <div className="app-bg min-h-screen overflow-x-hidden bg-bg-primary">
+      {/* Orbs animados — fundo vivo */}
+      <div className="app-bg-orbs">
+        <div className="orb orb-1" />
+        <div className="orb orb-2" />
+        <div className="orb orb-3" />
+        <div className="orb orb-4" />
+        <div className="orb orb-5" />
+        <div className="orb orb-6" />
+      </div>
       <TopNav />
       <main className="pt-12 md:pt-14">
         <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-5 lg:px-8 xl:px-10">
