@@ -130,9 +130,9 @@ body {
     overflow: hidden;
     /* Base estática de profundidade — sempre presente */
     background:
-      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.10), transparent 58%),
-      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.08), transparent 56%),
-      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.06), transparent 60%);
+      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.18), transparent 58%),
+      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.14), transparent 56%),
+      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.12), transparent 60%);
   }
 
   /* Grid sutil + noise por cima dos orbs */
@@ -154,29 +154,29 @@ body {
 
   /* ---- Orbs animados (definidos como keyframes puros) ---- */
   @keyframes orb-drift-1 {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0.18; }
-    25%  { transform: translate(120px, -80px) scale(1.25); opacity: 0.25; }
-    50%  { transform: translate(60px, 60px) scale(0.9); opacity: 0.14; }
-    75%  { transform: translate(-100px, 20px) scale(1.15); opacity: 0.22; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.18; }
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.45; }
+    25%  { transform: translate(120px, -80px) scale(1.25); opacity: 0.65; }
+    50%  { transform: translate(60px, 60px) scale(0.9); opacity: 0.35; }
+    75%  { transform: translate(-100px, 20px) scale(1.15); opacity: 0.55; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
   }
   @keyframes orb-drift-2 {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
-    30%  { transform: translate(-140px, 100px) scale(1.3) rotate(30deg); opacity: 0.22; }
-    60%  { transform: translate(80px, -60px) scale(0.85) rotate(-20deg); opacity: 0.12; }
-    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.40; }
+    30%  { transform: translate(-140px, 100px) scale(1.3) rotate(30deg); opacity: 0.60; }
+    60%  { transform: translate(80px, -60px) scale(0.85) rotate(-20deg); opacity: 0.30; }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.40; }
   }
   @keyframes orb-drift-3 {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0.12; }
-    35%  { transform: translate(100px, 120px) scale(1.2); opacity: 0.20; }
-    65%  { transform: translate(-80px, -40px) scale(0.95); opacity: 0.10; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.12; }
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.35; }
+    35%  { transform: translate(100px, 120px) scale(1.2); opacity: 0.55; }
+    65%  { transform: translate(-80px, -40px) scale(0.95); opacity: 0.25; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
   }
   @keyframes orb-drift-4 {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.10; }
-    40%  { transform: translate(-60px, -120px) scale(1.35) rotate(-40deg); opacity: 0.18; }
-    70%  { transform: translate(120px, 80px) scale(0.8) rotate(20deg); opacity: 0.08; }
-    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.10; }
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.30; }
+    40%  { transform: translate(-60px, -120px) scale(1.35) rotate(-40deg); opacity: 0.50; }
+    70%  { transform: translate(120px, 80px) scale(0.8) rotate(20deg); opacity: 0.20; }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.30; }
   }
   @keyframes orb-pulse {
     0%, 100% { filter: blur(80px) brightness(1); }
@@ -205,7 +205,7 @@ body {
     height: 800px;
     top: -15%;
     left: -5%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.35) 0%, rgba(76, 130, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.55) 0%, rgba(76, 130, 247, 0) 70%);
     animation: orb-drift-1 28s ease-in-out infinite, orb-pulse 14s ease-in-out infinite;
   }
 
@@ -215,7 +215,7 @@ body {
     height: 700px;
     top: -10%;
     right: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.30) 0%, rgba(144, 97, 249, 0) 70%);
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.45) 0%, rgba(144, 97, 249, 0) 70%);
     animation: orb-drift-2 34s ease-in-out infinite, orb-pulse 18s ease-in-out infinite 3s;
   }
 
@@ -226,7 +226,7 @@ body {
     bottom: -20%;
     left: 30%;
     border-radius: 50% / 40%;
-    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.22) 0%, rgba(34, 211, 238, 0) 70%);
+    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.38) 0%, rgba(34, 211, 238, 0) 70%);
     animation: orb-drift-3 38s ease-in-out infinite, orb-pulse 20s ease-in-out infinite 6s;
   }
 
@@ -236,7 +236,7 @@ body {
     height: 500px;
     top: 40%;
     right: -3%;
-    background: radial-gradient(circle, rgba(22, 199, 132, 0.18) 0%, rgba(22, 199, 132, 0) 70%);
+    background: radial-gradient(circle, rgba(22, 199, 132, 0.30) 0%, rgba(22, 199, 132, 0) 70%);
     animation: orb-drift-4 32s ease-in-out infinite, orb-pulse 16s ease-in-out infinite 9s;
   }
 
@@ -246,7 +246,7 @@ body {
     height: 650px;
     top: 20%;
     left: 15%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.12) 0%, rgba(76, 130, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.22) 0%, rgba(76, 130, 247, 0) 70%);
     animation: orb-drift-1 42s ease-in-out infinite reverse, orb-pulse 22s ease-in-out infinite 12s;
   }
 
@@ -256,7 +256,7 @@ body {
     height: 550px;
     bottom: 5%;
     left: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.14) 0%, rgba(144, 97, 249, 0) 70%);
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.28) 0%, rgba(144, 97, 249, 0) 70%);
     animation: orb-drift-2 36s ease-in-out infinite reverse, orb-pulse 19s ease-in-out infinite 4s;
   }
 

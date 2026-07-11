@@ -15,7 +15,7 @@ export default function Produtos() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      if (filters.marketplace !== 'all' && p.marketplace !== filters.marketplace) return false
+      if (filters.marketplaces.size > 0 && !filters.marketplaces.has(p.marketplace)) return false
       if (filters.category !== 'all' && p.category !== filters.category) return false
       if (filters.search) {
         const q = filters.search.toLowerCase()
