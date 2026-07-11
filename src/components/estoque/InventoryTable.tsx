@@ -8,6 +8,11 @@ import {
 } from '@/data/mockData'
 import InventoryFilters, { type InventoryFilterState } from './InventoryFilters'
 
+interface Props {
+  filters: InventoryFilterState
+  onChange: (next: InventoryFilterState) => void
+}
+
 const abcStyle: Record<'A' | 'B' | 'C', { color: string; bg: string }> = {
   A: { color: '#16C784', bg: 'rgba(22,199,132,0.14)' },
   B: { color: '#4C82F7', bg: 'rgba(76,130,247,0.14)' },
@@ -26,17 +31,6 @@ const brl = (v: number) => v.toLocaleString('pt-BR')
 const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-const defaultFilters: InventoryFilterState = {
-  abc: new Set(),
-  onlyCritical: false,
-  onlyStalled: false,
-  marketplace: 'all',
-  manufacturerSearch: '',
-  onlyLowCoverage: false,
-  onlyExcess: false,
-  onlyNoRecentEntry: false,
-}
-
 function daysSinceEntry(dateStr: string): number {
   const [d, m, y] = dateStr.split('/').map(Number)
   const entryDate = new Date(y, m - 1, d)
@@ -44,8 +38,7 @@ function daysSinceEntry(dateStr: string): number {
   return Math.round((refDate.getTime() - entryDate.getTime()) / 86400000)
 }
 
-export default function InventoryTable() {
-  const [filters, setFilters] = useState<InventoryFilterState>(defaultFilters)
+export default function InventoryTable({ filters, onChange }: Props) {
   const [sort, setSort] = useState<SortKey>('revenue')
 
   const filtered = useMemo(() => {
@@ -88,7 +81,7 @@ export default function InventoryTable() {
       </div>
 
       <div className="mb-3.5">
-        <InventoryFilters filters={filters} onChange={setFilters} />
+        <InventoryFilters filters={filters} onChange={onChange} />
       </div>
 
       {/* Mobile: stacked cards */}

@@ -17,6 +17,17 @@ interface Props {
   onChange: (next: InventoryFilterState) => void
 }
 
+export const defaultInventoryFilters: InventoryFilterState = {
+  abc: new Set(),
+  onlyCritical: false,
+  onlyStalled: false,
+  marketplace: 'all',
+  manufacturerSearch: '',
+  onlyLowCoverage: false,
+  onlyExcess: false,
+  onlyNoRecentEntry: false,
+}
+
 const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
