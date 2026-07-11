@@ -1,15 +1,405 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Acelera Intelligence</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-bg-primary: #060A16;
+  --color-bg-secondary: #0A0F1E;
+  --color-bg-card: #0C1324;
+  --color-bg-card-hover: #111A30;
+  --color-bg-elevated: #131D34;
+  --color-border-subtle: #1A2542;
+  --color-border-default: #26345A;
+
+  --color-text-primary: #F4F7FD;
+  --color-text-secondary: #97A3BD;
+  --color-text-muted: #59688A;
+
+  --color-accent-cyan: #22D3EE;
+  --color-accent-blue: #4C82F7;
+  --color-accent-blue-hover: #3B6FE6;
+  --color-accent-emerald: #16C784;
+  --color-accent-amber: #F5C24B;
+  --color-accent-rose: #F4436C;
+  --color-accent-violet: #9061F9;
+
+  --color-ml-orange: #FFE600;
+  --color-shopee-orange: #EE4D2D;
+  --color-amazon-orange: #FF9900;
+  --color-loja-blue: #4C82F7;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+html {
+  background: var(--color-bg-primary);
+}
+
+body {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+  background-color: var(--color-bg-primary);
+  background-image:
+    radial-gradient(1200px 620px at 8% -10%, rgba(34, 96, 200, 0.16), transparent 58%),
+    radial-gradient(1000px 640px at 100% -6%, rgba(76, 130, 247, 0.12), transparent 55%),
+    radial-gradient(1100px 720px at 50% 128%, rgba(34, 211, 238, 0.06), transparent 60%);
+  background-repeat: no-repeat;
+}
+
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #33334a; }
+
+@layer utilities {
+  /* Premium glass panel — promovido para a linguagem de profundidade validada
+     na Visão Geral. Agora padrão global (todas as páginas herdam). */
+  .glass-panel {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
+      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
+    border: 1px solid #2C3E66;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
+      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 4px 8px -2px rgba(0, 0, 0, 0.55),
+      0 16px 32px -12px rgba(0, 0, 0, 0.62),
+      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+  }
+
+  .glass-panel-hover {
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+  .glass-panel-hover:hover {
+    transform: translateY(-4px);
+    border-color: #43578A;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 6px 12px -2px rgba(0, 0, 0, 0.55),
+      0 28px 56px -14px rgba(0, 0, 0, 0.74),
+      0 84px 134px -40px rgba(4, 10, 30, 0.96);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 0 1px rgba(76, 130, 247, 0.25), 0 12px 40px -12px rgba(76, 130, 247, 0.45);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #F4F6FB 0%, #9AA4B8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ==========================================================================
+   * VISÃO GERAL — linguagem visual ISOLADA (não altera tokens globais nem
+   * .glass-panel). Profundidade real: rampa tonal mais clara que o fundo,
+   * rim light no topo, sombra em 3 camadas, gradiente interno nobre.
+   * Se validar, vira padrão global depois.
+   * ======================================================================== */
+
+  /* Atmosfera de fundo — glows ambientais + grid sutil + vinheta.
+     Fixo no viewport, aplicado GLOBALMENTE (todas as páginas) via .app-bg. */
+  .app-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(1100px 640px at 8% -8%, rgba(76, 130, 247, 0.16), transparent 58%),
+      radial-gradient(900px 560px at 96% 0%, rgba(144, 97, 249, 0.13), transparent 56%),
+      radial-gradient(1200px 720px at 50% 118%, rgba(34, 211, 238, 0.08), transparent 60%),
+      radial-gradient(700px 500px at 78% 60%, rgba(22, 199, 132, 0.05), transparent 62%);
+  }
+  .app-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"),
+      linear-gradient(rgba(130, 160, 220, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(130, 160, 220, 0.045) 1px, transparent 1px);
+    background-size: 160px 160px, 52px 52px, 52px 52px;
+    opacity: 0.5;
+    -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
+    mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
+  }
+
+  /* ---- Sistema de profundidade em 3 níveis --------------------------------
+     Nível 1 (estrutural): overview-glass · Nível 2 (primário): -elevated
+     Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
+     definida, sombra de contato + longa mais forte → mais "flutuando". */
+
+  /* Nível 1 — painel estrutural */
+  .overview-glass {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
+      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
+    border: 1px solid #2C3E66;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
+      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 4px 8px -2px rgba(0, 0, 0, 0.55),
+      0 16px 32px -12px rgba(0, 0, 0, 0.62),
+      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+  }
+
+  /* Nível 2 — painel primário (comparativo, painel de decisão) */
+  .overview-glass-elevated {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.025) 22%, rgba(255, 255, 255, 0) 58%),
+      radial-gradient(130% 90% at 50% -12%, rgba(76, 130, 247, 0.15), transparent 60%),
+      linear-gradient(180deg, #1A2846 0%, #0D1629 100%);
+    border: 1px solid #3A4F7C;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+      inset 0 -18px 36px -22px rgba(0, 0, 0, 0.6),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 5px 10px -2px rgba(0, 0, 0, 0.55),
+      0 22px 46px -14px rgba(0, 0, 0, 0.68),
+      0 62px 108px -36px rgba(4, 10, 30, 0.92);
+  }
+
+  /* Nível 3 — hero (Faturamento Líquido): mais elevado, rim emerald */
+  .overview-hero-card {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.025) 24%, rgba(255, 255, 255, 0) 60%),
+      radial-gradient(150% 110% at 50% -16%, rgba(22, 199, 132, 0.22), transparent 58%),
+      linear-gradient(180deg, #142C43 0%, #0B1A2B 100%);
+    border: 1px solid #2A625A;
+    box-shadow:
+      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
+      inset 0 -18px 38px -22px rgba(0, 0, 0, 0.55),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 5px 10px -2px rgba(0, 0, 0, 0.55),
+      0 24px 50px -14px rgba(0, 0, 0, 0.68),
+      0 66px 116px -36px rgba(4, 26, 20, 0.9);
+  }
+
+  /* Hover tátil — elevação + borda aquece + glow (todos os níveis) */
+  .overview-card-hover {
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+    will-change: transform;
+  }
+  .overview-card-hover:hover {
+    transform: translateY(-4px);
+    border-color: #3A4E78;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 26px 54px -14px rgba(0, 0, 0, 0.72),
+      0 80px 130px -40px rgba(4, 10, 30, 0.95);
+  }
+  .overview-hero-card.overview-card-hover:hover {
+    border-color: #2E6A5F;
+    box-shadow:
+      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 28px 58px -14px rgba(0, 0, 0, 0.72),
+      0 84px 140px -40px rgba(4, 26, 20, 0.92);
+  }
+
+  /* Linha de marketplace — card executivo sobre o painel pai */
+  .overview-marketplace-row {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 46%),
+      linear-gradient(180deg, #12203A 0%, #0B1324 100%);
+    border: 1px solid #26365A;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 1px 1px 0 rgba(0, 0, 0, 0.5),
+      0 10px 24px -12px rgba(0, 0, 0, 0.62);
+    transition:
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.24s ease,
+      border-color 0.24s ease;
+  }
+  .overview-marketplace-row:hover {
+    transform: translateY(-2px);
+    border-color: #3B4F79;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.11),
+      0 18px 38px -12px rgba(0, 0, 0, 0.74);
+  }
+  /* Canal Nº1 — dominante, mais corpo e luz */
+  .overview-marketplace-row-lead {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%),
+      radial-gradient(130% 110% at 50% -22%, rgba(76, 130, 247, 0.14), transparent 62%),
+      linear-gradient(180deg, #172E4E 0%, #0C1628 100%);
+    border: 1px solid #3F547E;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.5),
+      0 1px 1px 0 rgba(0, 0, 0, 0.55),
+      0 18px 40px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Trilho das barras de participação */
+  .overview-track {
+    background: linear-gradient(180deg, #050912 0%, #0A1120 100%);
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  /* ---- Sidebar premium ----------------------------------------------------
+     Item de navegação com hover vivo (glow + shift), ativo sofisticado, e
+     foco acessível — elimina o outline branco padrão do browser. */
+  .rail-item {
+    position: relative;
+    outline: none;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.25s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .rail-item:hover {
+    background: linear-gradient(180deg, rgba(76, 130, 247, 0.12), rgba(76, 130, 247, 0.04));
+    box-shadow:
+      inset 0 0 0 1px rgba(76, 130, 247, 0.16),
+      0 0 20px -6px rgba(76, 130, 247, 0.45);
+  }
+  .rail-item:hover :is(svg) {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 6px rgba(76, 130, 247, 0.5));
+  }
+  .rail-item :is(svg) {
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+  }
+  .rail-item:focus-visible {
+    box-shadow: 0 0 0 2px rgba(76, 130, 247, 0.55), 0 0 20px -6px rgba(76, 130, 247, 0.5);
+  }
+  .rail-item-active {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 60%),
+      linear-gradient(180deg, rgba(76, 130, 247, 0.14), rgba(76, 130, 247, 0.04));
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      inset 0 0 0 1px rgba(76, 130, 247, 0.22),
+      0 4px 14px -6px rgba(76, 130, 247, 0.4);
+  }
+  /* Barra de acento do item ativo — interna, com glow (sem sobrar pra fora) */
+  .rail-item-active::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    height: 18px;
+    width: 3px;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #6FA0FF, #4C82F7);
+    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+  }
+
+  /* Superfície da própria sidebar — camada com profundidade + glow ambiental.
+     NÃO definir position aqui: a classe .fixed do Tailwind já posiciona o
+     aside, e um position custom aqui sobrescreveria o fixed (mesma camada,
+     ordem posterior) — foi o que quebrou o layout. O fixed já ancora os
+     pseudo-elementos absolutos abaixo. */
+  .rail-surface {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 30%),
+      linear-gradient(180deg, #0C1424 0%, #080D18 100%);
+    box-shadow:
+      inset -1px 0 0 0 rgba(255, 255, 255, 0.04),
+      2px 0 24px -12px rgba(0, 0, 0, 0.8);
+  }
+  .rail-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 220px;
+    pointer-events: none;
+    background: radial-gradient(130% 100% at 50% -10%, rgba(76, 130, 247, 0.12), transparent 72%);
+  }
+  .rail-surface::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 200px;
+    pointer-events: none;
+    background: radial-gradient(120% 100% at 50% 120%, rgba(144, 97, 249, 0.08), transparent 74%);
+  }
+
+  /* Logo — reduz o neon/gamer do PNG: dessatura leve, integra ao container */
+  .brand-logo {
+    filter: saturate(0.82) brightness(0.95) contrast(1.02);
+  }
+
+  /* ---- Top nav (substitui a sidebar) --------------------------------------
+     Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
+     horizontal e fixa no topo. */
+  .topnav-surface {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
+      linear-gradient(180deg, #0C1424 0%, #0A1120 100%);
+    box-shadow:
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
+      0 12px 28px -16px rgba(0, 0, 0, 0.8);
+  }
+  .topnav-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(60% 160% at 8% 50%, rgba(76, 130, 247, 0.1), transparent 70%);
+  }
+
+  /* Indicador do item ativo — sublinhado inferior com glow (variante horizontal
+     do antigo indicador lateral da sidebar) */
+  .topnav-item-active::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #6FA0FF, #4C82F7);
+    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+  }
+
+  /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Glow concentrado no número/ícone principal (hero, líder) */
+  .num-glow {
+    text-shadow: 0 0 20px rgba(185, 212, 255, 0.22);
+  }
+  .icon-halo {
+    filter: drop-shadow(0 0 8px rgba(22, 199, 132, 0.45));
+  }
+}
