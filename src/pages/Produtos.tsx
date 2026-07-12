@@ -5,9 +5,7 @@ import type { ProductFilterState } from '@/components/produtos/ProductFilters'
 import ProductKPIs from '@/components/produtos/ProductKPIs'
 import ProductTable from '@/components/produtos/ProductTable'
 import Top5Products from '@/components/produtos/Top5Products'
-import CategoryPerformance from '@/components/produtos/CategoryPerformance'
 import ProductAlerts from '@/components/produtos/ProductAlerts'
-import ProductOpportunities from '@/components/produtos/ProductOpportunities'
 import { products } from '@/data/mockData'
 
 export default function Produtos() {
@@ -42,12 +40,6 @@ export default function Produtos() {
           <Top5Products />
           <ProductAlerts />
         </div>
-      </div>
-
-      {/* Category performance + product opportunities */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <CategoryPerformance />
-        <ProductOpportunities />
       </div>
     </div>
   )
