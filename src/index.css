@@ -150,6 +150,18 @@ body {
     opacity: 0.45;
     -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
     mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
+    animation: grain-drift 50s linear infinite;
+  }
+
+  /* Deriva bem lenta da textura de fundo — quase imperceptível quadro a
+     quadro, mas dá sensação de "vivo" sem chamar atenção do conteúdo. */
+  @keyframes grain-drift {
+    0%   { background-position: 0px 0px, 0px 0px, 0px 0px; }
+    50%  { background-position: 80px 60px, 26px 26px, 26px 26px; }
+    100% { background-position: 0px 0px, 0px 0px, 0px 0px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-bg::after { animation: none; }
   }
 
   /* ---- Orbs animados (definidos como keyframes puros) ---- */
@@ -179,8 +191,8 @@ body {
     100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.30; }
   }
   @keyframes orb-pulse {
-    0%, 100% { filter: blur(80px) brightness(1); }
-    50%      { filter: blur(100px) brightness(1.2); }
+    0%, 100% { filter: blur(75px) brightness(1.05); }
+    50%      { filter: blur(95px) brightness(1.35); }
   }
 
   /* Orbs — manchas de cor vivas. Container criado via JS no componente
@@ -205,7 +217,7 @@ body {
     height: 800px;
     top: -15%;
     left: -5%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.55) 0%, rgba(76, 130, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.72) 0%, rgba(76, 130, 247, 0) 70%);
     animation: orb-drift-1 28s ease-in-out infinite, orb-pulse 14s ease-in-out infinite;
   }
 
@@ -215,7 +227,7 @@ body {
     height: 700px;
     top: -10%;
     right: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.45) 0%, rgba(144, 97, 249, 0) 70%);
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.6) 0%, rgba(144, 97, 249, 0) 70%);
     animation: orb-drift-2 34s ease-in-out infinite, orb-pulse 18s ease-in-out infinite 3s;
   }
 
@@ -226,7 +238,7 @@ body {
     bottom: -20%;
     left: 30%;
     border-radius: 50% / 40%;
-    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.38) 0%, rgba(34, 211, 238, 0) 70%);
+    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.5) 0%, rgba(34, 211, 238, 0) 70%);
     animation: orb-drift-3 38s ease-in-out infinite, orb-pulse 20s ease-in-out infinite 6s;
   }
 
@@ -236,7 +248,7 @@ body {
     height: 500px;
     top: 40%;
     right: -3%;
-    background: radial-gradient(circle, rgba(22, 199, 132, 0.30) 0%, rgba(22, 199, 132, 0) 70%);
+    background: radial-gradient(circle, rgba(22, 199, 132, 0.42) 0%, rgba(22, 199, 132, 0) 70%);
     animation: orb-drift-4 32s ease-in-out infinite, orb-pulse 16s ease-in-out infinite 9s;
   }
 
@@ -246,7 +258,7 @@ body {
     height: 650px;
     top: 20%;
     left: 15%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.22) 0%, rgba(76, 130, 247, 0) 70%);
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.34) 0%, rgba(76, 130, 247, 0) 70%);
     animation: orb-drift-1 42s ease-in-out infinite reverse, orb-pulse 22s ease-in-out infinite 12s;
   }
 
@@ -256,7 +268,7 @@ body {
     height: 550px;
     bottom: 5%;
     left: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.28) 0%, rgba(144, 97, 249, 0) 70%);
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.4) 0%, rgba(144, 97, 249, 0) 70%);
     animation: orb-drift-2 36s ease-in-out infinite reverse, orb-pulse 19s ease-in-out infinite 4s;
   }
 
@@ -524,5 +536,19 @@ body {
   }
   .icon-halo {
     filter: drop-shadow(0 0 8px rgba(22, 199, 132, 0.45));
+  }
+
+  /* ---- Transição de página --------------------------------------------
+     Fade + leve subida ao trocar de rota, em vez do corte seco. Curta o
+     suficiente pra não atrapalhar a navegação. */
+  .page-transition {
+    animation: page-fade-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-transition { animation: none; }
   }
 }
