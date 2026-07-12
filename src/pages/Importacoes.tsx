@@ -61,16 +61,19 @@ function MarketplaceCard({ marketplace }: { marketplace: Marketplace }) {
   const cfg = statusConfig[conn.status]
 
   return (
-    <div className="glass-panel group relative overflow-hidden rounded-2xl">
+    <div className="glass-panel glass-panel-hover group relative overflow-hidden rounded-2xl">
       {/* Colored top glow */}
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-      <div className="absolute inset-x-0 top-0 h-8 opacity-20" style={{ background: `linear-gradient(to bottom, ${color}22, transparent)` }} />
+      <div className="absolute inset-x-0 top-0 h-10 opacity-25" style={{ background: `linear-gradient(to bottom, ${color}22, transparent)` }} />
 
       <div className="relative p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: color, boxShadow: `0 0 10px 2px ${color}66` }}
+            />
             <h3 className="text-sm font-semibold text-text-primary">{marketplace}</h3>
           </div>
           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.color} ${cfg.bg} ${cfg.border}`}>
@@ -175,13 +178,19 @@ export default function Importacoes() {
   return (
     <div className="space-y-4">
       {/* Page header */}
-      <div className="flex items-center gap-2 pt-1">
-        <Link2 className="h-4 w-4 text-accent-cyan" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Conexões com Marketplaces</span>
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <div className="flex items-center gap-2">
+          <Link2 className="h-4 w-4 text-accent-cyan" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Conexões com Marketplaces</span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-amber/25 bg-accent-amber/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent-amber">
+          <Info className="h-3 w-3" />
+          Demonstração
+        </span>
       </div>
 
       {/* Global sync status bar */}
-      <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="overview-glass-elevated overview-card-hover flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-cyan/10 text-accent-cyan">
             <Zap className="h-5 w-5" />
@@ -247,10 +256,11 @@ export default function Importacoes() {
             <Info className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-text-primary">Como funciona a conexão via API</p>
+            <p className="text-sm font-semibold text-text-primary">Como vai funcionar a conexão via API</p>
             <p className="mt-1 text-xs text-text-secondary leading-relaxed">
-              Cada marketplace é sincronizado automaticamente no intervalo configurado.
-              Os dados são atualizados em tempo real, sem necessidade de importação manual.
+              Esta tela está em modo de demonstração: os botões simulam o fluxo de conexão e sincronização
+              com dados fictícios. A integração real (autenticação OAuth com cada marketplace e sincronização
+              automática de pedidos, produtos, estoque e faturamento) ainda precisa ser implementada.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {DATA_TYPES.map(dt => (
