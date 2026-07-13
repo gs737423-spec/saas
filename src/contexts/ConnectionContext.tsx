@@ -34,6 +34,11 @@ interface ConnectionContextValue {
   mercadoLivre: MercadoLivreStatus | null
   loading: boolean
   syncing: boolean
+  /** True once a fetch to /api/integrations/status has genuinely failed (network
+   *  error, non-200, backend unreachable) — distinct from `loading`, so the UI
+   *  can show "backend indisponível" instead of spinning forever. This never
+   *  happens for config_missing, which is a normal 200 response body. */
+  backendUnreachable: boolean
   logs: SyncLogEntry[]
   refresh: () => Promise<void>
   connectMercadoLivre: () => void
@@ -57,6 +62,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [backendUnreachable, setBackendUnreachable] = useState(false)
 
   const refresh = useCallback(async () => {
     const [status, logsResponse] = await Promise.all([
@@ -65,6 +71,9 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     ])
     if (status) setMercadoLivre(status)
     if (logsResponse) setLogs(logsResponse.logs)
+    // status is only ever null here if the request itself failed — every real
+    // response (including config_missing) is a 200 with a body.
+    setBackendUnreachable(!status)
     setLoading(false)
   }, [])
 
@@ -89,7 +98,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   return (
-    <ConnectionContext.Provider value={{ mercadoLivre, loading, syncing, logs, refresh, connectMercadoLivre, syncMercadoLivre }}>
+    <ConnectionContext.Provider value={{ mercadoLivre, loading, syncing, backendUnreachable, logs, refresh, connectMercadoLivre, syncMercadoLivre }}>
       {children}
     </ConnectionContext.Provider>
   )

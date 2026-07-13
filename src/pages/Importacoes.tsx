@@ -35,15 +35,30 @@ const statusConfig: Record<IntegrationStatus, { label: string; color: string; bg
 }
 
 function MercadoLivreCard() {
-  const { mercadoLivre, loading, syncing, connectMercadoLivre, syncMercadoLivre } = useConnections()
+  const { mercadoLivre, loading, syncing, backendUnreachable, connectMercadoLivre, syncMercadoLivre } = useConnections()
   const color = getMarketplaceColor('Mercado Livre')
 
-  if (loading || !mercadoLivre) {
+  if (loading) {
     return (
       <div className="glass-panel relative overflow-hidden rounded-2xl p-4 sm:p-5">
         <div className="flex items-center gap-2 text-xs text-text-muted">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Carregando status da conexão...
+        </div>
+      </div>
+    )
+  }
+
+  if (backendUnreachable || !mercadoLivre) {
+    return (
+      <div className="glass-panel relative overflow-hidden rounded-2xl p-4 sm:p-5">
+        <div className="flex items-start gap-2 text-xs text-accent-rose">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Backend indisponível — não foi possível consultar o status da conexão. Isso é esperado ao rodar
+            apenas <code className="font-mono">vite dev</code> localmente; use <code className="font-mono">vercel dev</code> ou
+            acesse o deploy na Vercel.
+          </span>
         </div>
       </div>
     )

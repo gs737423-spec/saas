@@ -27,6 +27,18 @@ const USERS: Record<string, { hash: string; name: string }> = {
   },
 };
 
+// Optional demo/QA login, off by default. Only active when BOTH env vars are set —
+// intended for local dev / Vercel Preview only. Never set VITE_DEMO_EMAIL or
+// VITE_DEMO_PASSWORD_HASH in the Production environment target: like the rest of
+// this login system, the check runs client-side, so whatever is set here ends up
+// readable in the shipped JS bundle exactly like the two accounts above already are.
+// See .env.example for how to generate the hash.
+const demoEmail = import.meta.env.VITE_DEMO_EMAIL as string | undefined;
+const demoPasswordHash = import.meta.env.VITE_DEMO_PASSWORD_HASH as string | undefined;
+if (demoEmail && demoPasswordHash) {
+  USERS[demoEmail.toLowerCase().trim()] = { hash: demoPasswordHash, name: 'Demo' };
+}
+
 async function sha256(message: string): Promise<string> {
   const msgBuffer = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);

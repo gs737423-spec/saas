@@ -13,13 +13,19 @@ alter table marketplace_products add column if not exists company_id text not nu
 alter table marketplace_inventory add column if not exists company_id text not null default 'default-company';
 
 -- Re-scope uniqueness/lookups to be per-company instead of global.
+-- Each new constraint is dropped-if-exists before being (re)added so this
+-- migration can be run more than once without erroring (plain ADD CONSTRAINT
+-- has no IF NOT EXISTS in Postgres).
 alter table marketplace_connections drop constraint if exists marketplace_connections_provider_key;
+alter table marketplace_connections drop constraint if exists marketplace_connections_company_provider_key;
 alter table marketplace_connections add constraint marketplace_connections_company_provider_key unique (company_id, provider);
 
 alter table marketplace_products drop constraint if exists marketplace_products_connection_id_external_product_id_key;
+alter table marketplace_products drop constraint if exists marketplace_products_company_connection_external_key;
 alter table marketplace_products add constraint marketplace_products_company_connection_external_key unique (company_id, connection_id, external_product_id);
 
 alter table marketplace_inventory drop constraint if exists marketplace_inventory_connection_id_external_product_id_key;
+alter table marketplace_inventory drop constraint if exists marketplace_inventory_company_connection_external_key;
 alter table marketplace_inventory add constraint marketplace_inventory_company_connection_external_key unique (company_id, connection_id, external_product_id);
 
 create index if not exists marketplace_connections_company_id_idx on marketplace_connections (company_id);
