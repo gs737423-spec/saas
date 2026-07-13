@@ -7,6 +7,29 @@ import type { Product } from '@/data/mockData'
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
 
+// Deterministic per-bucket growth derived from each product's single trend
+// figure — gives D-1/D-7/D-30/D-365 distinct but consistent values.
+function bucketGrowth(baseTrend: number): { d1: number; d7: number; d30: number; d365: number } {
+  return {
+    d1: Math.round(baseTrend * 0.4 * 10) / 10,
+    d7: Math.round(baseTrend * 0.7 * 10) / 10,
+    d30: Math.round(baseTrend * 10) / 10,
+    d365: Math.round(baseTrend * 2.6 * 10) / 10,
+  }
+}
+
+function GrowthCell({ label, value }: { label: string; value: number }) {
+  const positive = value >= 0
+  return (
+    <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+      <span className={`font-mono text-[11px] font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+        {positive ? '+' : ''}{value}%
+      </span>
+      <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+    </div>
+  )
+}
+
 function stockTone(stock: number) {
   if (stock <= 25) return 'text-accent-rose'
   if (stock <= 60) return 'text-accent-amber'
@@ -138,7 +161,7 @@ export default function ProductTable({ filteredProducts }: Props) {
 
       {/* Desktop table */}
       <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[920px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               {columns.map((col) => (
@@ -157,8 +180,8 @@ export default function ProductTable({ filteredProducts }: Props) {
           </thead>
           <tbody>
             {sorted.map((p) => {
-              const positive = p.trend >= 0
               const mp = getMarketplaceColor(p.marketplace)
+              const growth = bucketGrowth(p.trend)
               return (
                 <tr key={p.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
@@ -187,10 +210,12 @@ export default function ProductTable({ filteredProducts }: Props) {
                     </div>
                   </td>
                   <td className="py-3 text-center">
-                    <span className={`inline-flex items-center gap-1 font-mono font-medium ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-                      {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {positive ? '+' : ''}{p.trend}%
-                    </span>
+                    <div className="flex items-center justify-center gap-2.5">
+                      <GrowthCell label="D-1" value={growth.d1} />
+                      <GrowthCell label="D-7" value={growth.d7} />
+                      <GrowthCell label="D-30" value={growth.d30} />
+                      <GrowthCell label="D-365" value={growth.d365} />
+                    </div>
                   </td>
                 </tr>
               )
