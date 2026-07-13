@@ -65,6 +65,13 @@ function generateDailyData(totalDays: number): DailyData[] {
 // 400 days of history so any period plus its "previous window" comparison
 // (up to 2x the selected range) always has data behind it.
 const allDailyData = generateDailyData(400)
+const dailyByDate = new Map(allDailyData.map((d) => [d.date, d]))
+
+const compareOptions: { key: 'yesterday' | 'week' | 'month'; label: string; offsetDays: number }[] = [
+  { key: 'yesterday', label: 'Ontem', offsetDays: 1 },
+  { key: 'week', label: 'Semana passada', offsetDays: 7 },
+  { key: 'month', label: 'Mês passado', offsetDays: 30 },
+]
 
 const brl = (v: number) => v.toLocaleString('pt-BR')
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -76,14 +83,14 @@ function resample(sliced: DailyData[], periodDays: number): DailyData[] {
   return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label, seriesLabel, compareLabel }: any) {
   if (!active || !payload?.length) return null
   const total = payload.find((p: any) => p.dataKey === 'total')?.value ?? 0
   const prev = payload.find((p: any) => p.dataKey === 'prevTotal')?.value
   const delta = prev > 0 ? ((total - prev) / prev) * 100 : 0
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label} · {seriesLabel}</p>
       <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
         <span className="flex items-center gap-2 text-text-secondary">
           <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
@@ -96,7 +103,7 @@ function CustomTooltip({ active, payload, label }: any) {
           <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
             <span className="flex items-center gap-2 text-text-secondary">
               <span className="h-2 w-2 rounded-full" style={{ background: '#6B7A9E' }} />
-              Período anterior
+              {compareLabel}
             </span>
             <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
           </div>
@@ -112,41 +119,40 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
+type ViewKey = 'total' | ChannelKey
+
 export default function RevenueByChannelChart() {
   const { period } = usePeriod()
-  const [visibleChannels, setVisibleChannels] = useState<Set<ChannelKey>>(
-    new Set(channels.map((c) => c.key))
-  )
-
-  const toggleChannel = useCallback((key: ChannelKey) => {
-    setVisibleChannels((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        if (next.size > 1) next.delete(key)
-      } else {
-        next.add(key)
-      }
-      return next
-    })
-  }, [])
+  // Which series feeds the "Hoje" line: sum of all channels, or a single one.
+  const [viewChannel, setViewChannel] = useState<ViewKey>('total')
+  // Offset (in days) used to look up the comparison line's values.
+  const [compareKey, setCompareKey] = useState<'yesterday' | 'week' | 'month'>('week')
 
   const periodDays = Math.max(period.days, 2)
+  const compareOffset = compareOptions.find((o) => o.key === compareKey)!.offsetDays
 
-  const visibleTotal = useCallback(
-    (d: DailyData) => channels.reduce((s, c) => s + (visibleChannels.has(c.key) ? (d as any)[c.key] : 0), 0),
-    [visibleChannels]
+  const valueFor = useCallback(
+    (d: DailyData) => (viewChannel === 'total' ? d.total : (d as any)[viewChannel]),
+    [viewChannel]
   )
+
+  function shiftedDate(dateStr: string, offsetDays: number): DailyData | undefined {
+    const d = new Date(dateStr)
+    d.setDate(d.getDate() - offsetDays)
+    return dailyByDate.get(d.toISOString().split('T')[0])
+  }
 
   const filteredData = useMemo(() => {
     const current = resample(allDailyData.slice(-periodDays), periodDays)
-    const previousSlice = allDailyData.slice(-periodDays * 2, -periodDays)
-    const previous = resample(previousSlice, periodDays)
-    return current.map((entry, i) => ({
-      ...entry,
-      total: visibleTotal(entry),
-      prevTotal: previous[i] ? visibleTotal(previous[i]) : undefined,
-    }))
-  }, [periodDays, visibleTotal])
+    return current.map((entry) => {
+      const prevEntry = shiftedDate(entry.date, compareOffset)
+      return {
+        ...entry,
+        total: valueFor(entry),
+        prevTotal: prevEntry ? valueFor(prevEntry) : undefined,
+      }
+    })
+  }, [periodDays, valueFor, compareOffset])
 
   const channelSummary = useMemo(() => {
     const periodData = allDailyData.slice(-periodDays)
@@ -164,6 +170,8 @@ export default function RevenueByChannelChart() {
   }, [periodDays])
 
   const totalRevenue = channelSummary.reduce((s, c) => s + c.total, 0)
+  const seriesLabel = viewChannel === 'total' ? 'Todos os canais' : channels.find((c) => c.key === viewChannel)!.label
+  const compareLabel = compareOptions.find((o) => o.key === compareKey)!.label
 
   return (
     <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
@@ -173,6 +181,9 @@ export default function RevenueByChannelChart() {
         <p className="mt-0.5 text-xs text-text-muted">
           {period.label} · Total: <span className="font-mono font-semibold text-text-secondary">R$ {brl(totalRevenue)}</span>
         </p>
+        <p className="mt-1 text-[11px] text-text-muted">
+          Gráfico: <span className="font-medium text-text-secondary">{seriesLabel}</span> vs <span className="font-medium text-text-secondary">{compareLabel.toLowerCase()}</span>
+        </p>
       </div>
 
       {/* Channel cards */}
@@ -181,11 +192,12 @@ export default function RevenueByChannelChart() {
           const brand = getMarketplaceColor(c.label)
           const positive = c.growth > 0.5
           const negative = c.growth < -0.5
-          const isVisible = visibleChannels.has(c.key)
+          const isVisible = viewChannel === c.key
           return (
             <button
               key={c.key}
-              onClick={() => toggleChannel(c.key)}
+              onClick={() => setViewChannel((v) => (v === c.key ? 'total' : c.key))}
+              title="Clique para ver este canal isolado no gráfico"
               className={`group relative cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
                 isVisible
                   ? 'border-white/[0.08] bg-white/[0.03]'
@@ -283,11 +295,11 @@ export default function RevenueByChannelChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
+            <Tooltip content={<CustomTooltip seriesLabel={seriesLabel} compareLabel={compareLabel} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
             <Line
               type="monotone"
               dataKey="prevTotal"
-              name="Período anterior"
+              name={compareLabel}
               stroke="#6B7A9E"
               strokeWidth={1.5}
               strokeOpacity={0.7}
@@ -318,41 +330,58 @@ export default function RevenueByChannelChart() {
         </ResponsiveContainer>
       </div>
 
-      {/* Interactive legend */}
-      <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-text-secondary">
-          <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
-          Hoje
-        </span>
-        <span className="flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-[11px] font-medium text-text-muted">
-          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#6B7A9E' }} />
-          Período anterior
-        </span>
-        <span className="mx-1 h-4 w-px bg-white/10" />
-        {channels.map((c) => {
-          const isVisible = visibleChannels.has(c.key)
-          return (
+      {/* View + compare controls */}
+      <div className="relative mt-3 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Ver</span>
+          <button
+            onClick={() => setViewChannel('total')}
+            className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
+              viewChannel === 'total'
+                ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue'
+                : 'border-white/10 bg-white/[0.04] text-text-secondary hover:bg-white/[0.08]'
+            }`}
+          >
+            <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
+            Todos (soma)
+          </button>
+          {channels.map((c) => {
+            const active = viewChannel === c.key
+            return (
+              <button
+                key={c.key}
+                onClick={() => setViewChannel(c.key)}
+                className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
+                  active
+                    ? 'border-white/20 bg-white/[0.08] text-text-primary'
+                    : 'border-white/5 bg-transparent text-text-muted hover:opacity-80'
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full" style={{ background: getMarketplaceColor(c.label), boxShadow: active ? `0 0 6px ${getMarketplaceColor(c.label)}66` : 'none' }} />
+                {c.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <span className="hidden h-4 w-px bg-white/10 sm:block" />
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Comparar com</span>
+          {compareOptions.map((o) => (
             <button
-              key={c.key}
-              onClick={() => toggleChannel(c.key)}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
-                isVisible
-                  ? 'border-white/10 bg-white/[0.04] text-text-secondary hover:bg-white/[0.08]'
-                  : 'border-white/5 bg-transparent text-text-muted line-through opacity-50 hover:opacity-70'
+              key={o.key}
+              onClick={() => setCompareKey(o.key)}
+              className={`cursor-pointer rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
+                compareKey === o.key
+                  ? 'border-white/20 bg-white/[0.08] text-text-primary'
+                  : 'border-white/5 bg-transparent text-text-muted hover:opacity-80'
               }`}
             >
-              <span
-                className="h-2 w-2 rounded-full transition-all duration-200"
-                style={{
-                  background: isVisible ? getMarketplaceColor(c.label) : '#59688A',
-                  boxShadow: isVisible ? `0 0 6px ${getMarketplaceColor(c.label)}66` : 'none',
-                }}
-              />
-              {c.label}
+              {o.label}
             </button>
-          )
-        })}
-        <span className="ml-auto text-[10px] text-text-muted">Clique para filtrar</span>
+          ))}
+        </div>
       </div>
     </div>
   )
