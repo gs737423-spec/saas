@@ -70,7 +70,7 @@ function HeroCard({ kpi }: { kpi: OverviewKpi }) {
         </div>
         <div className="mt-2 flex items-center gap-2">
           <Delta change={kpi.change} />
-          <span className="truncate text-xs text-text-muted">{kpi.context}</span>
+          {kpi.context && <span className="truncate text-xs text-text-muted">{kpi.context}</span>}
         </div>
       </div>
     </div>
@@ -82,14 +82,14 @@ function StatCard({ kpi }: { kpi: OverviewKpi }) {
   const attention = kpi.key === 'fees'
   const c = attention ? toneColor.amber : toneColor[kpi.tone]
   return (
-    <div className="overview-glass overview-card-hover relative overflow-hidden rounded-xl p-2.5">
+    <div className="overview-glass overview-card-hover relative flex h-full flex-col overflow-hidden rounded-xl p-2.5">
       {/* thin left accent only for the attention (fees) card */}
       {attention && <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: c }} />}
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5 flex h-3.5 items-center justify-between">
         <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">{kpi.label}</span>
         <Icon className="h-3.5 w-3.5" style={{ color: c }} />
       </div>
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex h-5 items-baseline gap-1.5">
         <div className="font-mono text-[18px] font-bold leading-none tracking-tight text-text-primary">
           {kpi.prefix && <span className="text-xs font-semibold text-text-secondary">{kpi.prefix} </span>}
           {kpi.value}
@@ -101,7 +101,7 @@ function StatCard({ kpi }: { kpi: OverviewKpi }) {
           </span>
         )}
       </div>
-      <div className="mt-1.5 flex items-center gap-1.5">
+      <div className="mt-auto flex items-center gap-1.5 pt-1.5">
         <Delta change={kpi.change} />
         <span className="truncate text-[10px] text-text-muted">{kpi.context}</span>
       </div>

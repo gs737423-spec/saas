@@ -4,8 +4,6 @@ import { defaultProductFilters } from '@/components/produtos/ProductFilters'
 import type { ProductFilterState } from '@/components/produtos/ProductFilters'
 import ProductKPIs from '@/components/produtos/ProductKPIs'
 import ProductTable from '@/components/produtos/ProductTable'
-import Top5Products from '@/components/produtos/Top5Products'
-import ProductAlerts from '@/components/produtos/ProductAlerts'
 import { products } from '@/data/mockData'
 import { buildPeriodOptions, BASELINE_DAYS } from '@/lib/periods'
 
@@ -48,14 +46,7 @@ export default function Produtos() {
 
       <ProductKPIs products={periodProducts} />
 
-      {/* Main table + side intelligence rail */}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <ProductTable filteredProducts={periodProducts} />
-        <div className="flex flex-col gap-3">
-          <Top5Products products={periodProducts} />
-          <ProductAlerts />
-        </div>
-      </div>
+      <ProductTable filteredProducts={periodProducts} />
     </div>
   )
 }

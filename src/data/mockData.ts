@@ -609,7 +609,7 @@ export const overviewKpis: OverviewKpi[] = [
     scalesWithPeriod: true,
     prefix: 'R$',
     change: 12.5,
-    context: 'Total dos 4 canais',
+    context: '',
     tone: 'cyan',
     hero: true,
   },
