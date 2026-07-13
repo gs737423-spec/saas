@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
@@ -127,6 +127,14 @@ export default function RevenueByChannelChart() {
   const [viewChannel, setViewChannel] = useState<ViewKey>('total')
   // Offset (in days) used to look up the comparison line's values.
   const [compareKey, setCompareKey] = useState<'yesterday' | 'week' | 'month'>('week')
+
+  // Keep "Comparar com" in sync with the topbar period so the two filters
+  // never disagree: 1 day -> ontem, up to ~10 days -> semana passada,
+  // longer ranges -> mês passado. User can still override manually; the
+  // default just re-syncs whenever the topbar period itself changes.
+  useEffect(() => {
+    setCompareKey(period.days <= 1 ? 'yesterday' : period.days <= 10 ? 'week' : 'month')
+  }, [period.key])
 
   const periodDays = period.days
   const compareOffset = compareOptions.find((o) => o.key === compareKey)!.offsetDays
