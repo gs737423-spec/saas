@@ -280,6 +280,106 @@ body {
     .orb { animation: none !important; }
   }
 
+  /* ---- Linhas de dados + sweep de luz — camada 2 do fundo vivo -----------
+     Traços diagonais finos que deslizam lentamente (sensação de fluxo de
+     dados/circuito), mais um feixe de luz suave que varre a tela em ciclo
+     bem longo. Tudo fixed, abaixo do conteúdo, pointer-events: none. */
+
+  .app-bg-lines {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .bg-line {
+    position: absolute;
+    inset: -50% -20%;
+    background-repeat: repeat;
+    will-change: background-position, opacity;
+  }
+
+  /* Traço 1 — diagonal fina azul, deslizando pra baixo-direita */
+  .bg-line-1 {
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(76, 130, 247, 0.16) 0px,
+      rgba(76, 130, 247, 0.16) 1px,
+      transparent 1px,
+      transparent 180px
+    );
+    background-size: 260px 260px;
+    opacity: 0.55;
+    animation: bg-line-drift-1 46s linear infinite;
+  }
+
+  /* Traço 2 — diagonal oposta, cyan, mais espaçada */
+  .bg-line-2 {
+    background-image: repeating-linear-gradient(
+      -68deg,
+      rgba(34, 211, 238, 0.12) 0px,
+      rgba(34, 211, 238, 0.12) 1px,
+      transparent 1px,
+      transparent 240px
+    );
+    background-size: 320px 320px;
+    opacity: 0.4;
+    animation: bg-line-drift-2 58s linear infinite;
+  }
+
+  /* Traço 3 — quase vertical, violeta, bem sutil, contraste de profundidade */
+  .bg-line-3 {
+    background-image: repeating-linear-gradient(
+      8deg,
+      rgba(144, 97, 249, 0.1) 0px,
+      rgba(144, 97, 249, 0.1) 1px,
+      transparent 1px,
+      transparent 300px
+    );
+    background-size: 340px 340px;
+    opacity: 0.35;
+    animation: bg-line-drift-1 70s linear infinite reverse;
+  }
+
+  @keyframes bg-line-drift-1 {
+    from { background-position: 0 0; }
+    to   { background-position: 520px 520px; }
+  }
+  @keyframes bg-line-drift-2 {
+    from { background-position: 0 0; }
+    to   { background-position: -640px 640px; }
+  }
+
+  /* Feixe de luz que varre a tela na diagonal, ciclo longo, quase imperceptível
+     quadro a quadro — reforça a sensação de "vivo" sem distrair do conteúdo. */
+  .bg-light-sweep {
+    position: absolute;
+    inset: -30% -60%;
+    background: linear-gradient(
+      100deg,
+      transparent 42%,
+      rgba(126, 178, 255, 0.09) 48%,
+      rgba(180, 210, 255, 0.14) 50%,
+      rgba(126, 178, 255, 0.09) 52%,
+      transparent 58%
+    );
+    background-size: 220% 220%;
+    animation: bg-light-sweep-move 22s ease-in-out infinite;
+  }
+
+  @keyframes bg-light-sweep-move {
+    0%   { background-position: -60% -60%; opacity: 0; }
+    15%  { opacity: 0.9; }
+    50%  { background-position: 60% 60%; opacity: 0.9; }
+    85%  { opacity: 0; }
+    100% { background-position: 140% 140%; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bg-line, .bg-light-sweep { animation: none !important; }
+  }
+
   /* ---- Sistema de profundidade em 3 níveis --------------------------------
      Nível 1 (estrutural): overview-glass · Nível 2 (primário): -elevated
      Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais

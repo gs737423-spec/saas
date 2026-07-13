@@ -32,6 +32,13 @@ export default function App() {
         <div className="orb orb-5" />
         <div className="orb orb-6" />
       </div>
+      {/* Linhas de dados + sweep de luz — fundo vivo, camada 2 */}
+      <div className="app-bg-lines" aria-hidden="true">
+        <div className="bg-line bg-line-1" />
+        <div className="bg-line bg-line-2" />
+        <div className="bg-line bg-line-3" />
+        <div className="bg-light-sweep" />
+      </div>
       <TopNav />
       <main className="pt-12 md:pt-14">
         <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-5 lg:px-8 xl:px-10">
