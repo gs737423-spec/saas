@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin'
-import { getAuthorizationUrl, signState } from '../../../src/server/integrations/mercadolivre/auth'
-import { logSyncEvent } from '../../../src/server/integrations/syncLog'
+import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
+import { getAuthorizationUrl, signState } from '../../../src/server/integrations/mercadolivre/auth.js'
+import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const appBaseUrl = process.env.APP_BASE_URL

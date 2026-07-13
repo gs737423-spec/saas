@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin'
-import { DEFAULT_COMPANY_ID, type DashboardInventoryItem, type DashboardInventoryResponse } from '../../src/server/integrations/types'
+import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { DEFAULT_COMPANY_ID, type DashboardInventoryItem, type DashboardInventoryResponse } from '../../src/server/integrations/types.js'
 
 type InventoryApiResponse = DashboardInventoryResponse & { ok: boolean; message?: string }
 

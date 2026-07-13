@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin'
-import { logSyncEvent } from '../../../src/server/integrations/syncLog'
-import type { SyncSummary } from '../../../src/server/integrations/types'
-import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync'
+import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
+import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
+import type { SyncSummary } from '../../../src/server/integrations/types.js'
+import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

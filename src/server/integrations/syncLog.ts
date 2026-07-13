@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from './supabaseAdmin'
-import { DEFAULT_COMPANY_ID, type Provider, type SyncLogEventType, type SyncLogStatus } from './types'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
+import { DEFAULT_COMPANY_ID, type Provider, type SyncLogEventType, type SyncLogStatus } from './types.js'
 
 export interface LogSyncEventParams {
   connectionId: string | null

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin'
-import { DEFAULT_COMPANY_ID, type SanitizedSyncLogEntry } from '../../src/server/integrations/types'
+import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { DEFAULT_COMPANY_ID, type SanitizedSyncLogEntry } from '../../src/server/integrations/types.js'
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100

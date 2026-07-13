@@ -1,4 +1,4 @@
-import type { MLItemDetail } from './types'
+import type { MLItemDetail } from './types.js'
 
 function extractSku(item: MLItemDetail): string | null {
   if (item.seller_custom_field) return item.seller_custom_field

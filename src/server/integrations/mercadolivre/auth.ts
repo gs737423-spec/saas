@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
-import type { MLTokenErrorResponse, MLTokenResponse, OAuthStatePayload } from './types'
+import type { MLTokenErrorResponse, MLTokenResponse, OAuthStatePayload } from './types.js'
 
 const AUTHORIZATION_URL = 'https://auth.mercadolivre.com.br/authorization'
 const TOKEN_URL = 'https://api.mercadolibre.com/oauth/token'

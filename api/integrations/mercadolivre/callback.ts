@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin'
-import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/mercadolivre/auth'
-import { encryptSecret } from '../../../src/server/integrations/crypto'
-import { logSyncEvent } from '../../../src/server/integrations/syncLog'
-import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types'
+import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
+import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/mercadolivre/auth.js'
+import { encryptSecret } from '../../../src/server/integrations/crypto.js'
+import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
+import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const appBaseUrl = process.env.APP_BASE_URL

@@ -1,4 +1,4 @@
-import type { MLItemDetail, MLItemSearchResponse } from './types'
+import type { MLItemDetail, MLItemSearchResponse } from './types.js'
 
 const BASE_URL = 'https://api.mercadolibre.com'
 

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin'
-import { DEFAULT_COMPANY_ID, type SanitizedConnectionStatusResponse } from '../../src/server/integrations/types'
+import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { DEFAULT_COMPANY_ID, type SanitizedConnectionStatusResponse } from '../../src/server/integrations/types.js'
 
 type StatusResponse = SanitizedConnectionStatusResponse & { ok: boolean; source: string; message?: string }
 

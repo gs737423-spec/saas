@@ -1,10 +1,10 @@
-import { getSupabaseAdmin } from '../supabaseAdmin'
-import { encryptSecret, decryptSecret } from '../crypto'
-import { logSyncEvent } from '../syncLog'
-import { DEFAULT_COMPANY_ID, type SyncSummary } from '../types'
-import { getItemDetail, searchUserItemIds, MercadoLivreApiError } from './client'
-import { mapItemToInventoryRow, mapItemToProductRow } from './mapper'
-import { refreshAccessToken } from './auth'
+import { getSupabaseAdmin } from '../supabaseAdmin.js'
+import { encryptSecret, decryptSecret } from '../crypto.js'
+import { logSyncEvent } from '../syncLog.js'
+import { DEFAULT_COMPANY_ID, type SyncSummary } from '../types.js'
+import { getItemDetail, searchUserItemIds, MercadoLivreApiError } from './client.js'
+import { mapItemToInventoryRow, mapItemToProductRow } from './mapper.js'
+import { refreshAccessToken } from './auth.js'
 
 export class ConnectionMissingError extends Error {}
 
