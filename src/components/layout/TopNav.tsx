@@ -54,32 +54,29 @@ export default function TopNav() {
     : 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rail-item group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-colors 2xl:w-auto 2xl:justify-start 2xl:gap-2 2xl:px-3 ${
+    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12.5px] font-medium transition-colors lg:gap-1.5 lg:px-2 ${
       isActive ? 'topnav-item-active text-accent-blue' : 'text-text-muted hover:text-text-primary'
     }`
 
   return (
-    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-12 items-center gap-2 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-14 md:px-4 lg:px-6">
+    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-12 items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-14 md:px-4 lg:px-6">
       {/* Brand */}
-      <div className="flex shrink-0 items-center gap-2.5">
-        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[#0a0e1c] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] md:h-9 md:w-9">
-          <img src={logoUrl} alt="Acelera" className="brand-logo h-full w-full scale-[1.6] object-cover" draggable={false} />
-          <span className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/[0.06]" />
-        </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <img src={logoUrl} alt="Acelera" className="brand-logo h-7 w-7 shrink-0 object-contain md:h-8 md:w-8" draggable={false} />
         <div className="hidden min-w-0 flex-col leading-none sm:flex">
           <span className="truncate text-sm font-semibold text-text-primary">Acelera</span>
           <span className="truncate text-[10px] text-text-muted">Intelligence</span>
         </div>
       </div>
 
-      <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
+      <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
 
-      {/* Section nav — desktop only. Icon-only until 2xl, icon+label from 2xl up. */}
-      <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto md:flex">
+      {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
+      <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
         {navItems.map((item) => (
           <NavLink key={item.label} to={item.to} end={item.to === '/'} title={item.label} className={linkClass}>
-            <item.icon className="h-[17px] w-[17px] shrink-0" />
-            <span className="hidden whitespace-nowrap 2xl:inline">{item.label}</span>
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
           </NavLink>
         ))}
       </nav>
@@ -92,22 +89,6 @@ export default function TopNav() {
         <button title="Buscar" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary">
           <Search className="h-[18px] w-[18px]" />
         </button>
-
-        <NavLink
-          to="/importacoes"
-          title="Conexões"
-          className="hidden items-center gap-2 rounded-lg border border-accent-violet/25 bg-accent-violet/[0.12] px-3 text-accent-violet shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] transition-all duration-200 hover:border-accent-violet/45 hover:bg-accent-violet/[0.18] lg:flex lg:h-9"
-        >
-          <Link2 className="h-[17px] w-[17px]" />
-          <span className="whitespace-nowrap text-sm font-semibold text-text-primary">Conexões</span>
-        </NavLink>
-        <NavLink
-          to="/importacoes"
-          title="Conexões"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-violet/25 bg-accent-violet/[0.12] text-accent-violet transition-colors hover:bg-accent-violet/[0.18] lg:hidden"
-        >
-          <Link2 className="h-[18px] w-[18px]" />
-        </NavLink>
 
         <button title="Notificações" className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary">
           <Bell className="h-[18px] w-[18px]" />
