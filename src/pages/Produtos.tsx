@@ -5,12 +5,12 @@ import type { ProductFilterState } from '@/components/produtos/ProductFilters'
 import ProductKPIs from '@/components/produtos/ProductKPIs'
 import ProductTable from '@/components/produtos/ProductTable'
 import { products } from '@/data/mockData'
-import { buildPeriodOptions, BASELINE_DAYS } from '@/lib/periods'
-
-const periodOptions = buildPeriodOptions()
+import { BASELINE_DAYS } from '@/lib/periods'
+import { usePeriod } from '@/contexts/PeriodContext'
 
 export default function Produtos() {
   const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
+  const { period } = usePeriod()
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -28,17 +28,17 @@ export default function Produtos() {
     })
   }, [filters])
 
-  // Scale revenue + units to the selected period. Both scale together so
-  // ratios (ticket médio, margin %) stay realistic — only totals move.
+  // Scale revenue + units to the globally-selected period (topbar calendar
+  // dropdown). Both scale together so ratios (ticket médio, margin %) stay
+  // realistic — only totals move.
   const periodProducts = useMemo(() => {
-    const period = periodOptions.find((p) => p.key === filters.period) ?? periodOptions[0]
     const scale = (period.days / BASELINE_DAYS) * period.jitter
     return filteredProducts.map((p) => ({
       ...p,
       revenue: Math.round(p.revenue * scale),
       units: Math.max(0, Math.round(p.units * scale)),
     }))
-  }, [filteredProducts, filters.period])
+  }, [filteredProducts, period])
 
   return (
     <div className="space-y-2 sm:space-y-2.5">

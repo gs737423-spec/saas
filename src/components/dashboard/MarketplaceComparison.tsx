@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Crown } from 'lucide-react'
-import { channelOverview, getMarketplaceColor, type ChannelOverview, type ChannelStatus } from '@/data/mockData'
+import { channelOverview, scaleChannelOverview, getMarketplaceColor, type ChannelOverview, type ChannelStatus } from '@/data/mockData'
+import { usePeriod } from '@/contexts/PeriodContext'
 
 type SortKey = 'netRevenue' | 'avgTicket' | 'feePct'
 
@@ -111,7 +112,9 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
 
 export default function MarketplaceComparison() {
   const [sort, setSort] = useState<SortKey>('netRevenue')
-  const rows = [...channelOverview].sort((a, b) => (b[sort] as number) - (a[sort] as number))
+  const { period } = usePeriod()
+  const scaled = scaleChannelOverview(channelOverview, period)
+  const rows = [...scaled].sort((a, b) => (b[sort] as number) - (a[sort] as number))
 
   return (
     <div className="overview-glass-elevated flex h-full min-h-[62vh] flex-col rounded-2xl p-3.5 sm:p-4 lg:min-h-[70vh]">

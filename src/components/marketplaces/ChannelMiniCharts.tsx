@@ -1,4 +1,5 @@
-import { channelOverview, getMarketplaceColor } from '@/data/mockData'
+import { channelOverview, scaleChannelOverview, getMarketplaceColor } from '@/data/mockData'
+import { usePeriod } from '@/contexts/PeriodContext'
 
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const brl = (v: number) => v.toLocaleString('pt-BR')
@@ -39,25 +40,28 @@ function MiniBarChart({ title, question, data, maxValue }: MiniChartProps) {
 }
 
 export default function ChannelMiniCharts() {
-  const byShare = [...channelOverview].sort((a, b) => b.netSharePct - a.netSharePct).map((m) => ({
+  const { period } = usePeriod()
+  const scaled = scaleChannelOverview(channelOverview, period)
+
+  const byShare = [...scaled].sort((a, b) => b.netSharePct - a.netSharePct).map((m) => ({
     marketplace: m.marketplace,
     value: m.netSharePct,
     display: `${pct(m.netSharePct)}%`,
   }))
 
-  const byTicket = [...channelOverview].sort((a, b) => b.avgTicket - a.avgTicket).map((m) => ({
+  const byTicket = [...scaled].sort((a, b) => b.avgTicket - a.avgTicket).map((m) => ({
     marketplace: m.marketplace,
     value: m.avgTicket,
     display: `R$ ${brl2(m.avgTicket)}`,
   }))
 
-  const byOrders = [...channelOverview].sort((a, b) => b.orders - a.orders).map((m) => ({
+  const byOrders = [...scaled].sort((a, b) => b.orders - a.orders).map((m) => ({
     marketplace: m.marketplace,
     value: m.orders,
     display: brl(m.orders),
   }))
 
-  const byFees = [...channelOverview].sort((a, b) => b.feePct - a.feePct).map((m) => ({
+  const byFees = [...scaled].sort((a, b) => b.feePct - a.feePct).map((m) => ({
     marketplace: m.marketplace,
     value: m.feePct,
     display: `${pct(m.feePct)}%`,

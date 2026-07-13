@@ -2,17 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Search, ChevronDown, Check, X } from 'lucide-react'
 import { productCategories, getMarketplaceColor } from '@/data/mockData'
 import type { Marketplace } from '@/data/mockData'
-import PeriodDropdown from '@/components/common/PeriodDropdown'
-import { buildPeriodOptions } from '@/lib/periods'
 
 const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
-const periodOptions = buildPeriodOptions()
 
 export interface ProductFilterState {
   search: string
   marketplaces: Set<Marketplace>
   category: string
-  period: string
 }
 
 interface Props {
@@ -20,11 +16,12 @@ interface Props {
   onChange: (next: ProductFilterState) => void
 }
 
+// Period is global (topbar calendar dropdown, PeriodContext) — no local
+// period field here anymore so every page reacts to the same selection.
 export const defaultProductFilters: ProductFilterState = {
   search: '',
   marketplaces: new Set(),
   category: 'all',
-  period: periodOptions.find((p) => p.key === 'month')!.key,
 }
 
 function MultiMarketplaceDropdown({
@@ -202,7 +199,7 @@ export default function ProductFilters({ filters, onChange }: Props) {
 
   return (
     <div className="glass-panel rounded-2xl p-4">
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_210px_170px_180px]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_210px_170px]">
         <div className="group flex h-11 items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 transition-colors focus-within:border-accent-blue/50 focus-within:bg-bg-card">
           <Search className="h-4 w-4 shrink-0 text-text-muted transition-colors group-focus-within:text-accent-blue" />
           <input
@@ -222,12 +219,6 @@ export default function ProductFilters({ filters, onChange }: Props) {
           onChange={(v) => onChange({ ...filters, category: v })}
           options={categoryOptions}
           labelFn={(v) => (v === 'all' ? 'Todas as categorias' : v)}
-        />
-        <PeriodDropdown
-          variant="field"
-          options={periodOptions}
-          selectedKey={filters.period}
-          onChange={(key) => onChange({ ...filters, period: key })}
         />
       </div>
     </div>

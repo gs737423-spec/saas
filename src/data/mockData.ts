@@ -1,3 +1,5 @@
+import { BASELINE_DAYS, type PeriodOption } from '@/lib/periods'
+
 export type Marketplace = 'Mercado Livre' | 'Shopee' | 'Amazon' | 'Loja Própria'
 
 export interface KPI {
@@ -568,6 +570,30 @@ export const channelOverview: ChannelOverview[] = _withNet
     netEfficiencyPct: Math.round((m.netRevenue / m.revenue) * 1000) / 10,
   }))
   .sort((a, b) => b.netRevenue - a.netRevenue)
+
+/**
+ * Scales the 30-day channelOverview baseline to the globally-selected period
+ * (topbar calendar dropdown). Revenue/orders/fees scale together so ratios
+ * (ticket médio, %s) stay realistic — only totals move, same approach as
+ * KPICards.resolveKpi. Recomputes netSharePct/netEfficiencyPct/avgTicket
+ * from the scaled absolutes rather than scaling them directly (they're rates).
+ */
+export function scaleChannelOverview(items: ChannelOverview[], period: PeriodOption): ChannelOverview[] {
+  const scale = (period.days / BASELINE_DAYS) * period.jitter
+  const scaled = items.map((m) => {
+    const revenue = Math.round(m.revenue * scale)
+    const orders = Math.max(1, Math.round(m.orders * scale))
+    const fees = Math.round(m.fees * scale)
+    const netRevenue = revenue - fees
+    return { ...m, revenue, orders, fees, netRevenue, avgTicket: Math.round((revenue / orders) * 100) / 100 }
+  })
+  const netTotal = scaled.reduce((s, m) => s + m.netRevenue, 0)
+  return scaled.map((m) => ({
+    ...m,
+    netSharePct: Math.round((m.netRevenue / netTotal) * 1000) / 10,
+    netEfficiencyPct: Math.round((m.netRevenue / m.revenue) * 1000) / 10,
+  }))
+}
 
 /* --- KPIs globais da Visão Geral --------------------------------------- */
 
