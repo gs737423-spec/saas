@@ -66,7 +66,7 @@ export type SyncLogEventType =
 
 export type SyncLogStatus = 'info' | 'success' | 'error'
 
-export type SyncSource = 'real' | 'demo' | 'config_missing'
+export type SyncSource = 'real' | 'demo' | 'config_missing' | 'error'
 
 export interface DashboardInventoryItem {
   sku: string | null
@@ -79,7 +79,7 @@ export interface DashboardInventoryItem {
   lastSyncAt: string | null
 }
 
-export type DashboardInventorySource = 'real' | 'demo' | 'config_missing'
+export type DashboardInventorySource = 'real' | 'demo' | 'config_missing' | 'error'
 
 export interface DashboardInventoryResponse {
   source: DashboardInventorySource

@@ -10,23 +10,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
-  if (missing.length > 0) {
-    await logSyncEvent({
-      connectionId: null,
-      provider: 'mercadolivre',
-      eventType: 'config_missing',
-      status: 'error',
-      message: `Sync attempted without required env vars: ${missing.join(', ')}`,
-    })
-    const summary: SyncSummary = { productsImported: 0, inventoryUpdated: 0, errors: [`config_missing: ${missing.join(', ')}`], durationMs: 0, source: 'config_missing' }
-    res.status(200).json(summary)
-    return
-  }
-
   try {
+    const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
+    if (missing.length > 0) {
+      await logSyncEvent({
+        connectionId: null,
+        provider: 'mercadolivre',
+        eventType: 'config_missing',
+        status: 'error',
+        message: `Sync attempted without required env vars: ${missing.join(', ')}`,
+      })
+      const summary: SyncSummary & { ok: boolean; message?: string } = {
+        productsImported: 0,
+        inventoryUpdated: 0,
+        errors: [`config_missing: ${missing.join(', ')}`],
+        durationMs: 0,
+        source: 'config_missing',
+        ok: false,
+        message: 'Credenciais do Mercado Livre ainda não configuradas.',
+      }
+      res.status(200).json(summary)
+      return
+    }
+
     const summary = await runMercadoLivreSync()
-    res.status(200).json(summary)
+    res.status(200).json({ ok: true, ...summary })
   } catch (err) {
     if (err instanceof ConnectionMissingError) {
       await logSyncEvent({
@@ -36,10 +44,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'error',
         message: err.message,
       })
-      res.status(400).json({ error: 'connection_missing', message: err.message })
+      res.status(200).json({ ok: false, source: 'disconnected', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
       return
     }
-    console.error('[mercadolivre/sync] unexpected error:', err)
-    res.status(500).json({ error: 'internal_error', message: err instanceof Error ? err.message : 'Unknown error' })
+    console.error('[mercadolivre/sync]', err)
+    res.status(200).json({
+      ok: false,
+      source: 'error',
+      message: 'Erro controlado ao sincronizar com o Mercado Livre.',
+      productsImported: 0,
+      inventoryUpdated: 0,
+      errors: [err instanceof Error ? err.message : 'Unknown error'],
+      durationMs: 0,
+    })
   }
 }

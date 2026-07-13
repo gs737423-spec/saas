@@ -2,16 +2,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin'
 import { DEFAULT_COMPANY_ID, type DashboardInventoryItem, type DashboardInventoryResponse } from '../../src/server/integrations/types'
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const missing = getMissingEnvVars(CORE_ENV_VARS)
-  if (missing.length > 0) {
-    const response: DashboardInventoryResponse = { source: 'config_missing', items: [], lastSyncAt: null }
-    res.status(200).json(response)
-    return
-  }
+type InventoryApiResponse = DashboardInventoryResponse & { ok: boolean; message?: string }
 
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const supabase = getSupabaseAdmin()
+    const missing = getMissingEnvVars(CORE_ENV_VARS)
+    if (missing.length > 0) {
+      const response: InventoryApiResponse = { ok: false, source: 'config_missing', items: [], lastSyncAt: null, message: 'Configuração do Supabase pendente.' }
+      res.status(200).json(response)
+      return
+    }
+
+    const supabase = await getSupabaseAdmin()
 
     const { data: connection, error: connError } = await supabase
       .from('marketplace_connections')
@@ -23,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (connError) throw new Error(connError.message)
 
     if (!connection || connection.status !== 'connected') {
-      const response: DashboardInventoryResponse = { source: 'demo', items: [], lastSyncAt: null }
+      const response: InventoryApiResponse = { ok: true, source: 'demo', items: [], lastSyncAt: null }
       res.status(200).json(response)
       return
     }
@@ -39,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!inventoryRows || inventoryRows.length === 0) {
       // Connected but no sync has run yet — still demo until real data exists,
       // never fabricate numbers to look "connected".
-      const response: DashboardInventoryResponse = { source: 'demo', items: [], lastSyncAt: connection.last_sync_at }
+      const response: InventoryApiResponse = { ok: true, source: 'demo', items: [], lastSyncAt: connection.last_sync_at }
       res.status(200).json(response)
       return
     }
@@ -66,10 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     })
 
-    const response: DashboardInventoryResponse = { source: 'real', items, lastSyncAt: connection.last_sync_at }
+    const response: InventoryApiResponse = { ok: true, source: 'real', items, lastSyncAt: connection.last_sync_at }
     res.status(200).json(response)
   } catch (err) {
-    console.error('[dashboard/inventory] failed:', err)
-    res.status(500).json({ error: 'internal_error', message: err instanceof Error ? err.message : 'Unknown error' })
+    console.error('[api/dashboard/inventory]', err)
+    const response: InventoryApiResponse = { ok: false, source: 'error', items: [], lastSyncAt: null, message: 'Erro controlado ao consultar estoque.' }
+    res.status(200).json(response)
   }
 }

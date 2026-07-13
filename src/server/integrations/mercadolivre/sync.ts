@@ -18,7 +18,7 @@ interface ConnectionRow {
 }
 
 async function loadConnection(): Promise<ConnectionRow> {
-  const supabase = getSupabaseAdmin()
+  const supabase = await getSupabaseAdmin()
   const { data, error } = await supabase
     .from('marketplace_connections')
     .select('id, status, seller_id, access_token_encrypted, refresh_token_encrypted, token_expires_at')
@@ -45,7 +45,7 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
   const refreshToken = decryptSecret(connection.refresh_token_encrypted!)
   const refreshed = await refreshAccessToken(refreshToken)
 
-  const supabase = getSupabaseAdmin()
+  const supabase = await getSupabaseAdmin()
   await supabase
     .from('marketplace_connections')
     .update({
@@ -74,7 +74,7 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
  */
 export async function runMercadoLivreSync(): Promise<SyncSummary> {
   const startedAt = new Date()
-  const supabase = getSupabaseAdmin()
+  const supabase = await getSupabaseAdmin()
   const connection = await loadConnection()
 
   await logSyncEvent({

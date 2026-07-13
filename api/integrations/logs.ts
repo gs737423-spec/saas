@@ -6,17 +6,17 @@ const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const missing = getMissingEnvVars(CORE_ENV_VARS)
-  if (missing.length > 0) {
-    res.status(200).json({ logs: [] as SanitizedSyncLogEntry[] })
-    return
-  }
-
-  const limit = Math.min(MAX_LIMIT, Math.max(1, Number(req.query.limit) || DEFAULT_LIMIT))
-  const provider = typeof req.query.provider === 'string' ? req.query.provider : undefined
-
   try {
-    const supabase = getSupabaseAdmin()
+    const missing = getMissingEnvVars(CORE_ENV_VARS)
+    if (missing.length > 0) {
+      res.status(200).json({ ok: false, source: 'config_missing', message: 'Configuração do Supabase pendente.', logs: [] as SanitizedSyncLogEntry[] })
+      return
+    }
+
+    const limit = Math.min(MAX_LIMIT, Math.max(1, Number(req.query.limit) || DEFAULT_LIMIT))
+    const provider = typeof req.query.provider === 'string' ? req.query.provider : undefined
+
+    const supabase = await getSupabaseAdmin()
     let query = supabase
       .from('sync_logs')
       .select('id, provider, event_type, status, message, created_at')
@@ -41,9 +41,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt: row.created_at,
     }))
 
-    res.status(200).json({ logs })
+    res.status(200).json({ ok: true, source: 'real', logs })
   } catch (err) {
-    console.error('[integrations/logs] failed:', err)
-    res.status(500).json({ error: 'internal_error', message: err instanceof Error ? err.message : 'Unknown error' })
+    console.error('[api/integrations/logs]', err)
+    res.status(200).json({ ok: false, source: 'error', message: 'Erro controlado ao consultar logs de integração.', logs: [] as SanitizedSyncLogEntry[] })
   }
 }

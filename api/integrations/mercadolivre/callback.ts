@@ -6,45 +6,47 @@ import { logSyncEvent } from '../../../src/server/integrations/syncLog'
 import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
   const appBaseUrl = process.env.APP_BASE_URL
 
-  if (missing.length > 0 || !appBaseUrl) {
-    console.error('[mercadolivre/callback] missing env vars:', missing.join(', '))
-    res.status(500).json({ error: 'config_missing', missing })
-    return
-  }
-
-  const { code, state, error: mlError } = req.query as { code?: string; state?: string; error?: string }
-
-  if (mlError) {
-    await logSyncEvent({
-      connectionId: null,
-      provider: 'mercadolivre',
-      eventType: 'oauth_error',
-      status: 'error',
-      message: `Mercado Livre returned error: ${mlError}`,
-    })
-    res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
-    return
-  }
-
-  const statePayload = verifyState(state)
-  if (!statePayload || !code) {
-    await logSyncEvent({
-      connectionId: null,
-      provider: 'mercadolivre',
-      eventType: 'validation_error',
-      status: 'error',
-      message: !code ? 'Missing authorization code in callback' : 'Invalid or expired OAuth state',
-    })
-    res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
-    return
-  }
-
   try {
+    const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
+    if (missing.length > 0 || !appBaseUrl) {
+      console.error('[mercadolivre/callback] missing env vars:', missing.join(', '))
+      // No safe redirect target without APP_BASE_URL — this is the one case where a
+      // JSON error is more honest than guessing a URL to bounce the browser to.
+      res.status(200).json({ ok: false, source: 'config_missing', message: 'Configuração pendente — variáveis de ambiente do Mercado Livre ausentes.' })
+      return
+    }
+
+    const { code, state, error: mlError } = req.query as { code?: string; state?: string; error?: string }
+
+    if (mlError) {
+      await logSyncEvent({
+        connectionId: null,
+        provider: 'mercadolivre',
+        eventType: 'oauth_error',
+        status: 'error',
+        message: `Mercado Livre returned error: ${mlError}`,
+      })
+      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      return
+    }
+
+    const statePayload = verifyState(state)
+    if (!statePayload || !code) {
+      await logSyncEvent({
+        connectionId: null,
+        provider: 'mercadolivre',
+        eventType: 'validation_error',
+        status: 'error',
+        message: !code ? 'Missing authorization code in callback' : 'Invalid or expired OAuth state',
+      })
+      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      return
+    }
+
     const tokenResponse = await exchangeCodeForToken(code)
-    const supabase = getSupabaseAdmin()
+    const supabase = await getSupabaseAdmin()
 
     const { data, error: upsertError } = await supabase
       .from('marketplace_connections')
@@ -82,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre`)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error during token exchange'
-    console.error('[mercadolivre/callback] failed:', message)
+    console.error('[mercadolivre/callback]', message)
     await logSyncEvent({
       connectionId: null,
       provider: 'mercadolivre',
@@ -90,6 +92,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       status: 'error',
       message,
     })
-    res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+    if (appBaseUrl) {
+      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+    } else {
+      res.status(200).json({ ok: false, source: 'error', message: 'Erro controlado durante autenticação com o Mercado Livre.' })
+    }
   }
 }

@@ -17,7 +17,7 @@ export interface LogSyncEventParams {
  *  a logging failure must not break the OAuth/sync flow it's trying to record. */
 export async function logSyncEvent(params: LogSyncEventParams): Promise<void> {
   try {
-    const supabase = getSupabaseAdmin()
+    const supabase = await getSupabaseAdmin()
     const { error } = await supabase.from('sync_logs').insert({
       company_id: DEFAULT_COMPANY_ID,
       connection_id: params.connectionId,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Database, Settings, Info } from 'lucide-react'
+import { Loader2, Database, Settings, Info, AlertTriangle } from 'lucide-react'
 import InventoryKPIs from '@/components/estoque/InventoryKPIs'
 import InventoryTable from '@/components/estoque/InventoryTable'
 import RealInventoryTable from '@/components/estoque/RealInventoryTable'
@@ -10,6 +10,7 @@ const badgeConfig = {
   real: { label: 'Dados reais', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/25', icon: Database },
   demo: { label: 'Demonstração', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/25', icon: Info },
   config_missing: { label: 'Configuração pendente', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/25', icon: Settings },
+  error: { label: 'Demonstração', color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/25', icon: AlertTriangle },
 } as const
 
 export default function Estoque() {
