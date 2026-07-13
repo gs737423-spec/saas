@@ -1,4 +1,5 @@
-import type { ProductHealthScore } from '@/data/mockData'
+import { Gauge } from 'lucide-react'
+import type { ProductHealthScore, StockItem } from '@/data/mockData'
 
 const statusColor: Record<string, string> = {
   'Saudável': '#16C784',
@@ -7,8 +8,15 @@ const statusColor: Record<string, string> = {
   'Parado': '#9061F9',
 }
 
-export default function ProdutoHealthScore({ health }: { health: ProductHealthScore }) {
+interface Props {
+  health: ProductHealthScore
+  stock: StockItem | undefined
+}
+
+export default function ProdutoHealthScore({ health, stock }: Props) {
   const color = statusColor[health.status] ?? '#4C82F7'
+  const ruptureRisk = stock ? (stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo') : null
+  const riskColor = ruptureRisk === 'Alto' ? '#F4436C' : ruptureRisk === 'Médio' ? '#F5C24B' : '#16C784'
 
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">
@@ -46,6 +54,32 @@ export default function ProdutoHealthScore({ health }: { health: ProductHealthSc
             </div>
           ))}
         </div>
+
+        {stock && ruptureRisk && (
+          <div className="grid w-full grid-cols-2 gap-2 border-t border-border-subtle pt-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
+              <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Cobertura</p>
+              <p className="mt-0.5 font-mono text-sm font-bold text-text-primary">{stock.coverageDays}d</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
+              <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Giro</p>
+              <p className="mt-0.5 flex items-center gap-1 font-mono text-sm font-bold text-text-primary">
+                <Gauge className="h-3 w-3 text-accent-cyan" />
+                {stock.turnover}x
+              </p>
+            </div>
+            <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
+              <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Estoque</p>
+              <p className="mt-0.5 font-mono text-sm font-bold text-text-primary">{stock.stock}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
+              <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Risco</p>
+              <span className="mt-0.5 inline-block rounded px-1 py-0.5 font-mono text-[11px] font-bold" style={{ color: riskColor, background: `${riskColor}1a` }}>
+                {ruptureRisk}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

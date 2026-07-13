@@ -33,7 +33,7 @@ export default function ProdutoDetalhe() {
       <ProdutoKPIs product={product} stock={stock} />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <SalesTrendChart sku={product.sku} />
-        <ProdutoHealthScore health={health} />
+        <ProdutoHealthScore health={health} stock={stock} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
