@@ -1,7 +1,9 @@
 import { useMemo, useState, useCallback } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
+import { usePeriod } from '@/contexts/PeriodContext'
+import { TODAY } from '@/lib/periods'
 
 const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; label: Marketplace }[] = [
   { key: 'mercadoLivre', label: 'Mercado Livre' },
@@ -22,19 +24,6 @@ interface DailyData {
   total: number
 }
 
-const periods = [
-  { key: '1d', label: '1 dia', days: 1 },
-  { key: '2d', label: '2 dias', days: 2 },
-  { key: '7d', label: '1 sem', days: 7 },
-  { key: '15d', label: '15 dias', days: 15 },
-  { key: '30d', label: '1 mês', days: 30 },
-  { key: '90d', label: '3 meses', days: 90 },
-  { key: '180d', label: '6 meses', days: 180 },
-  { key: '365d', label: '12 meses', days: 365 },
-] as const
-
-type PeriodKey = typeof periods[number]['key']
-
 function seededRandom(seed: number): number {
   const x = Math.sin(seed) * 10000
   return x - Math.floor(x)
@@ -42,12 +31,11 @@ function seededRandom(seed: number): number {
 
 function generateDailyData(totalDays: number): DailyData[] {
   const data: DailyData[] = []
-  const today = new Date(2026, 6, 11)
   const baselines = { mercadoLivre: 2800, shopee: 1600, amazon: 900, lojaPropria: 550 }
   const growthPerDay = { mercadoLivre: 3.5, shopee: 4.2, amazon: 2.8, lojaPropria: 1.8 }
 
   for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(today)
+    const d = new Date(TODAY)
     d.setDate(d.getDate() - i)
     const dayOfWeek = d.getDay()
     const weekendFactor = dayOfWeek === 0 ? 0.7 : dayOfWeek === 6 ? 0.85 : 1
@@ -74,19 +62,30 @@ function generateDailyData(totalDays: number): DailyData[] {
   return data
 }
 
-const allDailyData = generateDailyData(365)
+// 400 days of history so any period plus its "previous window" comparison
+// (up to 2x the selected range) always has data behind it.
+const allDailyData = generateDailyData(400)
 
 const brl = (v: number) => v.toLocaleString('pt-BR')
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
+/** Downsamples a daily slice so the chart stays readable on longer ranges. */
+function resample(sliced: DailyData[], periodDays: number): DailyData[] {
+  if (periodDays <= 15) return sliced
+  const step = periodDays <= 30 ? 2 : periodDays <= 90 ? 3 : 7
+  return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
+}
+
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
-  const total = payload.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
+  const channelEntries = payload.filter((p: any) => p.dataKey !== 'prevTotal')
+  const total = channelEntries.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
+  const prev = payload.find((p: any) => p.dataKey === 'prevTotal')?.value
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
       {channels.map((c) => {
-        const entry = payload.find((p: any) => p.dataKey === c.key)
+        const entry = channelEntries.find((p: any) => p.dataKey === c.key)
         if (!entry) return null
         const share = total > 0 ? (entry.value / total) * 100 : 0
         return (
@@ -106,12 +105,18 @@ function CustomTooltip({ active, payload, label }: any) {
         <span className="font-medium text-text-muted">Total</span>
         <span className="font-mono font-bold text-text-primary">R$ {brl(total)}</span>
       </div>
+      {prev !== undefined && (
+        <div className="flex items-center justify-between pt-1 text-[11px]">
+          <span className="text-text-muted">Período anterior</span>
+          <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
+        </div>
+      )}
     </div>
   )
 }
 
 export default function RevenueByChannelChart() {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('30d')
+  const { period } = usePeriod()
   const [visibleChannels, setVisibleChannels] = useState<Set<ChannelKey>>(
     new Set(channels.map((c) => c.key))
   )
@@ -128,46 +133,24 @@ export default function RevenueByChannelChart() {
     })
   }, [])
 
-  const periodDays = periods.find((p) => p.key === selectedPeriod)!.days
+  const periodDays = Math.max(period.days, 2)
 
   const filteredData = useMemo(() => {
-    const sliced = allDailyData.slice(-periodDays)
-    if (periodDays <= 2) return sliced
-    if (periodDays <= 15) return sliced
-    if (periodDays <= 30) {
-      const step = 2
-      return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
-    }
-    if (periodDays <= 90) {
-      const step = 3
-      return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
-    }
-    // 180, 365 — aggregate weekly
-    const weeks: DailyData[] = []
-    for (let i = 0; i < sliced.length; i += 7) {
-      const chunk = sliced.slice(i, i + 7)
-      const agg: any = { date: chunk[0].date, label: chunk[0].label }
-      let total = 0
-      for (const c of channels) {
-        agg[c.key] = chunk.reduce((s, d) => s + (d as any)[c.key], 0)
-        total += agg[c.key]
-      }
-      agg.total = total
-      weeks.push(agg)
-    }
-    return weeks
+    const current = resample(allDailyData.slice(-periodDays), periodDays)
+    const previousSlice = allDailyData.slice(-periodDays * 2, -periodDays)
+    const previous = resample(previousSlice, periodDays)
+    return current.map((entry, i) => ({ ...entry, prevTotal: previous[i]?.total }))
   }, [periodDays])
 
   const channelSummary = useMemo(() => {
     const periodData = allDailyData.slice(-periodDays)
+    const previousData = allDailyData.slice(-periodDays * 2, -periodDays)
     const totalAll = periodData.reduce((s, d) => s + d.total, 0)
     return channels
       .map((c) => {
         const total = periodData.reduce((s, d) => s + (d as any)[c.key], 0)
-        const halfIdx = Math.floor(periodData.length / 2)
-        const firstHalf = periodData.slice(0, halfIdx).reduce((s, d) => s + (d as any)[c.key], 0)
-        const secondHalf = periodData.slice(halfIdx).reduce((s, d) => s + (d as any)[c.key], 0)
-        const growth = firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf) * 100 : 0
+        const prevTotal = previousData.reduce((s, d) => s + (d as any)[c.key], 0)
+        const growth = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : 0
         const share = totalAll > 0 ? (total / totalAll) * 100 : 0
         return { ...c, total, growth, share }
       })
@@ -178,29 +161,12 @@ export default function RevenueByChannelChart() {
 
   return (
     <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
-      {/* Header + period pills */}
-      <div className="relative mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
-          <p className="mt-0.5 text-xs text-text-muted">
-            Total: <span className="font-mono font-semibold text-text-secondary">R$ {brl(totalRevenue)}</span>
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {periods.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setSelectedPeriod(p.key)}
-              className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all duration-200 ${
-                selectedPeriod === p.key
-                  ? 'bg-accent-blue/20 text-accent-blue shadow-[0_0_12px_rgba(59,130,246,0.15)] ring-1 ring-accent-blue/30'
-                  : 'text-text-muted hover:bg-white/5 hover:text-text-secondary'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+      {/* Header */}
+      <div className="relative mb-4">
+        <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
+        <p className="mt-0.5 text-xs text-text-muted">
+          {period.label} · Total: <span className="font-mono font-semibold text-text-secondary">R$ {brl(totalRevenue)}</span>
+        </p>
       </div>
 
       {/* Channel cards */}
@@ -288,7 +254,7 @@ export default function RevenueByChannelChart() {
       {/* Chart */}
       <div className="h-56 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+          <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
               {channels.map((c) => {
                 const color = getMarketplaceColor(c.label)
@@ -338,7 +304,18 @@ export default function RevenueByChannelChart() {
                 animationEasing="ease-out"
               />
             ))}
-          </AreaChart>
+            <Line
+              type="monotone"
+              dataKey="prevTotal"
+              name="Período anterior"
+              stroke="#9FB0D0"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+              dot={false}
+              activeDot={{ r: 3, fill: '#9FB0D0', stroke: '#0d1225', strokeWidth: 1.5 }}
+              animationDuration={600}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
@@ -367,6 +344,10 @@ export default function RevenueByChannelChart() {
             </button>
           )
         })}
+        <span className="flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-[11px] font-medium text-text-muted">
+          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#9FB0D0' }} />
+          Período anterior
+        </span>
         <span className="ml-auto text-[10px] text-text-muted">Clique para filtrar</span>
       </div>
     </div>
