@@ -35,15 +35,15 @@ interface Props {
   filteredProducts: Product[]
 }
 
-const columns: { key: SortKey; label: string; align?: 'right' }[] = [
+const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
   { key: 'sku', label: 'SKU' },
   { key: 'name', label: 'Produto' },
   { key: 'marketplace', label: 'Marketplace' },
-  { key: 'units', label: 'Vendas', align: 'right' },
-  { key: 'stock', label: 'Estoque', align: 'right' },
-  { key: 'revenue', label: 'Faturamento', align: 'right' },
-  { key: 'margin', label: 'Margem', align: 'right' },
-  { key: 'trend', label: 'Tendência', align: 'right' },
+  { key: 'units', label: 'Vendas', align: 'center' },
+  { key: 'stock', label: 'Estoque', align: 'center' },
+  { key: 'revenue', label: 'Faturamento', align: 'center' },
+  { key: 'margin', label: 'Margem', align: 'center' },
+  { key: 'trend', label: 'Tendência', align: 'center' },
 ]
 
 export default function ProductTable({ filteredProducts }: Props) {
@@ -144,7 +144,7 @@ export default function ProductTable({ filteredProducts }: Props) {
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`group cursor-pointer pb-3 pr-4 font-semibold select-none transition-colors hover:text-text-secondary ${col.key === 'trend' ? 'pr-0' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                  className={`group cursor-pointer pb-3 pr-4 font-semibold select-none transition-colors hover:text-text-secondary ${col.key === 'trend' ? 'pr-0' : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}
                   onClick={() => handleSort(col.key)}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -175,18 +175,18 @@ export default function ProductTable({ filteredProducts }: Props) {
                       {p.marketplace}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
-                  <td className={`py-3 pr-4 text-right font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
-                  <td className="py-3 pr-4 text-right font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
-                  <td className="py-3 pr-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="py-3 pr-4 text-center font-mono text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
+                  <td className={`py-3 pr-4 text-center font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
+                  <td className="py-3 pr-4 text-center font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
+                  <td className="py-3 pr-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border-subtle">
                         <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${p.margin}%` }} />
                       </div>
                       <span className="font-mono text-text-secondary">{p.margin}%</span>
                     </div>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-center">
                     <span className={`inline-flex items-center gap-1 font-mono font-medium ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
                       {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {positive ? '+' : ''}{p.trend}%
