@@ -491,9 +491,19 @@ body {
     background: radial-gradient(120% 100% at 50% 120%, rgba(144, 97, 249, 0.08), transparent 74%);
   }
 
-  /* Logo — reduz o neon/gamer do PNG: dessatura leve, integra ao container */
-  .brand-logo {
-    filter: saturate(0.82) brightness(0.95) contrast(1.02);
+  /* Brand mark — transparent cutout icon, subtle ambient glow so it reads
+     as an integrated part of the topbar instead of a pasted square. */
+  .brand-mark {
+    filter:
+      drop-shadow(0 0 10px rgba(76, 130, 247, 0.4))
+      drop-shadow(0 0 22px rgba(96, 111, 249, 0.18))
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  }
+  .group:hover .brand-mark {
+    filter:
+      drop-shadow(0 0 14px rgba(76, 130, 247, 0.55))
+      drop-shadow(0 0 28px rgba(96, 111, 249, 0.28))
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
   }
 
   /* ---- Top nav (substitui a sidebar) --------------------------------------

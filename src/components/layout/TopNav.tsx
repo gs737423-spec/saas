@@ -17,7 +17,7 @@ import {
   User,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import logoUrl from '@/assets/acelera-logo.png'
+import Brand from '@/components/layout/Brand'
 
 type Item = { icon: typeof Package; label: string; to: string }
 
@@ -59,17 +59,10 @@ export default function TopNav() {
     }`
 
   return (
-    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-12 items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-14 md:px-4 lg:px-6">
-      {/* Brand */}
-      <div className="flex shrink-0 items-center gap-2">
-        <img src={logoUrl} alt="Acelera" className="brand-logo h-7 w-7 shrink-0 object-contain md:h-8 md:w-8" draggable={false} />
-        <div className="hidden min-w-0 flex-col leading-none sm:flex">
-          <span className="truncate text-sm font-semibold text-text-primary">Acelera</span>
-          <span className="truncate text-[10px] text-text-muted">Intelligence</span>
-        </div>
-      </div>
+    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-16 md:px-4 lg:px-6">
+      <Brand />
 
-      <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
+      <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
 
       {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
       <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">

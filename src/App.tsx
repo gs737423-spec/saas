@@ -34,7 +34,7 @@ export default function App() {
         <div className="bg-line bg-line-1" />
       </div>
       <TopNav />
-      <main className="pt-12 md:pt-14">
+      <main className="pt-14 md:pt-16">
         <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-5 lg:px-8 xl:px-10">
           <div key={location.pathname} className="page-transition">
             <Routes location={location}>
