@@ -60,42 +60,42 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
 
   return (
     <div
-      className={`group flex items-center gap-3 rounded-xl px-3 py-2 sm:gap-4 sm:px-3.5 ${
+      className={`group flex flex-1 items-center gap-3 rounded-xl px-3 py-3.5 sm:gap-4 sm:px-4 sm:py-5 ${
         isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'
       }`}
     >
-      <span className="flex w-4 shrink-0 items-center justify-center">
-        {isLeader ? <Crown className="h-3.5 w-3.5" style={{ color: brand }} /> : <span className="font-mono text-xs font-bold text-text-muted">{rank}</span>}
+      <span className="flex w-5 shrink-0 items-center justify-center">
+        {isLeader ? <Crown className="h-4 w-4" style={{ color: brand }} /> : <span className="font-mono text-sm font-bold text-text-muted">{rank}</span>}
       </span>
 
-      <div className="flex w-24 shrink-0 items-center gap-2 sm:w-32">
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: brand, boxShadow: `0 0 6px ${brand}88` }} />
-        <span className="truncate text-[13px] font-medium text-text-primary">{m.marketplace}</span>
+      <div className="flex w-24 shrink-0 items-center gap-2 sm:w-36">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: brand, boxShadow: `0 0 8px ${brand}88` }} />
+        <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
       </div>
 
-      <div className="w-24 shrink-0 text-right sm:w-28">
-        <div className="font-mono text-[13px] font-semibold text-text-primary">R$ {brl(m.netRevenue)}</div>
-        <div className="font-mono text-[9px] text-text-muted">faturamento</div>
+      <div className="w-24 shrink-0 text-right sm:w-32">
+        <div className="font-mono text-[14px] font-semibold text-text-primary sm:text-[15px]">R$ {brl(m.netRevenue)}</div>
+        <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex">
-        <div className="overview-track h-1 flex-1 overflow-hidden rounded-full">
+        <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
-        <span className="w-10 shrink-0 text-right font-mono text-[11px] text-text-secondary">{pct(m.netSharePct)}%</span>
-        <span className="w-9 shrink-0 text-[9px] uppercase tracking-wider text-text-muted">share</span>
+        <span className="w-10 shrink-0 text-right font-mono text-[11.5px] text-text-secondary">{pct(m.netSharePct)}%</span>
+        <span className="w-9 shrink-0 text-[9.5px] uppercase tracking-wider text-text-muted">share</span>
       </div>
 
       <div className="hidden w-16 shrink-0 text-right lg:block">
-        <div className="font-mono text-xs text-text-secondary">R$ {brl2(m.avgTicket)}</div>
-        <div className="text-[9px] uppercase tracking-wider text-text-muted">ticket médio</div>
+        <div className="font-mono text-[13px] text-text-secondary">R$ {brl2(m.avgTicket)}</div>
+        <div className="text-[9.5px] uppercase tracking-wider text-text-muted">ticket médio</div>
       </div>
       <div className="hidden w-12 shrink-0 text-right lg:block">
-        <div className="font-mono text-xs" style={{ color: st.color }}>{pct(m.feePct)}%</div>
-        <div className="text-[9px] uppercase tracking-wider text-text-muted">comissão</div>
+        <div className="font-mono text-[13px]" style={{ color: st.color }}>{pct(m.feePct)}%</div>
+        <div className="text-[9.5px] uppercase tracking-wider text-text-muted">comissão</div>
       </div>
 
-      <div className="hidden shrink-0 items-center gap-2 xl:flex">
+      <div className="hidden shrink-0 items-center gap-2.5 xl:flex">
         <GrowthCell label="D-1" value={growth.d1} />
         <GrowthCell label="D-7" value={growth.d7} />
         <GrowthCell label="D-30" value={growth.d30} />
@@ -114,7 +114,7 @@ export default function MarketplaceComparison() {
   const rows = [...channelOverview].sort((a, b) => (b[sort] as number) - (a[sort] as number))
 
   return (
-    <div className="overview-glass-elevated flex h-full flex-col rounded-2xl p-3.5 sm:p-4">
+    <div className="overview-glass-elevated flex h-full min-h-[62vh] flex-col rounded-2xl p-3.5 sm:p-4 lg:min-h-[70vh]">
       <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">GMV</h3>
@@ -136,7 +136,7 @@ export default function MarketplaceComparison() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5">
+      <div className="flex flex-1 flex-col gap-2.5 sm:gap-3">
         {rows.map((m, i) => (
           <Row key={m.marketplace} m={m} rank={i + 1} />
         ))}
