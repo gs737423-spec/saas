@@ -76,11 +76,12 @@ function resample(sliced: DailyData[], periodDays: number): DailyData[] {
   return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label, visibleChannels }: any) {
   if (!active || !payload?.length) return null
-  const channelEntries = payload.filter((p: any) => p.dataKey !== 'prevTotal')
+  const channelEntries = payload.filter((p: any) => p.dataKey !== 'prevTotal' && visibleChannels.has(p.dataKey))
   const total = channelEntries.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
   const prev = payload.find((p: any) => p.dataKey === 'prevTotal')?.value
+  const delta = prev > 0 ? ((total - prev) / prev) * 100 : 0
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
@@ -107,8 +108,13 @@ function CustomTooltip({ active, payload, label }: any) {
       </div>
       {prev !== undefined && (
         <div className="flex items-center justify-between pt-1 text-[11px]">
-          <span className="text-text-muted">Período anterior</span>
-          <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
+          <span className="text-text-muted">Mesmo dia, período anterior</span>
+          <span className="flex items-center gap-1.5">
+            <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
+            <span className={`font-mono text-[10px] font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+              {delta >= 0 ? '+' : ''}{pct(delta)}%
+            </span>
+          </span>
         </div>
       )}
     </div>
@@ -135,12 +141,21 @@ export default function RevenueByChannelChart() {
 
   const periodDays = Math.max(period.days, 2)
 
+  const visibleTotal = useCallback(
+    (d: DailyData) => channels.reduce((s, c) => s + (visibleChannels.has(c.key) ? (d as any)[c.key] : 0), 0),
+    [visibleChannels]
+  )
+
   const filteredData = useMemo(() => {
     const current = resample(allDailyData.slice(-periodDays), periodDays)
     const previousSlice = allDailyData.slice(-periodDays * 2, -periodDays)
     const previous = resample(previousSlice, periodDays)
-    return current.map((entry, i) => ({ ...entry, prevTotal: previous[i]?.total }))
-  }, [periodDays])
+    return current.map((entry, i) => ({
+      ...entry,
+      total: visibleTotal(entry),
+      prevTotal: previous[i] ? visibleTotal(previous[i]) : undefined,
+    }))
+  }, [periodDays, visibleTotal])
 
   const channelSummary = useMemo(() => {
     const periodData = allDailyData.slice(-periodDays)
@@ -282,7 +297,7 @@ export default function RevenueByChannelChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
+            <Tooltip content={<CustomTooltip visibleChannels={visibleChannels} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
             {channels.map((c) => (
               <Area
                 key={c.key}
@@ -307,12 +322,13 @@ export default function RevenueByChannelChart() {
             <Line
               type="monotone"
               dataKey="prevTotal"
-              name="Período anterior"
-              stroke="#9FB0D0"
+              name="Mesmo dia, período anterior"
+              stroke="#6B7A9E"
               strokeWidth={1.5}
-              strokeDasharray="5 4"
+              strokeOpacity={0.65}
+              strokeDasharray="3 3"
               dot={false}
-              activeDot={{ r: 3, fill: '#9FB0D0', stroke: '#0d1225', strokeWidth: 1.5 }}
+              activeDot={{ r: 3, fill: '#6B7A9E', stroke: '#0d1225', strokeWidth: 1.5 }}
               animationDuration={600}
             />
           </ComposedChart>
@@ -345,8 +361,8 @@ export default function RevenueByChannelChart() {
           )
         })}
         <span className="flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-[11px] font-medium text-text-muted">
-          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#9FB0D0' }} />
-          Período anterior
+          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#6B7A9E' }} />
+          Mesmo dia, período anterior
         </span>
         <span className="ml-auto text-[10px] text-text-muted">Clique para filtrar</span>
       </div>
