@@ -44,9 +44,9 @@ export default function SalesTrendChart({ sku }: { sku: string }) {
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Tendência de Vendas</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-            <span className="text-text-muted"><span className="font-mono text-text-secondary">{totalUnits.toLocaleString('pt-BR')}</span> un.</span>
-            <span className="text-text-muted"><span className="font-mono text-text-secondary">R$ {totalRevenue.toLocaleString('pt-BR')}</span></span>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-text-muted"><span className="font-mono text-base font-bold text-text-primary">{totalUnits.toLocaleString('pt-BR')}</span> <span className="text-xs">un.</span></span>
+            <span className="font-mono text-base font-bold text-text-primary">R$ {totalRevenue.toLocaleString('pt-BR')}</span>
             <span className={`flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
               {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {positive ? '+' : ''}{pctChange}%
