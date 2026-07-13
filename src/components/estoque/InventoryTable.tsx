@@ -108,8 +108,8 @@ export default function InventoryTable({ filters, onChange }: Props) {
                 <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{i.stock}</p></div>
                 <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{i.units30d}</p></div>
                 <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: cov.color }}>{i.coverageDays}d</p></div>
-                <div><p className="text-text-muted">Custo</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl2(i.cost)}</p></div>
-                <div><p className="text-text-muted">Faturamento</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl(i.revenue)}</p></div>
+                <div><p className="text-text-muted">Última NF</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl2(i.cost)}</p></div>
+                <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl(i.stock * i.cost)}</p></div>
                 <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: turn.color }}>{i.turnoverStatus}</p></div>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
 
       {/* Desktop: table */}
       <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[1280px] text-sm">
+        <table className="w-full min-w-[1360px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
               <th className="pb-3 pr-3 pl-2 font-semibold">Código</th>
@@ -130,9 +130,10 @@ export default function InventoryTable({ filters, onChange }: Props) {
               <th className="pb-3 pr-3 text-right font-semibold">Cobertura</th>
               <th className="pb-3 pr-3 text-right font-semibold">Últ. Entrada</th>
               <th className="pb-3 pr-3 text-right font-semibold">Qtd. Entrada</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Custo</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Custo Entrada</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Faturamento</th>
+              <th className="pb-3 pr-3 text-right font-semibold">Última NF</th>
+              <th className="pb-3 pr-3 text-right font-semibold">Valor Frete</th>
+              <th className="pb-3 pr-3 text-right font-semibold">Valor em Estoque</th>
+              <th className="pb-3 pr-3 text-right font-semibold">Média</th>
               <th className="pb-3 pr-3 text-right font-semibold">Share</th>
               <th className="pb-3 pr-3 text-center font-semibold">ABC</th>
               <th className="pb-3 pr-2 text-center font-semibold">Giro</th>
@@ -143,7 +144,8 @@ export default function InventoryTable({ filters, onChange }: Props) {
               const cov = getCoverageStatus(i.coverageDays)
               const abc = abcStyle[i.abcClass]
               const turn = turnoverStatusStyle[i.turnoverStatus]
-              const costUp = i.lastEntryCost > i.previousEntryCost
+              const stockValue = i.stock * i.cost
+              const avgTicket = i.units30d > 0 ? i.revenue / i.units30d : 0
               return (
                 <tr key={i.sku} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-3 pl-2 font-mono text-[11px] text-text-muted">{i.sku}</td>
@@ -161,10 +163,9 @@ export default function InventoryTable({ filters, onChange }: Props) {
                   <td className="py-3 pr-3 text-right font-mono text-[11px] text-text-secondary">{i.lastEntryDate}</td>
                   <td className="py-3 pr-3 text-right font-mono text-text-secondary">{i.lastEntryQty}</td>
                   <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(i.cost)}</td>
-                  <td className="py-3 pr-3 text-right font-mono" style={costUp ? { color: '#F5A524' } : undefined}>
-                    R$ {brl2(i.lastEntryCost)}
-                  </td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-primary">R$ {brl(i.revenue)}</td>
+                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(i.lastEntryCost)}</td>
+                  <td className="py-3 pr-3 text-right font-mono text-text-primary">R$ {brl(stockValue)}</td>
+                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(avgTicket)}</td>
                   <td className="py-3 pr-3 text-right font-mono text-text-secondary">{pct(i.sharePct)}%</td>
                   <td className="py-3 pr-3 text-center">
                     <span className="rounded-md px-2 py-0.5 text-[11px] font-bold" style={{ color: abc.color, background: abc.bg }}>{i.abcClass}</span>
