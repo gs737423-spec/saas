@@ -75,9 +75,15 @@ export default function ProductTable({ filteredProducts }: Props) {
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
           <p className="mt-0.5 text-xs text-text-muted">{filteredProducts.length} produtos · vendas, estoque, margem e tendencia</p>
         </div>
-        <span className="hidden rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary sm:inline">
+        <button
+          type="button"
+          onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+          title="Inverter ordem"
+          className="hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary sm:inline-flex"
+        >
           Ordenado por {sortLabel} {sortDir === 'asc' ? '(crescente)' : '(decrescente)'}
-        </span>
+          {sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+        </button>
       </div>
 
       {/* Mobile: stacked cards */}
