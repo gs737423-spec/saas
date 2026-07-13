@@ -76,46 +76,37 @@ function resample(sliced: DailyData[], periodDays: number): DailyData[] {
   return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
 }
 
-function CustomTooltip({ active, payload, label, visibleChannels }: any) {
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
-  const channelEntries = payload.filter((p: any) => p.dataKey !== 'prevTotal' && visibleChannels.has(p.dataKey))
-  const total = channelEntries.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
+  const total = payload.find((p: any) => p.dataKey === 'total')?.value ?? 0
   const prev = payload.find((p: any) => p.dataKey === 'prevTotal')?.value
   const delta = prev > 0 ? ((total - prev) / prev) * 100 : 0
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
-      {channels.map((c) => {
-        const entry = channelEntries.find((p: any) => p.dataKey === c.key)
-        if (!entry) return null
-        const share = total > 0 ? (entry.value / total) * 100 : 0
-        return (
-          <div key={c.key} className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
-            <span className="flex items-center gap-2 text-text-secondary">
-              <span className="h-2 w-2 rounded-full" style={{ background: getMarketplaceColor(c.label), boxShadow: `0 0 6px ${getMarketplaceColor(c.label)}66` }} />
-              {c.label}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="font-mono font-semibold text-text-primary">R$ {brl(entry.value)}</span>
-              <span className="text-[10px] text-text-muted">{pct(share)}%</span>
-            </span>
-          </div>
-        )
-      })}
-      <div className="mt-1.5 flex items-center justify-between border-t border-white/10 pt-1.5 text-[11.5px]">
-        <span className="font-medium text-text-muted">Total</span>
-        <span className="font-mono font-bold text-text-primary">R$ {brl(total)}</span>
+      <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
+        <span className="flex items-center gap-2 text-text-secondary">
+          <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
+          Hoje
+        </span>
+        <span className="font-mono font-semibold text-text-primary">R$ {brl(total)}</span>
       </div>
       {prev !== undefined && (
-        <div className="flex items-center justify-between pt-1 text-[11px]">
-          <span className="text-text-muted">Mesmo dia, período anterior</span>
-          <span className="flex items-center gap-1.5">
+        <>
+          <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
+            <span className="flex items-center gap-2 text-text-secondary">
+              <span className="h-2 w-2 rounded-full" style={{ background: '#6B7A9E' }} />
+              Período anterior
+            </span>
             <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
-            <span className={`font-mono text-[10px] font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between border-t border-white/10 pt-1.5 text-[11px]">
+            <span className="font-medium text-text-muted">Variação</span>
+            <span className={`font-mono text-[11px] font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
               {delta >= 0 ? '+' : ''}{pct(delta)}%
             </span>
-          </span>
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
@@ -271,16 +262,11 @@ export default function RevenueByChannelChart() {
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
-              {channels.map((c) => {
-                const color = getMarketplaceColor(c.label)
-                return (
-                  <linearGradient key={c.key} id={`fill-${c.key}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                    <stop offset="50%" stopColor={color} stopOpacity={0.08} />
-                    <stop offset="100%" stopColor={color} stopOpacity={0} />
-                  </linearGradient>
-                )
-              })}
+              <linearGradient id="fill-total" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4C82F7" stopOpacity={0.3} />
+                <stop offset="50%" stopColor="#4C82F7" stopOpacity={0.08} />
+                <stop offset="100%" stopColor="#4C82F7" stopOpacity={0} />
+              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
@@ -297,39 +283,36 @@ export default function RevenueByChannelChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip visibleChannels={visibleChannels} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
-            {channels.map((c) => (
-              <Area
-                key={c.key}
-                type="monotone"
-                dataKey={c.key}
-                name={c.label}
-                stroke={visibleChannels.has(c.key) ? getMarketplaceColor(c.label) : 'transparent'}
-                strokeWidth={2.5}
-                fill={visibleChannels.has(c.key) ? `url(#fill-${c.key})` : 'transparent'}
-                dot={false}
-                activeDot={visibleChannels.has(c.key) ? {
-                  r: 4,
-                  strokeWidth: 2,
-                  stroke: '#0d1225',
-                  fill: getMarketplaceColor(c.label),
-                  style: { filter: `drop-shadow(0 0 4px ${getMarketplaceColor(c.label)}88)` },
-                } : false}
-                animationDuration={600}
-                animationEasing="ease-out"
-              />
-            ))}
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
             <Line
               type="monotone"
               dataKey="prevTotal"
-              name="Mesmo dia, período anterior"
+              name="Período anterior"
               stroke="#6B7A9E"
               strokeWidth={1.5}
-              strokeOpacity={0.65}
+              strokeOpacity={0.7}
               strokeDasharray="3 3"
               dot={false}
               activeDot={{ r: 3, fill: '#6B7A9E', stroke: '#0d1225', strokeWidth: 1.5 }}
               animationDuration={600}
+            />
+            <Area
+              type="monotone"
+              dataKey="total"
+              name="Hoje"
+              stroke="#4C82F7"
+              strokeWidth={2.5}
+              fill="url(#fill-total)"
+              dot={false}
+              activeDot={{
+                r: 4,
+                strokeWidth: 2,
+                stroke: '#0d1225',
+                fill: '#4C82F7',
+                style: { filter: 'drop-shadow(0 0 4px #4C82F788)' },
+              }}
+              animationDuration={600}
+              animationEasing="ease-out"
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -337,6 +320,15 @@ export default function RevenueByChannelChart() {
 
       {/* Interactive legend */}
       <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
+        <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-text-secondary">
+          <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
+          Hoje
+        </span>
+        <span className="flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-[11px] font-medium text-text-muted">
+          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#6B7A9E' }} />
+          Período anterior
+        </span>
+        <span className="mx-1 h-4 w-px bg-white/10" />
         {channels.map((c) => {
           const isVisible = visibleChannels.has(c.key)
           return (
@@ -360,10 +352,6 @@ export default function RevenueByChannelChart() {
             </button>
           )
         })}
-        <span className="flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-[11px] font-medium text-text-muted">
-          <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: '#6B7A9E' }} />
-          Mesmo dia, período anterior
-        </span>
         <span className="ml-auto text-[10px] text-text-muted">Clique para filtrar</span>
       </div>
     </div>
