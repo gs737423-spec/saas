@@ -1,5 +1,23 @@
 import { TrendingUp, TrendingDown, DollarSign, Wallet, ShoppingCart, Receipt, Percent, Gauge } from 'lucide-react'
 import { overviewKpis, type OverviewKpi, type KpiTone } from '@/data/mockData'
+import { BASELINE_DAYS, type PeriodOption } from '@/lib/periods'
+
+function formatKpiValue(kpi: OverviewKpi, raw: number): string {
+  if (kpi.key === 'ticket') {
+    return raw.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  if (kpi.key === 'efficiency') {
+    return raw.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  }
+  return Math.round(raw).toLocaleString('pt-BR')
+}
+
+/** Scales a 30-day baseline KPI to the selected period. */
+function resolveKpi(kpi: OverviewKpi, period: PeriodOption): OverviewKpi {
+  const scale = kpi.scalesWithPeriod ? (period.days / BASELINE_DAYS) * period.jitter : period.jitter
+  const raw = kpi.raw * scale
+  return { ...kpi, value: formatKpiValue(kpi, raw) }
+}
 
 const iconByKey: Record<string, typeof DollarSign> = {
   gross: DollarSign,
@@ -95,9 +113,10 @@ function StatCard({ kpi }: { kpi: OverviewKpi }) {
   )
 }
 
-export default function KPICards() {
-  const hero = overviewKpis.find((k) => k.hero)!
-  const rest = overviewKpis.filter((k) => !k.hero)
+export default function KPICards({ period }: { period: PeriodOption }) {
+  const resolved = overviewKpis.map((kpi) => resolveKpi(kpi, period))
+  const hero = resolved.find((k) => k.hero)!
+  const rest = resolved.filter((k) => !k.hero)
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.15fr_2.4fr]">
       <HeroCard kpi={hero} />

@@ -1,11 +1,13 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { products, getMarketplaceColor } from '@/data/mockData'
+import { getMarketplaceColor } from '@/data/mockData'
+import type { Product } from '@/data/mockData'
 
-const top5 = [...products].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-const maxRevenue = top5[0].revenue
+export default function Top5Products({ products }: { products: Product[] }) {
+  const top5 = [...products].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+  if (top5.length === 0) return null
+  const maxRevenue = top5[0].revenue
 
-export default function Top5Products() {
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4">

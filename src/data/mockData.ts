@@ -582,6 +582,10 @@ export interface OverviewKpi {
   key: string
   label: string
   value: string
+  /** Raw numeric value (30-day baseline) — scaled by the period selector. */
+  raw: number
+  /** true = totals that grow with the period (revenue, orders...). false = rates (ticket, efficiency). */
+  scalesWithPeriod: boolean
   prefix?: string
   suffix?: string
   change: number
@@ -599,6 +603,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'gross',
     label: 'Faturamento Bruto',
     value: _grossTotal.toLocaleString('pt-BR'),
+    raw: _grossTotal,
+    scalesWithPeriod: true,
     prefix: 'R$',
     change: 12.5,
     context: 'Total dos 4 canais',
@@ -608,6 +614,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'net',
     label: 'Faturamento Líquido',
     value: _netTotal.toLocaleString('pt-BR'),
+    raw: _netTotal,
+    scalesWithPeriod: true,
     prefix: 'R$',
     change: 11.2,
     context: 'Após taxas dos marketplaces',
@@ -619,6 +627,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'orders',
     label: 'Pedidos',
     value: _ordersTotal.toLocaleString('pt-BR'),
+    raw: _ordersTotal,
+    scalesWithPeriod: true,
     change: 8.3,
     context: 'Volume consolidado',
     tone: 'blue',
@@ -627,6 +637,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'ticket',
     label: 'Ticket Médio',
     value: _avgTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    raw: _avgTicket,
+    scalesWithPeriod: false,
     prefix: 'R$',
     change: 3.8,
     context: 'Bruto por pedido',
@@ -636,6 +648,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'fees',
     label: 'Taxas / Encargos',
     value: _feesTotal.toLocaleString('pt-BR'),
+    raw: _feesTotal,
+    scalesWithPeriod: true,
     prefix: 'R$',
     change: 1.4,
     context: `${Math.round((_feesTotal / _grossTotal) * 1000) / 10}% do bruto`,
@@ -646,6 +660,8 @@ export const overviewKpis: OverviewKpi[] = [
     key: 'efficiency',
     label: 'Eficiência Líquida',
     value: (Math.round(_netEfficiency * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    raw: _netEfficiency,
+    scalesWithPeriod: false,
     suffix: '%',
     change: 0.6,
     context: 'Quanto do bruto entra',

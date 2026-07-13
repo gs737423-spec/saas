@@ -2,15 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Search, ChevronDown, Check, X } from 'lucide-react'
 import { productCategories, getMarketplaceColor } from '@/data/mockData'
 import type { Marketplace } from '@/data/mockData'
+import PeriodDropdown from '@/components/common/PeriodDropdown'
+import { buildPeriodOptions } from '@/lib/periods'
 
 const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
-const periods = [
-  { value: '7d', label: 'Últimos 7 dias' },
-  { value: '30d', label: 'Últimos 30 dias' },
-  { value: 'month', label: 'Este mês' },
-  { value: '90d', label: 'Últimos 90 dias' },
-  { value: 'year', label: 'Este ano' },
-]
+const periodOptions = buildPeriodOptions()
 
 export interface ProductFilterState {
   search: string
@@ -28,7 +24,7 @@ export const defaultProductFilters: ProductFilterState = {
   search: '',
   marketplaces: new Set(),
   category: 'all',
-  period: '30d',
+  period: periodOptions.find((p) => p.key === 'month')!.key,
 }
 
 function MultiMarketplaceDropdown({
@@ -227,11 +223,11 @@ export default function ProductFilters({ filters, onChange }: Props) {
           options={categoryOptions}
           labelFn={(v) => (v === 'all' ? 'Todas as categorias' : v)}
         />
-        <Dropdown
-          value={filters.period}
-          onChange={(v) => onChange({ ...filters, period: v })}
-          options={periods.map((p) => p.value)}
-          labelFn={(v) => periods.find((p) => p.value === v)?.label ?? v}
+        <PeriodDropdown
+          variant="field"
+          options={periodOptions}
+          selectedKey={filters.period}
+          onChange={(key) => onChange({ ...filters, period: key })}
         />
       </div>
     </div>

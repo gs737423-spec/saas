@@ -1,12 +1,5 @@
 import { Boxes, Flame, Snowflake, Percent, Receipt, TrendingUp, TrendingDown } from 'lucide-react'
-import { products } from '@/data/mockData'
-
-// Derive KPIs from mock product data
-const active = products.length
-const bestSeller = [...products].sort((a, b) => b.units - a.units)[0]
-const lowestTurn = [...products].sort((a, b) => a.units - b.units)[0]
-const avgMargin = Math.round(products.reduce((s, p) => s + p.margin, 0) / products.length)
-const avgTicket = products.reduce((s, p) => s + p.revenue, 0) / products.reduce((s, p) => s + p.units, 0)
+import type { Product } from '@/data/mockData'
 
 type Card = {
   label: string
@@ -18,15 +11,23 @@ type Card = {
   secondary: string
 }
 
-const cards: Card[] = [
-  { label: 'Produtos Ativos', value: String(active), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#4C82F7', secondary: '#22D3EE' },
-  { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#16C784', secondary: '#22D3EE' },
-  { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#F9603C', secondary: '#F5A524' },
-  { label: 'Margem Média', value: `${avgMargin}%`, sub: 'todos os produtos', icon: Percent, primary: '#9061F9', secondary: '#4C82F7' },
-  { label: 'Ticket Médio', value: `R$ ${avgTicket.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#22D3EE', secondary: '#4C82F7' },
-]
+export default function ProductKPIs({ products }: { products: Product[] }) {
+  if (products.length === 0) return null
 
-export default function ProductKPIs() {
+  const active = products.length
+  const bestSeller = [...products].sort((a, b) => b.units - a.units)[0]
+  const lowestTurn = [...products].sort((a, b) => a.units - b.units)[0]
+  const avgMargin = Math.round(products.reduce((s, p) => s + p.margin, 0) / products.length)
+  const avgTicket = products.reduce((s, p) => s + p.revenue, 0) / products.reduce((s, p) => s + p.units, 0)
+
+  const cards: Card[] = [
+    { label: 'Produtos Ativos', value: String(active), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#4C82F7', secondary: '#22D3EE' },
+    { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#16C784', secondary: '#22D3EE' },
+    { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#F9603C', secondary: '#F5A524' },
+    { label: 'Margem Média', value: `${avgMargin}%`, sub: 'todos os produtos', icon: Percent, primary: '#9061F9', secondary: '#4C82F7' },
+    { label: 'Ticket Médio', value: `R$ ${avgTicket.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#22D3EE', secondary: '#4C82F7' },
+  ]
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {cards.map((c) => {

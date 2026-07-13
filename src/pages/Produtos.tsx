@@ -7,6 +7,9 @@ import ProductTable from '@/components/produtos/ProductTable'
 import Top5Products from '@/components/produtos/Top5Products'
 import ProductAlerts from '@/components/produtos/ProductAlerts'
 import { products } from '@/data/mockData'
+import { buildPeriodOptions, BASELINE_DAYS } from '@/lib/periods'
+
+const periodOptions = buildPeriodOptions()
 
 export default function Produtos() {
   const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
@@ -27,17 +30,29 @@ export default function Produtos() {
     })
   }, [filters])
 
+  // Scale revenue + units to the selected period. Both scale together so
+  // ratios (ticket médio, margin %) stay realistic — only totals move.
+  const periodProducts = useMemo(() => {
+    const period = periodOptions.find((p) => p.key === filters.period) ?? periodOptions[0]
+    const scale = (period.days / BASELINE_DAYS) * period.jitter
+    return filteredProducts.map((p) => ({
+      ...p,
+      revenue: Math.round(p.revenue * scale),
+      units: Math.max(0, Math.round(p.units * scale)),
+    }))
+  }, [filteredProducts, filters.period])
+
   return (
     <div className="space-y-3 sm:space-y-4">
       <ProductFilters filters={filters} onChange={setFilters} />
 
-      <ProductKPIs />
+      <ProductKPIs products={periodProducts} />
 
       {/* Main table + side intelligence rail */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <ProductTable filteredProducts={filteredProducts} />
+        <ProductTable filteredProducts={periodProducts} />
         <div className="flex flex-col gap-4">
-          <Top5Products />
+          <Top5Products products={periodProducts} />
           <ProductAlerts />
         </div>
       </div>
