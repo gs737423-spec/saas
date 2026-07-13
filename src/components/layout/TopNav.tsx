@@ -11,13 +11,13 @@ import {
   Link2,
   FileBarChart2,
   Settings,
-  Search,
-  Bell,
   LogOut,
   User,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Brand from '@/components/layout/Brand'
+import SearchMenu from '@/components/layout/SearchMenu'
+import NotificationsMenu from '@/components/layout/NotificationsMenu'
 
 type Item = { icon: typeof Package; label: string; to: string }
 
@@ -79,14 +79,8 @@ export default function TopNav() {
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-        <button title="Buscar" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary">
-          <Search className="h-[18px] w-[18px]" />
-        </button>
-
-        <button title="Notificações" className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full border-2 border-bg-secondary bg-accent-rose" />
-        </button>
+        <SearchMenu />
+        <NotificationsMenu />
 
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
 
