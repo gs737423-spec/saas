@@ -43,11 +43,11 @@ function StatusBadge({ status }: { status: ChannelStatus }) {
 function GrowthCell({ label, value }: { label: string; value: number }) {
   const positive = value >= 0
   return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className={`font-mono text-sm font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+    <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+      <span className={`font-mono text-[11px] font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
         {positive ? '+' : ''}{pct(value)}%
       </span>
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+      <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
     </div>
   )
 }
@@ -56,6 +56,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
   const brand = getMarketplaceColor(m.marketplace)
   const st = statusStyle[m.status]
   const isLeader = rank === 1
+  const growth = bucketGrowth(m.trend)
 
   return (
     <div
@@ -94,6 +95,13 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
         <div className="text-[9px] uppercase tracking-wider text-text-muted">comissão</div>
       </div>
 
+      <div className="hidden shrink-0 items-center gap-2 xl:flex">
+        <GrowthCell label="D-1" value={growth.d1} />
+        <GrowthCell label="D-7" value={growth.d7} />
+        <GrowthCell label="D-30" value={growth.d30} />
+        <GrowthCell label="D-365" value={growth.d365} />
+      </div>
+
       <div className="ml-auto shrink-0 lg:ml-0">
         <StatusBadge status={m.status} />
       </div>
@@ -104,9 +112,6 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
 export default function MarketplaceComparison() {
   const [sort, setSort] = useState<SortKey>('netRevenue')
   const rows = [...channelOverview].sort((a, b) => (b[sort] as number) - (a[sort] as number))
-
-  const avgTrend = channelOverview.reduce((s, m) => s + m.trend, 0) / channelOverview.length
-  const growth = bucketGrowth(avgTrend)
 
   return (
     <div className="overview-glass-elevated flex h-full flex-col rounded-2xl p-3.5 sm:p-4">
@@ -129,14 +134,6 @@ export default function MarketplaceComparison() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Crescimento — comparado a períodos anteriores */}
-      <div className="mb-3 grid grid-cols-4 gap-2 rounded-xl border border-border-subtle/60 bg-bg-primary/30 py-2.5">
-        <GrowthCell label="D-1" value={growth.d1} />
-        <GrowthCell label="D-7" value={growth.d7} />
-        <GrowthCell label="D-30" value={growth.d30} />
-        <GrowthCell label="D-365" value={growth.d365} />
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5">
