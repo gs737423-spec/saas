@@ -54,7 +54,7 @@ export default function TopNav() {
     : 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rail-item group relative flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors ${
+    `rail-item group relative flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium transition-colors xl:gap-2 xl:px-3 xl:text-sm ${
       isActive ? 'topnav-item-active text-accent-blue' : 'text-text-muted hover:text-text-primary'
     }`
 
@@ -74,16 +74,12 @@ export default function TopNav() {
 
       <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
 
-      {/* Section nav — desktop only, horizontally scrollable if the viewport is tight */}
+      {/* Section nav — desktop only. Icon-only below xl, icon+label from xl up. */}
       <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto md:flex">
         {navItems.map((item) => (
-          <NavLink key={item.label} to={item.to} end={item.to === '/'} className={linkClass}>
-            {() => (
-              <>
-                <item.icon className="h-[17px] w-[17px] shrink-0" />
-                <span className="whitespace-nowrap">{item.label}</span>
-              </>
-            )}
+          <NavLink key={item.label} to={item.to} end={item.to === '/'} title={item.label} className={linkClass}>
+            <item.icon className="h-[17px] w-[17px] shrink-0" />
+            <span className="hidden whitespace-nowrap xl:inline">{item.label}</span>
           </NavLink>
         ))}
       </nav>
