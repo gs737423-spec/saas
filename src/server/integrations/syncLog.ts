@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from './supabaseAdmin'
-import type { Provider, SyncLogEventType, SyncLogStatus } from './types'
+import { DEFAULT_COMPANY_ID, type Provider, type SyncLogEventType, type SyncLogStatus } from './types'
 
 export interface LogSyncEventParams {
   connectionId: string | null
@@ -19,6 +19,7 @@ export async function logSyncEvent(params: LogSyncEventParams): Promise<void> {
   try {
     const supabase = getSupabaseAdmin()
     const { error } = await supabase.from('sync_logs').insert({
+      company_id: DEFAULT_COMPANY_ID,
       connection_id: params.connectionId,
       provider: params.provider,
       event_type: params.eventType,

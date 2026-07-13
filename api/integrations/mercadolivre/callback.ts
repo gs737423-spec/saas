@@ -3,6 +3,7 @@ import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../.
 import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/mercadolivre/auth'
 import { encryptSecret } from '../../../src/server/integrations/crypto'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog'
+import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
@@ -49,6 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .upsert(
         {
+          company_id: DEFAULT_COMPANY_ID,
           provider: 'mercadolivre',
           status: 'connected',
           external_account_id: String(tokenResponse.user_id),
@@ -59,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           scopes: tokenResponse.scope,
           last_error: null,
         },
-        { onConflict: 'provider' }
+        { onConflict: 'company_id,provider' }
       )
       .select('id')
       .single()

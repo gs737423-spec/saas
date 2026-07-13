@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin'
-import type { SanitizedConnectionStatusResponse } from '../../src/server/integrations/types'
+import { DEFAULT_COMPANY_ID, type SanitizedConnectionStatusResponse } from '../../src/server/integrations/types'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const missing = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
@@ -25,6 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, status, external_account_id, last_sync_at, last_error, token_expires_at')
       .eq('provider', 'mercadolivre')
+      .eq('company_id', DEFAULT_COMPANY_ID)
       .maybeSingle()
 
     if (error) throw new Error(error.message)
