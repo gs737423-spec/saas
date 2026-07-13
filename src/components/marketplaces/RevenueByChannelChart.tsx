@@ -128,7 +128,7 @@ export default function RevenueByChannelChart() {
   // Offset (in days) used to look up the comparison line's values.
   const [compareKey, setCompareKey] = useState<'yesterday' | 'week' | 'month'>('week')
 
-  const periodDays = Math.max(period.days, 2)
+  const periodDays = period.days
   const compareOffset = compareOptions.find((o) => o.key === compareKey)!.offsetDays
 
   const valueFor = useCallback(
