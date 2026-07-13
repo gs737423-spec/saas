@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { ConnectionProvider } from '@/contexts/ConnectionContext'
+import { PeriodProvider } from '@/contexts/PeriodContext'
 import { useAuth } from '@/contexts/AuthContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
@@ -22,6 +23,7 @@ export default function App() {
 
   return (
     <ConnectionProvider>
+    <PeriodProvider>
     <div className="app-bg min-h-screen overflow-x-hidden">
       {/* Orbs — fundo vivo */}
       <div className="app-bg-orbs">
@@ -35,7 +37,7 @@ export default function App() {
       </div>
       <TopNav />
       <main className="pt-14 md:pt-16">
-        <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-4 sm:px-6 md:pb-6 md:pt-5 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1920px] px-3 pb-24 pt-2.5 sm:px-6 md:pb-6 md:pt-3 lg:px-8 xl:px-10">
           <div key={location.pathname} className="page-transition">
             <Routes location={location}>
               <Route path="/" element={<Dashboard />} />
@@ -55,6 +57,7 @@ export default function App() {
       </main>
       <BottomNav />
     </div>
+    </PeriodProvider>
     </ConnectionProvider>
   )
 }

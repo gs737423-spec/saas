@@ -48,7 +48,7 @@ const verdicts = [
     tone: '#22D3EE',
   },
   {
-    label: 'Maior Impacto de Taxas',
+    label: 'Maior Impacto de Comissão',
     value: `${pct(sorted.byFees[0].feePct)}%`,
     channel: sorted.byFees[0].marketplace,
     sub: `R$ ${brl(sorted.byFees[0].fees)} retidos`,

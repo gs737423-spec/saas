@@ -6,8 +6,8 @@ interface Props {
   options: PeriodOption[]
   selectedKey: string
   onChange: (key: string) => void
-  /** 'compact' = pill trigger for toolbars/headers. 'field' = full-width form field, matches other filter dropdowns. */
-  variant?: 'compact' | 'field'
+  /** 'compact' = pill trigger for toolbars/headers. 'field' = full-width form field, matches other filter dropdowns. 'icon' = icon+chevron only, no label — for tight topbars. */
+  variant?: 'compact' | 'field' | 'icon'
 }
 
 // Shared dropdown trigger + menu. Replaces the old row-of-buttons period
@@ -26,23 +26,31 @@ export default function PeriodDropdown({ options, selectedKey, onChange, variant
 
   const selected = options.find((o) => o.key === selectedKey) ?? options[0]
   const isField = variant === 'field'
+  const isIcon = variant === 'icon'
 
   return (
     <div ref={ref} className={`relative ${isField ? 'w-full' : 'shrink-0'}`}>
       <button
         type="button"
+        title={selected.label}
         onClick={() => setOpen((o) => !o)}
         className={
           isField
             ? 'flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-default focus:border-accent-blue/50'
-            : 'flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 text-xs font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary'
+            : isIcon
+              ? 'flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary'
+              : 'flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 text-xs font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary'
         }
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <Calendar className={`shrink-0 text-accent-blue ${isField ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />
-          <span className="truncate whitespace-nowrap">{selected.label}</span>
-        </span>
-        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+        {isIcon ? (
+          <Calendar className="h-[18px] w-[18px]" />
+        ) : (
+          <span className="flex min-w-0 items-center gap-2">
+            <Calendar className={`shrink-0 text-accent-blue ${isField ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />
+            <span className="truncate whitespace-nowrap">{selected.label}</span>
+          </span>
+        )}
+        {!isIcon && <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />}
       </button>
       {open && (
         <div className="absolute right-0 top-full z-30 mt-1.5 w-60 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">

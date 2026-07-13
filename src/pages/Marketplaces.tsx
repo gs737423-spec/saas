@@ -1,16 +1,12 @@
 import ChannelKPIVerdict from '@/components/marketplaces/ChannelKPIVerdict'
-import ChannelDeepComparison from '@/components/marketplaces/ChannelDeepComparison'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import ChannelMiniCharts from '@/components/marketplaces/ChannelMiniCharts'
 
 export default function Marketplaces() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* KPIs/veredictos */}
       <ChannelKPIVerdict />
-
-      {/* Comparativo profundo */}
-      <ChannelDeepComparison />
 
       {/* Gráfico com profundidade + small multiples, um único painel */}
       <RevenueByChannelChart />

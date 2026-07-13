@@ -28,15 +28,15 @@ export default function ProdutoDetalhe() {
   const health = getProductHealthScore(product, stock, status)
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-2 sm:space-y-2.5">
       <ProdutoHeader product={product} status={status} stock={stock} />
       <ProdutoKPIs product={product} stock={stock} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_420px]">
         <SalesTrendChart sku={product.sku} />
         <ProdutoHealthScore health={health} stock={stock} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         <MarketplacePerformanceBreakdown product={product} />
         <ProdutoAtividade sku={product.sku} />
       </div>

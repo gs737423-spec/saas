@@ -68,7 +68,7 @@ export default function ChannelMiniCharts() {
       <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
       <MiniBarChart title="Ticket Médio" question="Quem vende mais caro?" data={byTicket} />
       <MiniBarChart title="Pedidos" question="Quem traz mais volume?" data={byOrders} />
-      <MiniBarChart title="Impacto de Taxas" question="Quem consome mais em taxas?" data={byFees} maxValue={25} />
+      <MiniBarChart title="Impacto de Comissão" question="Quem consome mais em comissão?" data={byFees} maxValue={25} />
     </div>
   )
 }

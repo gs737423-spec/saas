@@ -188,7 +188,7 @@ export default function Importacoes() {
   const { logs } = useConnections()
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-accent-cyan" />

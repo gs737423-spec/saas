@@ -42,7 +42,7 @@ export default function Estoque() {
   const showRealTable = source === 'real' && inventory && inventory.items.length > 0
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-2 sm:space-y-2.5">
       <div className="flex items-center justify-end">
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.color} ${cfg.bg} ${cfg.border}`}>
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}

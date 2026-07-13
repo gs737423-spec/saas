@@ -51,7 +51,7 @@ export default function MarketplacePerformanceBreakdown({ product }: { product: 
                   <p className="mt-0.5 font-mono text-[13px] text-text-secondary">{b.margin}%</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Ticket</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Ticket Médio</p>
                   <p className="mt-0.5 font-mono text-[13px] text-text-secondary">R$ {b.avgTicket.toFixed(0)}</p>
                 </div>
               </div>

@@ -43,15 +43,15 @@ export default function Produtos() {
   }, [filteredProducts, filters.period])
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-2 sm:space-y-2.5">
       <ProductFilters filters={filters} onChange={setFilters} />
 
       <ProductKPIs products={periodProducts} />
 
       {/* Main table + side intelligence rail */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
         <ProductTable filteredProducts={periodProducts} />
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <Top5Products products={periodProducts} />
           <ProductAlerts />
         </div>

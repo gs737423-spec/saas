@@ -15,9 +15,11 @@ import {
   User,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePeriod } from '@/contexts/PeriodContext'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
+import PeriodDropdown from '@/components/common/PeriodDropdown'
 
 type Item = { icon: typeof Package; label: string; to: string }
 
@@ -38,6 +40,7 @@ const navItems: Item[] = [
 // live in BottomNav; here on mobile we only show brand + actions.
 export default function TopNav() {
   const { user, logout } = useAuth()
+  const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -79,6 +82,7 @@ export default function TopNav() {
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
         <SearchMenu />
         <NotificationsMenu />
 

@@ -574,7 +574,9 @@ export const channelOverview: ChannelOverview[] = _withNet
 const _ordersTotal = marketplaceMetrics.reduce((s, m) => s + m.orders, 0)
 const _feesTotal = _withNet.reduce((s, m) => s + m.fees, 0)
 const _avgTicket = _grossTotal / _ordersTotal
-const _netEfficiency = (_netTotal / _grossTotal) * 100
+/** Devoluções — estimativa de ~2.3% do bruto, consistente entre os canais. */
+const _returnsTotal = _grossTotal * 0.023
+const _returnsCount = Math.round(_ordersTotal * 0.018)
 
 export type KpiTone = 'blue' | 'emerald' | 'cyan' | 'amber' | 'violet' | 'neutral'
 
@@ -609,18 +611,6 @@ export const overviewKpis: OverviewKpi[] = [
     change: 12.5,
     context: 'Total dos 4 canais',
     tone: 'cyan',
-  },
-  {
-    key: 'net',
-    label: 'Faturamento Líquido',
-    value: _netTotal.toLocaleString('pt-BR'),
-    raw: _netTotal,
-    scalesWithPeriod: true,
-    prefix: 'R$',
-    change: 11.2,
-    context: 'Após taxas dos marketplaces',
-    tag: 'estimado',
-    tone: 'emerald',
     hero: true,
   },
   {
@@ -646,7 +636,7 @@ export const overviewKpis: OverviewKpi[] = [
   },
   {
     key: 'fees',
-    label: 'Taxas / Encargos',
+    label: 'Comissão',
     value: _feesTotal.toLocaleString('pt-BR'),
     raw: _feesTotal,
     scalesWithPeriod: true,
@@ -657,15 +647,15 @@ export const overviewKpis: OverviewKpi[] = [
     tone: 'amber',
   },
   {
-    key: 'efficiency',
-    label: 'Eficiência Líquida',
-    value: (Math.round(_netEfficiency * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    raw: _netEfficiency,
-    scalesWithPeriod: false,
-    suffix: '%',
-    change: 0.6,
-    context: 'Quanto do bruto entra',
-    tone: 'cyan',
+    key: 'returns',
+    label: 'Devoluções',
+    value: _returnsTotal.toLocaleString('pt-BR', { maximumFractionDigits: 0 }),
+    raw: _returnsTotal,
+    scalesWithPeriod: true,
+    prefix: 'R$',
+    change: -2.1,
+    context: `${_returnsCount.toLocaleString('pt-BR')} pedidos`,
+    tone: 'neutral',
   },
 ]
 

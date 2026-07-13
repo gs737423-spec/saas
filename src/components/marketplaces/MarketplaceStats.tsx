@@ -51,7 +51,7 @@ export default function MarketplaceStats() {
                   <p className="mt-0.5 font-mono text-text-secondary">{m.orders}</p>
                 </div>
                 <div>
-                  <p className="text-text-muted">Ticket</p>
+                  <p className="text-text-muted">Ticket Médio</p>
                   <p className="mt-0.5 font-mono text-text-secondary">R$ {m.avgTicket.toFixed(0)}</p>
                 </div>
                 <div>
