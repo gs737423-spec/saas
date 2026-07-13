@@ -153,7 +153,6 @@ body {
     opacity: 0.45;
     -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
     mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
-    animation: grain-drift 50s linear infinite;
   }
 
   /* Deriva bem lenta da textura de fundo — quase imperceptível quadro a
@@ -187,16 +186,8 @@ body {
     65%  { transform: translate(-80px, -40px) scale(0.95); opacity: 0.25; }
     100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
   }
-  @keyframes orb-drift-4 {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.30; }
-    40%  { transform: translate(-60px, -120px) scale(1.35) rotate(-40deg); opacity: 0.50; }
-    70%  { transform: translate(120px, 80px) scale(0.8) rotate(20deg); opacity: 0.20; }
-    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.30; }
-  }
-  @keyframes orb-pulse {
-    0%, 100% { filter: blur(75px) brightness(1.05); }
-    50%      { filter: blur(95px) brightness(1.35); }
-  }
+  /* orb-pulse removido: animar filter (blur/brightness) forçava repaint
+     da tela inteira a cada frame — era o maior custo de performance. */
 
   /* Orbs — manchas de cor vivas. Container criado via JS no componente
      LiveBackground, mas o fallback via .app-bg-orbs funciona só com CSS. */
@@ -211,7 +202,8 @@ body {
   .orb {
     position: absolute;
     border-radius: 50%;
-    will-change: transform, opacity;
+    filter: blur(80px);
+    will-change: transform;
   }
 
   /* Orb 1 — Azul profundo, canto superior esquerdo */
@@ -221,7 +213,7 @@ body {
     top: -15%;
     left: -5%;
     background: radial-gradient(circle, rgba(76, 130, 247, 0.72) 0%, rgba(76, 130, 247, 0) 70%);
-    animation: orb-drift-1 28s ease-in-out infinite, orb-pulse 14s ease-in-out infinite;
+    animation: orb-drift-1 28s ease-in-out infinite;
   }
 
   /* Orb 2 — Violeta, canto superior direito */
@@ -231,7 +223,7 @@ body {
     top: -10%;
     right: -8%;
     background: radial-gradient(circle, rgba(144, 97, 249, 0.6) 0%, rgba(144, 97, 249, 0) 70%);
-    animation: orb-drift-2 34s ease-in-out infinite, orb-pulse 18s ease-in-out infinite 3s;
+    animation: orb-drift-2 34s ease-in-out infinite;
   }
 
   /* Orb 3 — Cyan, centro-inferior */
@@ -242,37 +234,7 @@ body {
     left: 30%;
     border-radius: 50% / 40%;
     background: radial-gradient(ellipse, rgba(34, 211, 238, 0.5) 0%, rgba(34, 211, 238, 0) 70%);
-    animation: orb-drift-3 38s ease-in-out infinite, orb-pulse 20s ease-in-out infinite 6s;
-  }
-
-  /* Orb 4 — Esmeralda, canto direito-meio */
-  .orb-4 {
-    width: 500px;
-    height: 500px;
-    top: 40%;
-    right: -3%;
-    background: radial-gradient(circle, rgba(22, 199, 132, 0.42) 0%, rgba(22, 199, 132, 0) 70%);
-    animation: orb-drift-4 32s ease-in-out infinite, orb-pulse 16s ease-in-out infinite 9s;
-  }
-
-  /* Orb 5 — Azul suave, centro flutuante */
-  .orb-5 {
-    width: 650px;
-    height: 650px;
-    top: 20%;
-    left: 15%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.34) 0%, rgba(76, 130, 247, 0) 70%);
-    animation: orb-drift-1 42s ease-in-out infinite reverse, orb-pulse 22s ease-in-out infinite 12s;
-  }
-
-  /* Orb 6 — Violeta quente, inferior esquerdo */
-  .orb-6 {
-    width: 550px;
-    height: 550px;
-    bottom: 5%;
-    left: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.4) 0%, rgba(144, 97, 249, 0) 70%);
-    animation: orb-drift-2 36s ease-in-out infinite reverse, orb-pulse 19s ease-in-out infinite 4s;
+    animation: orb-drift-3 38s ease-in-out infinite;
   }
 
   /* Preferência de movimento reduzido — para orbs e removê-los */
@@ -314,70 +276,13 @@ body {
     animation: bg-line-drift-1 46s linear infinite;
   }
 
-  /* Traço 2 — diagonal oposta, cyan, mais espaçada */
-  .bg-line-2 {
-    background-image: repeating-linear-gradient(
-      -68deg,
-      rgba(34, 211, 238, 0.12) 0px,
-      rgba(34, 211, 238, 0.12) 1px,
-      transparent 1px,
-      transparent 240px
-    );
-    background-size: 320px 320px;
-    opacity: 0.4;
-    animation: bg-line-drift-2 58s linear infinite;
-  }
-
-  /* Traço 3 — quase vertical, violeta, bem sutil, contraste de profundidade */
-  .bg-line-3 {
-    background-image: repeating-linear-gradient(
-      8deg,
-      rgba(144, 97, 249, 0.1) 0px,
-      rgba(144, 97, 249, 0.1) 1px,
-      transparent 1px,
-      transparent 300px
-    );
-    background-size: 340px 340px;
-    opacity: 0.35;
-    animation: bg-line-drift-1 70s linear infinite reverse;
-  }
-
   @keyframes bg-line-drift-1 {
     from { background-position: 0 0; }
     to   { background-position: 520px 520px; }
   }
-  @keyframes bg-line-drift-2 {
-    from { background-position: 0 0; }
-    to   { background-position: -640px 640px; }
-  }
-
-  /* Feixe de luz que varre a tela na diagonal, ciclo longo, quase imperceptível
-     quadro a quadro — reforça a sensação de "vivo" sem distrair do conteúdo. */
-  .bg-light-sweep {
-    position: absolute;
-    inset: -30% -60%;
-    background: linear-gradient(
-      100deg,
-      transparent 42%,
-      rgba(126, 178, 255, 0.09) 48%,
-      rgba(180, 210, 255, 0.14) 50%,
-      rgba(126, 178, 255, 0.09) 52%,
-      transparent 58%
-    );
-    background-size: 220% 220%;
-    animation: bg-light-sweep-move 22s ease-in-out infinite;
-  }
-
-  @keyframes bg-light-sweep-move {
-    0%   { background-position: -60% -60%; opacity: 0; }
-    15%  { opacity: 0.9; }
-    50%  { background-position: 60% 60%; opacity: 0.9; }
-    85%  { opacity: 0; }
-    100% { background-position: 140% 140%; opacity: 0; }
-  }
 
   @media (prefers-reduced-motion: reduce) {
-    .bg-line, .bg-light-sweep { animation: none !important; }
+    .bg-line { animation: none !important; }
   }
 
   /* ---- Sistema de profundidade em 3 níveis --------------------------------

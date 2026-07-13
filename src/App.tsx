@@ -23,21 +23,15 @@ export default function App() {
   return (
     <ConnectionProvider>
     <div className="app-bg min-h-screen overflow-x-hidden">
-      {/* Orbs animados — fundo vivo */}
+      {/* Orbs — fundo vivo */}
       <div className="app-bg-orbs">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
         <div className="orb orb-3" />
-        <div className="orb orb-4" />
-        <div className="orb orb-5" />
-        <div className="orb orb-6" />
       </div>
-      {/* Linhas de dados + sweep de luz — fundo vivo, camada 2 */}
+      {/* Linha de dados — fundo vivo, camada 2 */}
       <div className="app-bg-lines" aria-hidden="true">
         <div className="bg-line bg-line-1" />
-        <div className="bg-line bg-line-2" />
-        <div className="bg-line bg-line-3" />
-        <div className="bg-light-sweep" />
       </div>
       <TopNav />
       <main className="pt-12 md:pt-14">
