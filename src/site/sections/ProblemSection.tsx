@@ -94,10 +94,10 @@ export default function ProblemSection() {
           </Reveal>
         </div>
 
-        {/* Fecho de posicionamento (antiga seção de transição, agora integrada) */}
-        <Reveal delay={60} className="mt-14 border-t pt-10 text-center" style={{ borderColor: 'var(--s-line)' }}>
-          <p className="mx-auto max-w-3xl font-extrabold tracking-tight"
-            style={{ fontSize: 'clamp(1.4rem, 3.2vw, 2.2rem)', lineHeight: 1.15, letterSpacing: '-0.02em', color: 'var(--s-ink)' }}>
+        {/* Fecho de posicionamento — linha de destaque, não uma nova tela */}
+        <Reveal delay={60} className="mt-10 border-t pt-6 text-center" style={{ borderColor: 'var(--s-line)' }}>
+          <p className="mx-auto max-w-2xl font-bold tracking-tight"
+            style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', lineHeight: 1.3, letterSpacing: '-0.015em', color: 'var(--s-ink-soft)' }}>
             Não é apenas reunir dados.{' '}
             <span style={{ color: 'var(--s-blue)' }}>É transformar a operação em uma visão clara.</span>
           </p>

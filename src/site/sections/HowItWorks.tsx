@@ -1,17 +1,12 @@
 import { Link2, Layers, LineChart } from 'lucide-react'
 import SectionHeader from '@/site/components/SectionHeader'
 import Reveal from '@/site/components/Reveal'
-import { howSteps, marketplaces, statusLabel, type IntegrationStatus } from '@/site/content'
+import { howSteps, marketplaces } from '@/site/content'
 
 const stepIcons = [Link2, Layers, LineChart]
 
-const statusOrder: { status: IntegrationStatus; tone: string }[] = [
-  { status: 'disponivel', tone: '#12B981' },
-  { status: 'em-desenvolvimento', tone: '#4C82F7' },
-  { status: 'em-breve', tone: '#E9A83A' },
-]
-
-// Como funciona (por API) + Integrações, em uma seção compacta.
+// Como funciona (fluxo por API) + grade de integrações disponíveis, em uma
+// única seção compacta.
 export default function HowItWorks() {
   return (
     <section id="como-funciona" style={{ background: 'var(--s-surface)', borderTop: '1px solid var(--s-line)' }}>
@@ -19,7 +14,7 @@ export default function HowItWorks() {
         <SectionHeader
           label="Do dado à decisão"
           title="Dos canais à decisão, de forma automática."
-          desc="Você conecta os marketplaces por API; a plataforma recebe, organiza e centraliza os dados da operação."
+          desc="Conecte seus marketplaces por API. A plataforma recebe, organiza e centraliza os dados da operação."
           align="center"
         />
 
@@ -45,38 +40,35 @@ export default function HowItWorks() {
           </ol>
         </div>
 
-        {/* Integrações — bloco compacto, 3 status */}
-        <div id="integracoes" className="mt-16 scroll-mt-24">
-          <Reveal className="mb-6 flex items-baseline justify-between gap-4 border-t pt-10" style={{ borderColor: 'var(--s-line)' }}>
-            <h3 className="site-h3" style={{ color: 'var(--s-ink)' }}>Integrações da plataforma</h3>
-            <span className="text-[13px]" style={{ color: 'var(--s-muted)' }}>Conexões diretas por API</span>
+        {/* Integrações — grade única premium, todas disponíveis por API */}
+        <div id="integracoes" className="mt-16 border-t pt-10" style={{ borderColor: 'var(--s-line)' }}>
+          <Reveal className="mb-7 flex flex-wrap items-baseline justify-between gap-3">
+            <div>
+              <h3 className="site-h3" style={{ color: 'var(--s-ink)' }}>Integrações disponíveis por API</h3>
+              <p className="mt-1.5 text-[14px]" style={{ color: 'var(--s-ink-soft)' }}>
+                Conecte os principais canais da sua operação e centralize os dados automaticamente.
+              </p>
+            </div>
           </Reveal>
-          <div className="grid gap-4 lg:grid-cols-3">
-            {statusOrder.map((g, gi) => {
-              const list = marketplaces.filter((m) => m.status === g.status)
-              return (
-                <Reveal key={g.status} delay={gi * 80}>
-                  <div className="site-card h-full p-5">
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: g.tone }} />
-                      <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--s-ink-soft)' }}>{statusLabel[g.status]}</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {list.map((m) => (
-                        <li key={m.name} className="flex items-center justify-between gap-2 rounded-xl px-3 py-2"
-                          style={{ background: 'var(--s-bg-soft)', border: '1px solid var(--s-line)' }}>
-                          <span className="marquee-logo" style={{ filter: 'none', opacity: 1 }}><m.Logo /></span>
-                          {g.status !== 'disponivel' && (
-                            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                              style={{ background: `${g.tone}1e`, color: g.tone }}>{statusLabel[g.status]}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {marketplaces.map((m, i) => (
+              <Reveal key={m.name} delay={(i % 4) * 50}>
+                <div
+                  className="site-card site-card-hover flex h-full flex-col justify-between gap-3 p-4"
+                  style={{ minHeight: 104, cursor: 'default' }}
+                >
+                  <span className="marquee-logo" style={{ opacity: 1, filter: 'none' }}><m.Logo /></span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[13.5px] font-bold leading-tight" style={{ color: 'var(--s-ink)' }}>{m.name}</span>
+                    <span className="flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide"
+                      style={{ background: 'rgba(18,185,129,0.12)', color: '#0E8F63' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 999, background: '#12B981', display: 'inline-block' }} />
+                      API
+                    </span>
                   </div>
-                </Reveal>
-              )
-            })}
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </div>

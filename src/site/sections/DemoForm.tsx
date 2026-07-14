@@ -91,14 +91,14 @@ export default function DemoForm() {
 
   return (
     <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-20 md:py-28">
+      <div className="site-container py-14 md:py-20">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
             <span className="site-label mb-3">Solicitar demonstração</span>
             <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Veja a plataforma com os dados da sua operação.</h2>
-            <p className="site-lead mt-4">Preencha os campos e nosso time mostra como centralizar seus marketplaces em uma única visão. Sem compromisso.</p>
+            <p className="site-lead mt-4">Preencha os campos e nosso time apresenta como centralizar seus marketplaces em uma única visão.</p>
             <ul className="mt-6 space-y-2.5">
-              {['Demonstração guiada da plataforma', 'Tira-dúvidas sobre integrações e conexões', 'Orientação para a sua operação'].map((t) => (
+              {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px]" style={{ color: 'var(--s-ink-soft)' }}>
                   <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: 'var(--s-emerald)' }} /> {t}
                 </li>

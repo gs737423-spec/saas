@@ -41,13 +41,16 @@ export default function SiteHeader() {
           </span>
         </a>
 
-        {/* Nav desktop */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
+        {/* Nav desktop — breakpoint próprio (1100px): abaixo disso a navegação
+            completa fica apertada ao lado dos dois CTAs, então cai pro menu
+            mobile em vez de esperar o layout quebrar. Nunca aparece junto
+            com o botão hambúrguer (mutuamente exclusivos pelo mesmo ponto). */}
+        <nav className="hidden items-center gap-0.5 nav:flex" aria-label="Navegação principal">
           {nav.map((n) => (
             <a
               key={n.href}
               href={n.href}
-              className="rounded-lg px-3 py-2 text-[14px] font-medium transition-colors"
+              className="rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors"
               style={{ color: 'var(--s-ink-soft)' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--s-blue-ink)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--s-ink-soft)')}
@@ -58,31 +61,36 @@ export default function SiteHeader() {
         </nav>
 
         {/* Ações desktop */}
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 nav:flex">
           <Link to="/login" className="btn btn-ghost" style={{ padding: '0.6rem 1rem' }}>Entrar</Link>
           <a href="#demonstracao" className="btn btn-primary" style={{ padding: '0.6rem 1.1rem' }}>
             Solicitar demonstração
           </a>
         </div>
 
-        {/* Botão mobile */}
-        <button
-          className="btn btn-ghost lg:hidden"
-          style={{ padding: '0.55rem', borderRadius: 12 }}
-          aria-label={open ? 'Fechar menu' : 'Abrir menu'}
-          aria-expanded={open}
-          aria-controls="site-mobile-menu"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Botão mobile — wrapper sem classe de display própria, só pra evitar
+            que `.btn` (display: inline-flex, especificidade igual à do
+            utilitário responsivo) vença a troca de visibilidade por ordem
+            de cascata em vez do breakpoint. */}
+        <div className="nav:hidden">
+          <button
+            className="btn btn-ghost"
+            style={{ padding: '0.55rem', borderRadius: 12 }}
+            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={open}
+            aria-controls="site-mobile-menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Menu mobile */}
       {open && (
         <div
           id="site-mobile-menu"
-          className="fixed inset-0 z-[70] lg:hidden"
+          className="fixed inset-0 z-[70] nav:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Menu"

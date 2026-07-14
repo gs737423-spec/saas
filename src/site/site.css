@@ -136,22 +136,32 @@
 .marquee-logo {
   display: inline-flex;
   align-items: center;
-  color: var(--s-ink-soft);
-  filter: grayscale(0.35);
-  opacity: 0.7;
+  color: var(--s-ink);
+  filter: grayscale(0.15);
+  opacity: 0.85;
   transition: filter 0.3s ease, opacity 0.3s ease, color 0.3s ease;
 }
 .marquee-logo:hover {
   filter: grayscale(0);
   opacity: 1;
-  color: var(--s-ink);
 }
-/* Logos maiores e com mais peso na faixa do hero */
-.marquee-logo svg { height: 38px; }
-@media (max-width: 640px) {
-  .marquee-logo { opacity: 0.85; filter: grayscale(0.15); } /* contraste sem depender de hover */
-  .marquee-logo svg { height: 30px; }
+.marquee-logo svg { height: 40px; width: 40px; }
+@media (max-width: 900px) { .marquee-logo svg { height: 34px; width: 34px; } }
+@media (max-width: 640px) { .marquee-logo svg { height: 30px; width: 30px; } }
+
+/* ---- Faixa do marquee — assinatura visual, encaixada na base do hero ----
+   Altura generosa (130–170px desktop), tom levemente diferente do hero,
+   sem depender de hover para ter presença. */
+.marquee-band {
+  position: relative;
+  margin-top: -1px; /* funde com a borda do hero, sem faixa branca entre eles */
+  background:
+    linear-gradient(180deg, rgba(76,130,247,0.05) 0%, rgba(76,130,247,0.02) 40%, var(--s-bg-soft) 100%);
+  padding-block: clamp(22px, 3vw, 30px);
 }
+.marquee-band__label { margin-bottom: clamp(18px, 2.4vw, 26px); }
+@media (max-width: 900px) { .marquee-band { padding-block: clamp(18px, 3vw, 24px); } }
+@media (max-width: 640px) { .marquee-band { padding-block: 16px; } }
 
 /* ---- Float dos cards do hero (poucos px, velocidades distintas) ---------- */
 @keyframes hero-float-a {
@@ -315,9 +325,12 @@
   border-radius: 6px;
 }
 
-/* Scroll suave só quando o site institucional está montado (não afeta o app) */
-html.site-active { scroll-behavior: smooth; }
-html.site-active :is(section, div)[id] { scroll-margin-top: 88px; }
+/* Scroll suave só quando o site institucional está montado (não afeta o app).
+   Offset cobre a altura MÁXIMA real do header (72px) + folga — o header
+   encolhe para 60px no scroll, nunca cresce, então usar o valor máximo aqui
+   garante que nenhum título fique escondido atrás dele. */
+html.site-active { scroll-behavior: smooth; scroll-padding-top: 96px; }
+html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 @media (prefers-reduced-motion: reduce) {
   html.site-active { scroll-behavior: auto; }
 }

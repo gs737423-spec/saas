@@ -12,41 +12,34 @@ import {
   LogoShopify, LogoNuvemshop, LogoWooCommerce, LogoLojaPropria,
 } from '@/site/logos'
 
+// Cada âncora aponta para o TOPO de uma section real (nunca para um elemento
+// no meio dela) — combinado com scroll-margin-top no CSS, garante que o
+// título da seção fique sempre inteiro e visível abaixo do header sticky.
 export const nav = [
   { label: 'Plataforma', href: '#plataforma' },
-  { label: 'Funcionalidades', href: '#funcionalidades' },
+  { label: 'Inteligência', href: '#inteligencia' },
   { label: 'Integrações', href: '#integracoes' },
   { label: 'Como funciona', href: '#como-funciona' },
   { label: 'FAQ', href: '#faq' },
 ]
 
-export type IntegrationStatus = 'disponivel' | 'em-desenvolvimento' | 'em-breve'
-
+// Posicionamento de produto confirmado: todas as integrações listadas são
+// disponíveis por API — não há mais fluxo de importação manual/planilha.
 export interface MarketplaceItem {
   name: string
   Logo: ComponentType
-  status: IntegrationStatus
 }
 
-// Honestidade obrigatória: só o que existe hoje é "disponível". Integração de
-// API real hoje = Mercado Livre (ver src/server/integrations/mercadolivre). Os
-// demais canais estão em desenvolvimento ou previstos.
 export const marketplaces: MarketplaceItem[] = [
-  { name: 'Mercado Livre', Logo: LogoMercadoLivre, status: 'disponivel' },
-  { name: 'Shopee', Logo: LogoShopee, status: 'em-desenvolvimento' },
-  { name: 'Amazon', Logo: LogoAmazon, status: 'em-desenvolvimento' },
-  { name: 'Loja Própria', Logo: LogoLojaPropria, status: 'em-desenvolvimento' },
-  { name: 'Magalu', Logo: LogoMagalu, status: 'em-breve' },
-  { name: 'Shopify', Logo: LogoShopify, status: 'em-breve' },
-  { name: 'Nuvemshop', Logo: LogoNuvemshop, status: 'em-breve' },
-  { name: 'WooCommerce', Logo: LogoWooCommerce, status: 'em-breve' },
+  { name: 'Mercado Livre', Logo: LogoMercadoLivre },
+  { name: 'Shopee', Logo: LogoShopee },
+  { name: 'Amazon', Logo: LogoAmazon },
+  { name: 'Magalu', Logo: LogoMagalu },
+  { name: 'Shopify', Logo: LogoShopify },
+  { name: 'Nuvemshop', Logo: LogoNuvemshop },
+  { name: 'WooCommerce', Logo: LogoWooCommerce },
+  { name: 'Loja Própria', Logo: LogoLojaPropria },
 ]
-
-export const statusLabel: Record<IntegrationStatus, string> = {
-  disponivel: 'Disponível',
-  'em-desenvolvimento': 'Em desenvolvimento',
-  'em-breve': 'Em breve',
-}
 
 // Abas da Plataforma interativa. Produto 360 vive DENTRO de "Produtos" como
 // visão secundária (não é mais uma seção isolada).
@@ -150,11 +143,11 @@ export const benefits = [
 export const faqItems = [
   {
     q: 'Quais marketplaces podem ser conectados?',
-    a: 'A plataforma centraliza Mercado Livre, Shopee, Amazon e loja própria. A integração direta por API já está disponível para o Mercado Livre; os demais canais estão em desenvolvimento e novas integrações estão previstas.',
+    a: 'Mercado Livre, Shopee, Amazon, Magalu, Shopify, Nuvemshop, WooCommerce e loja própria — todos disponíveis por integração direta via API.',
   },
   {
-    q: 'Como os dados chegam à plataforma?',
-    a: 'Por integração via API. Você conecta suas contas dos marketplaces e a plataforma recebe e organiza os dados pelas conexões disponíveis, sem alimentação manual.',
+    q: 'Como funciona a integração por API?',
+    a: 'Você conecta suas contas dos marketplaces e autoriza o acesso. A plataforma recebe os dados diretamente pelas APIs e os organiza automaticamente, sem alimentação manual.',
   },
   {
     q: 'A plataforma compara os resultados entre os canais?',
