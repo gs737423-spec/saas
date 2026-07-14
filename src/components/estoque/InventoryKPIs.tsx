@@ -4,12 +4,9 @@ import { defaultInventoryFilters, type InventoryFilterState } from './InventoryF
 import { useInventorySettings } from '@/contexts/InventorySettingsContext'
 
 const totalSkus = inventoryItems.length
-const critical = inventoryItems.filter((i) => i.status === 'critical').length
 const avgTurnover = inventoryItems.reduce((s, i) => s + i.turnover, 0) / inventoryItems.length
 const curveA = inventoryItems.filter((i) => i.abcClass === 'A').length
 const estimatedValue = getEstimatedInventoryValue()
-const excess = inventoryItems.filter((i) => i.coverageDays > 45).length
-const curveARisk = inventoryItems.filter((i) => i.abcClass === 'A' && i.coverageDays <= 20).length
 
 interface Props {
   filters: InventoryFilterState
@@ -29,7 +26,7 @@ interface CardDef {
   isActive?: (f: InventoryFilterState) => boolean
 }
 
-function buildCards(stalled: number): CardDef[] {
+function buildCards(stalled: number, curveARisk: number): CardDef[] {
   return [
     {
       key: 'value',
@@ -96,7 +93,7 @@ function buildCards(stalled: number): CardDef[] {
   ]
 }
 
-function RiskExtremesCard({ filters, onChange }: Props) {
+function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: Props & { critical: number; excess: number; excessDays: number }) {
   const criticalActive = filters.onlyCritical
   const excessActive = filters.onlyExcess
   return (
@@ -125,7 +122,7 @@ function RiskExtremesCard({ filters, onChange }: Props) {
             <Layers className="h-3.5 w-3.5" style={{ color: '#22D3EE' }} />
             <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{excess}</span>
           </div>
-          <div className="mt-1 truncate text-[10px] text-text-muted">excesso · &gt;45d</div>
+          <div className="mt-1 truncate text-[10px] text-text-muted">excesso · &gt;{excessDays}d</div>
         </button>
       </div>
     </div>
@@ -159,19 +156,22 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
 }
 
 export default function InventoryKPIs({ filters, onChange }: Props) {
-  const { classifyTurnover } = useInventorySettings()
+  const { settings, classifyGiro } = useInventorySettings()
   const stalled = inventoryItems.filter((i) => {
-    const st = classifyTurnover(i.turnover)
+    const st = classifyGiro(i.coverageDays)
     return st === 'Parado' || st === 'Parado crítico'
   }).length
-  const cards = buildCards(stalled)
+  const critical = inventoryItems.filter((i) => i.coverageDays <= settings.stock.criticalStockDays).length
+  const excess = inventoryItems.filter((i) => i.coverageDays > settings.stock.excessStockDays).length
+  const curveARisk = inventoryItems.filter((i) => i.abcClass === 'A' && i.coverageDays <= settings.coverage.thresholds.atencaoMaxDays).length
+  const cards = buildCards(stalled, curveARisk)
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
       {cards.slice(0, 2).map((c) => (
         <Card key={c.key} c={c} filters={filters} onChange={onChange} />
       ))}
-      <RiskExtremesCard filters={filters} onChange={onChange} />
+      <RiskExtremesCard filters={filters} onChange={onChange} critical={critical} excess={excess} excessDays={settings.stock.excessStockDays} />
       {cards.slice(2).map((c) => (
         <Card key={c.key} c={c} filters={filters} onChange={onChange} />
       ))}

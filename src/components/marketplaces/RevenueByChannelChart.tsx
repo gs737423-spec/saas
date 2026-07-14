@@ -191,11 +191,11 @@ export default function RevenueByChannelChart() {
     <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
       {/* Header */}
       <div className="relative mb-4">
-        <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Canal</h3>
-        <p className="mt-0.5 text-xs text-text-muted">
-          {period.label} · Total: <span className="font-mono font-semibold text-text-secondary">R$ {brl(totalRevenue)}</span>
+        <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
+        <p className="mt-0.5 text-[13px] text-text-secondary">
+          {period.label} · Total: <span className="font-mono font-semibold text-text-primary">R$ {brl(totalRevenue)}</span>
         </p>
-        <p className="mt-1 text-[11px] text-text-muted">
+        <p className="mt-1 text-[11.5px] text-text-secondary">
           Comparando com <span className="font-medium text-text-secondary">{compareLabel.toLowerCase()}</span> (linha tracejada)
         </p>
       </div>

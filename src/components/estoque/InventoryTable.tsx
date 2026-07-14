@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   inventoryItems,
   getMarketplaceColor,
-  getCoverageStatus,
 } from '@/data/mockData'
 import InventoryFilters, { type InventoryFilterState } from './InventoryFilters'
 import { useInventorySettings } from '@/contexts/InventorySettingsContext'
@@ -40,24 +39,24 @@ function daysSinceEntry(dateStr: string): number {
 
 export default function InventoryTable({ filters, onChange }: Props) {
   const [sort, setSort] = useState<SortKey>('revenue')
-  const { classifyTurnover, colorFor } = useInventorySettings()
+  const { settings, classifyGiro, giroColorFor, classifyCoverage } = useInventorySettings()
 
   const filtered = useMemo(() => {
     return inventoryItems.filter((i) => {
       if (filters.abc.size > 0 && !filters.abc.has(i.abcClass)) return false
       if (filters.onlyCritical && i.status !== 'critical') return false
       if (filters.onlyStalled) {
-        const st = classifyTurnover(i.turnover)
+        const st = classifyGiro(i.coverageDays)
         if (!(st === 'Parado' || st === 'Parado crítico')) return false
       }
       if (filters.marketplace !== 'all' && i.marketplace !== filters.marketplace) return false
       if (filters.manufacturerSearch && !i.manufacturerCode.toLowerCase().includes(filters.manufacturerSearch.toLowerCase())) return false
-      if (filters.onlyLowCoverage && i.coverageDays > 20) return false
-      if (filters.onlyExcess && i.coverageDays <= 45) return false
-      if (filters.onlyNoRecentEntry && daysSinceEntry(i.lastEntryDate) <= 60) return false
+      if (filters.onlyLowCoverage && i.coverageDays > settings.coverage.thresholds.atencaoMaxDays) return false
+      if (filters.onlyExcess && i.coverageDays <= settings.coverage.thresholds.saudavelMaxDays) return false
+      if (filters.onlyNoRecentEntry && daysSinceEntry(i.lastEntryDate) <= settings.stock.noRecentEntryDays) return false
       return true
     })
-  }, [filters, classifyTurnover])
+  }, [filters, classifyGiro, settings])
 
   const sorted = useMemo(() => [...filtered].sort((a, b) => (b[sort] as number) - (a[sort] as number)), [filtered, sort])
 
@@ -91,10 +90,10 @@ export default function InventoryTable({ filters, onChange }: Props) {
       {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
         {sorted.map((i) => {
-          const cov = getCoverageStatus(i.coverageDays)
+          const cov = classifyCoverage(i.coverageDays)
           const abc = abcStyle[i.abcClass]
-          const turnStatus = classifyTurnover(i.turnover)
-          const turn = colorFor(turnStatus)
+          const turnStatus = classifyGiro(i.coverageDays)
+          const turn = giroColorFor(turnStatus)
           const mp = getMarketplaceColor(i.marketplace)
           return (
             <div key={i.sku} className="overview-glass relative overflow-hidden rounded-xl p-3.5" style={{ boxShadow: `inset 3px 0 0 ${cov.color}` }}>
@@ -146,10 +145,10 @@ export default function InventoryTable({ filters, onChange }: Props) {
           </thead>
           <tbody>
             {sorted.map((i) => {
-              const cov = getCoverageStatus(i.coverageDays)
+              const cov = classifyCoverage(i.coverageDays)
               const abc = abcStyle[i.abcClass]
-              const turnStatus = classifyTurnover(i.turnover)
-              const turn = colorFor(turnStatus)
+              const turnStatus = classifyGiro(i.coverageDays)
+              const turn = giroColorFor(turnStatus)
               const stockValue = i.stock * i.cost
               const avgTicket = i.units30d > 0 ? i.revenue / i.units30d : 0
               return (
