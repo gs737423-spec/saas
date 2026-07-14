@@ -118,7 +118,7 @@ export default function ProductTable({ filteredProducts }: Props) {
             <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link to={`/produto/${p.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                  <Link to={`/app/produto/${p.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -186,7 +186,7 @@ export default function ProductTable({ filteredProducts }: Props) {
                 <tr key={p.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
                   <td className="py-3 pr-4">
-                    <Link to={`/produto/${p.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                    <Link to={`/app/produto/${p.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                     <span className="mt-0.5 block text-[11px] text-text-muted">{p.category}</span>
                   </td>
                   <td className="py-3 pr-4">

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Store,
@@ -24,15 +24,15 @@ import PeriodDropdown from '@/components/common/PeriodDropdown'
 type Item = { icon: typeof Package; label: string; to: string }
 
 const navItems: Item[] = [
-  { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
-  { icon: Store, label: 'Marketplaces', to: '/marketplaces' },
-  { icon: Package, label: 'Produtos', to: '/produtos' },
-  { icon: Boxes, label: 'Estoque', to: '/estoque' },
-  { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
-  { icon: Link2, label: 'Conexões', to: '/importacoes' },
-  { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
+  { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
+  { icon: Store, label: 'Marketplaces', to: '/app/marketplaces' },
+  { icon: Package, label: 'Produtos', to: '/app/produtos' },
+  { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
+  { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
+  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
+  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
+  { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
+  { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
 ]
 
 // Unified top navigation bar. Replaces the old fixed sidebar (SideRail) on
@@ -40,6 +40,7 @@ const navItems: Item[] = [
 // live in BottomNav; here on mobile we only show brand + actions.
 export default function TopNav() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -70,7 +71,7 @@ export default function TopNav() {
       {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
       <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
         {navItems.map((item) => (
-          <NavLink key={item.label} to={item.to} end={item.to === '/'} title={item.label} className={linkClass}>
+          <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
             <item.icon className="h-4 w-4 shrink-0" />
             <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
           </NavLink>
@@ -89,7 +90,7 @@ export default function TopNav() {
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
 
         <NavLink
-          to="/configuracoes"
+          to="/app/configuracoes"
           title="Configurações"
           className={({ isActive }) =>
             `hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary sm:flex ${
@@ -115,7 +116,7 @@ export default function TopNav() {
                 <p className="truncate text-[11px] text-text-muted">{user?.email}</p>
               </div>
               <NavLink
-                to="/configuracoes"
+                to="/app/configuracoes"
                 onClick={() => setShowUserMenu(false)}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
               >
@@ -123,7 +124,7 @@ export default function TopNav() {
                 Minha Conta
               </NavLink>
               <button
-                onClick={() => { setShowUserMenu(false); logout() }}
+                onClick={() => { setShowUserMenu(false); logout(); navigate('/') }}
                 className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"
               >
                 <LogOut className="h-4 w-4" />

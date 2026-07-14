@@ -35,7 +35,7 @@ export default function ProductOpportunities() {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <Link to={`/produto/${o.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{o.product}</Link>
+                  <Link to={`/app/produto/${o.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{o.product}</Link>
                   <span
                     className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold"
                     style={{ background: `${cfg.color}14`, color: cfg.color }}

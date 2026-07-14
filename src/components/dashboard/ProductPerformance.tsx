@@ -47,7 +47,7 @@ export default function ProductPerformance() {
                 <span className="mt-0.5 font-mono text-xs font-bold text-text-muted">{String(i + 1).padStart(2, '0')}</span>
                 <span className="mt-0.5 h-8 w-1 shrink-0 rounded-full" style={{ background: mpColor }} />
                 <div className="min-w-0 flex-1">
-                  <Link to={`/produto/${p.sku}`} className="block truncate text-[13px] font-medium leading-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                  <Link to={`/app/produto/${p.sku}`} className="block truncate text-[13px] font-medium leading-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -120,7 +120,7 @@ export default function ProductPerformance() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: mpColor }} />
                     <div className="min-w-0">
-                      <Link to={`/produto/${p.sku}`} className="block truncate text-[13px] font-medium leading-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                      <Link to={`/app/produto/${p.sku}`} className="block truncate text-[13px] font-medium leading-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                       <div className="mt-0.5 flex items-center gap-1.5">
                         <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                         <span className="text-text-muted">·</span>

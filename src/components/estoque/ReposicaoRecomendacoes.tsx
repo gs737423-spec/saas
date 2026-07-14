@@ -21,7 +21,7 @@ export default function ReposicaoRecomendacoes() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-1.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-                  <Link to={`/produto/${r.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{r.product}</Link>
+                  <Link to={`/app/produto/${r.sku}`} className="truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{r.product}</Link>
                   <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${urgencyColor[r.urgency]}`}>
                     Urgência {r.urgency}
                   </span>

@@ -22,7 +22,7 @@ export default function TopProductByChannel() {
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{m.marketplace}</span>
                 <Star className="ml-auto h-3.5 w-3.5 text-accent-amber" />
               </div>
-              <Link to={`/produto/${product.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">
+              <Link to={`/app/produto/${product.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">
                 {product.name}
               </Link>
               <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{product.sku}</span>

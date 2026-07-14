@@ -1,10 +1,12 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import aceleraLogo from '@/assets/acelera-logo.png';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,11 @@ export default function Login() {
     setMounted(true);
   }, []);
 
+  // Já autenticado: não faz sentido ver o login — vai direto para a plataforma.
+  if (isAuthenticated) {
+    return <Navigate to="/app" replace />;
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -23,7 +30,9 @@ export default function Login() {
 
     try {
       const success = await login(email, password);
-      if (!success) {
+      if (success) {
+        navigate('/app', { replace: true });
+      } else {
         setError('Email ou senha incorretos.');
       }
     } catch {
@@ -189,18 +198,28 @@ export default function Login() {
 
         {/* Forgot password */}
         <div className="text-center mt-4">
-          <a
-            href="#"
-            className="text-sm transition-colors hover:underline"
+          <button
+            type="button"
+            className="text-sm transition-colors hover:underline cursor-pointer bg-transparent"
             style={{ color: '#4C82F7' }}
-            onClick={(e) => e.preventDefault()}
           >
             Esqueceu a senha?
-          </a>
+          </button>
+        </div>
+
+        {/* Voltar ao site institucional */}
+        <div className="text-center mt-5">
+          <Link
+            to="/"
+            className="text-xs transition-colors hover:underline"
+            style={{ color: '#59688A' }}
+          >
+            &larr; Voltar ao site
+          </Link>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs mt-8" style={{ color: '#59688A' }}>
+        <p className="text-center text-xs mt-6" style={{ color: '#59688A' }}>
           &copy; 2026 Acelera Intelligence &middot; Todos os direitos reservados
         </p>
       </div>

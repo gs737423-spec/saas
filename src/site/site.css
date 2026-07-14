@@ -1,0 +1,338 @@
+/* ==========================================================================
+   Acelera Intelligence — Site institucional
+   Camada de estilos ISOLADA sob `.site-root`. Nunca altera os tokens do app
+   (dashboard permanece intocado). Animações em CSS puro: transform/opacity,
+   sem layout shift, respeitando prefers-reduced-motion. Conteúdo é visível
+   mesmo se o JS falhar (reveals partem visíveis e só então são "armados").
+   ========================================================================== */
+
+.site-root {
+  /* Paleta clara premium */
+  --s-bg: #F6F8FC;
+  --s-bg-soft: #EEF2F9;
+  --s-surface: #FFFFFF;
+  --s-ink: #0B1220;
+  --s-ink-soft: #33405C;
+  --s-muted: #64728D;
+  --s-line: #E2E8F2;
+  --s-line-strong: #D2DBEA;
+
+  /* Escuro (blocos de contraste) — herda a identidade do dashboard */
+  --s-dark: #070B18;
+  --s-dark-2: #0B1224;
+  --s-dark-surface: #101A31;
+  --s-dark-line: #22304F;
+  --s-dark-ink: #F4F7FD;
+  --s-dark-muted: #93A0BC;
+
+  /* Acentos (do SaaS) */
+  --s-blue: #3D74F0;
+  --s-blue-bright: #4C82F7;
+  --s-blue-ink: #1E4FC4;
+  --s-emerald: #12B981;
+  --s-amber: #E9A83A;
+  --s-rose: #F0466C;
+  --s-violet: #7C5CF6;
+
+  --s-container: 1200px;
+  --s-radius-block: 40px;
+  --s-radius-card: 24px;
+  --s-radius-btn: 14px;
+
+  color: var(--s-ink);
+  background: var(--s-bg);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+.site-root *,
+.site-root *::before,
+.site-root *::after { box-sizing: border-box; }
+
+.site-container {
+  width: 100%;
+  max-width: var(--s-container);
+  margin-inline: auto;
+  padding-inline: clamp(20px, 5vw, 56px);
+}
+
+/* Tipografia utilitária */
+.site-display {
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.03em;
+  font-size: clamp(2.35rem, 6.2vw, 4.6rem);
+}
+.site-h2 {
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-size: clamp(1.85rem, 4vw, 3rem);
+}
+.site-h3 {
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+}
+.site-lead {
+  font-size: clamp(1.02rem, 1.6vw, 1.22rem);
+  line-height: 1.55;
+  color: var(--s-ink-soft);
+}
+.site-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--s-blue-ink);
+}
+
+/* ---- Reveal no scroll (IntersectionObserver arma; CSS anima) -------------
+   Sem JS, o elemento fica visível (conteúdo garantido). Com JS, começa
+   deslocado e revela uma única vez ao entrar na viewport. */
+.reveal { opacity: 1; }
+.reveal.is-armed {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+.reveal.is-armed.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Marquee infinito (logos) -------------------------------------------
+   Duas cópias idênticas lado a lado; a faixa desliza -50% e reinicia sem
+   salto. Cópia duplicada é aria-hidden no JSX. Máscara suave nas pontas. */
+.marquee {
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee__track {
+  display: flex;
+  width: max-content;
+  flex-wrap: nowrap;
+  animation: marquee-scroll var(--marquee-duration, 34s) linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee__track { animation-play-state: paused; }
+@keyframes marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.marquee-logo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--s-muted);
+  filter: grayscale(1);
+  opacity: 0.62;
+  transition: filter 0.3s ease, opacity 0.3s ease, color 0.3s ease;
+}
+.marquee-logo:hover {
+  filter: grayscale(0);
+  opacity: 1;
+  color: var(--s-ink);
+}
+
+/* ---- Float dos cards do hero (poucos px, velocidades distintas) ---------- */
+@keyframes hero-float-a {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@keyframes hero-float-b {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(7px); }
+}
+.hero-float-a { animation: hero-float-a 6.5s ease-in-out infinite; }
+.hero-float-b { animation: hero-float-b 7.8s ease-in-out infinite; }
+
+/* ---- Superfícies ---- */
+.site-card {
+  background: var(--s-surface);
+  border: 1px solid var(--s-line);
+  border-radius: var(--s-radius-card);
+  box-shadow: 0 1px 2px rgba(16, 26, 49, 0.04),
+    0 12px 28px -14px rgba(16, 26, 49, 0.14);
+}
+.site-card-hover {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease, border-color 0.28s ease;
+  will-change: transform;
+}
+.site-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--s-line-strong);
+  box-shadow: 0 2px 4px rgba(16, 26, 49, 0.05),
+    0 24px 48px -18px rgba(16, 26, 49, 0.22);
+}
+
+/* Bloco escuro premium */
+.site-dark {
+  background:
+    radial-gradient(1100px 640px at 12% -10%, rgba(76, 130, 247, 0.20), transparent 58%),
+    radial-gradient(900px 620px at 100% 0%, rgba(124, 92, 246, 0.16), transparent 55%),
+    linear-gradient(180deg, var(--s-dark) 0%, var(--s-dark-2) 100%);
+  color: var(--s-dark-ink);
+}
+.site-dark-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #142238 0%, #0C1526 100%);
+  border: 1px solid var(--s-dark-line);
+  border-radius: var(--s-radius-card);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 18px 40px -16px rgba(2, 6, 20, 0.7);
+}
+
+/* ---- Botões ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--s-radius-btn);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.85rem 1.4rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.18s ease, box-shadow 0.22s ease,
+    background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn-primary {
+  background: linear-gradient(180deg, var(--s-blue-bright), var(--s-blue));
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 10px 24px -10px rgba(61, 116, 240, 0.7);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 16px 32px -10px rgba(61, 116, 240, 0.8);
+}
+.btn-ghost {
+  background: var(--s-surface);
+  border-color: var(--s-line-strong);
+  color: var(--s-ink);
+}
+.btn-ghost:hover {
+  transform: translateY(-2px);
+  border-color: var(--s-blue);
+  color: var(--s-blue-ink);
+  box-shadow: 0 12px 26px -14px rgba(16, 26, 49, 0.28);
+}
+.btn-on-dark {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--s-dark-ink);
+}
+.btn-on-dark:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* ---- Moldura de navegador minimalista para as capturas ---- */
+.browser-frame {
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0C1526;
+  border: 1px solid var(--s-dark-line);
+  box-shadow: 0 2px 4px rgba(2, 6, 20, 0.4),
+    0 30px 60px -24px rgba(2, 6, 20, 0.55);
+}
+.browser-frame__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding-inline: 14px;
+  background: linear-gradient(180deg, #16223A, #101A30);
+  border-bottom: 1px solid var(--s-dark-line);
+}
+.browser-frame__dot { width: 10px; height: 10px; border-radius: 50%; }
+.browser-frame__img { display: block; width: 100%; height: auto; }
+
+/* Header do site */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+.site-header[data-scrolled='true'] {
+  background: rgba(246, 248, 252, 0.82);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom-color: var(--s-line);
+  box-shadow: 0 6px 24px -18px rgba(16, 26, 49, 0.4);
+}
+
+/* Tabs — troca de conteúdo sem piscar, altura estável via grid */
+.tab-panel { animation: tab-fade 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes tab-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Acordeão FAQ */
+.faq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.faq-body[data-open='true'] { grid-template-rows: 1fr; }
+.faq-body > div { overflow: hidden; }
+
+/* Acessibilidade — foco visível consistente */
+.site-root :focus-visible {
+  outline: 2px solid var(--s-blue);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Scroll suave só quando o site institucional está montado (não afeta o app) */
+html.site-active { scroll-behavior: smooth; }
+html.site-active :is(section, div)[id] { scroll-margin-top: 88px; }
+@media (prefers-reduced-motion: reduce) {
+  html.site-active { scroll-behavior: auto; }
+}
+
+/* Bloqueio de scroll quando o menu mobile abre */
+.site-lock { overflow: hidden; }
+
+/* ---- prefers-reduced-motion — para tudo o que se move ---- */
+@media (prefers-reduced-motion: reduce) {
+  .site-root * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee__track { animation: none !important; }
+  .hero-float-a, .hero-float-b { animation: none !important; }
+  .reveal.is-armed { opacity: 1 !important; transform: none !important; }
+}
+
+/* Mobile — reduz movimento perceptível */
+@media (max-width: 640px) {
+  .hero-float-a, .hero-float-b { animation: none; }
+}

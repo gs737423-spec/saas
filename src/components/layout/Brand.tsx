@@ -6,7 +6,7 @@ import markUrl from '@/assets/acelera-mark.png'
 // place instead of being inlined and re-tweaked inside TopNav.
 export default function Brand() {
   return (
-    <Link to="/" className="group flex shrink-0 items-center gap-2.5">
+    <Link to="/app" className="group flex shrink-0 items-center gap-2.5">
       <img
         src={markUrl}
         alt="Acelera"

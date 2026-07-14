@@ -26,7 +26,7 @@ export default function InventoryAlerts() {
           return (
             <Link
               key={a.id}
-              to={`/produto/${a.sku}`}
+              to={`/app/produto/${a.sku}`}
               className="flex items-start gap-2.5 rounded-xl border p-3 transition-colors hover:border-border-default"
               style={{ borderColor: cfg.border, background: cfg.bg }}
             >

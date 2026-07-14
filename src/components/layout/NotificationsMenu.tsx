@@ -65,7 +65,7 @@ export default function NotificationsMenu() {
                 </div>
               )
               return a.sku ? (
-                <Link key={a.id} to={`/produto/${a.sku}`} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
+                <Link key={a.id} to={`/app/produto/${a.sku}`} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
                   {content}
                 </Link>
               ) : (

@@ -19,20 +19,20 @@ import {
 type Primary = { icon: typeof Package; label: string; to?: string }
 
 const primary: Primary[] = [
-  { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
-  { icon: Package, label: 'Produtos', to: '/produtos' },
-  { icon: Store, label: 'Canais', to: '/marketplaces' },
-  { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
+  { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
+  { icon: Package, label: 'Produtos', to: '/app/produtos' },
+  { icon: Store, label: 'Canais', to: '/app/marketplaces' },
+  { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
 ]
 
 const secondary = [
-  { icon: Boxes, label: 'Estoque', to: '/estoque' },
-  { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
-  { icon: Link2, label: 'Conexões', to: '/importacoes' },
-  { icon: Settings, label: 'Configurações', to: '/configuracoes' },
-  { icon: HelpCircle, label: 'Ajuda', to: '/configuracoes' },
+  { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
+  { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
+  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
+  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
+  { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
+  { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },
+  { icon: HelpCircle, label: 'Ajuda', to: '/app/configuracoes' },
 ]
 
 export default function BottomNav() {
@@ -87,7 +87,7 @@ export default function BottomNav() {
               <NavLink
                 key={item.label}
                 to={item.to}
-                end={item.to === '/'}
+                end={item.to === '/app'}
                 className={({ isActive }) =>
                   `flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
                     isActive ? 'text-accent-blue' : 'text-text-muted'

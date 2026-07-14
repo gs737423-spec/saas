@@ -16,7 +16,7 @@ export default function ProdutoDetalhe() {
       <div className="glass-panel rounded-2xl p-6 text-center">
         <p className="text-sm font-medium text-text-primary">Produto não encontrado</p>
         <p className="mt-1 text-[13px] text-text-muted">Nenhum produto com o SKU "{sku}" foi encontrado.</p>
-        <Link to="/produtos" className="mt-4 inline-block rounded-lg bg-accent-blue/10 px-4 py-2 text-[13px] font-medium text-accent-blue hover:bg-accent-blue/20">
+        <Link to="/app/produtos" className="mt-4 inline-block rounded-lg bg-accent-blue/10 px-4 py-2 text-[13px] font-medium text-accent-blue hover:bg-accent-blue/20">
           Voltar para Produtos
         </Link>
       </div>

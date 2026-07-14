@@ -5,16 +5,16 @@ import { products } from '@/data/mockData'
 import { LayoutDashboard, Store, Boxes, Wallet, Megaphone, Star, Link2, FileBarChart2, Settings } from 'lucide-react'
 
 const pages = [
-  { icon: LayoutDashboard, label: 'Visão Geral', to: '/' },
-  { icon: Store, label: 'Marketplaces', to: '/marketplaces' },
-  { icon: Package, label: 'Produtos', to: '/produtos' },
-  { icon: Boxes, label: 'Estoque', to: '/estoque' },
-  { icon: Wallet, label: 'Financeiro', to: '/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/avaliacoes' },
-  { icon: Link2, label: 'Conexões', to: '/importacoes' },
-  { icon: FileBarChart2, label: 'Relatórios', to: '/relatorios' },
-  { icon: Settings, label: 'Configurações', to: '/configuracoes' },
+  { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
+  { icon: Store, label: 'Marketplaces', to: '/app/marketplaces' },
+  { icon: Package, label: 'Produtos', to: '/app/produtos' },
+  { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
+  { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
+  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
+  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
+  { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
+  { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
+  { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },
 ]
 
 export default function SearchMenu() {
@@ -108,7 +108,7 @@ export default function SearchMenu() {
                 {matchedProducts.map((p) => (
                   <button
                     key={p.sku}
-                    onClick={() => go(`/produto/${p.sku}`)}
+                    onClick={() => go(`/app/produto/${p.sku}`)}
                     className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
                   >
                     <Package className="h-4 w-4 shrink-0 text-text-muted" />

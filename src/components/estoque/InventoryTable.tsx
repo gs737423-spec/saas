@@ -95,7 +95,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
             <div key={i.sku} className="overview-glass relative overflow-hidden rounded-xl p-3.5" style={{ boxShadow: `inset 3px 0 0 ${cov.color}` }}>
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link to={`/produto/${i.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>
+                  <Link to={`/app/produto/${i.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{i.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -150,7 +150,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
                 <tr key={i.sku} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-3 pl-2 font-mono text-[11px] text-text-muted">{i.sku}</td>
                   <td className="py-3 pr-3">
-                    <Link to={`/produto/${i.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>
+                    <Link to={`/app/produto/${i.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>
                   </td>
                   <td className="py-3 pr-3 font-mono text-[11px] text-text-muted">{i.manufacturerCode}</td>
                   <td className="py-3 pr-3 text-right font-mono text-text-secondary">{i.stock}</td>
