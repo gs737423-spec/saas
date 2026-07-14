@@ -82,7 +82,7 @@ function StatCard({ kpi }: { kpi: OverviewKpi }) {
   const attention = kpi.key === 'fees'
   const c = attention ? toneColor.amber : toneColor[kpi.tone]
   return (
-    <div className="overview-glass overview-card-hover relative flex h-full flex-col overflow-hidden rounded-xl p-2.5">
+    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-xl p-2.5">
       {/* thin left accent only for the attention (fees) card */}
       {attention && <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: c }} />}
       <div className="mb-1.5 flex h-3.5 items-center justify-between">

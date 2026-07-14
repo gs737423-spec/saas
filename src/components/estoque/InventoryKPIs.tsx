@@ -97,7 +97,7 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
   const criticalActive = filters.onlyCritical
   const excessActive = filters.onlyExcess
   return (
-    <div className="overview-glass overview-card-hover relative flex flex-col overflow-hidden rounded-2xl p-2.5">
+    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5">
       <span className="mb-1.5 block min-h-[28px] text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">Crítico / Excesso</span>
       <div className="mt-auto grid grid-cols-2 divide-x divide-border-subtle">
         <button
@@ -136,7 +136,7 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
   return (
     <button
       onClick={clickable ? () => onChange(c.apply!(filters)) : undefined}
-      className={`overview-glass overview-card-hover relative flex flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
       style={active ? { boxShadow: `inset 0 0 0 1.5px ${c.primary}99, 0 0 20px -6px ${c.primary}66` } : undefined}
     >
       <div
