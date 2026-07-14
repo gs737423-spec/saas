@@ -4,16 +4,10 @@ import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import MarketplaceMarquee from '@/site/sections/MarketplaceMarquee'
 import ProblemSection from '@/site/sections/ProblemSection'
-import TransitionMark from '@/site/sections/TransitionMark'
 import PlatformShowcase from '@/site/sections/PlatformShowcase'
-import MetricsSection from '@/site/sections/MetricsSection'
-import MarketplaceComparison from '@/site/sections/MarketplaceComparison'
-import ProductIntelligence from '@/site/sections/ProductIntelligence'
-import Product360 from '@/site/sections/Product360'
+import IntelligenceSection from '@/site/sections/IntelligenceSection'
 import HowItWorks from '@/site/sections/HowItWorks'
 import Benefits from '@/site/sections/Benefits'
-import Security from '@/site/sections/Security'
-import Integrations from '@/site/sections/Integrations'
 import FinalCta from '@/site/sections/FinalCta'
 import DemoForm from '@/site/sections/DemoForm'
 import Faq from '@/site/sections/Faq'
@@ -30,19 +24,20 @@ export default function SitePage() {
     <div className="site-root">
       <SiteHeader />
       <main>
+        {/* 1. Hero + marquee */}
         <Hero />
         <MarketplaceMarquee />
+        {/* 2. Problema e solução */}
         <ProblemSection />
-        <TransitionMark />
+        {/* 3. Plataforma interativa */}
         <PlatformShowcase />
-        <MetricsSection />
-        <MarketplaceComparison />
-        <ProductIntelligence />
-        <Product360 />
+        {/* 4. Inteligência da operação */}
+        <IntelligenceSection />
+        {/* 5. Como funciona (API) + integrações */}
         <HowItWorks />
+        {/* 6. Benefícios e confiança */}
         <Benefits />
-        <Security />
-        <Integrations />
+        {/* 7. Conversão */}
         <FinalCta />
         <DemoForm />
         <Faq />

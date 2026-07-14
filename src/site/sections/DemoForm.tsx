@@ -98,7 +98,7 @@ export default function DemoForm() {
             <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Veja a plataforma com os dados da sua operação.</h2>
             <p className="site-lead mt-4">Preencha os campos e nosso time mostra como centralizar seus marketplaces em uma única visão. Sem compromisso.</p>
             <ul className="mt-6 space-y-2.5">
-              {['Demonstração guiada da plataforma', 'Tira-dúvidas sobre integração e importação', 'Orientação para a sua operação'].map((t) => (
+              {['Demonstração guiada da plataforma', 'Tira-dúvidas sobre integrações e conexões', 'Orientação para a sua operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px]" style={{ color: 'var(--s-ink-soft)' }}>
                   <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: 'var(--s-emerald)' }} /> {t}
                 </li>

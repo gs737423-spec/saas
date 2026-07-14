@@ -1,6 +1,11 @@
 /* Conteúdo do site institucional — centralizado para não espalhar textos e
    valores mágicos pelas seções. Números demonstrativos são coerentes com o
-   sistema (mesmos dados do dashboard). */
+   sistema (mesmos dados do dashboard).
+
+   POSICIONAMENTO: a plataforma integra os marketplaces por API. O cliente
+   conecta suas contas, os dados são recebidos e organizados pelas conexões
+   disponíveis e os indicadores ficam centralizados em uma única visão.
+   Nada de importação/planilha/upload manual. */
 import type { ComponentType } from 'react'
 import {
   LogoMercadoLivre, LogoShopee, LogoAmazon, LogoMagalu,
@@ -15,7 +20,7 @@ export const nav = [
   { label: 'FAQ', href: '#faq' },
 ]
 
-export type IntegrationStatus = 'ativo' | 'planilha' | 'em-breve'
+export type IntegrationStatus = 'disponivel' | 'em-desenvolvimento' | 'em-breve'
 
 export interface MarketplaceItem {
   name: string
@@ -23,28 +28,39 @@ export interface MarketplaceItem {
   status: IntegrationStatus
 }
 
-// Honestidade obrigatória: só o que existe hoje é "ativo". Integração de API
-// real hoje = Mercado Livre (ver src/server/integrations/mercadolivre). Os
-// demais entram por planilha ou estão em desenvolvimento.
+// Honestidade obrigatória: só o que existe hoje é "disponível". Integração de
+// API real hoje = Mercado Livre (ver src/server/integrations/mercadolivre). Os
+// demais canais estão em desenvolvimento ou previstos.
 export const marketplaces: MarketplaceItem[] = [
-  { name: 'Mercado Livre', Logo: LogoMercadoLivre, status: 'ativo' },
-  { name: 'Shopee', Logo: LogoShopee, status: 'planilha' },
-  { name: 'Amazon', Logo: LogoAmazon, status: 'planilha' },
-  { name: 'Loja Própria', Logo: LogoLojaPropria, status: 'planilha' },
+  { name: 'Mercado Livre', Logo: LogoMercadoLivre, status: 'disponivel' },
+  { name: 'Shopee', Logo: LogoShopee, status: 'em-desenvolvimento' },
+  { name: 'Amazon', Logo: LogoAmazon, status: 'em-desenvolvimento' },
+  { name: 'Loja Própria', Logo: LogoLojaPropria, status: 'em-desenvolvimento' },
   { name: 'Magalu', Logo: LogoMagalu, status: 'em-breve' },
   { name: 'Shopify', Logo: LogoShopify, status: 'em-breve' },
   { name: 'Nuvemshop', Logo: LogoNuvemshop, status: 'em-breve' },
   { name: 'WooCommerce', Logo: LogoWooCommerce, status: 'em-breve' },
 ]
 
-export interface PlatformTab {
-  id: string
-  label: string
+export const statusLabel: Record<IntegrationStatus, string> = {
+  disponivel: 'Disponível',
+  'em-desenvolvimento': 'Em desenvolvimento',
+  'em-breve': 'Em breve',
+}
+
+// Abas da Plataforma interativa. Produto 360 vive DENTRO de "Produtos" como
+// visão secundária (não é mais uma seção isolada).
+export interface PlatformView {
   title: string
   desc: string
   bullets: string[]
   image: string
   alt: string
+}
+export interface PlatformTab extends PlatformView {
+  id: string
+  label: string
+  secondary?: { label: string } & PlatformView
 }
 
 export const platformTabs: PlatformTab[] = [
@@ -53,15 +69,15 @@ export const platformTabs: PlatformTab[] = [
     label: 'Visão Geral',
     title: 'Os principais números da operação em um único painel.',
     desc: 'Acompanhe faturamento bruto e líquido, pedidos, ticket médio, CMV e margem em uma visão executiva.',
-    bullets: ['Indicadores centralizados', 'Comparação entre períodos', 'Visão rápida dos pontos de atenção'],
+    bullets: ['Indicadores centralizados', 'Comparação entre períodos', 'Pontos de atenção em destaque'],
     image: '/site/dashboard-overview.webp',
     alt: 'Painel de Visão Geral da Acelera Intelligence com indicadores de faturamento, pedidos e margem',
   },
   {
     id: 'marketplaces',
     label: 'Marketplaces',
-    title: 'Compare os canais sem precisar cruzar planilhas.',
-    desc: 'Entenda a participação, o faturamento, os pedidos, o ticket e a margem de cada marketplace.',
+    title: 'Compare os canais em uma única visão.',
+    desc: 'Entenda a participação, o faturamento, os pedidos, o ticket e a margem de cada marketplace, lado a lado.',
     bullets: ['Comparação lado a lado', 'Participação por canal', 'Identificação de dependência'],
     image: '/site/marketplace-comparison.webp',
     alt: 'Tela de comparação entre marketplaces mostrando participação e desempenho por canal',
@@ -70,89 +86,75 @@ export const platformTabs: PlatformTab[] = [
     id: 'produtos',
     label: 'Produtos',
     title: 'Encontre rapidamente os produtos que mais impactam o resultado.',
-    desc: 'Visualize produtos mais vendidos, maior faturamento, melhor margem, quedas e riscos de estoque.',
+    desc: 'Visualize produtos mais vendidos, maior faturamento, melhor margem, crescimento, quedas e riscos de estoque.',
     bullets: ['Ranking de desempenho', 'Filtros inteligentes', 'Produtos que merecem atenção'],
     image: '/site/products-overview.webp',
     alt: 'Página de Produtos com ranking de desempenho e classificação por margem e faturamento',
-  },
-  {
-    id: 'produto-360',
-    label: 'Produto 360',
-    title: 'Analise cada produto por todos os ângulos.',
-    desc: 'Acompanhe tendência, vendas, margem, pedidos, estoque e participação de um produto específico.',
-    bullets: ['Histórico individual', 'Comparação entre canais', 'Evolução por período'],
-    image: '/site/product-360.webp',
-    alt: 'Tela Produto 360 com histórico individual, tendência e participação por canal',
+    secondary: {
+      label: 'Produto 360',
+      title: 'Cada produto analisado por todos os ângulos.',
+      desc: 'Tendência, vendas, margem, pedidos, estoque e participação por canal de um produto específico, com evolução por período.',
+      bullets: ['Histórico individual', 'Comparação entre canais', 'Evolução por período'],
+      image: '/site/product-360.webp',
+      alt: 'Tela Produto 360 com histórico individual, tendência e participação por canal',
+    },
   },
   {
     id: 'estoque',
     label: 'Estoque',
     title: 'Antecipe rupturas antes que elas afetem as vendas.',
-    desc: 'Identifique níveis críticos de estoque e produtos que precisam de reposição.',
-    bullets: ['Estoque crítico', 'Priorização de reposição', 'Visão organizada por produto'],
+    desc: 'Acompanhe estoque atual, cobertura e níveis críticos, com priorização dos produtos que precisam de reposição.',
+    bullets: ['Cobertura e estoque crítico', 'Produtos próximos da ruptura', 'Priorização de reposição'],
     image: '/site/inventory.webp',
     alt: 'Página de Estoque com níveis críticos e recomendações de reposição',
   },
-  {
-    id: 'importacoes',
-    label: 'Importações',
-    title: 'Traga os dados dos diferentes canais para o mesmo padrão.',
-    desc: 'Importe planilhas e centralize informações de fontes diferentes dentro da plataforma.',
-    bullets: ['Padronização de arquivos', 'Histórico de importações', 'Identificação de inconsistências'],
-    image: '/site/imports.webp',
-    alt: 'Tela de Importações com histórico e padronização de planilhas dos marketplaces',
-  },
 ]
 
+// Problema — no máximo quatro pontos, sem menção a planilhas.
 export const problems = [
-  'Dados separados em diferentes canais',
-  'Planilhas que precisam ser atualizadas manualmente',
-  'Dificuldade para calcular a margem real',
+  'Dados separados entre os canais',
+  'Dificuldade para entender a margem real',
   'Falta de comparação entre marketplaces',
-  'Estoque sem visão centralizada',
-  'Produtos em queda identificados tarde demais',
-  'Decisões tomadas sem visão completa',
+  'Produtos e estoques analisados tarde demais',
 ]
 
+// Como funciona — narrativa por API (conectar, centralizar, decidir).
 export const howSteps = [
   {
     n: '01',
-    title: 'Conecte ou importe',
-    text: 'Integre seus canais disponíveis ou envie as planilhas dos marketplaces.',
+    title: 'Conecte seus marketplaces',
+    text: 'Autorize as conexões disponíveis para que a plataforma acesse os dados necessários da operação.',
   },
   {
     n: '02',
-    title: 'Centralize os dados',
-    text: 'A plataforma organiza e padroniza informações de diferentes fontes.',
+    title: 'Centralize as informações',
+    text: 'Os dados recebidos pelas APIs são organizados em uma única estrutura de análise.',
   },
   {
     n: '03',
-    title: 'Decida com clareza',
-    text: 'Visualize indicadores, margens, produtos, estoque e pontos de atenção em um único lugar.',
+    title: 'Acompanhe e decida',
+    text: 'Visualize faturamento, margem, produtos, estoque e desempenho por canal em um só lugar.',
   },
 ]
 
 export const benefits = [
   'Visão consolidada da operação',
-  'Menos dependência de planilhas',
   'Comparação clara entre canais',
   'Margem real por marketplace',
-  'Melhor controle de estoque',
-  'Identificação rápida de produtos em queda',
-  'Priorização de oportunidades',
+  'Controle de estoque e rupturas',
+  'Produtos em queda identificados cedo',
   'Indicadores executivos centralizados',
-  'Mais agilidade nas análises',
-  'Decisões baseadas em dados',
 ]
 
+// FAQ compacto — perguntas essenciais, respostas baseadas no produto real.
 export const faqItems = [
   {
-    q: 'Quais marketplaces podem ser utilizados?',
-    a: 'A plataforma foi construída para operações que vendem em Mercado Livre, Shopee, Amazon e loja própria. A integração direta por API já está disponível para o Mercado Livre; os demais canais entram hoje pela importação de planilhas, e novas integrações estão em desenvolvimento.',
+    q: 'Quais marketplaces podem ser conectados?',
+    a: 'A plataforma centraliza Mercado Livre, Shopee, Amazon e loja própria. A integração direta por API já está disponível para o Mercado Livre; os demais canais estão em desenvolvimento e novas integrações estão previstas.',
   },
   {
-    q: 'É possível importar planilhas?',
-    a: 'Sim. A área de Importações recebe planilhas dos diferentes canais e padroniza as informações dentro da plataforma, mantendo um histórico das importações realizadas.',
+    q: 'Como os dados chegam à plataforma?',
+    a: 'Por integração via API. Você conecta suas contas dos marketplaces e a plataforma recebe e organiza os dados pelas conexões disponíveis, sem alimentação manual.',
   },
   {
     q: 'A plataforma compara os resultados entre os canais?',
@@ -167,20 +169,8 @@ export const faqItems = [
     a: 'Sim. A visão Produto 360 reúne faturamento, pedidos, ticket, margem, tendência, estoque e participação por canal de um produto específico, com evolução por período.',
   },
   {
-    q: 'A plataforma ajuda a identificar estoque crítico?',
-    a: 'Sim. A área de Estoque destaca níveis críticos e produtos que precisam de reposição, ajudando a antecipar rupturas.',
-  },
-  {
-    q: 'Como funciona a implantação?',
-    a: 'A implantação começa pela conexão dos canais disponíveis e pela importação das planilhas dos marketplaces. O melhor caminho para a sua operação é definido junto com o nosso time na demonstração.',
-  },
-  {
     q: 'Os dados de diferentes empresas ficam separados?',
-    a: 'Sim. O acesso é controlado por autenticação e cada operação enxerga apenas os próprios dados. Falamos com você sobre a estrutura de acesso da sua equipe na demonstração.',
-  },
-  {
-    q: 'Preciso substituir os sistemas que já utilizo?',
-    a: 'Não. A proposta é centralizar a análise da operação em um único lugar. Você continua vendendo nos seus canais e usa a plataforma para enxergar o resultado consolidado.',
+    a: 'Sim. O acesso é controlado por autenticação e cada operação enxerga apenas os próprios dados. Detalhamos a estrutura de acesso da sua equipe na demonstração.',
   },
 ]
 

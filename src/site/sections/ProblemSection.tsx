@@ -1,97 +1,106 @@
-import { FileSpreadsheet, AlertTriangle, ArrowRight, Layers } from 'lucide-react'
+import { Link2, AlertTriangle, ArrowRight, Layers } from 'lucide-react'
 import SectionHeader from '@/site/components/SectionHeader'
 import Reveal from '@/site/components/Reveal'
-import { problems } from '@/site/content'
-import { marketplaces } from '@/site/content'
+import { problems, marketplaces } from '@/site/content'
 
+// Problema + solução em um único bloco. A frase de posicionamento
+// ("Não é apenas reunir dados...") fecha a seção — não é mais uma seção
+// isolada. Cabe em ~1 tela no desktop.
 export default function ProblemSection() {
   const channels = marketplaces.slice(0, 4)
 
   return (
     <section id="desafio" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-20 md:py-28">
-        <SectionHeader
-          label="O desafio da operação multicanal"
-          title={
-            <>
-              Seus dados estão espalhados.
-              <br />
-              Suas decisões não deveriam estar.
-            </>
-          }
-          desc="Quando cada marketplace apresenta números, formatos e relatórios diferentes, entender o resultado real da operação se torna lento, inseguro e dependente de planilhas."
-        />
-
-        <div className="mt-14 grid items-stretch gap-6 lg:grid-cols-[1fr_auto_1fr]">
-          {/* Antes — disperso */}
-          <Reveal className="site-card" >
-            <div className="p-6 md:p-7">
-              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--s-rose)' }}>Hoje</span>
-              <h3 className="site-h3 mt-2" style={{ color: 'var(--s-ink)' }}>Planilhas e sistemas isolados</h3>
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                {channels.map((c) => (
-                  <span key={c.name} className="flex items-center gap-2 rounded-xl px-3 py-2"
-                    style={{ border: '1px dashed var(--s-line-strong)', background: 'var(--s-bg-soft)' }}>
-                    <FileSpreadsheet className="h-4 w-4" style={{ color: 'var(--s-muted)' }} />
-                    <span className="text-[12.5px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>{c.name}.xlsx</span>
+      <div className="site-container py-16 md:py-20">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
+          {/* Esquerda — narrativa */}
+          <div>
+            <SectionHeader
+              label="O desafio da operação multicanal"
+              title={
+                <>
+                  Seus dados estão espalhados.
+                  <br />
+                  Suas decisões não deveriam estar.
+                </>
+              }
+              desc="Quando cada canal apresenta números, formatos e indicadores separados, entender o resultado real da operação se torna lento e inseguro."
+            />
+            <ul className="mt-7 space-y-2.5">
+              {problems.map((p, i) => (
+                <Reveal as="li" key={p} delay={i * 60} className="flex items-center gap-3 border-b py-3" style={{ borderColor: 'var(--s-line)' }}>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(240,70,108,0.1)', color: 'var(--s-rose)' }}>
+                    <AlertTriangle className="h-3.5 w-3.5" />
                   </span>
-                ))}
-              </div>
-              <div className="mt-5 flex items-center gap-2 rounded-xl px-3 py-2.5"
-                style={{ background: 'rgba(240,70,108,0.06)', border: '1px solid rgba(240,70,108,0.16)' }}>
-                <AlertTriangle className="h-4 w-4 shrink-0" style={{ color: 'var(--s-rose)' }} />
-                <span className="text-[12.5px] font-medium" style={{ color: 'var(--s-ink-soft)' }}>
-                  Números que não batem entre canais
-                </span>
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Seta de convergência */}
-          <div className="hidden items-center justify-center lg:flex">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full"
-              style={{ background: 'var(--s-surface)', border: '1px solid var(--s-line)', color: 'var(--s-blue)' }}>
-              <ArrowRight className="h-5 w-5" />
-            </span>
+                  <span className="text-[15px] font-medium" style={{ color: 'var(--s-ink-soft)' }}>{p}</span>
+                </Reveal>
+              ))}
+            </ul>
           </div>
 
-          {/* Depois — centralizado */}
-          <Reveal className="site-dark-card" delay={120}>
-            <div className="p-6 md:p-7">
-              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--s-blue-bright)' }}>Com a Acelera</span>
-              <h3 className="site-h3 mt-2" style={{ color: 'var(--s-dark-ink)' }}>Uma visão centralizada</h3>
-              <div className="mt-5 flex items-center gap-3 rounded-2xl p-4"
-                style={{ background: 'rgba(76,130,247,0.08)', border: '1px solid var(--s-dark-line)' }}>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'rgba(76,130,247,0.18)', color: 'var(--s-blue-bright)' }}>
-                  <Layers className="h-5 w-5" />
-                </span>
-                <div>
-                  <div className="text-[19px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>R$ 284.520</div>
-                  <div className="text-[12px]" style={{ color: 'var(--s-dark-muted)' }}>faturamento consolidado · 4 canais</div>
+          {/* Direita — antes/depois (contas conectadas, sem arquivos) */}
+          <Reveal delay={80}>
+            <div className="grid items-stretch gap-3 sm:grid-cols-[1fr_auto_1fr]">
+              {/* Antes */}
+              <div className="site-card p-5">
+                <span className="text-[11.5px] font-bold uppercase tracking-wider" style={{ color: 'var(--s-rose)' }}>Hoje</span>
+                <h3 className="mt-1 text-[15px] font-bold" style={{ color: 'var(--s-ink)' }}>Canais isolados</h3>
+                <div className="mt-4 space-y-2">
+                  {channels.map((c) => (
+                    <div key={c.name} className="flex items-center gap-2 rounded-lg px-2.5 py-2"
+                      style={{ border: '1px dashed var(--s-line-strong)', background: 'var(--s-bg-soft)' }}>
+                      <span className="h-2 w-2 rounded-full" style={{ background: 'var(--s-line-strong)' }} />
+                      <span className="text-[12px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>{c.name}</span>
+                      <span className="ml-auto text-[10.5px]" style={{ color: 'var(--s-muted)' }}>conta separada</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {channels.map((c, i) => (
-                  <div key={c.name} className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--s-dark-line)' }}>
-                    <div className="text-[11px]" style={{ color: 'var(--s-dark-muted)' }}>{c.name}</div>
-                    <div className="text-[13px] font-bold" style={{ color: 'var(--s-dark-ink)' }}>{[42, 22, 16, 20][i]}%</div>
+
+              {/* Seta */}
+              <div className="hidden items-center justify-center sm:flex">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full hero-float-b"
+                  style={{ background: 'var(--s-surface)', border: '1px solid var(--s-line)', color: 'var(--s-blue)' }}>
+                  <ArrowRight className="h-4.5 w-4.5" />
+                </span>
+              </div>
+
+              {/* Depois */}
+              <div className="site-dark-card p-5">
+                <span className="text-[11.5px] font-bold uppercase tracking-wider" style={{ color: 'var(--s-blue-bright)' }}>Com a Acelera</span>
+                <h3 className="mt-1 text-[15px] font-bold" style={{ color: 'var(--s-dark-ink)' }}>Uma visão central</h3>
+                <div className="mt-4 flex items-center gap-2.5 rounded-xl p-3"
+                  style={{ background: 'rgba(76,130,247,0.1)', border: '1px solid var(--s-dark-line)' }}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'rgba(76,130,247,0.2)', color: 'var(--s-blue-bright)' }}>
+                    <Layers className="h-4.5 w-4.5" />
+                  </span>
+                  <div>
+                    <div className="text-[16px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>R$ 284.520</div>
+                    <div className="text-[10.5px]" style={{ color: 'var(--s-dark-muted)' }}>consolidado · 4 canais</div>
                   </div>
-                ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {channels.map((c, i) => (
+                    <div key={c.name} className="rounded-lg px-2.5 py-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--s-dark-line)' }}>
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--s-dark-muted)' }}>
+                        <Link2 className="h-3 w-3" style={{ color: 'var(--s-emerald)' }} />{c.name}
+                      </div>
+                      <div className="text-[12.5px] font-bold" style={{ color: 'var(--s-dark-ink)' }}>{[42, 22, 16, 20][i]}%</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </Reveal>
         </div>
 
-        {/* Lista de problemas — refinada, não em cards iguais */}
-        <Reveal className="mt-12" delay={80}>
-          <ul className="grid gap-x-10 gap-y-3 sm:grid-cols-2">
-            {problems.map((p) => (
-              <li key={p} className="flex items-start gap-3 border-b py-3" style={{ borderColor: 'var(--s-line)' }}>
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--s-rose)' }} />
-                <span className="text-[15px]" style={{ color: 'var(--s-ink-soft)' }}>{p}</span>
-              </li>
-            ))}
-          </ul>
+        {/* Fecho de posicionamento (antiga seção de transição, agora integrada) */}
+        <Reveal delay={60} className="mt-14 border-t pt-10 text-center" style={{ borderColor: 'var(--s-line)' }}>
+          <p className="mx-auto max-w-3xl font-extrabold tracking-tight"
+            style={{ fontSize: 'clamp(1.4rem, 3.2vw, 2.2rem)', lineHeight: 1.15, letterSpacing: '-0.02em', color: 'var(--s-ink)' }}>
+            Não é apenas reunir dados.{' '}
+            <span style={{ color: 'var(--s-blue)' }}>É transformar a operação em uma visão clara.</span>
+          </p>
         </Reveal>
       </div>
     </section>

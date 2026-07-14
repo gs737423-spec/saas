@@ -136,15 +136,21 @@
 .marquee-logo {
   display: inline-flex;
   align-items: center;
-  color: var(--s-muted);
-  filter: grayscale(1);
-  opacity: 0.62;
+  color: var(--s-ink-soft);
+  filter: grayscale(0.35);
+  opacity: 0.7;
   transition: filter 0.3s ease, opacity 0.3s ease, color 0.3s ease;
 }
 .marquee-logo:hover {
   filter: grayscale(0);
   opacity: 1;
   color: var(--s-ink);
+}
+/* Logos maiores e com mais peso na faixa do hero */
+.marquee-logo svg { height: 38px; }
+@media (max-width: 640px) {
+  .marquee-logo { opacity: 0.85; filter: grayscale(0.15); } /* contraste sem depender de hover */
+  .marquee-logo svg { height: 30px; }
 }
 
 /* ---- Float dos cards do hero (poucos px, velocidades distintas) ---------- */

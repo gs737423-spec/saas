@@ -28,7 +28,10 @@ export default function SiteHeader() {
 
   return (
     <header className="site-header" data-scrolled={scrolled}>
-      <div className="site-container flex h-[68px] items-center justify-between gap-4">
+      <div
+        className="site-container flex items-center justify-between gap-4 transition-[height] duration-300"
+        style={{ height: scrolled ? 60 : 72 }}
+      >
         {/* Logo → topo */}
         <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Acelera Intelligence — início">
           <img src={mark} alt="" width={36} height={36} className="h-9 w-9 object-contain" draggable={false} />
