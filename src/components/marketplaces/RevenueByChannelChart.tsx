@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
@@ -83,48 +83,46 @@ function resample(sliced: DailyData[], periodDays: number): DailyData[] {
   return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
 }
 
-function CustomTooltip({ active, payload, label, seriesLabel, compareLabel }: any) {
+function CustomTooltip({ active, payload, label, activeChannels, compareLabel }: any) {
   if (!active || !payload?.length) return null
-  const total = payload.find((p: any) => p.dataKey === 'total')?.value ?? 0
-  const prev = payload.find((p: any) => p.dataKey === 'prevTotal')?.value
-  const delta = prev > 0 ? ((total - prev) / prev) * 100 : 0
+  const list: typeof channels = activeChannels
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label} · {seriesLabel}</p>
-      <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
-        <span className="flex items-center gap-2 text-text-secondary">
-          <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
-          Hoje
-        </span>
-        <span className="font-mono font-semibold text-text-primary">R$ {brl(total)}</span>
-      </div>
-      {prev !== undefined && (
-        <>
-          <div className="flex items-center justify-between gap-4 py-0.5 text-[11.5px]">
-            <span className="flex items-center gap-2 text-text-secondary">
-              <span className="h-2 w-2 rounded-full" style={{ background: '#6B7A9E' }} />
-              {compareLabel}
-            </span>
-            <span className="font-mono text-text-secondary">R$ {brl(prev)}</span>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label} · vs {compareLabel.toLowerCase()}</p>
+      {list.map((c) => {
+        const cur = payload.find((p: any) => p.dataKey === c.key)?.value
+        const prev = payload.find((p: any) => p.dataKey === `prev_${c.key}`)?.value
+        if (cur === undefined) return null
+        const delta = prev > 0 ? ((cur - prev) / prev) * 100 : 0
+        const brand = getMarketplaceColor(c.label)
+        return (
+          <div key={c.key} className="border-t border-white/5 py-1 first:border-t-0 first:pt-0">
+            <div className="flex items-center justify-between gap-4 text-[11.5px]">
+              <span className="flex items-center gap-2 text-text-secondary">
+                <span className="h-2 w-2 rounded-full" style={{ background: brand, boxShadow: `0 0 6px ${brand}66` }} />
+                {c.label}
+              </span>
+              <span className="font-mono font-semibold text-text-primary">R$ {brl(cur)}</span>
+            </div>
+            {prev !== undefined && (
+              <div className="mt-0.5 flex items-center justify-between gap-4 pl-4 text-[10.5px] text-text-muted">
+                <span>anterior: R$ {brl(prev)}</span>
+                <span className={`font-mono font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                  {delta >= 0 ? '+' : ''}{pct(delta)}%
+                </span>
+              </div>
+            )}
           </div>
-          <div className="mt-1.5 flex items-center justify-between border-t border-white/10 pt-1.5 text-[11px]">
-            <span className="font-medium text-text-muted">Variação</span>
-            <span className={`font-mono text-[11px] font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-              {delta >= 0 ? '+' : ''}{pct(delta)}%
-            </span>
-          </div>
-        </>
-      )}
+        )
+      })}
     </div>
   )
 }
 
-type ViewKey = 'total' | ChannelKey
-
 export default function RevenueByChannelChart() {
   const { period } = usePeriod()
-  // Which series feeds the "Hoje" line: sum of all channels, or a single one.
-  const [viewChannel, setViewChannel] = useState<ViewKey>('total')
+  // Multiple channels can be active at once, each keeping its own brand color.
+  const [selected, setSelected] = useState<Set<ChannelKey>>(new Set(channels.map((c) => c.key)))
   // Offset (in days) used to look up the comparison line's values.
   const [compareKey, setCompareKey] = useState<'yesterday' | 'week' | 'month'>('week')
 
@@ -136,13 +134,21 @@ export default function RevenueByChannelChart() {
     setCompareKey(period.days <= 1 ? 'yesterday' : period.days <= 10 ? 'week' : 'month')
   }, [period.key])
 
+  const toggleChannel = (key: ChannelKey) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        if (next.size > 1) next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }
+
   const periodDays = period.days
   const compareOffset = compareOptions.find((o) => o.key === compareKey)!.offsetDays
-
-  const valueFor = useCallback(
-    (d: DailyData) => (viewChannel === 'total' ? d.total : (d as any)[viewChannel]),
-    [viewChannel]
-  )
+  const activeChannels = channels.filter((c) => selected.has(c.key))
 
   function shiftedDate(dateStr: string, offsetDays: number): DailyData | undefined {
     const d = new Date(dateStr)
@@ -154,13 +160,14 @@ export default function RevenueByChannelChart() {
     const current = resample(allDailyData.slice(-periodDays), periodDays)
     return current.map((entry) => {
       const prevEntry = shiftedDate(entry.date, compareOffset)
-      return {
-        ...entry,
-        total: valueFor(entry),
-        prevTotal: prevEntry ? valueFor(prevEntry) : undefined,
+      const row: any = { label: entry.label, date: entry.date }
+      for (const c of channels) {
+        row[c.key] = (entry as any)[c.key]
+        row[`prev_${c.key}`] = prevEntry ? (prevEntry as any)[c.key] : undefined
       }
+      return row
     })
-  }, [periodDays, valueFor, compareOffset])
+  }, [periodDays, compareOffset])
 
   const channelSummary = useMemo(() => {
     const periodData = allDailyData.slice(-periodDays)
@@ -178,7 +185,6 @@ export default function RevenueByChannelChart() {
   }, [periodDays])
 
   const totalRevenue = channelSummary.reduce((s, c) => s + c.total, 0)
-  const seriesLabel = viewChannel === 'total' ? 'Todos os canais' : channels.find((c) => c.key === viewChannel)!.label
   const compareLabel = compareOptions.find((o) => o.key === compareKey)!.label
 
   return (
@@ -190,22 +196,22 @@ export default function RevenueByChannelChart() {
           {period.label} · Total: <span className="font-mono font-semibold text-text-secondary">R$ {brl(totalRevenue)}</span>
         </p>
         <p className="mt-1 text-[11px] text-text-muted">
-          Gráfico: <span className="font-medium text-text-secondary">{seriesLabel}</span> vs <span className="font-medium text-text-secondary">{compareLabel.toLowerCase()}</span>
+          Comparando com <span className="font-medium text-text-secondary">{compareLabel.toLowerCase()}</span> (linha tracejada)
         </p>
       </div>
 
-      {/* Channel cards */}
+      {/* Channel cards — click to toggle, multiple can be active */}
       <div className="relative mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {channelSummary.map((c, idx) => {
           const brand = getMarketplaceColor(c.label)
           const positive = c.growth > 0.5
           const negative = c.growth < -0.5
-          const isVisible = viewChannel === c.key
+          const isVisible = selected.has(c.key)
           return (
             <button
               key={c.key}
-              onClick={() => setViewChannel((v) => (v === c.key ? 'total' : c.key))}
-              title="Clique para ver este canal isolado no gráfico"
+              onClick={() => toggleChannel(c.key)}
+              title="Clique para mostrar/ocultar este canal no gráfico"
               className={`group relative cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
                 isVisible
                   ? 'border-white/[0.08] bg-white/[0.03]'
@@ -282,11 +288,16 @@ export default function RevenueByChannelChart() {
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
-              <linearGradient id="fill-total" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4C82F7" stopOpacity={0.3} />
-                <stop offset="50%" stopColor="#4C82F7" stopOpacity={0.08} />
-                <stop offset="100%" stopColor="#4C82F7" stopOpacity={0} />
-              </linearGradient>
+              {channels.map((c) => {
+                const color = getMarketplaceColor(c.label)
+                return (
+                  <linearGradient key={c.key} id={`fill-${c.key}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+                    <stop offset="50%" stopColor={color} stopOpacity={0.06} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0} />
+                  </linearGradient>
+                )
+              })}
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
@@ -303,77 +314,56 @@ export default function RevenueByChannelChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip seriesLabel={seriesLabel} compareLabel={compareLabel} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
-            <Line
-              type="monotone"
-              dataKey="prevTotal"
-              name={compareLabel}
-              stroke="#6B7A9E"
-              strokeWidth={1.5}
-              strokeOpacity={0.7}
-              strokeDasharray="3 3"
-              dot={false}
-              activeDot={{ r: 3, fill: '#6B7A9E', stroke: '#0d1225', strokeWidth: 1.5 }}
-              animationDuration={600}
-            />
-            <Area
-              type="monotone"
-              dataKey="total"
-              name="Hoje"
-              stroke="#4C82F7"
-              strokeWidth={2.5}
-              fill="url(#fill-total)"
-              dot={false}
-              activeDot={{
-                r: 4,
-                strokeWidth: 2,
-                stroke: '#0d1225',
-                fill: '#4C82F7',
-                style: { filter: 'drop-shadow(0 0 4px #4C82F788)' },
-              }}
-              animationDuration={600}
-              animationEasing="ease-out"
-            />
+            <Tooltip content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
+            {activeChannels.map((c) => {
+              const color = getMarketplaceColor(c.label)
+              return (
+                <Line
+                  key={`prev-${c.key}`}
+                  type="monotone"
+                  dataKey={`prev_${c.key}`}
+                  name={`${c.label} · ${compareLabel}`}
+                  stroke={color}
+                  strokeWidth={1.75}
+                  strokeOpacity={0.55}
+                  strokeDasharray="5 4"
+                  dot={false}
+                  activeDot={{ r: 3, fill: color, stroke: '#0d1225', strokeWidth: 1.5, fillOpacity: 0.7 }}
+                  animationDuration={500}
+                  isAnimationActive={false}
+                />
+              )
+            })}
+            {activeChannels.map((c) => {
+              const color = getMarketplaceColor(c.label)
+              return (
+                <Area
+                  key={c.key}
+                  type="monotone"
+                  dataKey={c.key}
+                  name={c.label}
+                  stroke={color}
+                  strokeWidth={2.5}
+                  fill={`url(#fill-${c.key})`}
+                  dot={false}
+                  activeDot={{
+                    r: 4,
+                    strokeWidth: 2,
+                    stroke: '#0d1225',
+                    fill: color,
+                    style: { filter: `drop-shadow(0 0 4px ${color}88)` },
+                  }}
+                  animationDuration={600}
+                  animationEasing="ease-out"
+                />
+              )
+            })}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
-      {/* View + compare controls */}
+      {/* Compare controls */}
       <div className="relative mt-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Ver</span>
-          <button
-            onClick={() => setViewChannel('total')}
-            className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
-              viewChannel === 'total'
-                ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue'
-                : 'border-white/10 bg-white/[0.04] text-text-secondary hover:bg-white/[0.08]'
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-accent-blue" style={{ boxShadow: '0 0 6px #4C82F766' }} />
-            Todos (soma)
-          </button>
-          {channels.map((c) => {
-            const active = viewChannel === c.key
-            return (
-              <button
-                key={c.key}
-                onClick={() => setViewChannel(c.key)}
-                className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
-                  active
-                    ? 'border-white/20 bg-white/[0.08] text-text-primary'
-                    : 'border-white/5 bg-transparent text-text-muted hover:opacity-80'
-                }`}
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: getMarketplaceColor(c.label), boxShadow: active ? `0 0 6px ${getMarketplaceColor(c.label)}66` : 'none' }} />
-                {c.label}
-              </button>
-            )
-          })}
-        </div>
-
-        <span className="hidden h-4 w-px bg-white/10 sm:block" />
-
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Comparar com</span>
           {compareOptions.map((o) => (
@@ -390,6 +380,7 @@ export default function RevenueByChannelChart() {
             </button>
           ))}
         </div>
+        <span className="text-[10px] text-text-muted">Clique nos cards acima para comparar mais de um canal ao mesmo tempo.</span>
       </div>
     </div>
   )
