@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Receipt, Percent, RotateCcw } from 'lucide-react'
 import { overviewKpis, type OverviewKpi, type KpiTone } from '@/data/mockData'
 import { BASELINE_DAYS, type PeriodOption } from '@/lib/periods'
+import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 function formatKpiValue(kpi: OverviewKpi, raw: number): string {
   if (kpi.key === 'ticket') {
@@ -9,11 +10,16 @@ function formatKpiValue(kpi: OverviewKpi, raw: number): string {
   return Math.round(raw).toLocaleString('pt-BR')
 }
 
+interface ResolvedKpi extends OverviewKpi {
+  /** Scaled numeric value (post period-scaling), fed to the counter animation. */
+  resolvedRaw: number
+}
+
 /** Scales a 30-day baseline KPI to the selected period. */
-function resolveKpi(kpi: OverviewKpi, period: PeriodOption): OverviewKpi {
+function resolveKpi(kpi: OverviewKpi, period: PeriodOption): ResolvedKpi {
   const scale = kpi.scalesWithPeriod ? (period.days / BASELINE_DAYS) * period.jitter : period.jitter
   const raw = kpi.raw * scale
-  return { ...kpi, value: formatKpiValue(kpi, raw) }
+  return { ...kpi, value: formatKpiValue(kpi, raw), resolvedRaw: raw }
 }
 
 const iconByKey: Record<string, typeof DollarSign> = {
@@ -43,7 +49,7 @@ function Delta({ change }: { change: number }) {
   )
 }
 
-function HeroCard({ kpi }: { kpi: OverviewKpi }) {
+function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
   const c = toneColor[kpi.tone]
   return (
@@ -59,7 +65,7 @@ function HeroCard({ kpi }: { kpi: OverviewKpi }) {
         <div className="mt-2.5 flex items-center gap-2">
           <div className="num-glow font-mono text-[28px] font-bold leading-none tracking-tight text-text-primary">
             {kpi.prefix && <span className="text-base font-semibold text-text-secondary">{kpi.prefix} </span>}
-            {kpi.value}
+            <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
             {kpi.suffix && <span className="text-base font-semibold text-text-secondary">{kpi.suffix}</span>}
           </div>
           {kpi.tag && (
@@ -77,7 +83,7 @@ function HeroCard({ kpi }: { kpi: OverviewKpi }) {
   )
 }
 
-function StatCard({ kpi }: { kpi: OverviewKpi }) {
+function StatCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
   const attention = kpi.key === 'fees'
   const c = attention ? toneColor.amber : toneColor[kpi.tone]
@@ -92,7 +98,7 @@ function StatCard({ kpi }: { kpi: OverviewKpi }) {
       <div className="flex h-5 items-baseline gap-1.5">
         <div className="font-mono text-[18px] font-bold leading-none tracking-tight text-text-primary">
           {kpi.prefix && <span className="text-xs font-semibold text-text-secondary">{kpi.prefix} </span>}
-          {kpi.value}
+          <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
           {kpi.suffix && <span className="text-xs font-semibold text-text-secondary">{kpi.suffix}</span>}
         </div>
         {kpi.tag && (

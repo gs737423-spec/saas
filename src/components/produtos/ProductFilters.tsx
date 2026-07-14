@@ -61,7 +61,7 @@ function MultiMarketplaceDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-default focus:border-accent-blue/50"
+        className="motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50"
       >
         <span className="flex min-w-0 items-center gap-1.5 truncate">
           {selected.size > 0 && selected.size <= 2 ? (
@@ -165,7 +165,7 @@ function Dropdown<T extends string>({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-default focus:border-accent-blue/50"
+        className="motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50"
       >
         <span className="truncate">{labelFn(value)}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -198,9 +198,9 @@ export default function ProductFilters({ filters, onChange }: Props) {
   const categoryOptions: string[] = ['all', ...productCategories]
 
   return (
-    <div className="glass-panel rounded-2xl p-4">
+    <div className="glass-panel motion-panel rounded-2xl p-4">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_210px_170px]">
-        <div className="group flex h-11 items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 transition-colors focus-within:border-accent-blue/50 focus-within:bg-bg-card">
+        <div className="motion-input group flex h-11 items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 focus-within:border-accent-blue/50 focus-within:bg-bg-card">
           <Search className="h-4 w-4 shrink-0 text-text-muted transition-colors group-focus-within:text-accent-blue" />
           <input
             type="text"

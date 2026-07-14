@@ -61,7 +61,7 @@ export default function SearchMenu() {
       <button
         title="Buscar"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary"
+        className="motion-header-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
         <Search className="h-[18px] w-[18px]" />
       </button>

@@ -61,7 +61,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
   const sorted = useMemo(() => [...filtered].sort((a, b) => (b[sort] as number) - (a[sort] as number)), [filtered, sort])
 
   return (
-    <div className="overview-glass-elevated flex flex-col rounded-2xl p-4 sm:rounded-3xl sm:p-5">
+    <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-4 sm:rounded-3xl sm:p-5">
       <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
@@ -73,7 +73,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
             <button
               key={o.key}
               onClick={() => setSort(o.key)}
-              className={`cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+              className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${
                 sort === o.key ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-muted hover:text-text-secondary'
               }`}
             >
@@ -152,7 +152,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
               const stockValue = i.stock * i.cost
               const avgTicket = i.units30d > 0 ? i.revenue / i.units30d : 0
               return (
-                <tr key={i.sku} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
+                <tr key={i.sku} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-2 pl-2 font-mono text-[11px] text-text-muted">{i.sku}</td>
                   <td className="py-3 pr-2">
                     <Link to={`/app/produto/${i.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>

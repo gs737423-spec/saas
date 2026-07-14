@@ -92,7 +92,7 @@ export default function ProductTable({ filteredProducts }: Props) {
   const sortLabel = columns.find((c) => c.key === sortKey)?.label ?? ''
 
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:p-5">
+    <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
@@ -102,7 +102,7 @@ export default function ProductTable({ filteredProducts }: Props) {
           type="button"
           onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
           title="Inverter ordem"
-          className="hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary sm:inline-flex"
+          className="motion-chip hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary hover:border-border-default hover:text-text-primary sm:inline-flex"
         >
           Ordenado por {sortLabel} {sortDir === 'asc' ? '(crescente)' : '(decrescente)'}
           {sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
@@ -183,7 +183,7 @@ export default function ProductTable({ filteredProducts }: Props) {
               const mp = getMarketplaceColor(p.marketplace)
               const growth = bucketGrowth(p.trend)
               return (
-                <tr key={p.id} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
+                <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
                   <td className="py-3 pr-4">
                     <Link to={`/app/produto/${p.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>

@@ -1,0 +1,210 @@
+/* ==========================================================================
+   Motion Design System — Utilities
+   ==========================================================================
+   Reusable classes built on the tokens in motion-tokens.css. NONE of these
+   are applied to any component yet — this file only defines them so future
+   work has a single, consistent vocabulary instead of ad-hoc transitions.
+
+   Rules this file follows (see motion-system.md for the long version):
+   - Only animate `transform`, `opacity`, and (sparingly) `filter` — all
+     GPU-compositable, none trigger layout or paint of surrounding content.
+   - Never `transition: all`.
+   - Every duration/easing value comes from a token. No literals.
+   - No JavaScript for anything a :hover/:focus-visible/:active selector
+     can express on its own.
+   ========================================================================== */
+
+@layer utilities {
+
+  /* ---- Elevation system ---------------------------------------------------
+     Three static surface levels (no motion) + three interactive states.
+     Levels compose with the shadow scale below — a component picks a
+     surface-N for its resting shadow and layers on -hover/-active/-focus
+     as needed. Not wired into any real surface yet. */
+  .motion-surface-1 { box-shadow: var(--motion-shadow-1); }
+  .motion-surface-2 { box-shadow: var(--motion-shadow-2); }
+  .motion-surface-3 { box-shadow: var(--motion-shadow-3); }
+
+  .motion-elevate-hover {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover),
+                box-shadow var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .motion-elevate-hover:hover {
+    transform: translateY(var(--motion-translate-hover));
+    box-shadow: var(--motion-shadow-3);
+  }
+  .motion-elevate-active:active {
+    transform: translateY(0) scale(var(--motion-scale-active));
+  }
+
+  /* ---- Shadow scale ---------------------------------------------------- */
+  :root {
+    --motion-shadow-1: 0 1px 2px 0 rgba(0, 0, 0, calc(0.35 * var(--motion-shadow-intensity)));
+    --motion-shadow-2: 0 4px 12px -2px rgba(0, 0, 0, calc(0.55 * var(--motion-shadow-intensity))),
+                        0 1px 2px 0 rgba(0, 0, 0, calc(0.4 * var(--motion-shadow-intensity)));
+    --motion-shadow-3: 0 16px 32px -8px rgba(0, 0, 0, calc(0.7 * var(--motion-shadow-intensity))),
+                        0 4px 8px -2px rgba(0, 0, 0, calc(0.5 * var(--motion-shadow-intensity)));
+  }
+
+  /* ---- Glow scale --------------------------------------------------------
+     Extremely discreet by design — a soft colored halo, not a neon effect.
+     Consumers supply --motion-glow-color; falls back to accent blue. */
+  :root {
+    --motion-glow-color: var(--color-accent-blue);
+  }
+  .motion-glow {
+    filter: drop-shadow(0 0 calc(8px * var(--motion-glow-intensity)) color-mix(in srgb, var(--motion-glow-color) 55%, transparent));
+    transition: filter var(--motion-duration-normal) var(--motion-ease-standard);
+  }
+  .motion-glow-hover:hover {
+    filter: drop-shadow(0 0 calc(14px * var(--motion-glow-intensity)) color-mix(in srgb, var(--motion-glow-color) 70%, transparent));
+  }
+
+  /* ---- Focus system --------------------------------------------------------
+     One ring recipe, reused via focus-visible so keyboard focus is always
+     legible without adding a visible ring on mouse click. Not applied to
+     any input/button/card/link yet. */
+  .motion-focus-ring {
+    outline: none;
+  }
+  .motion-focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+    transition: outline-offset var(--motion-duration-ultrafast) var(--motion-ease-standard);
+  }
+
+  /* ---- Hover / interactive primitives ------------------------------------ */
+  .motion-hover {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover),
+                opacity var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .motion-hover:hover {
+    transform: scale(var(--motion-scale-hover));
+  }
+
+  .motion-card {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover),
+                box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
+                border-color var(--motion-duration-fast) var(--motion-ease-hover);
+    will-change: transform;
+  }
+  .motion-card:hover {
+    transform: translateY(var(--motion-translate-hover));
+  }
+
+  .motion-button {
+    transition: transform var(--motion-duration-ultrafast) var(--motion-ease-button),
+                background-color var(--motion-duration-fast) var(--motion-ease-standard),
+                box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+  .motion-button:active {
+    transform: scale(var(--motion-scale-active));
+  }
+
+  .motion-input {
+    transition: border-color var(--motion-duration-fast) var(--motion-ease-standard),
+                background-color var(--motion-duration-fast) var(--motion-ease-standard),
+                box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  /* ---- Fade / slide / scale entrances -------------------------------------
+     Applied via a class + optional data-state, not inline styles. Distances
+     and durations are tokenized so every entrance in the app matches. */
+  .motion-fade {
+    opacity: 0;
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-enter);
+  }
+  .motion-fade[data-state="visible"] {
+    opacity: 1;
+  }
+
+  .motion-slide {
+    opacity: 0;
+    transform: translateY(var(--motion-translate-slide));
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-enter),
+                transform var(--motion-duration-normal) var(--motion-ease-enter);
+  }
+  .motion-slide[data-state="visible"] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .motion-scale {
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-enter),
+                transform var(--motion-duration-normal) var(--motion-ease-enter);
+  }
+  .motion-scale[data-state="visible"] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ---- Skeleton ------------------------------------------------------------
+     Loading placeholder shimmer. Pure CSS, GPU-friendly (background-position
+     via a gradient, not layout-affecting properties). Not used anywhere. */
+  .motion-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+  .motion-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    animation: motion-skeleton-sweep var(--motion-duration-slow) linear infinite;
+    animation-duration: 1.4s;
+  }
+  @keyframes motion-skeleton-sweep {
+    100% { transform: translateX(100%); }
+  }
+
+  /* ---- Number counter (visual hook only) ----------------------------------
+     The actual counting logic lives in src/lib/motion.ts (useAnimatedNumber).
+     This class just marks an element as GPU-composited text so re-renders
+     during the count don't trigger layout. */
+  .motion-number {
+    display: inline-block;
+    will-change: contents;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Chart animation ------------------------------------------------------
+     Generic draw-in for SVG path-based charts (line/area strokes). Consumers
+     set stroke-dasharray/stroke-dashoffset via the helper in motion.ts;
+     this class only owns the transition timing. */
+  .motion-chart-draw {
+    transition: stroke-dashoffset var(--motion-duration-slow) var(--motion-ease-enter);
+  }
+  .motion-chart-fade {
+    opacity: 0;
+    transition: opacity var(--motion-duration-slow) var(--motion-ease-enter);
+  }
+  .motion-chart-fade[data-state="visible"] {
+    opacity: 1;
+  }
+
+  /* ---- Reduced motion ------------------------------------------------------
+     One escape hatch for everything above, instead of repeating the media
+     query per class. */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-hover,
+    .motion-card,
+    .motion-button,
+    .motion-input,
+    .motion-fade,
+    .motion-slide,
+    .motion-scale,
+    .motion-glow,
+    .motion-elevate-hover,
+    .motion-chart-draw,
+    .motion-chart-fade {
+      transition: none !important;
+    }
+    .motion-skeleton::after {
+      animation: none !important;
+    }
+  }
+}

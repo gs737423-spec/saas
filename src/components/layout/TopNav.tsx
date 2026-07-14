@@ -93,7 +93,7 @@ export default function TopNav() {
           to="/app/configuracoes"
           title="Configurações"
           className={({ isActive }) =>
-            `hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary sm:flex ${
+            `motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex ${
               isActive ? 'text-accent-blue' : ''
             }`
           }
@@ -105,7 +105,7 @@ export default function TopNav() {
           <button
             onClick={() => setShowUserMenu(v => !v)}
             title={user?.name ?? 'Usuário'}
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet"
+            className="motion-header-control flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet"
           >
             {initials}
           </button>

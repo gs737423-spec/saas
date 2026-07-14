@@ -44,9 +44,13 @@ export default function Produtos() {
     <div className="space-y-2 sm:space-y-2.5">
       <ProductFilters filters={filters} onChange={setFilters} />
 
-      <ProductKPIs products={periodProducts} />
+      <div className="motion-block-in">
+        <ProductKPIs products={periodProducts} />
+      </div>
 
-      <ProductTable filteredProducts={periodProducts} />
+      <div className="motion-block-in motion-block-in-2">
+        <ProductTable filteredProducts={periodProducts} />
+      </div>
     </div>
   )
 }

@@ -8,10 +8,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-2">
       {/* KPIs com hierarquia: hero Bruto + secundários */}
-      <KPICards period={period} />
+      <div className="motion-block-in">
+        <KPICards period={period} />
+      </div>
 
       {/* Comparativo (GMV) */}
-      <MarketplaceComparison />
+      <div className="motion-block-in motion-block-in-2">
+        <MarketplaceComparison />
+      </div>
     </div>
   )
 }
