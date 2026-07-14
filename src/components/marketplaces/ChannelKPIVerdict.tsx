@@ -1,6 +1,7 @@
 import { Crown, Receipt, ShoppingCart, TrendingUp, AlertTriangle, Shield } from 'lucide-react'
 import { channelOverview, scaleChannelOverview, getMarketplaceColor } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
+import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 const brl = (v: number) => v.toLocaleString('pt-BR')
 const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -22,7 +23,8 @@ export default function ChannelKPIVerdict() {
   const verdicts = [
     {
       label: 'Líder em Líquido',
-      value: `R$ ${brl(sorted.byNet[0].netRevenue)}`,
+      raw: sorted.byNet[0].netRevenue,
+      format: (v: number) => `R$ ${brl(v)}`,
       channel: sorted.byNet[0].marketplace,
       sub: `${pct(sorted.byNet[0].netSharePct)}% do líquido total`,
       icon: Crown,
@@ -30,7 +32,8 @@ export default function ChannelKPIVerdict() {
     },
     {
       label: 'Melhor Ticket',
-      value: `R$ ${brl2(sorted.byTicket[0].avgTicket)}`,
+      raw: sorted.byTicket[0].avgTicket,
+      format: (v: number) => `R$ ${brl2(v)}`,
       channel: sorted.byTicket[0].marketplace,
       sub: `${brl(sorted.byTicket[0].orders)} pedidos`,
       icon: Receipt,
@@ -38,7 +41,8 @@ export default function ChannelKPIVerdict() {
     },
     {
       label: 'Mais Pedidos',
-      value: brl(sorted.byOrders[0].orders),
+      raw: sorted.byOrders[0].orders,
+      format: (v: number) => brl(v),
       channel: sorted.byOrders[0].marketplace,
       sub: `ticket R$ ${brl2(sorted.byOrders[0].avgTicket)}`,
       icon: ShoppingCart,
@@ -46,7 +50,8 @@ export default function ChannelKPIVerdict() {
     },
     {
       label: 'Maior Crescimento',
-      value: `+${pct(sorted.byGrowth[0].trend)}%`,
+      raw: sorted.byGrowth[0].trend,
+      format: (v: number) => `+${pct(v)}%`,
       channel: sorted.byGrowth[0].marketplace,
       sub: `líquido R$ ${brl(sorted.byGrowth[0].netRevenue)}`,
       icon: TrendingUp,
@@ -54,7 +59,8 @@ export default function ChannelKPIVerdict() {
     },
     {
       label: 'Maior Impacto de Comissão',
-      value: `${pct(sorted.byFees[0].feePct)}%`,
+      raw: sorted.byFees[0].feePct,
+      format: (v: number) => `${pct(v)}%`,
       channel: sorted.byFees[0].marketplace,
       sub: `R$ ${brl(sorted.byFees[0].fees)} retidos`,
       icon: Shield,
@@ -62,7 +68,8 @@ export default function ChannelKPIVerdict() {
     },
     {
       label: 'Canal em Atenção',
-      value: sorted.attention.marketplace,
+      raw: null,
+      format: (_v: number) => sorted.attention.marketplace,
       channel: sorted.attention.marketplace,
       sub: `${sorted.attention.status} · ${pct(sorted.attention.trend)}%`,
       icon: AlertTriangle,
@@ -83,7 +90,7 @@ export default function ChannelKPIVerdict() {
               <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: v.tone }} />
             </div>
             <div className="font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">
-              {v.value}
+              {v.raw !== null ? <AnimatedNumber value={v.raw} format={v.format} /> : v.format(0)}
             </div>
             <div className="mt-auto flex items-center gap-1.5 pt-1.5">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: brand }} />

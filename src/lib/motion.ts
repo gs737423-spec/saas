@@ -9,7 +9,7 @@
  * See motion-system.md for usage guidance and rules.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 /** Mirrors the CSS custom properties in motion-tokens.css, in ms/units JS can use directly. */
 export const motionTokens = {
@@ -58,11 +58,15 @@ export function staggerDelayFor(index: number, stepMs: number = motionTokens.sta
  * Not used anywhere yet.
  */
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
+  // Read synchronously on first render (not in an effect) so consumers like
+  // useAnimatedNumber never get a false "reduced=false" on the very first
+  // commit — that would fire one animated frame before snapping to final.
+  const [reduced, setReduced] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(query.matches)
     const onChange = () => setReduced(query.matches)
     query.addEventListener('change', onChange)
     return () => query.removeEventListener('change', onChange)
@@ -73,21 +77,22 @@ export function useReducedMotion(): boolean {
 
 /**
  * Animates a number from its previous value to `value` over `durationMs`,
- * for KPI-style counters. Ease matches motionTokens.easing.enter. Skips
- * the animation entirely under prefers-reduced-motion.
+ * for KPI-style counters. Counts up from 0 on first mount (entrance), and
+ * from the previous value on subsequent changes (e.g. period switch) — never
+ * restarts from 0 on an update. Ease matches motionTokens.easing.enter.
+ * Skips the animation entirely under prefers-reduced-motion (shows the
+ * final value immediately, before paint, via useLayoutEffect — no 0 flash).
  *
  * Pair with the `.motion-number` CSS class (tabular-nums + will-change)
  * on the element that renders the returned value.
- *
- * Not used anywhere yet.
  */
 export function useAnimatedNumber(value: number, durationMs: number = motionTokens.duration.slow): number {
-  const [display, setDisplay] = useState(value)
-  const fromRef = useRef(value)
+  const [display, setDisplay] = useState(0)
+  const fromRef = useRef(0)
   const rafRef = useRef<number | undefined>(undefined)
   const reduced = useReducedMotion()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (reduced) {
       setDisplay(value)
       fromRef.current = value

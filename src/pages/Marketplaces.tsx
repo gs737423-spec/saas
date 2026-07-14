@@ -6,11 +6,15 @@ export default function Marketplaces() {
   return (
     <div className="space-y-2">
       {/* KPIs/veredictos */}
-      <ChannelKPIVerdict />
+      <div className="motion-block-in">
+        <ChannelKPIVerdict />
+      </div>
 
       {/* Gráfico com profundidade + small multiples, um único painel */}
-      <RevenueByChannelChart />
-      <div className="overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
+      <div className="motion-block-in motion-block-in-2">
+        <RevenueByChannelChart />
+      </div>
+      <div className="overview-glass motion-panel motion-block-in motion-block-in-3 rounded-2xl p-3.5 sm:p-4">
         <ChannelMiniCharts />
       </div>
     </div>
