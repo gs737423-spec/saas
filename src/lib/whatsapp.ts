@@ -5,11 +5,11 @@ const NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined)?.rep
 
 const ACCESS_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_ACCESS_MESSAGE as string | undefined) ||
-  'Olá! Sou cliente da Acelera Intelligence e preciso de ajuda para acessar a plataforma.'
+  'Olá! Sou cliente da Marketplace e preciso de ajuda para acessar a plataforma.'
 
 const DEMO_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_DEMO_MESSAGE as string | undefined) ||
-  'Olá! Gostaria de conhecer a plataforma Acelera Intelligence e solicitar uma demonstração.'
+  'Olá! Gostaria de conhecer a plataforma Marketplace e solicitar uma demonstração.'
 
 export const whatsappConfigured = !!NUMBER
 

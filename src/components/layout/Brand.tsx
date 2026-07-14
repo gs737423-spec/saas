@@ -9,16 +9,13 @@ export default function Brand() {
     <Link to="/app" className="group flex shrink-0 items-center gap-2.5">
       <img
         src={markUrl}
-        alt="Acelera"
+        alt="Marketplace"
         draggable={false}
         className="brand-mark motion-brand-mark h-9 w-9 shrink-0 object-contain group-hover:scale-[1.03] md:h-10 md:w-10"
       />
       <div className="hidden min-w-0 flex-col justify-center gap-0.5 sm:flex">
         <span className="truncate text-[15px] font-bold leading-none tracking-tight text-text-primary md:text-base">
-          Acelera
-        </span>
-        <span className="truncate text-[9.5px] font-semibold uppercase leading-none tracking-[0.16em] text-accent-blue/75">
-          Intelligence
+          Marketplace
         </span>
       </div>
     </Link>

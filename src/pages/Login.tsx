@@ -147,11 +147,8 @@ export default function Login() {
 
           <div className="relative">
             <Link to="/" className="inline-flex items-center gap-2.5">
-              <img src={mark} alt="Acelera Intelligence" width={34} height={34} className="h-8 w-8 object-contain" />
-              <span className="flex flex-col leading-none">
-                <span className="text-[14px] font-extrabold" style={{ color: ink }}>Acelera</span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: blue }}>Intelligence</span>
-              </span>
+              <img src={mark} alt="Marketplace" width={34} height={34} className="h-8 w-8 object-contain" />
+              <span className="text-[14px] font-extrabold" style={{ color: ink }}>Marketplace</span>
             </Link>
 
             <span
@@ -166,7 +163,7 @@ export default function Login() {
               Todo o controle da sua operação começa em uma única visão.
             </h1>
             <p className="mt-3 max-w-sm text-[14.5px] leading-relaxed" style={{ color: textMuted }}>
-              Acompanhe marketplaces, faturamento, margem, produtos e estoque em um dashboard centralizado.
+              Acompanhe marketplaces, faturamento, produtos e estoque em um dashboard centralizado.
             </p>
           </div>
 
@@ -183,7 +180,7 @@ export default function Login() {
               </div>
               <img
                 src="/site/dashboard-overview.webp"
-                alt="Painel de Visão Geral da Acelera Intelligence"
+                alt="Painel de Visão Geral da plataforma"
                 className="block w-full"
                 style={{ objectFit: 'cover', objectPosition: 'top', maxHeight: 'calc(100% - 32px)' }}
                 loading="eager"
@@ -211,8 +208,8 @@ export default function Login() {
           {/* Header compacto */}
           <div className="flex items-center justify-between px-6 py-5 sm:px-10">
             <Link to="/" className="flex items-center gap-2 lg:hidden">
-              <img src={mark} alt="Acelera Intelligence" width={28} height={28} className="h-7 w-7 object-contain" />
-              <span className="text-[13px] font-extrabold" style={{ color: '#0B1220' }}>Acelera</span>
+              <img src={mark} alt="Marketplace" width={28} height={28} className="h-7 w-7 object-contain" />
+              <span className="text-[13px] font-extrabold" style={{ color: '#0B1220' }}>Marketplace</span>
             </Link>
             <Link
               to="/"
@@ -229,7 +226,7 @@ export default function Login() {
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors"
                 style={{ color: '#0E8F63', background: 'rgba(18,185,129,0.1)' }}
               >
-                <MessageCircle className="h-3.5 w-3.5" /> Falar com a Acelera
+                <MessageCircle className="h-3.5 w-3.5" /> Falar com a Marketplace
               </a>
             )}
           </div>
@@ -242,7 +239,7 @@ export default function Login() {
               {view === 'login' ? (
                 <>
                   <h2 className="text-[21px] font-extrabold tracking-tight" style={{ color: '#0B1220' }}>Acesse sua operação</h2>
-                  <p className="mt-1.5 text-[13.5px]" style={{ color: '#64728D' }}>Entre com as credenciais liberadas pela equipe Acelera.</p>
+                  <p className="mt-1.5 text-[13.5px]" style={{ color: '#64728D' }}>Entre com as credenciais liberadas pela equipe Marketplace.</p>
 
                   <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
                     <div>
@@ -363,7 +360,7 @@ export default function Login() {
                   )}
 
                   <div className="mt-6 border-t pt-5 text-center" style={{ borderColor: '#E2E8F2' }}>
-                    <p className="text-[12.5px]" style={{ color: '#64728D' }}>Ainda não utiliza a Acelera?</p>
+                    <p className="text-[12.5px]" style={{ color: '#64728D' }}>Ainda não utiliza a Marketplace?</p>
                     <a href="/#demonstracao" className="mt-1.5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold hover:underline" style={{ color: blue }}>
                       Solicitar demonstração <ArrowRight className="h-3.5 w-3.5" />
                     </a>
@@ -439,7 +436,7 @@ export default function Login() {
             <Link to="/privacidade" className="hover:underline">Política de Privacidade</Link>
             <Link to="/termos" className="hover:underline">Termos de Uso</Link>
             {accessHelpUrl && <a href={accessHelpUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">Suporte</a>}
-            <span>&copy; {new Date().getFullYear()} Acelera Intelligence</span>
+            <span>&copy; {new Date().getFullYear()} Marketplace</span>
           </div>
         </section>
       </div>
