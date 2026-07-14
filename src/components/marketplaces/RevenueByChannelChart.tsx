@@ -4,6 +4,12 @@ import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Respon
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { TODAY } from '@/lib/periods'
+import { motionTokens, useReducedMotion } from '@/lib/motion'
+
+// Entrance timing for both series — within the 450-750ms window, no bounce
+// (Recharts only accepts named easings here, 'ease-out' is the closest
+// match to the enter token's decelerate curve without overshoot).
+const CHART_ENTER_MS = motionTokens.duration.slow + 150 // 550ms
 
 const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; label: Marketplace }[] = [
   { key: 'mercadoLivre', label: 'Mercado Livre' },
@@ -121,6 +127,8 @@ function CustomTooltip({ active, payload, label, activeChannels, compareLabel }:
 
 export default function RevenueByChannelChart() {
   const { period } = usePeriod()
+  const reducedMotion = useReducedMotion()
+  const chartDuration = reducedMotion ? 0 : CHART_ENTER_MS
   // Multiple channels can be active at once, each keeping its own brand color.
   const [selected, setSelected] = useState<Set<ChannelKey>>(new Set(channels.map((c) => c.key)))
   // Offset (in days) used to look up the comparison line's values.
@@ -314,7 +322,13 @@ export default function RevenueByChannelChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />} cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }} />
+            <Tooltip
+              content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />}
+              cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }}
+              wrapperStyle={{ transition: `transform ${motionTokens.duration.ultrafast}ms ${'ease-out'}, opacity ${motionTokens.duration.fast}ms ${'ease-out'}`, outline: 'none' }}
+              animationDuration={motionTokens.duration.ultrafast}
+              animationEasing="ease-out"
+            />
             {activeChannels.map((c) => {
               const color = getMarketplaceColor(c.label)
               return (
@@ -329,8 +343,8 @@ export default function RevenueByChannelChart() {
                   strokeDasharray="5 4"
                   dot={false}
                   activeDot={{ r: 3, fill: color, stroke: '#0d1225', strokeWidth: 1.5, fillOpacity: 0.7 }}
-                  animationDuration={500}
-                  isAnimationActive={false}
+                  animationDuration={chartDuration}
+                  animationEasing="ease-out"
                 />
               )
             })}
@@ -353,7 +367,7 @@ export default function RevenueByChannelChart() {
                     fill: color,
                     style: { filter: `drop-shadow(0 0 4px ${color}88)` },
                   }}
-                  animationDuration={600}
+                  animationDuration={chartDuration}
                   animationEasing="ease-out"
                 />
               )

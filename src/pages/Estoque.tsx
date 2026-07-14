@@ -33,8 +33,12 @@ export default function Estoque() {
         <RealInventoryTable items={inventory.items} />
       ) : (
         <>
-          <InventoryKPIs filters={filters} onChange={setFilters} />
-          <InventoryTable filters={filters} onChange={setFilters} />
+          <div className="motion-block-in">
+            <InventoryKPIs filters={filters} onChange={setFilters} />
+          </div>
+          <div className="motion-block-in motion-block-in-2">
+            <InventoryTable filters={filters} onChange={setFilters} />
+          </div>
         </>
       )}
     </div>

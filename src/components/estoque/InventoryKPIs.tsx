@@ -2,6 +2,7 @@ import { Boxes, AlertTriangle, PauseCircle, RefreshCw, Crown, Wallet, Layers, Sh
 import { inventoryItems, getEstimatedInventoryValue } from '@/data/mockData'
 import { defaultInventoryFilters, type InventoryFilterState } from './InventoryFilters'
 import { useInventorySettings } from '@/contexts/InventorySettingsContext'
+import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 const totalSkus = inventoryItems.length
 const avgTurnover = inventoryItems.reduce((s, i) => s + i.turnover, 0) / inventoryItems.length
@@ -16,7 +17,9 @@ interface Props {
 interface CardDef {
   key: string
   label: string
-  value: string
+  /** Raw numeric value — animated via AnimatedNumber. */
+  raw: number
+  format: (v: number) => string
   sub: string
   icon: typeof Boxes
   primary: string
@@ -31,7 +34,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'value',
       label: 'Valor Estimado em Estoque',
-      value: `R$ ${estimatedValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`,
+      raw: estimatedValue,
+      format: (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}`,
       sub: 'estoque × custo unitário',
       icon: Wallet,
       primary: '#22D3EE',
@@ -40,7 +44,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'total',
       label: 'Total de SKUs',
-      value: String(totalSkus),
+      raw: totalSkus,
+      format: (v) => String(Math.round(v)),
       sub: 'produtos ativos · clique para limpar filtros',
       icon: Boxes,
       primary: '#4C82F7',
@@ -51,7 +56,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'stalled',
       label: 'Produtos Parados',
-      value: String(stalled),
+      raw: stalled,
+      format: (v) => String(Math.round(v)),
       sub: 'sem giro relevante',
       icon: PauseCircle,
       primary: '#9061F9',
@@ -62,7 +68,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'turnover',
       label: 'Giro Médio',
-      value: `${avgTurnover.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}x`,
+      raw: avgTurnover,
+      format: (v) => `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}x`,
       sub: 'vendas ÷ estoque médio',
       icon: RefreshCw,
       primary: '#F5A524',
@@ -71,7 +78,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'curveA',
       label: 'Produtos Curva A',
-      value: String(curveA),
+      raw: curveA,
+      format: (v) => String(Math.round(v)),
       sub: 'maior share de faturamento',
       icon: Crown,
       primary: '#16C784',
@@ -82,7 +90,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
     {
       key: 'curveARisk',
       label: 'Curva A em Risco',
-      value: String(curveARisk),
+      raw: curveARisk,
+      format: (v) => String(Math.round(v)),
       sub: 'top faturamento, cobertura baixa',
       icon: ShieldAlert,
       primary: '#F4436C',
@@ -108,7 +117,9 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
         >
           <div className="flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" style={{ color: '#F4436C' }} />
-            <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{critical}</span>
+            <span className="font-mono text-[16px] font-bold leading-none text-text-primary">
+              <AnimatedNumber value={critical} format={(v) => String(Math.round(v))} />
+            </span>
           </div>
           <div className="mt-1 truncate text-[10px] text-text-muted">crítico · ruptura</div>
         </button>
@@ -120,7 +131,9 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
         >
           <div className="flex items-center gap-1.5">
             <Layers className="h-3.5 w-3.5" style={{ color: '#22D3EE' }} />
-            <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{excess}</span>
+            <span className="font-mono text-[16px] font-bold leading-none text-text-primary">
+              <AnimatedNumber value={excess} format={(v) => String(Math.round(v))} />
+            </span>
           </div>
           <div className="mt-1 truncate text-[10px] text-text-muted">excesso · &gt;{excessDays}d</div>
         </button>
@@ -149,7 +162,9 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
           <Icon className="h-3.5 w-3.5" style={{ color: c.primary }} />
         </div>
       </div>
-      <div className="relative mt-auto truncate font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">{c.value}</div>
+      <div className="relative mt-auto truncate font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">
+        <AnimatedNumber value={c.raw} format={c.format} />
+      </div>
       <div className="relative mt-1 truncate text-[10px] text-text-muted">{c.sub}</div>
     </button>
   )
