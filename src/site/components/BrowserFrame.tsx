@@ -59,7 +59,7 @@ export default function BrowserFrame({ src, alt, caption, priority = false, clas
               color: 'var(--s-blue-bright)',
             }}
           >
-            Acelera Intelligence
+            Marketplace
           </span>
           <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--s-dark-ink)', maxWidth: 360 }}>
             {caption ?? alt}

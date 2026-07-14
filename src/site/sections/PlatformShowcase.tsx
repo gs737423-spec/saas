@@ -31,16 +31,16 @@ export default function PlatformShowcase() {
   const view: PlatformView = showSecondary && tab.secondary ? tab.secondary : tab
 
   return (
-    <section id="plataforma" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-16 md:py-24">
+    <section id="produto" style={{ background: 'var(--s-bg)' }}>
+      <div className="site-container py-14 md:py-20">
         <SectionHeader
-          label="Conheça a plataforma"
+          label="Produto"
           title="Uma visão completa da operação, sem trocar entre sistemas."
           desc="Do resultado geral ao desempenho individual de cada produto, os indicadores que realmente ajudam a decidir."
         />
 
         {/* Abas — scroll horizontal no mobile */}
-        <div className="mt-8 -mx-5 overflow-x-auto px-5 hide-scrollbar" id="funcionalidades">
+        <div className="mt-8 -mx-5 overflow-x-auto px-5 hide-scrollbar">
           <div
             role="tablist"
             aria-label="Áreas da plataforma"

@@ -1,11 +1,13 @@
 /* Conteúdo do site institucional — centralizado para não espalhar textos e
-   valores mágicos pelas seções. Números demonstrativos são coerentes com o
-   sistema (mesmos dados do dashboard).
+   valores mágicos pelas seções.
 
-   POSICIONAMENTO: a plataforma integra os marketplaces por API. O cliente
-   conecta suas contas, os dados são recebidos e organizados pelas conexões
-   disponíveis e os indicadores ficam centralizados em uma única visão.
-   Nada de importação/planilha/upload manual. */
+   POSICIONAMENTO (fase 2 — redesign estrutural): a plataforma não vende
+   "centralizar marketplaces", vende decisão executiva sobre a operação.
+   Integração é por API; nenhuma integração está confirmada como disponível
+   em produção hoje (ver api/integrations/status.ts — Mercado Livre retorna
+   config_missing). Status honestos: Em implantação / Planejado / Sob
+   análise técnica. Margem e CMV não são citados como entregues — dependem
+   de cadastro de custo que ainda não existe no produto real. */
 import type { ComponentType } from 'react'
 import {
   LogoMercadoLivre, LogoShopee, LogoAmazon, LogoMagalu,
@@ -13,37 +15,60 @@ import {
 } from '@/site/logos'
 import { whatsappDemoUrl } from '@/lib/whatsapp'
 
-// Cada âncora aponta para o TOPO de uma section real (nunca para um elemento
-// no meio dela) — combinado com scroll-margin-top no CSS, garante que o
-// título da seção fique sempre inteiro e visível abaixo do header sticky.
+// Cada âncora aponta para o TOPO de uma section real — combinado com
+// scroll-margin-top no CSS, garante que o título fique sempre visível
+// abaixo do header sticky.
 export const nav = [
-  { label: 'Plataforma', href: '#plataforma' },
-  { label: 'Inteligência', href: '#inteligencia' },
+  { label: 'Produto', href: '#produto' },
+  { label: 'Resultados', href: '#diagnostico' },
   { label: 'Integrações', href: '#integracoes' },
   { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Segurança', href: '#seguranca' },
 ]
 
-// Posicionamento de produto confirmado: todas as integrações listadas são
-// disponíveis por API — não há mais fluxo de importação manual/planilha.
+export type IntegrationStatus = 'em-implantacao' | 'planejado' | 'sob-analise'
+
 export interface MarketplaceItem {
   name: string
   Logo: ComponentType
+  status: IntegrationStatus
 }
 
+export const statusLabel: Record<IntegrationStatus, string> = {
+  'em-implantacao': 'Em implantação',
+  planejado: 'Planejado',
+  'sob-analise': 'Sob análise técnica',
+}
+
+export const statusTone: Record<IntegrationStatus, string> = {
+  'em-implantacao': '#4C82F7',
+  planejado: '#8A96AE',
+  'sob-analise': '#E9A83A',
+}
+
+// Único item com sinal de progresso real (o código de integração existe,
+// falta configuração/validação em produção — ver api/integrations/status.ts).
 export const marketplaces: MarketplaceItem[] = [
-  { name: 'Mercado Livre', Logo: LogoMercadoLivre },
-  { name: 'Shopee', Logo: LogoShopee },
-  { name: 'Amazon', Logo: LogoAmazon },
-  { name: 'Magalu', Logo: LogoMagalu },
-  { name: 'Shopify', Logo: LogoShopify },
-  { name: 'Nuvemshop', Logo: LogoNuvemshop },
-  { name: 'WooCommerce', Logo: LogoWooCommerce },
-  { name: 'Loja Própria', Logo: LogoLojaPropria },
+  { name: 'Mercado Livre', Logo: LogoMercadoLivre, status: 'em-implantacao' },
+  { name: 'Shopee', Logo: LogoShopee, status: 'planejado' },
+  { name: 'Amazon', Logo: LogoAmazon, status: 'planejado' },
+  { name: 'Magalu', Logo: LogoMagalu, status: 'planejado' },
+  { name: 'Shopify', Logo: LogoShopify, status: 'planejado' },
+  { name: 'Nuvemshop', Logo: LogoNuvemshop, status: 'planejado' },
+  { name: 'WooCommerce', Logo: LogoWooCommerce, status: 'planejado' },
+  { name: 'Loja Própria', Logo: LogoLojaPropria, status: 'sob-analise' },
 ]
 
-// Abas da Plataforma interativa. Produto 360 vive DENTRO de "Produtos" como
-// visão secundária (não é mais uma seção isolada).
+// Faixa de prova técnica — confiança, não logos repetidos.
+export const trustStrip = [
+  { label: 'Integração segura', desc: 'Conexão por API, sem compartilhar senhas.' },
+  { label: 'Dados isolados por empresa', desc: 'Cada operação enxerga só os próprios dados.' },
+  { label: 'Sincronização automatizada', desc: 'Sem atualização manual de planilhas.' },
+  { label: 'Onboarding assistido', desc: 'Nossa equipe acompanha a implantação.' },
+]
+
+// Abas da Plataforma interativa (Produto imersivo). Copy orientada a decisão,
+// sem menção a margem/CMV (não entregues hoje).
 export interface PlatformView {
   title: string
   desc: string
@@ -61,17 +86,17 @@ export const platformTabs: PlatformTab[] = [
   {
     id: 'visao-geral',
     label: 'Visão Geral',
-    title: 'Os principais números da operação em um único painel.',
-    desc: 'Acompanhe faturamento bruto e líquido, pedidos, ticket médio, CMV e margem em uma visão executiva.',
+    title: 'Entenda a operação antes de abrir cada canal.',
+    desc: 'Veja faturamento, pedidos, ticket, taxas e pontos de atenção em uma única leitura executiva.',
     bullets: ['Indicadores centralizados', 'Comparação entre períodos', 'Pontos de atenção em destaque'],
     image: '/site/dashboard-overview.webp',
-    alt: 'Painel de Visão Geral da Acelera Intelligence com indicadores de faturamento, pedidos e margem',
+    alt: 'Painel de Visão Geral com indicadores de faturamento, pedidos e taxas',
   },
   {
     id: 'marketplaces',
     label: 'Marketplaces',
-    title: 'Compare os canais em uma única visão.',
-    desc: 'Entenda a participação, o faturamento, os pedidos, o ticket e a margem de cada marketplace, lado a lado.',
+    title: 'Descubra qual canal sustenta a operação.',
+    desc: 'Compare faturamento, pedidos, ticket e eficiência para entender onde crescer e onde corrigir.',
     bullets: ['Comparação lado a lado', 'Participação por canal', 'Identificação de dependência'],
     image: '/site/marketplace-comparison.webp',
     alt: 'Tela de comparação entre marketplaces mostrando participação e desempenho por canal',
@@ -79,110 +104,85 @@ export const platformTabs: PlatformTab[] = [
   {
     id: 'produtos',
     label: 'Produtos',
-    title: 'Encontre rapidamente os produtos que mais impactam o resultado.',
-    desc: 'Visualize produtos mais vendidos, maior faturamento, melhor margem, crescimento, quedas e riscos de estoque.',
+    title: 'Saiba quais produtos puxam o resultado.',
+    desc: 'Identifique os SKUs que mais vendem, os que estão perdendo força e os que exigem ação.',
     bullets: ['Ranking de desempenho', 'Filtros inteligentes', 'Produtos que merecem atenção'],
     image: '/site/products-overview.webp',
-    alt: 'Página de Produtos com ranking de desempenho e classificação por margem e faturamento',
+    alt: 'Página de Produtos com ranking de desempenho',
     secondary: {
       label: 'Produto 360',
       title: 'Cada produto analisado por todos os ângulos.',
-      desc: 'Tendência, vendas, margem, pedidos, estoque e participação por canal de um produto específico, com evolução por período.',
+      desc: 'Tendência, vendas, pedidos, estoque e participação por canal de um produto específico, com evolução por período.',
       bullets: ['Histórico individual', 'Comparação entre canais', 'Evolução por período'],
       image: '/site/product-360.webp',
-      alt: 'Tela Produto 360 com histórico individual, tendência e participação por canal',
+      alt: 'Tela Produto 360 com histórico individual e tendência',
     },
   },
   {
     id: 'estoque',
     label: 'Estoque',
-    title: 'Antecipe rupturas antes que elas afetem as vendas.',
-    desc: 'Acompanhe estoque atual, cobertura e níveis críticos, com priorização dos produtos que precisam de reposição.',
-    bullets: ['Cobertura e estoque crítico', 'Produtos próximos da ruptura', 'Priorização de reposição'],
+    title: 'Antecipe ruptura, excesso e baixo giro.',
+    desc: 'Visualize cobertura, Curva ABC, produtos parados e necessidades de reposição antes que impactem o caixa.',
+    bullets: ['Cobertura e estoque crítico', 'Curva ABC', 'Priorização de reposição'],
     image: '/site/inventory.webp',
-    alt: 'Página de Estoque com níveis críticos e recomendações de reposição',
+    alt: 'Página de Estoque com cobertura e níveis críticos',
   },
 ]
 
-// Problema — no máximo quatro pontos, sem menção a planilhas.
-export const problems = [
-  'Dados separados entre os canais',
-  'Dificuldade para entender a margem real',
-  'Falta de comparação entre marketplaces',
-  'Produtos e estoques analisados tarde demais',
+// Problema — compacto, sem repetir o hero.
+export const problemBefore = ['Acessos separados', 'Relatórios diferentes', 'Números sem padrão', 'Decisões atrasadas']
+export const problemAfter = ['Uma visão consolidada', 'Dados normalizados', 'Prioridades claras', 'Comparação entre canais']
+
+// Diagnóstico executivo — exemplos concretos, sem alegar IA.
+export const diagnosticExamples = [
+  { title: 'Canal com queda de faturamento', detail: 'Identificado por variação negativa consistente no período comparado.' },
+  { title: 'Produto Curva A com estoque crítico', detail: 'Cruza classificação ABC com cobertura de dias restante.' },
+  { title: 'Marketplace com taxas elevadas', detail: 'Compara impacto de comissão sobre o faturamento bruto do canal.' },
+  { title: 'Produto com excesso de cobertura', detail: 'Estoque parado além do limite configurado para o giro esperado.' },
+  { title: 'Canal concentrando o resultado', detail: 'Aponta dependência quando um canal ultrapassa participação saudável.' },
 ]
 
-// Como funciona — narrativa por API (conectar, centralizar, decidir).
+// Como funciona — 3 etapas apenas.
 export const howSteps = [
-  {
-    n: '01',
-    title: 'Conecte seus marketplaces',
-    text: 'Autorize as conexões disponíveis para que a plataforma acesse os dados necessários da operação.',
-  },
-  {
-    n: '02',
-    title: 'Centralize as informações',
-    text: 'Os dados recebidos pelas APIs são organizados em uma única estrutura de análise.',
-  },
-  {
-    n: '03',
-    title: 'Acompanhe e decida',
-    text: 'Visualize faturamento, margem, produtos, estoque e desempenho por canal em um só lugar.',
-  },
+  { n: '01', title: 'Conectar', text: 'Autorize os canais disponíveis sem compartilhar senhas com a plataforma.' },
+  { n: '02', title: 'Normalizar', text: 'Os dados recebidos são organizados em um modelo único de análise.' },
+  { n: '03', title: 'Decidir', text: 'Cards, gráficos e alertas transformam dados operacionais em prioridades claras.' },
 ]
 
-export const benefits = [
-  'Visão consolidada da operação',
-  'Comparação clara entre canais',
-  'Margem real por marketplace',
-  'Controle de estoque e rupturas',
-  'Produtos em queda identificados cedo',
-  'Indicadores executivos centralizados',
+// Segurança — só o que é real ou está explicitamente marcado como planejado.
+export const securityPoints = [
+  'OAuth quando suportado pelo canal',
+  'Tokens protegidos no backend — nunca no navegador',
+  'Dados separados por empresa',
+  'Logs de sincronização',
+  'Acesso controlado por autenticação',
+  'Conexão revogável a qualquer momento',
 ]
 
-// FAQ compacto — perguntas essenciais, respostas baseadas no produto real.
+// FAQ — 4 perguntas, respostas honestas.
 export const faqItems = [
   {
-    q: 'Quais marketplaces podem ser conectados?',
-    a: 'Mercado Livre, Shopee, Amazon, Magalu, Shopify, Nuvemshop, WooCommerce e loja própria — todos disponíveis por integração direta via API.',
+    q: 'Como os dados são integrados?',
+    a: 'Por conexão via API. Você autoriza o acesso ao canal e a plataforma recebe e normaliza os dados automaticamente — sem enviar planilhas ou compartilhar senhas.',
   },
   {
-    q: 'Como funciona a integração por API?',
-    a: 'Você conecta suas contas dos marketplaces e autoriza o acesso. A plataforma recebe os dados diretamente pelas APIs e os organiza automaticamente, sem alimentação manual.',
+    q: 'Quais canais estão disponíveis atualmente?',
+    a: 'A integração com o Mercado Livre está em implantação. Shopee, Amazon, Magalu, Shopify, Nuvemshop e WooCommerce estão planejados; a conexão com loja própria está sob análise técnica.',
   },
   {
-    q: 'A plataforma compara os resultados entre os canais?',
-    a: 'Sim. A tela de Marketplaces mostra faturamento, pedidos, ticket médio, margem e participação de cada canal lado a lado, ajudando a identificar dependência e os canais mais eficientes.',
+    q: 'Quanto tempo leva a implantação?',
+    a: 'Varia conforme os canais e o volume da operação. O prazo é definido junto com você durante a demonstração, com acompanhamento da nossa equipe.',
   },
   {
-    q: 'Consigo acompanhar margem e CMV?',
-    a: 'Sim. Faturamento bruto e líquido, CMV e margem fazem parte dos indicadores da Visão Geral e também aparecem na análise por canal e por produto.',
-  },
-  {
-    q: 'É possível analisar cada produto individualmente?',
-    a: 'Sim. A visão Produto 360 reúne faturamento, pedidos, ticket, margem, tendência, estoque e participação por canal de um produto específico, com evolução por período.',
-  },
-  {
-    q: 'Os dados de diferentes empresas ficam separados?',
-    a: 'Sim. O acesso é controlado por autenticação e cada operação enxerga apenas os próprios dados. Detalhamos a estrutura de acesso da sua equipe na demonstração.',
+    q: 'Como os dados de cada empresa são protegidos?',
+    a: 'Cada operação acessa apenas os próprios dados, com autenticação e separação por empresa. Tokens de integração ficam protegidos no backend, nunca expostos no navegador.',
   },
 ]
 
-// Contato — usados nos CTAs "Falar com um especialista".
-// IMPORTANTE: preencha com os canais REAIS da empresa. Enquanto estiverem
-// vazios, o botão "Falar com um especialista" leva ao formulário de
-// demonstração (nunca a um link falso/vazio). Ex.:
-//   whatsapp: 'https://wa.me/55DDDNUMERO'
-//   email: 'contato@suaempresa.com.br'
-// O WhatsApp agora é centralizado em src/lib/whatsapp.ts (VITE_WHATSAPP_*) —
-// mesma fonte usada pela página de login. `email` continua aqui como
-// fallback opcional caso a empresa prefira e-mail em algum ponto.
 export const contact = {
   email: '',
 }
 
-// Resolve o destino do CTA "Falar com um especialista" sem nunca cair em
-// href vazio: WhatsApp real > e-mail real > formulário de demonstração.
 export function specialistHref(): string {
   const wa = whatsappDemoUrl()
   if (wa) return wa

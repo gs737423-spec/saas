@@ -2,14 +2,13 @@ import { useEffect } from 'react'
 import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
-import MarketplaceMarquee from '@/site/sections/MarketplaceMarquee'
+import TrustStrip from '@/site/sections/TrustStrip'
 import ProblemSection from '@/site/sections/ProblemSection'
 import PlatformShowcase from '@/site/sections/PlatformShowcase'
-import IntelligenceSection from '@/site/sections/IntelligenceSection'
+import DiagnosticSection from '@/site/sections/DiagnosticSection'
 import HowItWorks from '@/site/sections/HowItWorks'
-import Benefits from '@/site/sections/Benefits'
-import FinalCta from '@/site/sections/FinalCta'
-import DemoForm from '@/site/sections/DemoForm'
+import IntegrationsSecurity from '@/site/sections/IntegrationsSecurity'
+import Demo from '@/site/sections/Demo'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
@@ -25,22 +24,22 @@ export default function SitePage() {
     <div className="site-root">
       <SiteHeader />
       <main>
-        {/* 1. Hero + marquee */}
+        {/* 1. Promessa */}
         <Hero />
-        <MarketplaceMarquee />
-        {/* 2. Problema e solução */}
+        {/* 2. Prova técnica */}
+        <TrustStrip />
+        {/* 3. Problema */}
         <ProblemSection />
-        {/* 3. Plataforma interativa */}
+        {/* 4. Produto imersivo */}
         <PlatformShowcase />
-        {/* 4. Inteligência da operação */}
-        <IntelligenceSection />
-        {/* 5. Como funciona (API) + integrações */}
+        {/* 5. Diagnóstico executivo */}
+        <DiagnosticSection />
+        {/* 6. Como funciona */}
         <HowItWorks />
-        {/* 6. Benefícios e confiança */}
-        <Benefits />
-        {/* 7. Conversão */}
-        <FinalCta />
-        <DemoForm />
+        {/* 7. Integração e segurança */}
+        <IntegrationsSecurity />
+        {/* 8. Conversão */}
+        <Demo />
         <Faq />
       </main>
       <Footer />

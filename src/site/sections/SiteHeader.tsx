@@ -33,12 +33,9 @@ export default function SiteHeader() {
         style={{ height: scrolled ? 60 : 72 }}
       >
         {/* Logo → topo */}
-        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Acelera Intelligence — início">
+        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Marketplace — início">
           <img src={mark} alt="" width={36} height={36} className="h-9 w-9 object-contain" draggable={false} />
-          <span className="flex flex-col leading-none">
-            <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Acelera</span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--s-blue-ink)' }}>Intelligence</span>
-          </span>
+          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Marketplace</span>
         </a>
 
         {/* Nav desktop — breakpoint próprio (1100px): abaixo disso a navegação

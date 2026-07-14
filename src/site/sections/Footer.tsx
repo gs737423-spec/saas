@@ -14,13 +14,10 @@ export default function Footer() {
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
               <img src={mark} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-              <span className="flex flex-col leading-none">
-                <span className="text-[15px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>Acelera</span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--s-blue-bright)' }}>Intelligence</span>
-              </span>
+              <span className="text-[15px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>Marketplace</span>
             </div>
             <p className="mt-4 text-[13.5px]" style={{ color: 'var(--s-dark-muted)', lineHeight: 1.6 }}>
-              Plataforma de gestão e análise para operações que vendem em múltiplos marketplaces. Faturamento, margem, produtos e estoque em uma única visão.
+              Gestão e análise para operações que vendem em múltiplos canais.
             </p>
           </div>
 
@@ -53,7 +50,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row" style={{ borderColor: 'var(--s-dark-line)' }}>
-          <p className="text-[12.5px]" style={{ color: 'var(--s-dark-muted)' }}>&copy; {year} Acelera Intelligence. Todos os direitos reservados.</p>
+          <p className="text-[12.5px]" style={{ color: 'var(--s-dark-muted)' }}>&copy; {year} Marketplace. Todos os direitos reservados.</p>
           <a href="#topo" className="text-[12.5px] font-semibold" style={{ color: 'var(--s-blue-bright)' }}>Voltar ao topo ↑</a>
         </div>
       </div>

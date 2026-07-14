@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Loader2, ArrowRight, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, ArrowRight, AlertCircle, MessageCircle } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
-import { contact } from '@/site/content'
+import { contact, specialistHref } from '@/site/content'
 
 const CHANNELS = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria', 'Outros']
 const ORDER_RANGES = ['Até 100 pedidos', '100 a 500', '500 a 2.000', '2.000 a 10.000', 'Mais de 10.000']
@@ -19,10 +19,16 @@ function maskPhone(v: string): string {
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export default function DemoForm() {
+// Conversão — seção única (funde o antigo banner escuro de CTA + o
+// formulário; eram dois blocos de conversão seguidos e redundantes).
+// Campos essenciais visíveis; marketplaces/faixa de pedidos ficam
+// secundários e opcionais (sem fluxo em duas etapas no backend hoje).
+export default function Demo() {
   const [status, setStatus] = useState<Status>('idle')
+  const [showOptional, setShowOptional] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', whatsapp: '', company: '', marketplaces: [] as string[], monthlyOrders: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const waHref = specialistHref()
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -52,7 +58,6 @@ export default function DemoForm() {
         body: JSON.stringify({ ...form, marketplaces: form.marketplaces.join(', ') }),
       })
       if (res.ok) { setStatus('success'); return }
-      // 501 = função existe mas sem LEADS_WEBHOOK_URL; 404 = sem função (dev/preview)
       if (res.status === 501 || res.status === 404) { setStatus('unconfigured'); return }
       if (res.status === 422) {
         const data = await res.json().catch(() => null)
@@ -65,7 +70,6 @@ export default function DemoForm() {
       }
       setStatus('error')
     } catch {
-      // Sem backend disponível (ex.: dev local sem funções Vercel)
       setStatus('unconfigured')
     }
   }
@@ -76,7 +80,7 @@ export default function DemoForm() {
   if (status === 'success') {
     return (
       <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-        <div className="site-container py-20 md:py-28">
+        <div className="site-container py-16 md:py-20">
           <Reveal className="site-card mx-auto max-w-xl p-10 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(18,185,129,0.12)', color: 'var(--s-emerald)' }}>
               <CheckCircle2 className="h-7 w-7" />
@@ -91,12 +95,12 @@ export default function DemoForm() {
 
   return (
     <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-14 md:py-20">
+      <div className="site-container py-16 md:py-20">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
             <span className="site-label mb-3">Solicitar demonstração</span>
-            <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Veja a plataforma com os dados da sua operação.</h2>
-            <p className="site-lead mt-4">Preencha os campos e nosso time apresenta como centralizar seus marketplaces em uma única visão.</p>
+            <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Veja a Marketplace com os dados da sua operação.</h2>
+            <p className="site-lead mt-4">Entenda como centralizar seus canais e transformar dados dispersos em uma visão executiva.</p>
             <ul className="mt-6 space-y-2.5">
               {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px]" style={{ color: 'var(--s-ink-soft)' }}>
@@ -104,6 +108,12 @@ export default function DemoForm() {
                 </li>
               ))}
             </ul>
+
+            {waHref.startsWith('http') && (
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: 'var(--s-blue)' }}>
+                <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
+              </a>
+            )}
           </div>
 
           <Reveal className="site-card p-6 md:p-8">
@@ -123,29 +133,39 @@ export default function DemoForm() {
                 </Field>
               </div>
 
-              <fieldset className="mt-5">
-                <legend className="mb-2 text-[13px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>Marketplaces utilizados</legend>
-                <div className="flex flex-wrap gap-2">
-                  {CHANNELS.map((c) => {
-                    const on = form.marketplaces.includes(c)
-                    return (
-                      <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
-                        aria-pressed={on}
-                        className="rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition-colors"
-                        style={on ? { background: 'var(--s-blue)', color: '#fff', border: '1px solid var(--s-blue)' } : { background: 'var(--s-surface)', color: 'var(--s-ink-soft)', border: '1px solid var(--s-line-strong)' }}>
-                        {c}
-                      </button>
-                    )
-                  })}
-                </div>
-              </fieldset>
+              {/* Campos secundários — opcionais, visualmente discretos (sem fluxo em 2 etapas no backend) */}
+              <button type="button" onClick={() => setShowOptional((v) => !v)} aria-expanded={showOptional}
+                className="mt-4 text-[12.5px] font-semibold hover:underline" style={{ color: 'var(--s-muted)' }}>
+                {showOptional ? 'Ocultar detalhes opcionais' : '+ Adicionar detalhes opcionais da operação'}
+              </button>
 
-              <Field label="Faixa de pedidos mensais" htmlFor="f-orders" className="mt-5">
-                <select id="f-orders" className={inputCls} style={inputStyle} value={form.monthlyOrders} onChange={(e) => set('monthlyOrders', e.target.value)}>
-                  <option value="">Selecione (opcional)</option>
-                  {ORDER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </Field>
+              {showOptional && (
+                <div className="mt-3 space-y-4 rounded-xl p-3.5" style={{ background: 'var(--s-bg-soft)' }}>
+                  <fieldset>
+                    <legend className="mb-2 text-[12px] font-semibold" style={{ color: 'var(--s-muted)' }}>Marketplaces utilizados</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {CHANNELS.map((c) => {
+                        const on = form.marketplaces.includes(c)
+                        return (
+                          <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
+                            aria-pressed={on}
+                            className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
+                            style={on ? { background: 'var(--s-blue)', color: '#fff', border: '1px solid var(--s-blue)' } : { background: 'var(--s-surface)', color: 'var(--s-ink-soft)', border: '1px solid var(--s-line-strong)' }}>
+                            {c}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <Field label="Faixa de pedidos mensais" htmlFor="f-orders">
+                    <select id="f-orders" className={inputCls} style={inputStyle} value={form.monthlyOrders} onChange={(e) => set('monthlyOrders', e.target.value)}>
+                      <option value="">Selecione (opcional)</option>
+                      {ORDER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              )}
 
               <label className="mt-5 flex items-start gap-2.5 text-[13px]" style={{ color: 'var(--s-ink-soft)' }}>
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />

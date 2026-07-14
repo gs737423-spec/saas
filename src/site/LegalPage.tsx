@@ -22,7 +22,7 @@ const CONTENT: Record<Variant, { title: string; intro: string; blocks: { h: stri
     title: 'Termos de Uso',
     intro: 'Resumo dos termos de uso do site institucional. O documento definitivo é fornecido pela empresa; este texto é um ponto de partida e deve ser revisado pelo responsável legal.',
     blocks: [
-      { h: 'Sobre o site', p: 'Este site apresenta a plataforma Acelera Intelligence e permite solicitar uma demonstração. As informações têm caráter institucional.' },
+      { h: 'Sobre o site', p: 'Este site apresenta a plataforma Marketplace e permite solicitar uma demonstração. As informações têm caráter institucional.' },
       { h: 'Uso das informações', p: 'Os números exibidos nas telas e composições são demonstrativos e servem para ilustrar as funcionalidades da plataforma.' },
       { h: 'Acesso à plataforma', p: 'O acesso à área da plataforma exige autenticação e é destinado a clientes e usuários autorizados.' },
     ],
@@ -39,12 +39,9 @@ export default function LegalPage({ variant }: { variant: Variant }) {
     <div className="site-root" style={{ minHeight: '100vh' }}>
       <header className="site-header" data-scrolled="true">
         <div className="site-container flex h-[68px] items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="Acelera Intelligence — início">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="Marketplace — início">
             <img src={mark} alt="" width={34} height={34} className="h-8 w-8 object-contain" />
-            <span className="flex flex-col leading-none">
-              <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Acelera</span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--s-blue-ink)' }}>Intelligence</span>
-            </span>
+            <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Marketplace</span>
           </Link>
           <Link to="/" className="btn btn-ghost" style={{ padding: '0.5rem 0.9rem' }}>
             <ArrowLeft className="h-4 w-4" /> Voltar ao site
@@ -64,7 +61,7 @@ export default function LegalPage({ variant }: { variant: Variant }) {
           ))}
         </div>
         <p className="mt-12 text-[13px]" style={{ color: 'var(--s-muted)' }}>
-          &copy; {new Date().getFullYear()} Acelera Intelligence.
+          &copy; {new Date().getFullYear()} Marketplace.
         </p>
       </main>
       <WhatsAppFloatButton />
