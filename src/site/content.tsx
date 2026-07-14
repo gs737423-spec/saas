@@ -11,6 +11,7 @@ import {
   LogoMercadoLivre, LogoShopee, LogoAmazon, LogoMagalu,
   LogoShopify, LogoNuvemshop, LogoWooCommerce, LogoLojaPropria,
 } from '@/site/logos'
+import { whatsappDemoUrl } from '@/lib/whatsapp'
 
 // Cada âncora aponta para o TOPO de uma section real (nunca para um elemento
 // no meio dela) — combinado com scroll-margin-top no CSS, garante que o
@@ -173,15 +174,18 @@ export const faqItems = [
 // demonstração (nunca a um link falso/vazio). Ex.:
 //   whatsapp: 'https://wa.me/55DDDNUMERO'
 //   email: 'contato@suaempresa.com.br'
+// O WhatsApp agora é centralizado em src/lib/whatsapp.ts (VITE_WHATSAPP_*) —
+// mesma fonte usada pela página de login. `email` continua aqui como
+// fallback opcional caso a empresa prefira e-mail em algum ponto.
 export const contact = {
-  whatsapp: '',
   email: '',
 }
 
 // Resolve o destino do CTA "Falar com um especialista" sem nunca cair em
 // href vazio: WhatsApp real > e-mail real > formulário de demonstração.
 export function specialistHref(): string {
-  if (contact.whatsapp) return contact.whatsapp
+  const wa = whatsappDemoUrl()
+  if (wa) return wa
   if (contact.email) return `mailto:${contact.email}`
   return '#demonstracao'
 }

@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import mark from '@/assets/acelera-mark.png'
 import { nav, contact } from '@/site/content'
+import { whatsappDemoUrl } from '@/lib/whatsapp'
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  const wa = whatsappDemoUrl()
   return (
     <footer id="privacidade-anchor" className="site-dark" style={{ borderTop: '1px solid var(--s-dark-line)' }}>
       <div className="site-container py-14">
@@ -43,8 +45,8 @@ export default function Footer() {
               {contact.email && (
                 <li><a href={`mailto:${contact.email}`} className="text-[14px]" style={{ color: 'var(--s-dark-ink)' }}>{contact.email}</a></li>
               )}
-              {contact.whatsapp && (
-                <li><a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" className="text-[14px]" style={{ color: 'var(--s-dark-ink)' }}>WhatsApp</a></li>
+              {wa && (
+                <li><a href={wa} target="_blank" rel="noopener noreferrer" className="text-[14px]" style={{ color: 'var(--s-dark-ink)' }}>WhatsApp</a></li>
               )}
             </ul>
           </div>

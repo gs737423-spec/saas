@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 interface User {
   email: string;
@@ -54,22 +54,25 @@ function deriveNameFromEmail(email: string): string {
     .join(' ');
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+function readStoredUser(): User | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as User;
+    return parsed.email ? parsed : null;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as User;
-        if (parsed.email) {
-          setUser(parsed);
-        }
-      }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, []);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Lido de forma síncrona no initializer (não em useEffect): se a leitura
+  // acontecesse após o primeiro render, /login desenharia o formulário por
+  // um instante mesmo para quem já está autenticado, antes do redirect —
+  // um flash perceptível. Assim, isAuthenticated já vem correto na primeira
+  // pintura da tela.
+  const [user, setUser] = useState<User | null>(() => readStoredUser());
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     const normalizedEmail = email.toLowerCase().trim();
