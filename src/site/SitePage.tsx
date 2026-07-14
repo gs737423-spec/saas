@@ -12,6 +12,7 @@ import FinalCta from '@/site/sections/FinalCta'
 import DemoForm from '@/site/sections/DemoForm'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
+import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 
 export default function SitePage() {
   // Ativa o scroll suave escopado ao site (não afeta a área /app).
@@ -43,6 +44,7 @@ export default function SitePage() {
         <Faq />
       </main>
       <Footer />
+      <WhatsAppFloatButton />
     </div>
   )
 }

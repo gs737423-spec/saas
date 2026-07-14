@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import mark from '@/assets/acelera-mark.png'
+import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 import './site.css'
 
 type Variant = 'privacidade' | 'termos'
@@ -66,6 +67,7 @@ export default function LegalPage({ variant }: { variant: Variant }) {
           &copy; {new Date().getFullYear()} Acelera Intelligence.
         </p>
       </main>
+      <WhatsAppFloatButton />
     </div>
   )
 }
