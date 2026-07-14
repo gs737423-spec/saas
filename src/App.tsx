@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { ConnectionProvider } from '@/contexts/ConnectionContext'
 import { PeriodProvider } from '@/contexts/PeriodContext'
+import { InventorySettingsProvider } from '@/contexts/InventorySettingsContext'
 import { useAuth } from '@/contexts/AuthContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
@@ -10,6 +11,7 @@ import Estoque from '@/pages/Estoque'
 import Importacoes from '@/pages/Importacoes'
 import Marketplaces from '@/pages/Marketplaces'
 import Placeholder from '@/pages/Placeholder'
+import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
 // Shell autenticado da plataforma. Montado em `/app/*` (ver main.tsx). O site
@@ -26,6 +28,7 @@ export default function App() {
   return (
     <ConnectionProvider>
     <PeriodProvider>
+    <InventorySettingsProvider>
     <div className="app-bg min-h-screen overflow-x-hidden">
       {/* Orbs — fundo vivo */}
       <div className="app-bg-orbs">
@@ -52,7 +55,7 @@ export default function App() {
               <Route path="marketing" element={<Placeholder title="Marketing" description="Desempenho de campanhas, ROI de anúncios patrocinados e recomendações de investimento por produto e canal." />} />
               <Route path="avaliacoes" element={<Placeholder title="Avaliações" description="Monitoramento de reviews e reputação em todos os marketplaces, com alertas de avaliações negativas em tempo real." />} />
               <Route path="relatorios" element={<Placeholder title="Relatórios" description="Relatórios customizáveis de vendas, produtos e performance, com exportação e agendamento automático." />} />
-              <Route path="configuracoes" element={<Placeholder title="Configurações" description="Preferências da conta, integrações de marketplace, permissões de equipe e configurações de notificação." />} />
+              <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>
           </div>
@@ -60,6 +63,7 @@ export default function App() {
       </main>
       <BottomNav />
     </div>
+    </InventorySettingsProvider>
     </PeriodProvider>
     </ConnectionProvider>
   )

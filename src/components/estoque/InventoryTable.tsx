@@ -4,9 +4,9 @@ import {
   inventoryItems,
   getMarketplaceColor,
   getCoverageStatus,
-  turnoverStatusStyle,
 } from '@/data/mockData'
 import InventoryFilters, { type InventoryFilterState } from './InventoryFilters'
+import { useInventorySettings } from '@/contexts/InventorySettingsContext'
 
 interface Props {
   filters: InventoryFilterState
@@ -40,12 +40,16 @@ function daysSinceEntry(dateStr: string): number {
 
 export default function InventoryTable({ filters, onChange }: Props) {
   const [sort, setSort] = useState<SortKey>('revenue')
+  const { classifyTurnover, colorFor } = useInventorySettings()
 
   const filtered = useMemo(() => {
     return inventoryItems.filter((i) => {
       if (filters.abc.size > 0 && !filters.abc.has(i.abcClass)) return false
       if (filters.onlyCritical && i.status !== 'critical') return false
-      if (filters.onlyStalled && !(i.turnoverStatus === 'Parado' || i.turnoverStatus === 'Parado crítico')) return false
+      if (filters.onlyStalled) {
+        const st = classifyTurnover(i.turnover)
+        if (!(st === 'Parado' || st === 'Parado crítico')) return false
+      }
       if (filters.marketplace !== 'all' && i.marketplace !== filters.marketplace) return false
       if (filters.manufacturerSearch && !i.manufacturerCode.toLowerCase().includes(filters.manufacturerSearch.toLowerCase())) return false
       if (filters.onlyLowCoverage && i.coverageDays > 20) return false
@@ -53,7 +57,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
       if (filters.onlyNoRecentEntry && daysSinceEntry(i.lastEntryDate) <= 60) return false
       return true
     })
-  }, [filters])
+  }, [filters, classifyTurnover])
 
   const sorted = useMemo(() => [...filtered].sort((a, b) => (b[sort] as number) - (a[sort] as number)), [filtered, sort])
 
@@ -89,7 +93,8 @@ export default function InventoryTable({ filters, onChange }: Props) {
         {sorted.map((i) => {
           const cov = getCoverageStatus(i.coverageDays)
           const abc = abcStyle[i.abcClass]
-          const turn = turnoverStatusStyle[i.turnoverStatus]
+          const turnStatus = classifyTurnover(i.turnover)
+          const turn = colorFor(turnStatus)
           const mp = getMarketplaceColor(i.marketplace)
           return (
             <div key={i.sku} className="overview-glass relative overflow-hidden rounded-xl p-3.5" style={{ boxShadow: `inset 3px 0 0 ${cov.color}` }}>
@@ -110,7 +115,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
                 <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: cov.color }}>{i.coverageDays}d</p></div>
                 <div><p className="text-text-muted">Última NF</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl2(i.cost)}</p></div>
                 <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl(i.stock * i.cost)}</p></div>
-                <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: turn.color }}>{i.turnoverStatus}</p></div>
+                <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: turn.color }}>{turnStatus}</p></div>
               </div>
             </div>
           )
@@ -119,23 +124,23 @@ export default function InventoryTable({ filters, onChange }: Props) {
 
       {/* Desktop: table */}
       <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[1360px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
-              <th className="pb-3 pr-3 pl-2 font-semibold">Código</th>
-              <th className="pb-3 pr-3 font-semibold">Descrição</th>
-              <th className="pb-3 pr-3 font-semibold">Cód. Fabricante</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Estoque</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Vendas 30d</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Cobertura</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Últ. Entrada</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Qtd. Entrada</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Última NF</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Valor Frete</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Valor em Estoque</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Média</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Share</th>
-              <th className="pb-3 pr-3 text-center font-semibold">ABC</th>
+              <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
+              <th className="pb-3 pr-2 font-semibold">Descrição</th>
+              <th className="hidden pb-3 pr-2 font-semibold xl:table-cell">Cód. Fabricante</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Estoque</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Vendas 30d</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Cobertura</th>
+              <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Últ. Entrada</th>
+              <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Qtd. Entrada</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Última NF</th>
+              <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Valor Frete</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Valor em Estoque</th>
+              <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Média</th>
+              <th className="pb-3 pr-2 text-center font-semibold">Share</th>
+              <th className="pb-3 pr-2 text-center font-semibold">ABC</th>
               <th className="pb-3 pr-2 text-center font-semibold">Giro</th>
             </tr>
           </thead>
@@ -143,35 +148,36 @@ export default function InventoryTable({ filters, onChange }: Props) {
             {sorted.map((i) => {
               const cov = getCoverageStatus(i.coverageDays)
               const abc = abcStyle[i.abcClass]
-              const turn = turnoverStatusStyle[i.turnoverStatus]
+              const turnStatus = classifyTurnover(i.turnover)
+              const turn = colorFor(turnStatus)
               const stockValue = i.stock * i.cost
               const avgTicket = i.units30d > 0 ? i.revenue / i.units30d : 0
               return (
                 <tr key={i.sku} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
-                  <td className="py-3 pr-3 pl-2 font-mono text-[11px] text-text-muted">{i.sku}</td>
-                  <td className="py-3 pr-3">
+                  <td className="py-3 pr-2 pl-2 font-mono text-[11px] text-text-muted">{i.sku}</td>
+                  <td className="py-3 pr-2">
                     <Link to={`/app/produto/${i.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{i.name}</Link>
                   </td>
-                  <td className="py-3 pr-3 font-mono text-[11px] text-text-muted">{i.manufacturerCode}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">{i.stock}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">{i.units30d}</td>
-                  <td className="py-3 pr-3 text-right">
+                  <td className="hidden py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell">{i.manufacturerCode}</td>
+                  <td className="py-3 pr-2 text-center font-mono text-text-secondary">{i.stock}</td>
+                  <td className="py-3 pr-2 text-center font-mono text-text-secondary">{i.units30d}</td>
+                  <td className="py-3 pr-2 text-center">
                     <span className="rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold" style={{ color: cov.color, background: `${cov.color}1F` }}>
                       {i.coverageDays}d · {cov.label}
                     </span>
                   </td>
-                  <td className="py-3 pr-3 text-right font-mono text-[11px] text-text-secondary">{i.lastEntryDate}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">{i.lastEntryQty}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(i.cost)}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(i.lastEntryCost)}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-primary">R$ {brl(stockValue)}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">R$ {brl2(avgTicket)}</td>
-                  <td className="py-3 pr-3 text-right font-mono text-text-secondary">{pct(i.sharePct)}%</td>
-                  <td className="py-3 pr-3 text-center">
+                  <td className="hidden py-3 pr-2 text-center font-mono text-[11px] text-text-secondary lg:table-cell">{i.lastEntryDate}</td>
+                  <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">{i.lastEntryQty}</td>
+                  <td className="py-3 pr-2 text-center font-mono text-text-secondary">R$ {brl2(i.cost)}</td>
+                  <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary lg:table-cell">R$ {brl2(i.lastEntryCost)}</td>
+                  <td className="py-3 pr-2 text-center font-mono text-text-primary">R$ {brl(stockValue)}</td>
+                  <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">R$ {brl2(avgTicket)}</td>
+                  <td className="py-3 pr-2 text-center font-mono text-text-secondary">{pct(i.sharePct)}%</td>
+                  <td className="py-3 pr-2 text-center">
                     <span className="rounded-md px-2 py-0.5 text-[11px] font-bold" style={{ color: abc.color, background: abc.bg }}>{i.abcClass}</span>
                   </td>
                   <td className="py-3 pr-2 text-center">
-                    <span className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: turn.color, background: turn.bg }}>{i.turnoverStatus}</span>
+                    <span className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: turn.color, background: turn.bg }}>{turnStatus}</span>
                   </td>
                 </tr>
               )
