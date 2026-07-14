@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Motion Design System — tokens + utilities. Defines classes/variables
+   only; nothing here is applied to any element in this codebase yet.
+   See motion-system.md. */
+@import "./styles/motion-tokens.css";
+@import "./styles/motion.css";
+
 @theme {
   /* Breakpoint próprio do header do site institucional (src/site) — a
      navegação completa (5 links + 2 CTAs) só cabe confortavelmente a partir

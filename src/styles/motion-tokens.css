@@ -1,0 +1,48 @@
+/* ==========================================================================
+   Motion Design System — Tokens
+   ==========================================================================
+   Plain CSS custom properties (not Tailwind @theme) so they don't generate
+   utility classes or interact with the Tailwind build — they're consumed
+   by hand-written classes in motion.css and, later, by component styles.
+
+   Nothing in this file is applied to any element yet. See motion-system.md
+   for how these are meant to be used.
+   ========================================================================== */
+
+:root {
+  /* ---- Duration ---------------------------------------------------------
+     Four steps only. Pick the nearest one — never invent a fifth. */
+  --motion-duration-ultrafast: 100ms;
+  --motion-duration-fast: 160ms;
+  --motion-duration-normal: 240ms;
+  --motion-duration-slow: 400ms;
+
+  /* ---- Easing -------------------------------------------------------------
+     Named by intent, not by curve shape, so call sites read as English. */
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);   /* default, symmetric */
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);     /* decelerate — things arriving */
+  --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);      /* accelerate — things leaving */
+  --motion-ease-hover: cubic-bezier(0.22, 1, 0.36, 1);    /* snappy settle, matches
+                                                              existing .overview-card-hover feel */
+  --motion-ease-button: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot for tactile press */
+
+  /* ---- Scale --------------------------------------------------------------
+     Subtle by design — this app's existing hover states never scale past
+     ~1.05 (see Brand.tsx's group-hover:scale-[1.06]). Stay in that range. */
+  --motion-scale-hover: 1.02;
+  --motion-scale-active: 0.98;
+
+  /* ---- Translate ------------------------------------------------------- */
+  --motion-translate-hover: -4px;   /* matches .overview-card-hover's translateY(-4px) */
+  --motion-translate-slide: 12px;   /* entrance slide distance */
+
+  /* ---- Glow / Shadow intensity -------------------------------------------
+     Multipliers, not raw values — actual shadow/glow recipes live in
+     motion.css's elevation + glow scales and read these as coefficients. */
+  --motion-glow-intensity: 0.55;
+  --motion-shadow-intensity: 0.65;
+
+  /* ---- Stagger ------------------------------------------------------------
+     Base delay step for sequenced entrances (see motion.js stagger helper). */
+  --motion-stagger-step: 40ms;
+}
