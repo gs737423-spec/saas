@@ -70,6 +70,8 @@ export default function BrowserFrame({ src, alt, caption, priority = false, clas
           className="browser-frame__img"
           src={src}
           alt={alt}
+          width={2880}
+          height={1800}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           onError={() => setFailed(true)}
