@@ -90,6 +90,10 @@ body {
       0 46px 84px -32px rgba(2, 6, 20, 0.9);
   }
 
+  /* Baseline untouched — shared by pages outside Stage 2's validated scope
+     (Placeholder.tsx, ProdutoHeader/ProdutoKPIs). Do not tune this shared
+     rule for Stage 2; use .motion-panel-card (Stage 2 section below) as an
+     additive override on the specific in-scope card instead. */
   .glass-panel-hover {
     transition:
       transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
@@ -353,31 +357,10 @@ body {
       0 66px 116px -36px rgba(4, 26, 20, 0.9);
   }
 
-  /* Hover tátil — elevação + borda aquece + glow (todos os níveis) */
-  .overview-card-hover {
-    transition:
-      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.3s ease,
-      border-color 0.3s ease;
-    will-change: transform;
-  }
-  .overview-card-hover:hover {
-    transform: translateY(-4px);
-    border-color: #3A4E78;
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 26px 54px -14px rgba(0, 0, 0, 0.72),
-      0 80px 130px -40px rgba(4, 10, 30, 0.95);
-  }
-  .overview-hero-card.overview-card-hover:hover {
-    border-color: #2E6A5F;
-    box-shadow:
-      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 28px 58px -14px rgba(0, 0, 0, 0.72),
-      0 84px 140px -40px rgba(4, 26, 20, 0.92);
-  }
+  /* Hover tátil — elevação + borda aquece + glow (todos os níveis).
+     Rule body lives in the Stage 2 section below (.overview-card-hover),
+     which is the single source of truth — kept here as the anchor comment
+     only so the "3 níveis de profundidade" doc block above stays readable. */
 
   /* Linha de marketplace — card executivo sobre o painel pai */
   .overview-marketplace-row {
@@ -391,16 +374,14 @@ body {
       0 1px 1px 0 rgba(0, 0, 0, 0.5),
       0 10px 24px -12px rgba(0, 0, 0, 0.62);
     transition:
-      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.24s ease,
-      border-color 0.24s ease;
+      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
+      border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    transform: translateY(-2px);
     border-color: #3B4F79;
     box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.11),
-      0 18px 38px -12px rgba(0, 0, 0, 0.74);
+      0 8px 20px -10px rgba(0, 0, 0, 0.7);
   }
   /* Canal Nº1 — dominante, mais corpo e luz */
   .overview-marketplace-row-lead {
@@ -430,26 +411,51 @@ body {
     position: relative;
     outline: none;
     transition:
-      background-color 0.2s ease,
-      color 0.2s ease,
-      box-shadow 0.25s ease,
-      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
+      color var(--motion-duration-fast) var(--motion-ease-hover),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:hover {
     background: linear-gradient(180deg, rgba(76, 130, 247, 0.12), rgba(76, 130, 247, 0.04));
+    transform: translateY(-1px);
     box-shadow:
       inset 0 0 0 1px rgba(76, 130, 247, 0.16),
       0 0 20px -6px rgba(76, 130, 247, 0.45);
   }
+  .rail-item:active {
+    transform: translateY(-1px) scale(0.985);
+  }
   .rail-item:hover :is(svg) {
-    transform: scale(1.08);
+    transform: scale(1.04);
     filter: drop-shadow(0 0 6px rgba(76, 130, 247, 0.5));
   }
   .rail-item :is(svg) {
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover), filter var(--motion-duration-fast) var(--motion-ease-standard);
   }
   .rail-item:focus-visible {
     box-shadow: 0 0 0 2px rgba(76, 130, 247, 0.55), 0 0 20px -6px rgba(76, 130, 247, 0.5);
+  }
+  /* Base do sublinhado ativo — sempre presente, opacity/scale animam a
+     entrada/saída ao trocar de página em vez de aparecer/sumir abrupto. */
+  .rail-item::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #6FA0FF, #4C82F7);
+    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+    opacity: 0;
+    transform: scaleX(0.6);
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-standard),
+                transform var(--motion-duration-normal) var(--motion-ease-standard);
+  }
+  .rail-item.topnav-item-active::after {
+    opacity: 1;
+    transform: scaleX(1);
   }
   .rail-item-active {
     background:
@@ -512,6 +518,9 @@ body {
       drop-shadow(0 0 22px rgba(96, 111, 249, 0.18))
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
   }
+  .motion-brand-mark {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
+  }
   .group:hover .brand-mark {
     filter:
       drop-shadow(0 0 14px rgba(76, 130, 247, 0.55))
@@ -538,19 +547,8 @@ body {
     background: radial-gradient(60% 160% at 8% 50%, rgba(76, 130, 247, 0.1), transparent 70%);
   }
 
-  /* Indicador do item ativo — sublinhado inferior com glow (variante horizontal
-     do antigo indicador lateral da sidebar) */
-  .topnav-item-active::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 9999px;
-    background: linear-gradient(90deg, #6FA0FF, #4C82F7);
-    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
-  }
+  /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
+     acima, que já cobre o sublinhado com transição de entrada/saída. */
 
   /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
   .hide-scrollbar {
@@ -559,6 +557,152 @@ body {
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* ==========================================================================
+     Motion System — Stage 2 applied surfaces (header controls, KPI cards,
+     panels, table rows, badges). Uses tokens from motion-tokens.css. Only
+     transform / opacity / border-color / background-color / box-shadow.
+     ========================================================================== */
+
+  /* Header icon buttons (busca, notificações, configurações, avatar) */
+  .motion-header-control {
+    transition:
+      transform var(--motion-duration-fast) var(--motion-ease-hover),
+      border-color var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
+      color var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .motion-header-control:hover {
+    transform: scale(1.015);
+    border-color: var(--color-border-default);
+    background-color: var(--color-bg-card-hover);
+  }
+  .motion-header-control:active {
+    transform: scale(0.985);
+  }
+
+  /* KPI-style small cards — max 2px lift, tokenized timing */
+  .overview-card-hover {
+    transition:
+      transform var(--motion-duration-fast) var(--motion-ease-hover),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
+      border-color var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .overview-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: #3A4E78;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+  }
+  .overview-hero-card.overview-card-hover:hover {
+    border-color: #2E6A5F;
+    box-shadow:
+      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
+      0 3px 6px -1px rgba(0, 0, 0, 0.5),
+      0 22px 44px -16px rgba(4, 26, 20, 0.75);
+  }
+  /* Highlight superior — visível sempre em baixa opacidade, reforça no hover */
+  .overview-card-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .overview-card-hover:hover::before {
+    opacity: 1;
+  }
+
+  /* Additive override for in-scope content cards that use the shared
+     .glass-panel-hover (Conexões only, per audit) — tightens the lift to
+     Stage 2's 2px standard via a compound selector, WITHOUT touching the
+     base .glass-panel-hover rule that Financeiro/Marketing/Avaliações/
+     Relatórios placeholders and ProdutoDetalhe still use untouched. */
+  .glass-panel-hover.motion-card-tight {
+    transition:
+      transform var(--motion-duration-fast) var(--motion-ease-hover),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
+      border-color var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .glass-panel-hover.motion-card-tight:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+      0 1px 1px 0 rgba(0, 0, 0, 0.6),
+      0 6px 12px -2px rgba(0, 0, 0, 0.55),
+      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+  }
+
+  /* Big panels (GMV, Receita por Marketplace, Catálogo, Estoque, filtros) —
+     border + shadow only, no translate: they must read as solid, not floaty. */
+  .motion-panel {
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-ease-hover),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .motion-panel:hover {
+    border-color: #3A4E78;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      0 1px 1px 0 rgba(0, 0, 0, 0.55),
+      0 24px 48px -20px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Table rows — background/border only, never transform */
+  .motion-row {
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-standard),
+      border-color var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  /* Interactive badges (only when the badge itself is a button/toggle) */
+  .motion-badge-interactive {
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
+      color var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+
+  /* Filter chips / sort toggles / small pill buttons — color+border feedback
+     plus a tiny press scale, explicit properties (no transition-colors
+     shorthand clash with the active-state scale). */
+  .motion-chip {
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
+      border-color var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-ultrafast) var(--motion-ease-button);
+  }
+  .motion-chip:active {
+    transform: scale(0.985);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail-item,
+    .rail-item:hover,
+    .rail-item:active,
+    .rail-item :is(svg),
+    .rail-item::after,
+    .motion-header-control,
+    .overview-card-hover,
+    .overview-card-hover::before,
+    .motion-card-tight,
+    .motion-panel,
+    .motion-row,
+    .motion-badge-interactive,
+    .motion-chip,
+    .motion-input,
+    .motion-brand-mark,
+    .overview-marketplace-row {
+      transition: none !important;
+      transform: none !important;
+    }
   }
 
   /* Glow concentrado no número/ícone principal (hero, líder) */

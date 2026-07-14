@@ -117,7 +117,7 @@ export default function MarketplaceComparison() {
   const rows = [...scaled].sort((a, b) => (b[sort] as number) - (a[sort] as number))
 
   return (
-    <div className="overview-glass-elevated flex h-full min-h-[62vh] flex-col rounded-2xl p-3.5 sm:p-4 lg:min-h-[70vh]">
+    <div className="overview-glass-elevated motion-panel flex h-full min-h-[62vh] flex-col rounded-2xl p-3.5 sm:p-4 lg:min-h-[70vh]">
       <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">GMV</h3>
@@ -129,7 +129,7 @@ export default function MarketplaceComparison() {
             <button
               key={o.key}
               onClick={() => setSort(o.key)}
-              className={`cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+              className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${
                 sort === o.key ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-muted hover:text-text-secondary'
               }`}
             >

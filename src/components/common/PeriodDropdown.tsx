@@ -36,10 +36,10 @@ export default function PeriodDropdown({ options, selectedKey, onChange, variant
         onClick={() => setOpen((o) => !o)}
         className={
           isField
-            ? 'flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-default focus:border-accent-blue/50'
+            ? 'motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50'
             : isIcon
-              ? 'flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary'
-              : 'flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 text-xs font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary'
+              ? 'motion-header-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary'
+              : 'motion-header-control flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 text-xs font-medium text-text-secondary hover:border-border-default hover:text-text-primary'
         }
       >
         {isIcon ? (

@@ -103,6 +103,7 @@
 
   .motion-input {
     transition: border-color var(--motion-duration-fast) var(--motion-ease-standard),
+                background-color var(--motion-duration-fast) var(--motion-ease-standard),
                 box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
   }
 

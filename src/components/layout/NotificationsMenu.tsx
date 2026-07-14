@@ -34,7 +34,7 @@ export default function NotificationsMenu() {
       <button
         title="Notificações"
         onClick={() => { setOpen((o) => !o); setRead(true) }}
-        className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted transition-colors hover:text-text-primary"
+        className="motion-header-control relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
         <Bell className="h-[18px] w-[18px]" />
         {!read && alerts.length > 0 && (

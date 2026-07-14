@@ -35,7 +35,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   return (
     <button
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-colors ${
+      className={`motion-chip cursor-pointer rounded-full border px-3 py-1.5 text-[11.5px] font-medium ${
         active
           ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue'
           : 'border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-secondary'
@@ -66,7 +66,7 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-colors ${
+        className={`motion-chip flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-medium ${
           open
             ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue'
             : 'border-border-subtle bg-bg-primary/40 text-text-secondary hover:text-text-primary'
@@ -108,7 +108,7 @@ export default function InventoryFilters({ filters, onChange }: Props) {
   }
 
   return (
-    <div className="overview-glass flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
+    <div className="overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
       <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Curva</span>
       {(['A', 'B', 'C'] as const).map((c) => (
         <Chip key={c} active={filters.abc.has(c)} onClick={() => toggleAbc(c)}>{c}</Chip>
@@ -129,7 +129,7 @@ export default function InventoryFilters({ filters, onChange }: Props) {
         onChange={(v) => onChange({ ...filters, marketplace: v })}
       />
 
-      <div className="flex min-w-[160px] flex-1 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary/40 px-3 py-1.5">
+      <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
         <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
         <input
           value={filters.manufacturerSearch}

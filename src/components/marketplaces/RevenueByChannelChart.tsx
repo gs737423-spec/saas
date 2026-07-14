@@ -188,7 +188,7 @@ export default function RevenueByChannelChart() {
   const compareLabel = compareOptions.find((o) => o.key === compareKey)!.label
 
   return (
-    <div className="overview-glass-elevated relative overflow-hidden rounded-[22px] p-4 sm:p-5">
+    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-4 sm:p-5">
       {/* Header */}
       <div className="relative mb-4">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>

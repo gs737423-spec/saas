@@ -10,7 +10,7 @@ export default function Marketplaces() {
 
       {/* Gráfico com profundidade + small multiples, um único painel */}
       <RevenueByChannelChart />
-      <div className="overview-glass rounded-2xl p-3.5 sm:p-4">
+      <div className="overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
         <ChannelMiniCharts />
       </div>
     </div>

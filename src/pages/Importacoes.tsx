@@ -70,7 +70,7 @@ function MercadoLivreCard() {
   const needsReconnect = mercadoLivre.status === 'error' || mercadoLivre.status === 'expired' || mercadoLivre.status === 'disconnected'
 
   return (
-    <div className="glass-panel glass-panel-hover group relative overflow-hidden rounded-2xl">
+    <div className="glass-panel glass-panel-hover motion-card-tight group relative overflow-hidden rounded-2xl">
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
       <div className="absolute inset-x-0 top-0 h-10 opacity-25" style={{ background: `linear-gradient(to bottom, ${color}22, transparent)` }} />
 

@@ -11,7 +11,7 @@ export default function Brand() {
         src={markUrl}
         alt="Acelera"
         draggable={false}
-        className="brand-mark h-9 w-9 shrink-0 object-contain transition-transform duration-300 group-hover:scale-[1.06] md:h-10 md:w-10"
+        className="brand-mark motion-brand-mark h-9 w-9 shrink-0 object-contain group-hover:scale-[1.03] md:h-10 md:w-10"
       />
       <div className="hidden min-w-0 flex-col justify-center gap-0.5 sm:flex">
         <span className="truncate text-[15px] font-bold leading-none tracking-tight text-text-primary md:text-base">
