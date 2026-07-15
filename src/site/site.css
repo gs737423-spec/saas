@@ -34,7 +34,7 @@
   --s-rose: #F0466C;
   --s-violet: #7C5CF6;
 
-  --s-container: 1200px;
+  --s-container: 1340px;
   --s-radius-block: 40px;
   --s-radius-card: 24px;
   --s-radius-btn: 14px;
@@ -180,7 +180,7 @@
 }
 .marquee-band--ecosystem {
   position: relative;
-  padding-block: clamp(40px, 6vw, 64px);
+  padding-block: clamp(28px, 4vw, 44px);
   background:
     radial-gradient(900px 420px at 50% -10%, rgba(76, 130, 247, 0.08), transparent 65%),
     var(--s-bg-soft);

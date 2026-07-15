@@ -3,16 +3,12 @@ import { marketplaces, trustStrip, statusTone } from '@/site/content'
 
 const trustIcons = [ShieldCheck, Building2, RefreshCw, UserCheck]
 
-// Marquee premium do ecossistema — duas linhas rolando em direções opostas,
-// logos grandes, glow de linha nas bordas. Cada logo carrega um ponto de
-// status (cor + title) coerente com a seção de Integrações — nunca sugere
-// que um canal está pronto quando não está (regra validada nas fases
-// anteriores). Abaixo, a faixa de confiança compacta se funde no mesmo bloco.
+// Marquee premium do ecossistema — uma única linha, logos grandes, glow de
+// linha nas bordas. Cada logo carrega um ponto de status (cor + title)
+// coerente com a seção de Integrações — nunca sugere que um canal está
+// pronto quando não está. Abaixo, a faixa de confiança compacta se funde
+// no mesmo bloco.
 export default function EcosystemMarquee() {
-  const half = Math.ceil(marketplaces.length / 2)
-  const rowA = marketplaces
-  const rowB = [...marketplaces.slice(half), ...marketplaces.slice(0, half)]
-
   const Row = ({ items, reverse, big }: { items: typeof marketplaces; reverse?: boolean; big?: boolean }) => (
     <div className={`marquee ${reverse ? 'marquee--reverse' : ''}`}>
       <div className="marquee__track" style={{ ['--marquee-duration' as string]: reverse ? '38s' : '30s' }}>
@@ -35,14 +31,13 @@ export default function EcosystemMarquee() {
   return (
     <section aria-label="Ecossistema de marketplaces conectados" className="marquee-band--ecosystem">
       <div className="site-container">
-        <p className="mb-8 text-center text-[13.5px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>
+        <p className="mb-6 text-center text-[13.5px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>
           Um ecossistema de canais, uma única visão da operação.
         </p>
-        <div className="marquee-row"><Row items={rowA} big /></div>
-        <div className="marquee-row"><Row items={rowB} reverse /></div>
+        <Row items={marketplaces} big />
 
         {/* Faixa de confiança — compacta, funde no mesmo bloco */}
-        <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-8 sm:grid-cols-4" style={{ borderColor: 'var(--s-line)' }}>
+        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-6 sm:grid-cols-4" style={{ borderColor: 'var(--s-line)' }}>
           {trustStrip.map((t, i) => {
             const Icon = trustIcons[i]
             return (
