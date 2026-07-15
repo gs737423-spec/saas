@@ -39,8 +39,6 @@ export interface MarketplaceFinance {
   refunds: number
   /** bruto - taxas - estornos. Não é lucro. */
   netValue: number
-  /** líquido ÷ bruto × 100 */
-  netEfficiencyPct: number
   source: FinanceSource
 }
 
@@ -56,7 +54,6 @@ function buildBaseline(): MarketplaceFinance[] {
       fees,
       refunds,
       netValue,
-      netEfficiencyPct: Math.round((netValue / grossRevenue) * 1000) / 10,
       source: 'demo' as FinanceSource,
     }
   })
@@ -79,7 +76,6 @@ export function scaleMarketplaceFinance(items: MarketplaceFinance[], period: Per
       fees,
       refunds,
       netValue,
-      netEfficiencyPct: grossRevenue > 0 ? Math.round((netValue / grossRevenue) * 1000) / 10 : 0,
     }
   })
 }
@@ -88,9 +84,8 @@ export interface FinanceOverview {
   grossRevenue: number
   fees: number
   refunds: number
-  /** bruto - taxas - estornos. Não é lucro. */
+  /** bruto - comissão - estornos. Não é lucro. */
   netValue: number
-  netEfficiencyPct: number
   source: FinanceSource
 }
 
@@ -105,7 +100,6 @@ export function buildFinanceOverview(items: MarketplaceFinance[]): FinanceOvervi
     fees,
     refunds,
     netValue,
-    netEfficiencyPct: grossRevenue > 0 ? Math.round((netValue / grossRevenue) * 1000) / 10 : 0,
     source: items.every((m) => m.source === 'demo') ? 'demo' : items.some((m) => m.source === 'real') ? 'real' : 'estimated',
   }
 }

@@ -27,7 +27,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
     },
     {
       key: 'fees',
-      label: 'Taxas e Comissões',
+      label: 'Comissão',
       raw: overview.fees,
       format: (v) => `R$ ${brl(v)}`,
       context: 'Retido pelos canais de venda',
@@ -48,7 +48,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       label: 'Valor Líquido Estimado',
       raw: overview.netValue,
       format: (v) => `R$ ${brl(v)}`,
-      context: `${overview.netEfficiencyPct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do bruto`,
+      context: 'Bruto menos comissão e estornos',
       icon: Wallet,
       tone: '#16C784',
     },

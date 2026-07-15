@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { getMarketplaceColor } from '@/data/mockData'
 import type { Product } from '@/data/mockData'
 import ProductFilters, { type ProductFilterState } from './ProductFilters'
+import DataTableViewport from '@/components/common/DataTableViewport'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
@@ -167,7 +168,8 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       </div>
 
       {/* Desktop table */}
-      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
+      <div className="hidden md:block">
+        <DataTableViewport size="large" ariaLabel="Catálogo de produtos. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
         <table className="w-full min-w-[920px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
@@ -229,6 +231,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
             })}
           </tbody>
         </table>
+        </DataTableViewport>
       </div>
 
       {sorted.length === 0 && (

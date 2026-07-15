@@ -86,7 +86,7 @@ export default function FinanceHeader({ marketplaceFilter, onMarketplaceFilterCh
           )}
         </div>
         <p className="mt-0.5 text-[13px] text-text-secondary">
-          Acompanhe faturamento, taxas, estornos e valor líquido estimado de todos os canais de venda.
+          Acompanhe faturamento, comissão, estornos e valor líquido estimado de todos os canais de venda.
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
