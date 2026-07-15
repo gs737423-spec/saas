@@ -129,177 +129,79 @@ body {
    * Se validar, vira padrão global depois.
    * ======================================================================== */
 
-  /* ---- Fundo vivo — orbs orgânicos animados atrás de tudo ----------------
-     Cada orb é uma mancha grande de cor que flutua e respira em ciclos longos.
-     São fixed, ficam abaixo de todo conteúdo, e jamais interferem em interações. */
+  /* ---- Fundo ambiente da plataforma ---------------------------------------
+     Substitui a versão anterior (3 orbs blur(80px) + linha diagonal animada
+     + grid/ruído) depois de auditoria comparativa off/current/subtle: a
+     versão anterior tinha 4 elementos animados e 3 will-change:transform
+     permanentes sem ganho visual comprovado sobre esta. Agora: 1 base
+     estática + 1 grid estático + 2 glows, dos quais só 1 anima (translate +
+     opacity, sem filter:blur — a suavidade vem do próprio radial-gradient).
+     Tudo fixed, atrás de todo conteúdo, pointer-events: none. */
 
   .app-bg {
     position: relative;
   }
 
-  /* Container dos orbs — fixed full viewport */
-  .app-bg::before {
-    content: '';
+  .app-bg-subtle {
     position: fixed;
     inset: 0;
     z-index: -3;
     pointer-events: none;
     overflow: hidden;
-    /* Base estática de profundidade — sempre presente, reforçada pra
-       aparecer mesmo nos vãos estreitos entre cards em telas com pouco
-       espaço vazio (ex: grids densos como Conexões). */
-    background:
-      radial-gradient(1300px 760px at 6% -10%, rgba(76, 130, 247, 0.26), transparent 60%),
-      radial-gradient(1100px 680px at 98% -4%, rgba(144, 97, 249, 0.22), transparent 58%),
-      radial-gradient(1300px 820px at 50% 120%, rgba(34, 211, 238, 0.18), transparent 62%),
-      radial-gradient(700px 500px at 100% 45%, rgba(22, 199, 132, 0.1), transparent 62%);
   }
-
-  /* Grid sutil + noise por cima dos orbs */
-  .app-bg::after {
+  .app-bg-subtle::before {
     content: '';
-    position: fixed;
+    position: absolute;
     inset: 0;
-    z-index: -1;
-    pointer-events: none;
+    background:
+      radial-gradient(1200px 700px at 10% -10%, rgba(76, 130, 247, 0.16), transparent 60%),
+      radial-gradient(1100px 680px at 100% 0%, rgba(144, 97, 249, 0.12), transparent 58%);
+  }
+  .app-bg-subtle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
     background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"),
-      linear-gradient(rgba(130, 160, 220, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(130, 160, 220, 0.045) 1px, transparent 1px);
-    background-size: 160px 160px, 52px 52px, 52px 52px;
-    opacity: 0.45;
+      linear-gradient(rgba(130, 160, 220, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(130, 160, 220, 0.035) 1px, transparent 1px);
+    background-size: 52px 52px, 52px 52px;
     -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
     mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
   }
 
-  /* Deriva bem lenta da textura de fundo — quase imperceptível quadro a
-     quadro, mas dá sensação de "vivo" sem chamar atenção do conteúdo. */
-  @keyframes grain-drift {
-    0%   { background-position: 0px 0px, 0px 0px, 0px 0px; }
-    50%  { background-position: 80px 60px, 26px 26px, 26px 26px; }
-    100% { background-position: 0px 0px, 0px 0px, 0px 0px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .app-bg::after { animation: none; }
-  }
-
-  /* ---- Orbs animados (definidos como keyframes puros) ---- */
-  @keyframes orb-drift-1 {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0.45; }
-    25%  { transform: translate(120px, -80px) scale(1.25); opacity: 0.65; }
-    50%  { transform: translate(60px, 60px) scale(0.9); opacity: 0.35; }
-    75%  { transform: translate(-100px, 20px) scale(1.15); opacity: 0.55; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
-  }
-  @keyframes orb-drift-2 {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.40; }
-    30%  { transform: translate(-140px, 100px) scale(1.3) rotate(30deg); opacity: 0.60; }
-    60%  { transform: translate(80px, -60px) scale(0.85) rotate(-20deg); opacity: 0.30; }
-    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.40; }
-  }
-  @keyframes orb-drift-3 {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0.35; }
-    35%  { transform: translate(100px, 120px) scale(1.2); opacity: 0.55; }
-    65%  { transform: translate(-80px, -40px) scale(0.95); opacity: 0.25; }
-    100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
-  }
-  /* orb-pulse removido: animar filter (blur/brightness) forçava repaint
-     da tela inteira a cada frame — era o maior custo de performance. */
-
-  /* Orbs — manchas de cor vivas. Container criado via JS no componente
-     LiveBackground, mas o fallback via .app-bg-orbs funciona só com CSS. */
-  .app-bg-orbs {
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .orb {
+  .bg-glow {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    will-change: transform;
   }
-
-  /* Orb 1 — Azul profundo, canto superior esquerdo */
-  .orb-1 {
-    width: 800px;
-    height: 800px;
-    top: -15%;
-    left: -5%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.72) 0%, rgba(76, 130, 247, 0) 70%);
-    animation: orb-drift-1 28s ease-in-out infinite;
+  /* Sem filter:blur — a suavidade vem só do radial-gradient com borda
+     transparente. Estático: nenhuma animação, nenhum will-change. */
+  .bg-glow-static {
+    width: 640px;
+    height: 640px;
+    top: -12%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(76, 130, 247, 0.3) 0%, rgba(76, 130, 247, 0) 70%);
   }
-
-  /* Orb 2 — Violeta, canto superior direito */
-  .orb-2 {
-    width: 700px;
-    height: 700px;
-    top: -10%;
-    right: -8%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.6) 0%, rgba(144, 97, 249, 0) 70%);
-    animation: orb-drift-2 34s ease-in-out infinite;
+  /* Único elemento animado do modo subtle — translate + opacity apenas. */
+  .bg-glow-moving {
+    width: 560px;
+    height: 560px;
+    bottom: -14%;
+    right: -6%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.26) 0%, rgba(34, 211, 238, 0) 70%);
+    animation: bg-glow-drift 40s ease-in-out infinite;
   }
-
-  /* Orb 3 — Cyan, centro-inferior */
-  .orb-3 {
-    width: 900px;
-    height: 600px;
-    bottom: -20%;
-    left: 30%;
-    border-radius: 50% / 40%;
-    background: radial-gradient(ellipse, rgba(34, 211, 238, 0.5) 0%, rgba(34, 211, 238, 0) 70%);
-    animation: orb-drift-3 38s ease-in-out infinite;
+  @keyframes bg-glow-drift {
+    0%   { transform: translate(0, 0); opacity: 0.85; }
+    50%  { transform: translate(-60px, 40px); opacity: 1; }
+    100% { transform: translate(0, 0); opacity: 0.85; }
   }
-
-  /* Preferência de movimento reduzido — para orbs e removê-los */
   @media (prefers-reduced-motion: reduce) {
-    .orb { animation: none !important; }
+    .bg-glow-moving { animation: none !important; }
   }
-
-  /* ---- Linhas de dados + sweep de luz — camada 2 do fundo vivo -----------
-     Traços diagonais finos que deslizam lentamente (sensação de fluxo de
-     dados/circuito), mais um feixe de luz suave que varre a tela em ciclo
-     bem longo. Tudo fixed, abaixo do conteúdo, pointer-events: none. */
-
-  .app-bg-lines {
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .bg-line {
-    position: absolute;
-    inset: -50% -20%;
-    background-repeat: repeat;
-    will-change: background-position, opacity;
-  }
-
-  /* Traço 1 — diagonal fina azul, deslizando pra baixo-direita */
-  .bg-line-1 {
-    background-image: repeating-linear-gradient(
-      115deg,
-      rgba(76, 130, 247, 0.16) 0px,
-      rgba(76, 130, 247, 0.16) 1px,
-      transparent 1px,
-      transparent 180px
-    );
-    background-size: 260px 260px;
-    opacity: 0.55;
-    animation: bg-line-drift-1 46s linear infinite;
-  }
-
-  @keyframes bg-line-drift-1 {
-    from { background-position: 0 0; }
-    to   { background-position: 520px 520px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bg-line { animation: none !important; }
+  /* Mobile — nenhum movimento contínuo de fundo. Puro CSS, sem JS. */
+  @media (max-width: 768px) {
+    .bg-glow-moving { animation: none !important; }
   }
 
   /* ---- Sistema de profundidade em 3 níveis --------------------------------
