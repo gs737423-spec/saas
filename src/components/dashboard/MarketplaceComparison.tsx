@@ -82,7 +82,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
       {/* Preenche o espaço sobrando da linha (badge sempre no fim via
           ml-auto) em vez de deixar espaço vazio — cap em max-w pra não
           esticar demais em telas muito largas. */}
-      <div className="hidden min-w-[100px] max-w-[460px] flex-1 items-center gap-2 md:flex">
+      <div className="hidden min-w-[100px] max-w-[920px] flex-1 items-center gap-2 md:flex">
         <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
