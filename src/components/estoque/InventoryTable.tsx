@@ -6,6 +6,7 @@ import {
 } from '@/data/mockData'
 import InventoryFilters, { type InventoryFilterState } from './InventoryFilters'
 import { useInventorySettings } from '@/contexts/InventorySettingsContext'
+import DataTableViewport from '@/components/common/DataTableViewport'
 
 interface Props {
   filters: InventoryFilterState
@@ -122,7 +123,8 @@ export default function InventoryTable({ filters, onChange }: Props) {
       </div>
 
       {/* Desktop: table */}
-      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
+      <div className="hidden md:block">
+        <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
         <table className="w-full min-w-[1040px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
@@ -183,6 +185,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
             })}
           </tbody>
         </table>
+        </DataTableViewport>
       </div>
     </div>
   )

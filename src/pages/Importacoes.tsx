@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useConnections, getMarketplaceColor, type IntegrationStatus } from '@/contexts/ConnectionContext'
 import type { Marketplace } from '@/data/mockData'
+import DataTableViewport from '@/components/common/DataTableViewport'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Shopee', 'Amazon', 'Loja Própria']
 
@@ -209,7 +210,7 @@ export default function Importacoes() {
             <Clock className="h-4 w-4 text-text-muted" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">Atividade recente</h3>
           </div>
-          <div className="max-h-60 space-y-1 overflow-y-auto">
+          <DataTableViewport size="small" stickyHeader={false} ariaLabel="Atividade recente das conexões. Role para visualizar mais registros." className="space-y-1 rounded-lg">
             {logs.map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[11px] hover:bg-bg-card/60">
                 {entry.status === 'success' && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-accent-emerald" />}
@@ -220,7 +221,7 @@ export default function Importacoes() {
                 <span className="ml-auto shrink-0 text-text-muted">{relativeTime(entry.createdAt)}</span>
               </div>
             ))}
-          </div>
+          </DataTableViewport>
         </div>
       )}
 

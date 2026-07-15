@@ -1,5 +1,6 @@
 import type { MarketplaceFinance } from '@/data/financeData'
 import { getMarketplaceColor } from '@/data/mockData'
+import DataTableViewport from '@/components/common/DataTableViewport'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -52,39 +53,41 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
       </div>
 
       {/* Desktop table */}
-      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-              <th className="pb-3 pr-4 font-semibold">Marketplace</th>
-              <th className="pb-3 pr-4 text-center font-semibold">Faturamento bruto</th>
-              <th className="pb-3 pr-4 text-center font-semibold">Taxas e comissões</th>
-              <th className="pb-3 pr-4 text-center font-semibold">Estornos e devoluções</th>
-              <th className="pb-3 pr-4 text-center font-semibold">Valor líquido estimado</th>
-              <th className="pb-3 text-center font-semibold">Eficiência líquida</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((m) => {
-              const brand = getMarketplaceColor(m.marketplace)
-              return (
-                <tr key={m.marketplace} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                  <td className="py-3 pr-4">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: brand }} />
-                      <span className="font-medium text-text-primary">{m.marketplace}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
-                  <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.fees)}</td>
-                  <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
-                  <td className="py-3 pr-4 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
-                  <td className="py-3 text-center font-mono text-text-secondary">{pct(m.netEfficiencyPct)}%</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      <div className="hidden md:block">
+        <DataTableViewport size="small" ariaLabel="Comparativo por marketplace. Role para visualizar mais canais." className="-mx-1 rounded-xl px-1">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                <th className="pb-3 pr-4 font-semibold">Marketplace</th>
+                <th className="pb-3 pr-4 text-center font-semibold">Faturamento bruto</th>
+                <th className="pb-3 pr-4 text-center font-semibold">Taxas e comissões</th>
+                <th className="pb-3 pr-4 text-center font-semibold">Estornos e devoluções</th>
+                <th className="pb-3 pr-4 text-center font-semibold">Valor líquido estimado</th>
+                <th className="pb-3 text-center font-semibold">Eficiência líquida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((m) => {
+                const brand = getMarketplaceColor(m.marketplace)
+                return (
+                  <tr key={m.marketplace} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
+                    <td className="py-3 pr-4">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: brand }} />
+                        <span className="font-medium text-text-primary">{m.marketplace}</span>
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
+                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.fees)}</td>
+                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
+                    <td className="py-3 pr-4 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
+                    <td className="py-3 text-center font-mono text-text-secondary">{pct(m.netEfficiencyPct)}%</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </DataTableViewport>
       </div>
     </div>
   )
