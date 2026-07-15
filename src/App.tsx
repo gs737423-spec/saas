@@ -10,6 +10,7 @@ import Produtos from '@/pages/Produtos'
 import Estoque from '@/pages/Estoque'
 import Importacoes from '@/pages/Importacoes'
 import Marketplaces from '@/pages/Marketplaces'
+import Financeiro from '@/pages/Financeiro'
 import Placeholder from '@/pages/Placeholder'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
@@ -51,7 +52,7 @@ export default function App() {
               <Route path="marketplaces" element={<Marketplaces />} />
               <Route path="estoque" element={<Estoque />} />
               <Route path="importacoes" element={<Importacoes />} />
-              <Route path="financeiro" element={<Placeholder title="Financeiro" description="Fluxo de caixa, DRE simplificado, custos por marketplace e projeções financeiras consolidadas de todos os canais de venda." />} />
+              <Route path="financeiro" element={<Financeiro />} />
               <Route path="marketing" element={<Placeholder title="Marketing" description="Desempenho de campanhas, ROI de anúncios patrocinados e recomendações de investimento por produto e canal." />} />
               <Route path="avaliacoes" element={<Placeholder title="Avaliações" description="Monitoramento de reviews e reputação em todos os marketplaces, com alertas de avaliações negativas em tempo real." />} />
               <Route path="relatorios" element={<Placeholder title="Relatórios" description="Relatórios customizáveis de vendas, produtos e performance, com exportação e agendamento automático." />} />
