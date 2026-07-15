@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X, ArrowRight } from 'lucide-react'
+import { Menu, X, ArrowRight, Lock } from 'lucide-react'
 import mark from '@/assets/acelera-mark.png'
 import { nav } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
@@ -47,10 +47,10 @@ export default function SiteHeader() {
             <a
               key={n.href}
               href={n.href}
-              className="rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+              className="rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-all"
               style={{ color: 'var(--s-ink-soft)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--s-blue-ink)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--s-ink-soft)')}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--s-blue-ink)'; e.currentTarget.style.background = 'rgba(76,130,247,0.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--s-ink-soft)'; e.currentTarget.style.background = 'transparent'; }}
             >
               {n.label}
             </a>
@@ -59,7 +59,9 @@ export default function SiteHeader() {
 
         {/* Ações desktop */}
         <div className="hidden items-center gap-2 nav:flex">
-          <Link to="/login" className="btn btn-ghost" style={{ padding: '0.6rem 1rem' }}>Entrar</Link>
+          <Link to="/login" className="btn btn-ghost glow-on-hover" style={{ padding: '0.6rem 1.1rem' }}>
+            <Lock className="h-3.5 w-3.5" /> Entrar
+          </Link>
           <a href="#demonstracao" className="btn btn-primary" style={{ padding: '0.6rem 1.1rem' }}>
             Solicitar demonstração
           </a>

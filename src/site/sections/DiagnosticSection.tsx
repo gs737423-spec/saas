@@ -27,7 +27,7 @@ export default function DiagnosticSection() {
                 const Icon = icons[i]
                 return (
                   <Reveal key={d.title} delay={i * 60}>
-                    <div className="site-dark-card h-full p-4">
+                    <div className="site-dark-card glow-on-hover h-full p-4">
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'rgba(76,130,247,0.14)', color: 'var(--s-blue-bright)' }}>
                         <Icon className="h-4 w-4" />
                       </span>

@@ -21,7 +21,7 @@ export default function IntegrationsSecurity() {
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {marketplaces.map((m, i) => (
               <Reveal key={m.name} delay={(i % 4) * 50}>
-                <div className="site-card flex h-full flex-col justify-between gap-3 p-4" style={{ minHeight: 104 }}>
+                <div className="site-card glow-on-hover flex h-full flex-col justify-between gap-3 p-4" style={{ minHeight: 104 }}>
                   <span className="marquee-logo" style={{ opacity: 1, filter: 'none' }}><m.Logo /></span>
                   <div>
                     <div className="text-[13.5px] font-bold leading-tight" style={{ color: 'var(--s-ink)' }}>{m.name}</div>
