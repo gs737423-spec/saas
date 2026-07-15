@@ -29,7 +29,7 @@ function buildSteps(overview: FinanceOverview): Step[] {
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
     { key: 'gross', label: 'Faturamento bruto', start: 0, end: grossRevenue, delta: grossRevenue, percentage: 100, color: '#22D3EE' },
-    { key: 'fees', label: 'Taxas e comissões', start: grossRevenue, end: grossRevenue - fees, delta: -fees, percentage: (fees / safeGross) * 100, color: '#F5C24B' },
+    { key: 'fees', label: 'Comissão', start: grossRevenue, end: grossRevenue - fees, delta: -fees, percentage: (fees / safeGross) * 100, color: '#F5C24B' },
     { key: 'refunds', label: 'Estornos e devoluções', start: grossRevenue - fees, end: netValue, delta: -refunds, percentage: (refunds / safeGross) * 100, color: '#F4436C' },
     { key: 'net', label: 'Valor líquido estimado', start: 0, end: netValue, delta: netValue, percentage: (netValue / safeGross) * 100, color: '#16C784' },
   ]
@@ -54,7 +54,7 @@ export default function NetValueWaterfall({ overview }: { overview: FinanceOverv
     const expected = overview.grossRevenue - overview.fees - overview.refunds
     if (Math.round(expected) !== Math.round(overview.netValue)) {
       // eslint-disable-next-line no-console
-      console.error('NetValueWaterfall: netValue inconsistente com bruto - taxas - estornos', { overview, expected })
+      console.error('NetValueWaterfall: netValue inconsistente com bruto - comissão - estornos', { overview, expected })
     }
   }
 
@@ -66,7 +66,7 @@ export default function NetValueWaterfall({ overview }: { overview: FinanceOverv
       <div className="mb-3">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Composição do valor líquido</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
-          Faturamento bruto menos taxas e estornos — leitura direta, sem precisar passar o mouse.
+          Faturamento bruto menos comissão e estornos — leitura direta, sem precisar passar o mouse.
         </p>
       </div>
 
@@ -130,12 +130,14 @@ export default function NetValueWaterfall({ overview }: { overview: FinanceOverv
                     }}
                   />
 
-                  {/* label + percentual, fora da área de barras */}
+                  {/* label + percentual sobre o bruto (deduções apenas — não é eficiência), fora da área de barras */}
                   <div className="absolute inset-x-0 bottom-[-38px] text-center">
                     <div className="truncate text-[10.5px] font-medium text-text-secondary">{s.label}</div>
-                    <div className="font-mono text-[11px] font-semibold" style={{ color: s.color }}>
-                      {isDecrease ? '-' : ''}{pct(s.percentage)}%
-                    </div>
+                    {s.key !== 'net' && (
+                      <div className="font-mono text-[11px] font-semibold" style={{ color: s.color }}>
+                        {isDecrease ? '-' : ''}{pct(s.percentage)}%
+                      </div>
+                    )}
                   </div>
                 </div>
               )

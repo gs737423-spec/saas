@@ -32,7 +32,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
       >
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
-          <p className="mt-0.5 text-xs text-text-muted">{transactions.length} lançamentos · vendas, taxas, estornos e ajustes</p>
+          <p className="mt-0.5 text-xs text-text-muted">{transactions.length} lançamentos · vendas, comissão, estornos e ajustes</p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
