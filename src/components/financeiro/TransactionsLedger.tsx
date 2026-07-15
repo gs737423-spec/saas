@@ -24,7 +24,7 @@ const typeOptions: FinanceTransactionType[] = ['Venda', 'Comissão', 'Tarifa', '
 
 export default function TransactionsLedger({ transactions }: { transactions: FinanceTransaction[] }) {
   const [open, setOpen] = useState(false)
-  const [activeType, setActiveType] = useState<FinanceTransactionType | 'Todos'>('Todos')
+  const [activeTypes, setActiveTypes] = useState<Set<FinanceTransactionType>>(new Set())
   const [query, setQuery] = useState('')
 
   const availableTypes = useMemo(
@@ -32,14 +32,23 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
     [transactions],
   )
 
+  const toggleType = (type: FinanceTransactionType) => {
+    setActiveTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
+      return next
+    })
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return transactions.filter((t) => {
-      if (activeType !== 'Todos' && t.type !== activeType) return false
+      if (activeTypes.size > 0 && !activeTypes.has(t.type)) return false
       if (q && !t.identifier.toLowerCase().includes(q)) return false
       return true
     })
-  }, [transactions, activeType, query])
+  }, [transactions, activeTypes, query])
 
   return (
     <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
@@ -51,7 +60,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
           <p className="mt-0.5 text-xs text-text-muted">
-            {activeType === 'Todos' && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, comissão, estornos e ajustes
+            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, comissão, estornos e ajustes
           </p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -63,10 +72,10 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
-                onClick={() => setActiveType('Todos')}
+                onClick={() => setActiveTypes(new Set())}
                 className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
-                  activeType === 'Todos'
+                  activeTypes.size === 0
                     ? { background: '#3B82F618', color: '#3B82F6' }
                     : { background: 'transparent', color: 'var(--text-muted)' }
                 }
@@ -77,10 +86,10 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                 <button
                   key={type}
                   type="button"
-                  onClick={() => setActiveType(type)}
+                  onClick={() => toggleType(type)}
                   className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                   style={
-                    activeType === type
+                    activeTypes.has(type)
                       ? { background: `${typeTone[type]}18`, color: typeTone[type] }
                       : { background: 'transparent', color: 'var(--text-muted)' }
                   }
