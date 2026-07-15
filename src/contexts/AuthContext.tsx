@@ -5,6 +5,11 @@ interface User {
   name: string;
 }
 
+interface StoredSession extends User {
+  /** epoch ms — sessão expira mesmo sem fechar a aba (defesa extra) */
+  expiresAt: number;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -15,6 +20,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const STORAGE_KEY = 'acelera_auth';
+// Validade absoluta da sessão — mesmo sem fechar a aba, expira depois disso.
+// Fechar a aba/navegador já derruba a sessão antes (sessionStorage, não
+// localStorage: não sobrevive ao fechamento, diferente de antes).
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12h
 
 const USERS: Record<string, { hash: string; name: string }> = {
   'rogger.salazar@climario.com.br': {
@@ -56,12 +65,20 @@ function deriveNameFromEmail(email: string): string {
 
 function readStoredUser(): User | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    // sessionStorage: some navegador limpa ao fechar a aba/janela — era o
+    // bug reportado ("quase não pede senha mais"). localStorage sobrevive
+    // indefinidamente entre sessões; sessionStorage não.
+    const stored = sessionStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
-    const parsed = JSON.parse(stored) as User;
-    return parsed.email ? parsed : null;
+    const parsed = JSON.parse(stored) as StoredSession;
+    if (!parsed.email) return null;
+    if (!parsed.expiresAt || Date.now() > parsed.expiresAt) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return { email: parsed.email, name: parsed.name };
   } catch {
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     return null;
   }
 }
@@ -88,13 +105,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     setUser(loggedInUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedInUser));
+    const session: StoredSession = { ...loggedInUser, expiresAt: Date.now() + SESSION_TTL_MS };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     return true;
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
   }, []);
 
   return (

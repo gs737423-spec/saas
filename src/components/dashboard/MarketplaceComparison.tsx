@@ -75,24 +75,26 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
       </div>
 
       <div className="w-24 shrink-0 text-right sm:w-32">
-        <div className="font-mono text-[14px] font-semibold text-text-primary sm:text-[15px]">R$ {brl(m.netRevenue)}</div>
+        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.netRevenue)}</div>
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex">
+      {/* Barra encurtada (não cresce mais infinito) — libera espaço horizontal
+          pras colunas seguintes (ticket, comissão, D-1..D-365) aparecerem
+          antes, sem precisar de tela tão larga. */}
+      <div className="hidden w-28 shrink-0 items-center gap-2 md:flex lg:w-32">
         <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
         <span className="w-10 shrink-0 text-right font-mono text-[11.5px] text-text-secondary">{pct(m.netSharePct)}%</span>
-        <span className="w-9 shrink-0 text-[9.5px] uppercase tracking-wider text-text-muted">share</span>
       </div>
 
-      <div className="hidden w-16 shrink-0 text-right lg:block">
-        <div className="font-mono text-[13px] text-text-secondary">R$ {brl2(m.avgTicket)}</div>
+      <div className="hidden w-20 shrink-0 whitespace-nowrap text-right lg:block">
+        <div className="font-mono text-[14px] font-semibold text-text-secondary">R$ {brl2(m.avgTicket)}</div>
         <div className="text-[9.5px] uppercase tracking-wider text-text-muted">ticket médio</div>
       </div>
-      <div className="hidden w-12 shrink-0 text-right lg:block">
-        <div className="font-mono text-[13px]" style={{ color: st.color }}>{pct(m.feePct)}%</div>
+      <div className="hidden w-14 shrink-0 text-right lg:block">
+        <div className="font-mono text-[14px] font-semibold" style={{ color: st.color }}>{pct(m.feePct)}%</div>
         <div className="text-[9.5px] uppercase tracking-wider text-text-muted">comissão</div>
       </div>
 
