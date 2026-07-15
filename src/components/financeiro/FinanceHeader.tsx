@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import type { Marketplace } from '@/data/mockData'
 import { getMarketplaceColor } from '@/data/mockData'
-import PeriodDropdown from '@/components/common/PeriodDropdown'
-import { usePeriod } from '@/contexts/PeriodContext'
 
 const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
 
@@ -72,8 +70,6 @@ interface Props {
 }
 
 export default function FinanceHeader({ marketplaceFilter, onMarketplaceFilterChange, lastUpdated, isDemo }: Props) {
-  const { options, periodKey, setPeriodKey } = usePeriod()
-
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -92,7 +88,6 @@ export default function FinanceHeader({ marketplaceFilter, onMarketplaceFilterCh
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <span className="text-[11px] text-text-muted">Atualizado {lastUpdated}</span>
         <MarketplaceDropdown value={marketplaceFilter} onChange={onMarketplaceFilterChange} />
-        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} />
       </div>
     </div>
   )
