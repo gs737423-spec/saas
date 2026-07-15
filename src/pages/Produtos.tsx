@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import ProductFilters from '@/components/produtos/ProductFilters'
 import { defaultProductFilters } from '@/components/produtos/ProductFilters'
 import type { ProductFilterState } from '@/components/produtos/ProductFilters'
 import ProductKPIs from '@/components/produtos/ProductKPIs'
@@ -42,14 +41,12 @@ export default function Produtos() {
 
   return (
     <div className="space-y-2 sm:space-y-2.5">
-      <ProductFilters filters={filters} onChange={setFilters} />
-
       <div className="motion-block-in">
         <ProductKPIs products={periodProducts} />
       </div>
 
       <div className="motion-block-in motion-block-in-2">
-        <ProductTable filteredProducts={periodProducts} />
+        <ProductTable filteredProducts={periodProducts} filters={filters} onFiltersChange={setFilters} />
       </div>
     </div>
   )

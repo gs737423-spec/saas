@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucid
 import { Link } from 'react-router-dom'
 import { getMarketplaceColor } from '@/data/mockData'
 import type { Product } from '@/data/mockData'
+import ProductFilters, { type ProductFilterState } from './ProductFilters'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
@@ -56,6 +57,8 @@ function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[
 
 interface Props {
   filteredProducts: Product[]
+  filters: ProductFilterState
+  onFiltersChange: (next: ProductFilterState) => void
 }
 
 const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
@@ -69,7 +72,7 @@ const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
   { key: 'trend', label: 'Tendência', align: 'center' },
 ]
 
-export default function ProductTable({ filteredProducts }: Props) {
+export default function ProductTable({ filteredProducts, filters, onFiltersChange }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -107,6 +110,10 @@ export default function ProductTable({ filteredProducts }: Props) {
           Ordenado por {sortLabel} {sortDir === 'asc' ? '(crescente)' : '(decrescente)'}
           {sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
         </button>
+      </div>
+
+      <div className="mb-3.5">
+        <ProductFilters filters={filters} onChange={onFiltersChange} />
       </div>
 
       {/* Mobile: stacked cards */}
