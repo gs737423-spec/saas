@@ -28,3 +28,6 @@ pnpm-debug.log*
 !.vscode/extensions.json
 
 .vercel
+
+# Configurações locais do Obsidian
+.obsidian/
