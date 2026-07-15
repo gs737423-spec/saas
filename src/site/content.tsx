@@ -11,7 +11,6 @@
 import type { ComponentType } from 'react'
 import {
   LogoMercadoLivre, LogoShopee, LogoAmazon, LogoMagalu,
-  LogoShopify, LogoNuvemshop, LogoWooCommerce, LogoLojaPropria,
 } from '@/site/logos'
 import { whatsappDemoUrl } from '@/lib/whatsapp'
 
@@ -53,10 +52,6 @@ export const marketplaces: MarketplaceItem[] = [
   { name: 'Shopee', Logo: LogoShopee, status: 'planejado' },
   { name: 'Amazon', Logo: LogoAmazon, status: 'planejado' },
   { name: 'Magalu', Logo: LogoMagalu, status: 'planejado' },
-  { name: 'Shopify', Logo: LogoShopify, status: 'planejado' },
-  { name: 'Nuvemshop', Logo: LogoNuvemshop, status: 'planejado' },
-  { name: 'WooCommerce', Logo: LogoWooCommerce, status: 'planejado' },
-  { name: 'Loja Própria', Logo: LogoLojaPropria, status: 'sob-analise' },
 ]
 
 // Faixa de prova técnica — confiança, não logos repetidos.
