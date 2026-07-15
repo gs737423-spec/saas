@@ -31,15 +31,10 @@ export default function App() {
     <PeriodProvider>
     <InventorySettingsProvider>
     <div className="app-bg min-h-screen overflow-x-hidden">
-      {/* Orbs — fundo vivo */}
-      <div className="app-bg-orbs">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
-        <div className="orb orb-3" />
-      </div>
-      {/* Linha de dados — fundo vivo, camada 2 */}
-      <div className="app-bg-lines" aria-hidden="true">
-        <div className="bg-line bg-line-1" />
+      {/* Fundo ambiente — 1 base estática + 1 grid estático + 2 glows (só 1 anima). Ver index.css .app-bg-subtle. */}
+      <div className="app-bg-subtle" aria-hidden="true">
+        <div className="bg-glow bg-glow-static" />
+        <div className="bg-glow bg-glow-moving" />
       </div>
       <TopNav />
       <main className="pt-14 md:pt-16">
