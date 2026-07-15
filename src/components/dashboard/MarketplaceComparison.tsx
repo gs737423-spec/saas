@@ -61,7 +61,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
 
   return (
     <div
-      className={`group flex flex-1 items-center gap-3 rounded-xl px-3 py-3.5 sm:gap-4 sm:px-4 sm:py-5 ${
+      className={`group flex flex-1 items-center gap-2.5 rounded-xl px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${
         isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'
       }`}
     >
@@ -69,12 +69,12 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
         {isLeader ? <Crown className="h-4 w-4" style={{ color: brand }} /> : <span className="font-mono text-sm font-bold text-text-muted">{rank}</span>}
       </span>
 
-      <div className="flex w-24 shrink-0 items-center gap-2 sm:w-36">
+      <div className="flex w-24 shrink-0 items-center gap-2 sm:w-32">
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: brand, boxShadow: `0 0 8px ${brand}88` }} />
         <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
       </div>
 
-      <div className="w-24 shrink-0 text-right sm:w-32">
+      <div className="w-24 shrink-0 text-right sm:w-28">
         <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.netRevenue)}</div>
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
@@ -82,7 +82,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
       {/* Preenche o espaço sobrando da linha (badge sempre no fim via
           ml-auto) em vez de deixar espaço vazio — cap em max-w pra não
           esticar demais em telas muito largas. */}
-      <div className="hidden min-w-[100px] max-w-xs flex-1 items-center gap-2 md:flex">
+      <div className="hidden min-w-[100px] max-w-[460px] flex-1 items-center gap-2 md:flex">
         <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
