@@ -749,4 +749,70 @@ body {
       animation: none;
     }
   }
+
+  /* ==========================================================================
+     Finance waterfall — altura compacta do bridge chart (Composição do valor
+     líquido). Área útil das barras; labels/eixo ficam dentro dela via
+     posicionamento absoluto (ver NetValueWaterfall.tsx).
+     ========================================================================== */
+  .finance-waterfall-chart {
+    height: clamp(240px, 32vh, 300px);
+  }
+  @media (max-width: 640px) {
+    .finance-waterfall-chart {
+      height: clamp(220px, 40vh, 280px);
+    }
+  }
+
+  /* ==========================================================================
+     DataTableViewport — wrapper padronizado de scroll interno + cabeçalho
+     sticky para tabelas longas (ver src/components/common/DataTableViewport.tsx).
+     max-height só entra em ação quando o conteúdo excede o limite; poucas
+     linhas nunca deixam espaço vazio artificial.
+     ========================================================================== */
+  .data-table-viewport {
+    position: relative;
+    overflow: auto;
+    min-height: 0;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  .data-table-viewport::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .data-table-viewport::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .data-table-viewport::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+  }
+  .data-table-viewport:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .data-table-viewport:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: -2px;
+  }
+
+  .data-table-viewport--small { max-height: clamp(260px, 35vh, 320px); }
+  .data-table-viewport--medium { max-height: clamp(320px, 45vh, 420px); }
+  .data-table-viewport--large { max-height: clamp(360px, 55vh, 520px); }
+  @media (max-width: 640px) {
+    .data-table-viewport--small { max-height: 280px; }
+    .data-table-viewport--medium { max-height: 340px; }
+    .data-table-viewport--large { max-height: 380px; }
+  }
+
+  /* Cabeçalho sticky — fundo opaco (o token mais próximo do gradiente de
+     .glass-panel) pra nenhuma linha aparecer "por baixo" ao rolar. */
+  .data-table-viewport--sticky thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-bg-elevated);
+    box-shadow: 0 1px 0 0 var(--color-border-subtle);
+  }
 }
