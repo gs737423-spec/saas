@@ -751,20 +751,6 @@ body {
   }
 
   /* ==========================================================================
-     Finance waterfall — altura compacta do bridge chart (Composição do valor
-     líquido). Área útil das barras; labels/eixo ficam dentro dela via
-     posicionamento absoluto (ver NetValueWaterfall.tsx).
-     ========================================================================== */
-  .finance-waterfall-chart {
-    height: clamp(240px, 32vh, 300px);
-  }
-  @media (max-width: 640px) {
-    .finance-waterfall-chart {
-      height: clamp(220px, 40vh, 280px);
-    }
-  }
-
-  /* ==========================================================================
      DataTableViewport — wrapper padronizado de scroll interno + cabeçalho
      sticky para tabelas longas (ver src/components/common/DataTableViewport.tsx).
      max-height só entra em ação quando o conteúdo excede o limite; poucas

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import FinanceHeader from '@/components/financeiro/FinanceHeader'
 import FinanceKPIs from '@/components/financeiro/FinanceKPIs'
-import NetValueWaterfall from '@/components/financeiro/NetValueWaterfall'
+import FinancialComposition from '@/components/financeiro/FinancialComposition'
 import MarketplaceFinanceTable from '@/components/financeiro/MarketplaceFinanceTable'
 import TransactionsLedger from '@/components/financeiro/TransactionsLedger'
 import { marketplaceFinance, scaleMarketplaceFinance, buildFinanceOverview, financeTransactions } from '@/data/financeData'
@@ -41,7 +41,7 @@ export default function Financeiro() {
       </p>
 
       <div className="motion-block-in motion-block-in-2">
-        <NetValueWaterfall overview={overview} />
+        <FinancialComposition overview={overview} />
       </div>
 
       <div className="motion-block-in motion-block-in-3">
