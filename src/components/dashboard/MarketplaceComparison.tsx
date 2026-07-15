@@ -82,7 +82,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
       {/* Barra encurtada (não cresce mais infinito) — libera espaço horizontal
           pras colunas seguintes (ticket, comissão, D-1..D-365) aparecerem
           antes, sem precisar de tela tão larga. */}
-      <div className="hidden w-28 shrink-0 items-center gap-2 md:flex lg:w-32">
+      <div className="hidden w-40 shrink-0 items-center gap-2 md:flex lg:w-56 xl:w-64">
         <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
