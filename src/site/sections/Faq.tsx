@@ -10,7 +10,7 @@ export default function Faq() {
 
   return (
     <section id="faq" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-14 md:py-20">
+      <div className="site-container py-8 md:py-12">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <Reveal>
             <span className="site-label mb-2">Perguntas frequentes</span>

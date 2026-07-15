@@ -12,9 +12,9 @@ const icons = [TrendingDown, AlertTriangle, Percent, Boxes, PieChart]
 export default function DiagnosticSection() {
   return (
     <section id="diagnostico" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-6">
+      <div className="site-container py-4">
         <div className="site-dark overflow-hidden" style={{ borderRadius: 'var(--s-radius-block)' }}>
-          <div className="px-6 py-14 md:px-14 md:py-18">
+          <div className="px-6 py-8 md:px-14 md:py-11">
             <SectionHeader
               tone="dark"
               label="Diagnóstico executivo"

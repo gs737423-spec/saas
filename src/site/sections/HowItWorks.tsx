@@ -10,7 +10,7 @@ const stepIcons = [Link2, Layers, LineChart]
 export default function HowItWorks() {
   return (
     <section id="como-funciona" style={{ background: 'var(--s-surface)', borderTop: '1px solid var(--s-line)' }}>
-      <div className="site-container py-14 md:py-18">
+      <div className="site-container py-8 md:py-11">
         <SectionHeader
           label="Como funciona"
           title="Conectar, normalizar, decidir."

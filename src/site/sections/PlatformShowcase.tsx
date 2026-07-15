@@ -32,7 +32,7 @@ export default function PlatformShowcase() {
 
   return (
     <section id="produto" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-14 md:py-20">
+      <div className="site-container py-8 md:py-12">
         <SectionHeader
           label="Produto"
           title="Uma visão completa da operação, sem trocar entre sistemas."

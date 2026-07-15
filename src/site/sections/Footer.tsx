@@ -8,7 +8,7 @@ export default function Footer() {
   const wa = whatsappDemoUrl()
   return (
     <footer id="privacidade-anchor" className="site-dark" style={{ borderTop: '1px solid var(--s-dark-line)' }}>
-      <div className="site-container py-14">
+      <div className="site-container py-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
           {/* Marca + descrição */}
           <div className="max-w-xs">

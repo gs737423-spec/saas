@@ -10,7 +10,7 @@ import { marketplaces, statusLabel, statusTone, securityPoints } from '@/site/co
 export default function IntegrationsSecurity() {
   return (
     <section style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-14 md:py-20">
+      <div className="site-container py-8 md:py-12">
         <div id="integracoes" className="scroll-mt-24">
           <SectionHeader
             label="Integrações"

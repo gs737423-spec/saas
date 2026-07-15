@@ -9,7 +9,7 @@ import { problemBefore, problemAfter } from '@/site/content'
 export default function ProblemSection() {
   return (
     <section id="desafio" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-14 md:py-18">
+      <div className="site-container py-8 md:py-11">
         <SectionHeader
           label="O problema"
           title="Mais canais não deveriam significar menos clareza."

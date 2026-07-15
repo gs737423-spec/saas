@@ -80,7 +80,7 @@ export default function Demo() {
   if (status === 'success') {
     return (
       <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-        <div className="site-container py-16 md:py-20">
+        <div className="site-container py-9 md:py-12">
           <Reveal className="site-card mx-auto max-w-xl p-10 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(18,185,129,0.12)', color: 'var(--s-emerald)' }}>
               <CheckCircle2 className="h-7 w-7" />

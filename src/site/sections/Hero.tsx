@@ -36,7 +36,7 @@ export default function Hero() {
     <section id="topo" className="relative overflow-hidden">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
         style={{ background: 'radial-gradient(1000px 540px at 82% -10%, rgba(76,130,247,0.16), transparent 62%), radial-gradient(760px 540px at 2% 4%, rgba(124,92,246,0.1), transparent 58%)' }} />
-      <div className="site-container relative grid items-center gap-10 py-14 md:py-16 lg:grid-cols-[40fr_60fr] lg:gap-12 lg:py-20">
+      <div className="site-container relative grid items-center gap-10 py-9 md:py-10 lg:grid-cols-[40fr_60fr] lg:gap-12 lg:py-12">
         {/* Texto */}
         <div className="max-w-xl">
           <span className="site-label mb-5" style={{ background: 'var(--s-surface)', border: '1px solid var(--s-line)', padding: '6px 12px', borderRadius: 999 }}>
