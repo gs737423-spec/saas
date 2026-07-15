@@ -1,5 +1,6 @@
-import { ArrowRight, TrendingUp, Store, PackageX } from 'lucide-react'
+import { ArrowRight, TrendingUp, Store, PackageX, MessageCircle } from 'lucide-react'
 import BrowserFrame from '@/site/components/BrowserFrame'
+import { whatsappDemoUrl } from '@/lib/whatsapp'
 
 function FloatCard({
   icon, label, value, meta, tone, float, className = '',
@@ -8,7 +9,7 @@ function FloatCard({
   meta?: string; tone: string; float: 'a' | 'b'; className?: string
 }) {
   return (
-    <div className={`site-card absolute ${float === 'a' ? 'hero-float-a' : 'hero-float-b'} ${className}`}
+    <div className={`site-card glow-on-hover absolute ${float === 'a' ? 'hero-float-a' : 'hero-float-b'} ${className}`}
       style={{ padding: '11px 13px', borderRadius: 16, minWidth: 150 }}>
       <div className="flex items-center gap-2">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${tone}1a`, color: tone }}>{icon}</span>
@@ -24,14 +25,17 @@ function FloatCard({
   )
 }
 
-// Hero vende decisão, não centralização. Dashboard como protagonista visual
-// (maior que a versão anterior), no máximo 2 cards flutuantes, nenhum deles
-// referencia margem/CMV (não entregues no produto real hoje).
+// Hero vende decisão, não centralização. Dashboard como protagonista visual,
+// no máximo 2 cards flutuantes (sem margem/CMV — não entregues hoje).
+// Ambientação: halos difusos respirando devagar atrás da moldura (CSS puro,
+// sem JS por frame), reforçando profundidade sem competir com o conteúdo.
 export default function Hero() {
+  const waHref = whatsappDemoUrl()
+
   return (
     <section id="topo" className="relative overflow-hidden">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(900px 480px at 80% -8%, rgba(76,130,247,0.13), transparent 60%), radial-gradient(680px 480px at 4% 6%, rgba(124,92,246,0.08), transparent 55%)' }} />
+        style={{ background: 'radial-gradient(1000px 540px at 82% -10%, rgba(76,130,247,0.16), transparent 62%), radial-gradient(760px 540px at 2% 4%, rgba(124,92,246,0.1), transparent 58%)' }} />
       <div className="site-container relative grid items-center gap-10 py-14 md:py-16 lg:grid-cols-[40fr_60fr] lg:gap-12 lg:py-20">
         {/* Texto */}
         <div className="max-w-xl">
@@ -53,12 +57,21 @@ export default function Hero() {
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <a href="#demonstracao" className="btn btn-primary">Solicitar demonstração <ArrowRight className="h-4 w-4" /></a>
             <a href="#produto" className="btn btn-ghost">Conhecer a plataforma</a>
+            {waHref && (
+              <a href={waHref} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-transform hover:-translate-y-0.5"
+                style={{ background: 'rgba(18,185,129,0.1)', border: '1px solid rgba(18,185,129,0.25)', color: '#0E8F63' }}>
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
+            )}
           </div>
         </div>
 
-        {/* Produto — protagonista, maior área que a versão anterior */}
+        {/* Produto — protagonista, com halos de profundidade atrás da moldura */}
         <div className="relative">
           <div className="relative">
+            <span aria-hidden="true" className="ambient-halo" style={{ width: 260, height: 260, top: -40, right: -30, background: 'radial-gradient(circle, rgba(76,130,247,0.30), transparent 70%)' }} />
+            <span aria-hidden="true" className="ambient-halo" style={{ width: 220, height: 220, bottom: -30, left: -20, background: 'radial-gradient(circle, rgba(124,92,246,0.22), transparent 70%)', animationDelay: '2.5s' }} />
             <BrowserFrame
               src="/site/dashboard-overview.webp"
               alt="Painel de Visão Geral da plataforma"

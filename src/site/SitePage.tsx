@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
-import TrustStrip from '@/site/sections/TrustStrip'
+import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
 import ProblemSection from '@/site/sections/ProblemSection'
 import PlatformShowcase from '@/site/sections/PlatformShowcase'
 import DiagnosticSection from '@/site/sections/DiagnosticSection'
@@ -26,8 +26,8 @@ export default function SitePage() {
       <main>
         {/* 1. Promessa */}
         <Hero />
-        {/* 2. Prova técnica */}
-        <TrustStrip />
+        {/* 2. Prova técnica — ecossistema + confiança */}
+        <EcosystemMarquee />
         {/* 3. Problema */}
         <ProblemSection />
         {/* 4. Produto imersivo */}

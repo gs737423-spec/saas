@@ -39,6 +39,16 @@
   --s-radius-card: 24px;
   --s-radius-btn: 14px;
 
+  /* Tokens de motion — mesmos valores do Motion System do dashboard
+     (src/lib/motion.ts), só que expressos em CSS puro (sem JS aqui).
+     Centralizado para não duplicar durações/easings mágicos pelo site. */
+  --s-dur-fast: 160ms;
+  --s-dur-normal: 240ms;
+  --s-dur-slow: 400ms;
+  --s-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --s-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --s-ease-hover: cubic-bezier(0.22, 1, 0.36, 1);
+
   color: var(--s-ink);
   background: var(--s-bg);
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -162,6 +172,35 @@
 .marquee-band__label { margin-bottom: clamp(18px, 2.4vw, 26px); }
 @media (max-width: 900px) { .marquee-band { padding-block: clamp(18px, 3vw, 24px); } }
 @media (max-width: 640px) { .marquee-band { padding-block: 16px; } }
+
+/* ---- Marquee premium do ecossistema — duas camadas, direções opostas,
+   logos maiores, glow de linha nas bordas. "Tech product", não carrossel. */
+.marquee--reverse .marquee__track {
+  animation-direction: reverse;
+}
+.marquee-band--ecosystem {
+  position: relative;
+  padding-block: clamp(40px, 6vw, 64px);
+  background:
+    radial-gradient(900px 420px at 50% -10%, rgba(76, 130, 247, 0.08), transparent 65%),
+    var(--s-bg-soft);
+  overflow: hidden;
+}
+.marquee-band--ecosystem::before,
+.marquee-band--ecosystem::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(76, 130, 247, 0.35), transparent);
+}
+.marquee-band--ecosystem::before { top: 0; }
+.marquee-band--ecosystem::after { bottom: 0; }
+.marquee-logo--lg svg { height: 52px; width: 52px; }
+@media (max-width: 900px) { .marquee-logo--lg svg { height: 42px; width: 42px; } }
+@media (max-width: 640px) { .marquee-logo--lg svg { height: 34px; width: 34px; } }
+.marquee-row + .marquee-row { margin-top: clamp(20px, 3vw, 32px); }
 
 /* ---- Float dos cards do hero (poucos px, velocidades distintas) ---------- */
 @keyframes hero-float-a {
@@ -307,6 +346,58 @@
 @keyframes tab-fade {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Ambientação tecnológica — leve, sem competir com o conteúdo.
+   Grade técnica quase imperceptível + halos difusos fixos atrás de tudo
+   (z-index negativo, pointer-events:none). CSS puro, sem canvas/WebGL,
+   custo de repaint desprezível (background estático, sem JS por frame).
+   ========================================================================== */
+.site-root {
+  position: relative;
+}
+.site-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(76, 130, 247, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 130, 247, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(120% 60% at 50% 0%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(120% 60% at 50% 0%, #000 0%, transparent 70%);
+}
+
+/* ---- Glow utilitário — hover em cards/pontos estratégicos ---- */
+.glow-on-hover {
+  transition: box-shadow var(--s-dur-normal) var(--s-ease-hover);
+}
+.glow-on-hover:hover {
+  box-shadow: 0 0 0 1px rgba(76, 130, 247, 0.22), 0 18px 40px -16px rgba(76, 130, 247, 0.35);
+}
+.site-dark-card.glow-on-hover:hover {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(76, 130, 247, 0.3),
+    0 24px 48px -16px rgba(76, 130, 247, 0.28);
+}
+
+/* Brilho ambiente muito suave, respirando devagar — usado em pontos únicos
+   (ex.: painel do login, bloco de diagnóstico), nunca em loop no site todo. */
+@keyframes ambient-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+.ambient-halo {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  pointer-events: none;
+  animation: ambient-breathe 9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-halo { animation: none; opacity: 0.7; }
 }
 
 /* Acordeão FAQ */
