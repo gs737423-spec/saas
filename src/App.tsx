@@ -31,9 +31,10 @@ export default function App() {
     <PeriodProvider>
     <InventorySettingsProvider>
     <div className="app-bg min-h-screen overflow-x-hidden">
-      {/* Fundo ambiente — 1 base estática + 1 grid estático + 2 glows (só 1 anima). Ver index.css .app-bg-subtle. */}
+      {/* Fundo ambiente — 1 base estática + 1 grid estático + 3 glows (só 1 anima). Ver index.css .app-bg-subtle. */}
       <div className="app-bg-subtle" aria-hidden="true">
         <div className="bg-glow bg-glow-static" />
+        <div className="bg-glow bg-glow-accent" />
         <div className="bg-glow bg-glow-moving" />
       </div>
       <TopNav />

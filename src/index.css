@@ -154,19 +154,20 @@ body {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(1200px 700px at 10% -10%, rgba(76, 130, 247, 0.16), transparent 60%),
-      radial-gradient(1100px 680px at 100% 0%, rgba(144, 97, 249, 0.12), transparent 58%);
+      radial-gradient(1300px 780px at 8% -8%, rgba(76, 130, 247, 0.32), transparent 62%),
+      radial-gradient(1200px 760px at 100% 0%, rgba(144, 97, 249, 0.26), transparent 60%),
+      radial-gradient(1100px 700px at 50% 118%, rgba(34, 211, 238, 0.14), transparent 62%);
   }
   .app-bg-subtle::after {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(130, 160, 220, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(130, 160, 220, 0.035) 1px, transparent 1px);
+      linear-gradient(rgba(150, 180, 240, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(150, 180, 240, 0.07) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
-    -webkit-mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
-    mask-image: radial-gradient(135% 100% at 50% 0%, #000 0%, transparent 78%);
+    -webkit-mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
+    mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
   }
 
   .bg-glow {
@@ -176,25 +177,34 @@ body {
   /* Sem filter:blur — a suavidade vem só do radial-gradient com borda
      transparente. Estático: nenhuma animação, nenhum will-change. */
   .bg-glow-static {
-    width: 640px;
-    height: 640px;
-    top: -12%;
-    left: -8%;
-    background: radial-gradient(circle, rgba(76, 130, 247, 0.3) 0%, rgba(76, 130, 247, 0) 70%);
+    width: 820px;
+    height: 820px;
+    top: -14%;
+    left: -10%;
+    background: radial-gradient(circle, rgba(144, 97, 249, 0.5) 0%, rgba(144, 97, 249, 0.12) 45%, rgba(144, 97, 249, 0) 72%);
+  }
+  /* Terceiro glow — estático, sem custo de animação. Cobre o canto oposto
+     pra plataforma não ficar "vazia" fora da área dos dois glows acima. */
+  .bg-glow-accent {
+    width: 620px;
+    height: 620px;
+    bottom: -16%;
+    left: 8%;
+    background: radial-gradient(circle, rgba(22, 199, 132, 0.22) 0%, rgba(22, 199, 132, 0) 70%);
   }
   /* Único elemento animado do modo subtle — translate + opacity apenas. */
   .bg-glow-moving {
-    width: 560px;
-    height: 560px;
-    bottom: -14%;
-    right: -6%;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.26) 0%, rgba(34, 211, 238, 0) 70%);
+    width: 780px;
+    height: 780px;
+    bottom: -18%;
+    right: -10%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.48) 0%, rgba(76, 130, 247, 0.16) 45%, rgba(34, 211, 238, 0) 72%);
     animation: bg-glow-drift 40s ease-in-out infinite;
   }
   @keyframes bg-glow-drift {
-    0%   { transform: translate(0, 0); opacity: 0.85; }
-    50%  { transform: translate(-60px, 40px); opacity: 1; }
-    100% { transform: translate(0, 0); opacity: 0.85; }
+    0%   { transform: translate(0, 0) scale(1); opacity: 0.85; }
+    50%  { transform: translate(-70px, 50px) scale(1.08); opacity: 1; }
+    100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
   }
   @media (prefers-reduced-motion: reduce) {
     .bg-glow-moving { animation: none !important; }
