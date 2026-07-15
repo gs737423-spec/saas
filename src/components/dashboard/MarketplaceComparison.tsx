@@ -79,10 +79,10 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
-      {/* Barra encurtada (não cresce mais infinito) — libera espaço horizontal
-          pras colunas seguintes (ticket, comissão, D-1..D-365) aparecerem
-          antes, sem precisar de tela tão larga. */}
-      <div className="hidden w-40 shrink-0 items-center gap-2 md:flex lg:w-56 xl:w-64">
+      {/* Preenche o espaço sobrando da linha (badge sempre no fim via
+          ml-auto) em vez de deixar espaço vazio — cap em max-w pra não
+          esticar demais em telas muito largas. */}
+      <div className="hidden min-w-[100px] max-w-xs flex-1 items-center gap-2 md:flex">
         <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${m.netSharePct}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
@@ -105,7 +105,7 @@ function Row({ m, rank }: { m: ChannelOverview; rank: number }) {
         <GrowthCell label="D-365" value={growth.d365} />
       </div>
 
-      <div className="ml-auto shrink-0 lg:ml-0">
+      <div className="ml-auto shrink-0">
         <StatusBadge status={m.status} />
       </div>
     </div>
