@@ -196,9 +196,9 @@ export default function RevenueByChannelChart() {
   const compareLabel = compareOptions.find((o) => o.key === compareKey)!.label
 
   return (
-    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-4 sm:p-5">
+    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-3.5 sm:p-4">
       {/* Header */}
-      <div className="relative mb-4">
+      <div className="relative mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
           {period.label} · Total: <span className="font-mono font-semibold text-text-primary">R$ {brl(totalRevenue)}</span>
@@ -209,7 +209,7 @@ export default function RevenueByChannelChart() {
       </div>
 
       {/* Channel cards — click to toggle, multiple can be active */}
-      <div className="relative mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="relative mb-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {channelSummary.map((c, idx) => {
           const brand = getMarketplaceColor(c.label)
           const positive = c.growth > 0.5
@@ -238,7 +238,7 @@ export default function RevenueByChannelChart() {
                 }}
               />
 
-              <div className="px-3.5 py-3">
+              <div className="px-3.5 py-2.5">
                 {/* Channel name + rank */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -259,12 +259,12 @@ export default function RevenueByChannelChart() {
                 </div>
 
                 {/* Value */}
-                <div className="mt-2 font-mono text-lg font-bold leading-none tracking-tight text-text-primary sm:text-xl">
+                <div className="mt-1.5 font-mono text-lg font-bold leading-none tracking-tight text-text-primary sm:text-xl">
                   R$ {brl(c.total)}
                 </div>
 
                 {/* Growth + Share row */}
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-1.5 flex items-center justify-between">
                   <div className={`flex items-center gap-1 text-[11px] font-semibold ${
                     positive ? 'text-accent-emerald' : negative ? 'text-accent-rose' : 'text-text-muted'
                   }`}>
@@ -275,7 +275,7 @@ export default function RevenueByChannelChart() {
                 </div>
 
                 {/* Share bar */}
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -292,7 +292,7 @@ export default function RevenueByChannelChart() {
       </div>
 
       {/* Chart */}
-      <div className="h-56 sm:h-64">
+      <div className="h-44 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
@@ -377,7 +377,7 @@ export default function RevenueByChannelChart() {
       </div>
 
       {/* Compare controls */}
-      <div className="relative mt-3 flex flex-wrap items-center gap-3">
+      <div className="relative mt-2 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Comparar com</span>
           {compareOptions.map((o) => (

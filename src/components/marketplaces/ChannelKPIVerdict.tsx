@@ -83,7 +83,7 @@ export default function ChannelKPIVerdict() {
         const Icon = v.icon
         const brand = getMarketplaceColor(v.channel as any)
         return (
-          <div key={v.label} className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-[18px] p-2.5">
+          <div key={v.label} className="overview-glass overview-card-hover relative flex h-full min-h-[98px] flex-col overflow-hidden rounded-[18px] p-2.5">
             <div className="absolute inset-y-0 left-0 w-[3px]" style={{ background: brand }} />
             <div className="mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
               <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{v.label}</span>
