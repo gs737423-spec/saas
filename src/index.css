@@ -705,11 +705,16 @@ body {
   }
 
   /* Cabeçalho sticky — fundo opaco (o token mais próximo do gradiente de
-     .glass-panel) pra nenhuma linha aparecer "por baixo" ao rolar. */
+     .glass-panel) pra nenhuma linha aparecer "por baixo" ao rolar.
+     padding-top: as células só tinham pb-3 (sem pt) — coladas no topo exato
+     do viewport com scroll (top: 0), as letras maiúsculas ficavam cortadas
+     visualmente contra a borda. Reservar um respiro aqui resolve pra todo
+     consumidor de DataTableViewport de uma vez (Financeiro, Estoque, Produtos). */
   .data-table-viewport--sticky thead th {
     position: sticky;
     top: 0;
     z-index: 10;
+    padding-top: 10px;
     background: var(--color-bg-elevated);
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
