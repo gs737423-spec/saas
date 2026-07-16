@@ -52,6 +52,35 @@ export function LogoAmazon() {
   )
 }
 
+// Leroy Merlin: sem asset oficial disponível localmente. Regra do projeto
+// proíbe desenhar uma aproximação geométrica da marca de terceiro — por
+// isso aqui é wordmark tipográfico (fallback permitido), não um ícone
+// inventado. Trocar por asset oficial documentado assim que disponível.
+export function LogoLeroyMerlin() {
+  return (
+    <span
+      role="img"
+      aria-label="Leroy Merlin"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: SIZE,
+        height: SIZE,
+        borderRadius: 8,
+        background: '#78BE20',
+        color: '#fff',
+        fontFamily: 'Inter, sans-serif',
+        fontWeight: 800,
+        fontSize: 12,
+        letterSpacing: '-0.02em',
+      }}
+    >
+      LM
+    </span>
+  )
+}
+
 export function LogoMagalu() {
   return (
     <Wrap title="Magalu">

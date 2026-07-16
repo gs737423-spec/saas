@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
               <img src={mark} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-              <span className="text-[15px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>Marketplace</span>
+              <span className="text-[15px] font-extrabold" style={{ color: 'var(--s-dark-ink)' }}>Vintec</span>
             </div>
             <p className="mt-4 text-[13.5px]" style={{ color: 'var(--s-dark-muted)', lineHeight: 1.6 }}>
               Gestão e análise para operações que vendem em múltiplos canais.
@@ -50,7 +50,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row" style={{ borderColor: 'var(--s-dark-line)' }}>
-          <p className="text-[12.5px]" style={{ color: 'var(--s-dark-muted)' }}>&copy; {year} Marketplace. Todos os direitos reservados.</p>
+          <p className="text-[12.5px]" style={{ color: 'var(--s-dark-muted)' }}>&copy; {year} Vintec. Todos os direitos reservados.</p>
           <a href="#topo" className="text-[12.5px] font-semibold" style={{ color: 'var(--s-blue-bright)' }}>Voltar ao topo ↑</a>
         </div>
       </div>

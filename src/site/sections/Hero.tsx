@@ -1,89 +1,204 @@
-import { ArrowRight, TrendingUp, Store, PackageX, MessageCircle } from 'lucide-react'
-import BrowserFrame from '@/site/components/BrowserFrame'
-import { whatsappDemoUrl } from '@/lib/whatsapp'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import PersonPhotoSlot from '@/site/components/PersonPhotoSlot'
+import { marketplaces, specialistHref } from '@/site/content'
+import { whatsappContactUrl } from '@/lib/whatsapp'
 
-function FloatCard({
-  icon, label, value, meta, tone, float, className = '',
-}: {
-  icon: React.ReactNode; label: string; value: string
-  meta?: string; tone: string; float: 'a' | 'b'; className?: string
-}) {
-  return (
-    <div className={`site-card glow-on-hover absolute ${float === 'a' ? 'hero-float-a' : 'hero-float-b'} ${className}`}
-      style={{ padding: '11px 13px', borderRadius: 16, minWidth: 150 }}>
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${tone}1a`, color: tone }}>{icon}</span>
-        <span className="text-[11px] font-semibold" style={{ color: 'var(--s-muted)' }}>{label}</span>
-      </div>
-      <div className="mt-1.5 text-[18px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>{value}</div>
-      {meta && (
-        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold" style={{ color: 'var(--s-emerald)' }}>
-          <TrendingUp className="h-3 w-3" />{meta}
-        </div>
-      )}
-    </div>
-  )
+interface Slide {
+  eyebrow: string
+  title: React.ReactNode
+  text: string
+  chips: string[]
+  ctaLabel: string
+  ctaSecondary: string
+  photoId: string
+  waMessage: string
 }
 
-// Hero vende decisão, não centralização. Dashboard como protagonista visual,
-// no máximo 2 cards flutuantes (sem margem/CMV — não entregues hoje).
-// Ambientação: halos difusos respirando devagar atrás da moldura (CSS puro,
-// sem JS por frame), reforçando profundidade sem competir com o conteúdo.
+// Todos os 3 slides vendem a mesma proposta (Vintec: operação multicanal
+// conectada por API) sob ângulos diferentes — nunca ofertas distintas.
+const slides: Slide[] = [
+  {
+    eyebrow: 'Operação multicanal',
+    title: <>Centralize seus marketplaces em <span style={{ color: 'var(--s-teal)' }}>uma única operação</span>.</>,
+    text: 'A Vintec ajuda sua empresa a acompanhar os principais canais com mais organização, clareza e controle — tudo conectado por API.',
+    chips: ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Operação centralizada'],
+    ctaLabel: 'Fale com um especialista',
+    ctaSecondary: 'Conheça as soluções',
+    photoId: 'hero-pessoa-tablet',
+    waMessage: 'Olá! Gostaria de conhecer a Vintec e entender como ela pode ajudar na minha operação de marketplaces.',
+  },
+  {
+    eyebrow: 'Clareza operacional',
+    title: <>Mais clareza para <span style={{ color: 'var(--s-teal)' }}>vender, decidir e crescer</span>.</>,
+    text: 'Tenha uma visão mais organizada da operação multicanal e entenda melhor o que impacta o seu negócio.',
+    chips: ['Mais controle', 'Mais organização', 'Mais eficiência', 'Decisões melhores'],
+    ctaLabel: 'Solicitar contato',
+    ctaSecondary: 'Ver como funciona',
+    photoId: 'hero-pessoa-notebook',
+    waMessage: 'Olá! Gostaria de solicitar um contato sobre a Vintec.',
+  },
+  {
+    eyebrow: 'Estrutura pensada para crescer',
+    title: <>Uma estrutura pensada para <span style={{ color: 'var(--s-teal)' }}>operações que vendem em marketplaces</span>.</>,
+    text: 'A Vintec reúne tecnologia, processos e clareza para empresas que querem operar melhor e crescer com mais segurança.',
+    chips: ['Conexões via API', 'Operação multicanal', 'Acompanhamento claro', 'Estrutura escalável'],
+    ctaLabel: 'Fale com um especialista',
+    ctaSecondary: 'Ver como funciona',
+    photoId: 'hero-pessoa-celular',
+    waMessage: 'Olá! Gostaria de entender melhor a estrutura da Vintec para operações multicanal.',
+  },
+]
+
+const AUTOPLAY_MS = 8000
+
 export default function Hero() {
-  const waHref = whatsappDemoUrl()
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const timerRef = useRef<number | null>(null)
+  const reducedMotion = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  ).current
+
+  useEffect(() => {
+    if (reducedMotion || paused) return
+    const onVisibility = () => {
+      if (document.hidden && timerRef.current) {
+        window.clearInterval(timerRef.current)
+        timerRef.current = null
+      } else if (!document.hidden && !timerRef.current) {
+        timerRef.current = window.setInterval(() => setActive((i) => (i + 1) % slides.length), AUTOPLAY_MS)
+      }
+    }
+    timerRef.current = window.setInterval(() => setActive((i) => (i + 1) % slides.length), AUTOPLAY_MS)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current)
+      timerRef.current = null
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [paused, reducedMotion])
+
+  function goTo(i: number) {
+    setActive((i + slides.length) % slides.length)
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowRight') goTo(active + 1)
+    if (e.key === 'ArrowLeft') goTo(active - 1)
+  }
+
+  const touchStartX = useRef<number | null>(null)
+  function onTouchStart(e: React.TouchEvent) { touchStartX.current = e.touches[0].clientX }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(dx) > 40) goTo(active + (dx < 0 ? 1 : -1))
+    touchStartX.current = null
+  }
+
+  const slide = slides[active]
+  const waHref = whatsappContactUrl(slide.waMessage) ?? specialistHref(slide.waMessage)
 
   return (
-    <section id="topo" className="relative overflow-hidden">
+    <section
+      id="topo"
+      className="relative overflow-hidden"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Apresentação da Vintec"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(1000px 540px at 82% -10%, rgba(76,130,247,0.16), transparent 62%), radial-gradient(760px 540px at 2% 4%, rgba(124,92,246,0.1), transparent 58%)' }} />
-      <div className="site-container relative grid items-center gap-10 py-9 md:py-10 lg:grid-cols-[40fr_60fr] lg:gap-12 lg:py-12">
-        {/* Texto */}
-        <div className="max-w-xl">
+        style={{ background: 'radial-gradient(1000px 540px at 82% -10%, rgba(20,135,125,0.16), transparent 62%), radial-gradient(760px 540px at 2% 4%, rgba(76,130,247,0.1), transparent 58%)' }} />
+
+      {/* Primeiro slide renderizado direto no HTML — nada depende de JS pra aparecer */}
+      <div className="site-container relative grid items-center gap-10 py-9 md:py-10 lg:grid-cols-[42fr_58fr] lg:gap-12 lg:py-14">
+        <div className="max-w-xl" style={{ minHeight: 320 }}>
           <span className="site-label mb-5" style={{ background: 'var(--s-surface)', border: '1px solid var(--s-line)', padding: '6px 12px', borderRadius: 999 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--s-emerald)', display: 'inline-block' }} />
-            Plataforma de gestão multicanal
+            <span style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--s-teal)', display: 'inline-block' }} />
+            {slide.eyebrow}
           </span>
 
-          <h1 className="site-display" style={{ color: 'var(--s-ink)' }}>
-            A camada de{' '}
-            <span style={{ color: 'var(--s-blue)' }}>decisão</span> da sua operação em marketplaces.
-          </h1>
-
-          <p className="site-lead mt-5">
-            Centralize pedidos, faturamento, produtos e estoque para identificar riscos, oportunidades e
-            prioridades sem depender de relatórios separados.
-          </p>
+          <h1 className="site-display" style={{ color: 'var(--s-ink)' }}>{slide.title}</h1>
+          <p className="site-lead mt-5">{slide.text}</p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <a href="#demonstracao" className="btn btn-primary">Solicitar demonstração <ArrowRight className="h-4 w-4" /></a>
-            <a href="#produto" className="btn btn-ghost">Conhecer a plataforma</a>
-            {waHref && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-transform hover:-translate-y-0.5"
-                style={{ background: 'rgba(18,185,129,0.1)', border: '1px solid rgba(18,185,129,0.25)', color: '#0E8F63' }}>
-                <MessageCircle className="h-4 w-4" /> WhatsApp
-              </a>
-            )}
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              {slide.ctaLabel} <ArrowRight className="h-4 w-4" />
+            </a>
+            <a href="#servicos" className="btn btn-ghost">{slide.ctaSecondary}</a>
+          </div>
+
+          {/* Controles do slider */}
+          <div className="mt-8 flex items-center gap-3">
+            <button type="button" aria-label="Slide anterior" onClick={() => goTo(active - 1)}
+              className="flex h-9 w-9 items-center justify-center rounded-full" style={{ border: '1px solid var(--s-line-strong)', color: 'var(--s-ink-soft)' }}>
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2" role="tablist" aria-label="Slides">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  role="tab"
+                  aria-selected={i === active}
+                  aria-label={`Ir para slide ${i + 1}`}
+                  onClick={() => goTo(i)}
+                  className="h-2 rounded-full transition-all"
+                  style={{ width: i === active ? 22 : 8, background: i === active ? 'var(--s-teal)' : 'var(--s-line-strong)' }}
+                />
+              ))}
+            </div>
+            <button type="button" aria-label="Próximo slide" onClick={() => goTo(active + 1)}
+              className="flex h-9 w-9 items-center justify-center rounded-full" style={{ border: '1px solid var(--s-line-strong)', color: 'var(--s-ink-soft)' }}>
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        {/* Produto — protagonista, com halos de profundidade atrás da moldura */}
-        <div className="relative">
-          <div className="relative">
-            <span aria-hidden="true" className="ambient-halo" style={{ width: 260, height: 260, top: -40, right: -30, background: 'radial-gradient(circle, rgba(76,130,247,0.30), transparent 70%)' }} />
-            <span aria-hidden="true" className="ambient-halo" style={{ width: 220, height: 220, bottom: -30, left: -20, background: 'radial-gradient(circle, rgba(124,92,246,0.22), transparent 70%)', animationDelay: '2.5s' }} />
-            <BrowserFrame
-              src="/site/dashboard-overview.webp"
-              alt="Painel de Visão Geral da plataforma"
-              caption="Visão Geral — faturamento, pedidos e canais em um só painel"
-              priority
-            />
-            <FloatCard icon={<Store className="h-4 w-4" />} label="Canal líder" value="Mercado Livre" meta="42% de participação" tone="#3D74F0" float="a" className="-left-3 top-8 sm:-left-7" />
-            <FloatCard icon={<PackageX className="h-4 w-4" />} label="Estoque em atenção" value="3 produtos" tone="#E9A83A" float="b" className="-right-2 bottom-6 sm:-right-5" />
+        {/* Foto humanizada + balões dos marketplaces — altura fixa, sem layout shift entre slides */}
+        <div className="relative" style={{ minHeight: 380 }}>
+          <span aria-hidden="true" className="ambient-halo" style={{ width: 260, height: 260, top: -40, right: -30, background: 'radial-gradient(circle, rgba(20,135,125,0.30), transparent 70%)' }} />
+          <span aria-hidden="true" className="ambient-halo" style={{ width: 220, height: 220, bottom: -30, left: -20, background: 'radial-gradient(circle, rgba(76,130,247,0.20), transparent 70%)', animationDelay: '2.5s' }} />
+          <PersonPhotoSlot
+            id={slide.photoId}
+            src="/site/people/processed/vintec-hero-tablet.webp"
+            alt="Pessoa segurando um tablet, representando a operação acompanhada pela Vintec"
+            ratio="4 / 5"
+            className="mx-auto max-w-sm"
+          />
+
+          {/* Balões flutuantes com os marketplaces + capacidades */}
+          <div className="pointer-events-none absolute inset-0">
+            {slide.chips.slice(0, 3).map((c, i) => {
+              const Logo = marketplaces.find((m) => m.name === c)?.Logo
+              const pos = [
+                { top: '8%', left: '-4%' },
+                { top: '42%', right: '-6%' },
+                { bottom: '10%', left: '2%' },
+              ][i]
+              return (
+                <span
+                  key={c}
+                  aria-hidden="true"
+                  className={`site-card absolute flex items-center gap-2 px-3 py-2 ${i % 2 === 0 ? 'hero-float-a' : 'hero-float-b'}`}
+                  style={{ ...pos, borderRadius: 999, fontSize: 12.5, fontWeight: 700, color: 'var(--s-ink)' }}
+                >
+                  {Logo ? <Logo /> : <span style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--s-teal)' }} />}
+                  {c}
+                </span>
+              )
+            })}
           </div>
-          <p className="mt-3 text-center text-[11.5px]" style={{ color: 'var(--s-muted)' }}>Dados demonstrativos para ilustração.</p>
         </div>
       </div>
+
+      <p className="sr-only" aria-live="polite">{`Slide ${active + 1} de ${slides.length}: ${slide.eyebrow}`}</p>
     </section>
   )
 }

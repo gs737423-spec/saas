@@ -1,26 +1,25 @@
-import { Link2, Layers, LineChart } from 'lucide-react'
+import { Link2, Layers, LineChart, Target } from 'lucide-react'
 import SectionHeader from '@/site/components/SectionHeader'
 import Reveal from '@/site/components/Reveal'
 import { howSteps } from '@/site/content'
 
-const stepIcons = [Link2, Layers, LineChart]
+const stepIcons = [Link2, Layers, LineChart, Target]
 
-// Como funciona — só as 3 etapas. Integrações e segurança viraram uma
-// seção própria (IntegrationsSecurity.tsx) para não repetir conteúdo.
+// Como funciona — 4 etapas, sempre API (nunca planilha/upload manual).
 export default function HowItWorks() {
   return (
     <section id="como-funciona" style={{ background: 'var(--s-surface)', borderTop: '1px solid var(--s-line)' }}>
       <div className="site-container py-8 md:py-11">
         <SectionHeader
           label="Como funciona"
-          title="Conectar, normalizar, decidir."
+          title="Conectar, organizar, acompanhar, decidir."
           align="center"
         />
 
         <div className="relative mt-10">
           <div aria-hidden="true" className="absolute left-0 right-0 top-7 hidden lg:block"
             style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--s-line-strong) 12%, var(--s-line-strong) 88%, transparent)' }} />
-          <ol className="grid gap-8 lg:grid-cols-3 lg:gap-6">
+          <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {howSteps.map((s, i) => {
               const Icon = stepIcons[i]
               return (

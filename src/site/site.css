@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Acelera Intelligence — Site institucional
+   Vintec — Site institucional
    Camada de estilos ISOLADA sob `.site-root`. Nunca altera os tokens do app
    (dashboard permanece intocado). Animações em CSS puro: transform/opacity,
    sem layout shift, respeitando prefers-reduced-motion. Conteúdo é visível
@@ -25,7 +25,16 @@
   --s-dark-ink: #F4F7FD;
   --s-dark-muted: #93A0BC;
 
-  /* Acentos (do SaaS) */
+  /* Marca — teal como cor principal, azul-petróleo pra profundidade nos
+     blocos escuros, azul preservado como acento próprio secundário
+     (halos, detalhes) em vez de virar 100% verde. */
+  --s-teal: #0F6B63;
+  --s-teal-bright: #189E90;
+  --s-teal-ink: #0A4A44;
+  --s-petrol: #0B2E3C;
+  --s-petrol-deep: #061E28;
+
+  /* Acentos */
   --s-blue: #3D74F0;
   --s-blue-bright: #4C82F7;
   --s-blue-ink: #1E4FC4;
@@ -237,9 +246,9 @@
 /* Bloco escuro premium */
 .site-dark {
   background:
-    radial-gradient(1100px 640px at 12% -10%, rgba(76, 130, 247, 0.20), transparent 58%),
-    radial-gradient(900px 620px at 100% 0%, rgba(124, 92, 246, 0.16), transparent 55%),
-    linear-gradient(180deg, var(--s-dark) 0%, var(--s-dark-2) 100%);
+    radial-gradient(1100px 640px at 12% -10%, rgba(20, 135, 125, 0.22), transparent 58%),
+    radial-gradient(900px 620px at 100% 0%, rgba(76, 130, 247, 0.14), transparent 55%),
+    linear-gradient(180deg, var(--s-petrol-deep) 0%, var(--s-dark) 100%);
   color: var(--s-dark-ink);
 }
 .site-dark-card {
@@ -271,15 +280,15 @@
 }
 .btn:active { transform: translateY(1px) scale(0.99); }
 .btn-primary {
-  background: linear-gradient(180deg, var(--s-blue-bright), var(--s-blue));
+  background: linear-gradient(180deg, var(--s-teal-bright), var(--s-teal));
   color: #fff;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset,
-    0 10px 24px -10px rgba(61, 116, 240, 0.7);
+    0 10px 24px -10px rgba(15, 107, 99, 0.7);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 16px 32px -10px rgba(61, 116, 240, 0.8);
+    0 16px 32px -10px rgba(15, 107, 99, 0.8);
 }
 .btn-ghost {
   background: var(--s-surface);
@@ -288,8 +297,8 @@
 }
 .btn-ghost:hover {
   transform: translateY(-2px);
-  border-color: var(--s-blue);
-  color: var(--s-blue-ink);
+  border-color: var(--s-teal);
+  color: var(--s-teal-ink);
   box-shadow: 0 12px 26px -14px rgba(16, 26, 49, 0.28);
 }
 .btn-on-dark {
@@ -376,11 +385,11 @@
   transition: box-shadow var(--s-dur-normal) var(--s-ease-hover);
 }
 .glow-on-hover:hover {
-  box-shadow: 0 0 0 1px rgba(76, 130, 247, 0.22), 0 18px 40px -16px rgba(76, 130, 247, 0.35);
+  box-shadow: 0 0 0 1px rgba(20, 135, 125, 0.25), 0 18px 40px -16px rgba(20, 135, 125, 0.35);
 }
 .site-dark-card.glow-on-hover:hover {
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(76, 130, 247, 0.3),
-    0 24px 48px -16px rgba(76, 130, 247, 0.28);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(20, 135, 125, 0.32),
+    0 24px 48px -16px rgba(20, 135, 125, 0.28);
 }
 
 /* Brilho ambiente muito suave, respirando devagar — usado em pontos únicos
@@ -418,7 +427,7 @@
 
 /* Acessibilidade — foco visível consistente */
 .site-root :focus-visible {
-  outline: 2px solid var(--s-blue);
+  outline: 2px solid var(--s-teal);
   outline-offset: 2px;
   border-radius: 6px;
 }

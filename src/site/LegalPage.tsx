@@ -22,7 +22,7 @@ const CONTENT: Record<Variant, { title: string; intro: string; blocks: { h: stri
     title: 'Termos de Uso',
     intro: 'Resumo dos termos de uso do site institucional. O documento definitivo é fornecido pela empresa; este texto é um ponto de partida e deve ser revisado pelo responsável legal.',
     blocks: [
-      { h: 'Sobre o site', p: 'Este site apresenta a plataforma Marketplace e permite solicitar uma demonstração. As informações têm caráter institucional.' },
+      { h: 'Sobre o site', p: 'Este site apresenta a plataforma Vintec e permite solicitar uma demonstração. As informações têm caráter institucional.' },
       { h: 'Uso das informações', p: 'Os números exibidos nas telas e composições são demonstrativos e servem para ilustrar as funcionalidades da plataforma.' },
       { h: 'Acesso à plataforma', p: 'O acesso à área da plataforma exige autenticação e é destinado a clientes e usuários autorizados.' },
     ],
@@ -39,9 +39,9 @@ export default function LegalPage({ variant }: { variant: Variant }) {
     <div className="site-root" style={{ minHeight: '100vh' }}>
       <header className="site-header" data-scrolled="true">
         <div className="site-container flex h-[68px] items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="Marketplace — início">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="Vintec — início">
             <img src={mark} alt="" width={34} height={34} className="h-8 w-8 object-contain" />
-            <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Marketplace</span>
+            <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Vintec</span>
           </Link>
           <Link to="/" className="btn btn-ghost" style={{ padding: '0.5rem 0.9rem' }}>
             <ArrowLeft className="h-4 w-4" /> Voltar ao site

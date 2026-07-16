@@ -5,11 +5,11 @@ const NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined)?.rep
 
 const ACCESS_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_ACCESS_MESSAGE as string | undefined) ||
-  'Olá! Sou cliente da Marketplace e preciso de ajuda para acessar a plataforma.'
+  'Olá! Sou cliente da Vintec e preciso de ajuda para acessar a plataforma.'
 
 const DEMO_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_DEMO_MESSAGE as string | undefined) ||
-  'Olá! Gostaria de conhecer a plataforma Marketplace e solicitar uma demonstração.'
+  'Olá! Gostaria de conhecer a Vintec e entender como ela pode ajudar na minha operação de marketplaces.'
 
 export const whatsappConfigured = !!NUMBER
 
@@ -23,7 +23,12 @@ export function whatsappAccessHelpUrl(): string | null {
   return buildUrl(ACCESS_MESSAGE)
 }
 
-/** Link comercial — solicitar demonstração. */
+/** Link comercial — solicitar demonstração (mensagem padrão). */
 export function whatsappDemoUrl(): string | null {
   return buildUrl(DEMO_MESSAGE)
+}
+
+/** Link comercial com mensagem contextual por seção — mesmo número centralizado, sem hardcode. */
+export function whatsappContactUrl(message: string): string | null {
+  return buildUrl(message)
 }

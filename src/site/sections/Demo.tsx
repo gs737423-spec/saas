@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2, ArrowRight, AlertCircle, MessageCircle } from 'l
 import Reveal from '@/site/components/Reveal'
 import { contact, specialistHref } from '@/site/content'
 
-const CHANNELS = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria', 'Outros']
+const CHANNELS = ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Outros']
 const ORDER_RANGES = ['Até 100 pedidos', '100 a 500', '500 a 2.000', '2.000 a 10.000', 'Mais de 10.000']
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'unconfigured'
@@ -99,8 +99,8 @@ export default function Demo() {
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
             <span className="site-label mb-3">Solicitar demonstração</span>
-            <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Veja a Marketplace com os dados da sua operação.</h2>
-            <p className="site-lead mt-4">Entenda como centralizar seus canais e transformar dados dispersos em uma visão executiva.</p>
+            <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Vamos conversar sobre a sua operação?</h2>
+            <p className="site-lead mt-4">Entenda como a Vintec pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
             <ul className="mt-6 space-y-2.5">
               {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px]" style={{ color: 'var(--s-ink-soft)' }}>

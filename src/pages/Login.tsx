@@ -158,8 +158,8 @@ export default function Login() {
         {/* Header compacto */}
         <header className="flex items-center justify-between px-5 py-3 sm:px-8">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={mark} alt="Marketplace" width={32} height={32} className="h-8 w-8 object-contain" />
-            <span className="text-[14px] font-extrabold" style={{ color: ink }}>Marketplace</span>
+            <img src={mark} alt="Vintec" width={32} height={32} className="h-8 w-8 object-contain" />
+            <span className="text-[14px] font-extrabold" style={{ color: ink }}>Vintec</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/" className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors sm:flex" style={{ color: muted }}>
@@ -199,7 +199,7 @@ export default function Login() {
                     <ShieldCheck className="h-3 w-3" /> Acesso seguro à sua operação
                   </span>
                   <h2 className="mt-3 text-[24px] font-extrabold tracking-tight" style={{ color: ink }}>Acesse sua operação</h2>
-                  <p className="mt-1.5 text-[13.5px]" style={{ color: muted }}>Entre com as credenciais liberadas pela equipe Marketplace.</p>
+                  <p className="mt-1.5 text-[13.5px]" style={{ color: muted }}>Entre com as credenciais liberadas pela equipe Vintec.</p>
 
                   {/* Benefícios — chips compactos, não um painel separado */}
                   <div className="mt-3.5 flex flex-wrap gap-2">
@@ -327,7 +327,7 @@ export default function Login() {
                   </p>
 
                   <div className="mt-4 border-t pt-3.5 text-center" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                    <p className="text-[12.5px]" style={{ color: muted }}>Ainda não utiliza a Marketplace?</p>
+                    <p className="text-[12.5px]" style={{ color: muted }}>Ainda não utiliza a Vintec?</p>
                     <a href="/#demonstracao" className="mt-1.5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold hover:underline" style={{ color: '#7FA6FF' }}>
                       Solicitar demonstração <ArrowRight className="h-3.5 w-3.5" />
                     </a>
@@ -400,7 +400,7 @@ export default function Login() {
           <Link to="/privacidade" className="hover:underline">Política de Privacidade</Link>
           <Link to="/termos" className="hover:underline">Termos de Uso</Link>
           {accessHelpUrl && <a href={accessHelpUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">Suporte</a>}
-          <span>&copy; {new Date().getFullYear()} Marketplace</span>
+          <span>&copy; {new Date().getFullYear()} Vintec</span>
         </div>
       </div>
     </div>

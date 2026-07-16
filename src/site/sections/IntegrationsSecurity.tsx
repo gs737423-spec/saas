@@ -1,7 +1,7 @@
 import { ShieldCheck } from 'lucide-react'
 import SectionHeader from '@/site/components/SectionHeader'
 import Reveal from '@/site/components/Reveal'
-import { marketplaces, statusLabel, statusTone, securityPoints } from '@/site/content'
+import { marketplaces, securityPoints } from '@/site/content'
 
 // Integrações + Segurança em uma seção institucional. Status honesto por
 // canal — nenhuma integração é apresentada como "disponível" sem validação
@@ -25,11 +25,6 @@ export default function IntegrationsSecurity() {
                   <span className="marquee-logo" style={{ opacity: 1, filter: 'none' }}><m.Logo /></span>
                   <div>
                     <div className="text-[13.5px] font-bold leading-tight" style={{ color: 'var(--s-ink)' }}>{m.name}</div>
-                    <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                      style={{ background: `${statusTone[m.status]}18`, color: statusTone[m.status] }}>
-                      <span style={{ width: 5, height: 5, borderRadius: 999, background: statusTone[m.status], display: 'inline-block' }} />
-                      {statusLabel[m.status]}
-                    </span>
                   </div>
                 </div>
               </Reveal>

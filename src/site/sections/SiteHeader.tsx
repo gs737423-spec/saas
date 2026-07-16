@@ -33,9 +33,9 @@ export default function SiteHeader() {
         style={{ height: scrolled ? 60 : 72 }}
       >
         {/* Logo → topo */}
-        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Marketplace — início">
+        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Vintec — início">
           <img src={mark} alt="" width={36} height={36} className="h-9 w-9 object-contain" draggable={false} />
-          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Marketplace</span>
+          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>Vintec</span>
         </a>
 
         {/* Nav desktop — breakpoint próprio (1100px): abaixo disso a navegação
