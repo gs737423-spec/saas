@@ -19,16 +19,13 @@ function maskPhone(v: string): string {
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Conversão — seção única (funde o antigo banner escuro de CTA + o
-// formulário; eram dois blocos de conversão seguidos e redundantes).
-// Campos essenciais visíveis; marketplaces/faixa de pedidos ficam
-// secundários e opcionais (sem fluxo em duas etapas no backend hoje).
+// Conversão final — CTA forte no dark. Formulário essencial + WhatsApp.
 export default function Demo() {
   const [status, setStatus] = useState<Status>('idle')
   const [showOptional, setShowOptional] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', whatsapp: '', company: '', marketplaces: [] as string[], monthlyOrders: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const waHref = specialistHref()
+  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da Vintec.')
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -74,19 +71,16 @@ export default function Demo() {
     }
   }
 
-  const inputStyle: React.CSSProperties = { background: 'var(--s-surface)', border: '1px solid var(--s-line-strong)', color: 'var(--s-ink)' }
-  const inputCls = 'w-full rounded-xl px-3.5 py-2.5 text-[14.5px] outline-none transition-colors focus:border-[var(--s-blue)]'
-
   if (status === 'success') {
     return (
-      <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-        <div className="site-container py-9 md:py-12">
-          <Reveal className="site-card mx-auto max-w-xl p-10 text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(18,185,129,0.12)', color: 'var(--s-emerald)' }}>
+      <section id="demonstracao" className="sec-glow">
+        <div className="site-container py-16 md:py-20">
+          <Reveal className="vt-card mx-auto max-w-xl p-10 text-center">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(31,185,168,0.14)', color: '#4FD9C9' }}>
               <CheckCircle2 className="h-7 w-7" />
             </span>
-            <h2 className="site-h3 mt-5" style={{ color: 'var(--s-ink)' }}>Pedido recebido!</h2>
-            <p className="site-lead mt-3">Recebemos sua solicitação de demonstração. Nosso time entrará em contato pelo WhatsApp ou e-mail informado.</p>
+            <h2 className="site-h3 mt-5 vt-ink">Pedido recebido!</h2>
+            <p className="site-lead mt-3 vt-muted">Recebemos sua solicitação. Nosso time entrará em contato pelo WhatsApp ou e-mail informado.</p>
           </Reveal>
         </div>
       </section>
@@ -94,55 +88,54 @@ export default function Demo() {
   }
 
   return (
-    <section id="demonstracao" style={{ background: 'var(--s-bg)' }}>
-      <div className="site-container py-16 md:py-20">
+    <section id="demonstracao" className="sec-glow">
+      <div className="site-container py-16 md:py-24">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
-            <span className="site-label mb-3">Solicitar demonstração</span>
-            <h2 className="site-h2" style={{ color: 'var(--s-ink)' }}>Vamos conversar sobre a sua operação?</h2>
-            <p className="site-lead mt-4">Entenda como a Vintec pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
+            <span className="site-label mb-3" style={{ color: '#4FD9C9' }}>Fale com a Vintec</span>
+            <h2 className="site-h2 vt-ink">Vamos conversar sobre a sua operação?</h2>
+            <p className="site-lead mt-4 vt-muted">Entenda como a Vintec pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
             <ul className="mt-6 space-y-2.5">
               {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
-                <li key={t} className="flex items-center gap-2.5 text-[14.5px]" style={{ color: 'var(--s-ink-soft)' }}>
-                  <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: 'var(--s-emerald)' }} /> {t}
+                <li key={t} className="flex items-center gap-2.5 text-[14.5px] vt-muted">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: '#4FD9C9' }} /> {t}
                 </li>
               ))}
             </ul>
 
             {waHref.startsWith('http') && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: 'var(--s-blue)' }}>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#4FD9C9' }}>
                 <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
               </a>
             )}
           </div>
 
-          <Reveal className="site-card p-6 md:p-8">
+          <Reveal className="vt-card p-6 md:p-8">
             <form onSubmit={onSubmit} noValidate>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nome completo" error={errors.name} htmlFor="f-name">
-                  <input id="f-name" className={inputCls} style={inputStyle} value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
+                  <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
                 </Field>
                 <Field label="E-mail profissional" error={errors.email} htmlFor="f-email">
-                  <input id="f-email" type="email" className={inputCls} style={inputStyle} value={form.email} onChange={(e) => set('email', e.target.value)} aria-invalid={!!errors.email} autoComplete="email" />
+                  <input id="f-email" type="email" className="vt-input" value={form.email} onChange={(e) => set('email', e.target.value)} aria-invalid={!!errors.email} autoComplete="email" />
                 </Field>
                 <Field label="WhatsApp com DDD" error={errors.whatsapp} htmlFor="f-phone">
-                  <input id="f-phone" inputMode="tel" placeholder="(11) 99999-9999" className={inputCls} style={inputStyle} value={form.whatsapp} onChange={(e) => set('whatsapp', maskPhone(e.target.value))} aria-invalid={!!errors.whatsapp} />
+                  <input id="f-phone" inputMode="tel" placeholder="(11) 99999-9999" className="vt-input" value={form.whatsapp} onChange={(e) => set('whatsapp', maskPhone(e.target.value))} aria-invalid={!!errors.whatsapp} />
                 </Field>
                 <Field label="Nome da empresa" error={errors.company} htmlFor="f-company">
-                  <input id="f-company" className={inputCls} style={inputStyle} value={form.company} onChange={(e) => set('company', e.target.value)} aria-invalid={!!errors.company} autoComplete="organization" />
+                  <input id="f-company" className="vt-input" value={form.company} onChange={(e) => set('company', e.target.value)} aria-invalid={!!errors.company} autoComplete="organization" />
                 </Field>
               </div>
 
-              {/* Campos secundários — opcionais, visualmente discretos (sem fluxo em 2 etapas no backend) */}
               <button type="button" onClick={() => setShowOptional((v) => !v)} aria-expanded={showOptional}
-                className="mt-4 text-[12.5px] font-semibold hover:underline" style={{ color: 'var(--s-muted)' }}>
+                className="mt-4 text-[12.5px] font-semibold hover:underline vt-muted">
                 {showOptional ? 'Ocultar detalhes opcionais' : '+ Adicionar detalhes opcionais da operação'}
               </button>
 
               {showOptional && (
-                <div className="mt-3 space-y-4 rounded-xl p-3.5" style={{ background: 'var(--s-bg-soft)' }}>
+                <div className="mt-3 space-y-4 rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <fieldset>
-                    <legend className="mb-2 text-[12px] font-semibold" style={{ color: 'var(--s-muted)' }}>Marketplaces utilizados</legend>
+                    <legend className="mb-2 text-[12px] font-semibold vt-muted">Marketplaces utilizados</legend>
                     <div className="flex flex-wrap gap-2">
                       {CHANNELS.map((c) => {
                         const on = form.marketplaces.includes(c)
@@ -150,7 +143,7 @@ export default function Demo() {
                           <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
                             aria-pressed={on}
                             className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
-                            style={on ? { background: 'var(--s-blue)', color: '#fff', border: '1px solid var(--s-blue)' } : { background: 'var(--s-surface)', color: 'var(--s-ink-soft)', border: '1px solid var(--s-line-strong)' }}>
+                            style={on ? { background: '#1FB9A8', color: '#062229', border: '1px solid #1FB9A8' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
                             {c}
                           </button>
                         )
@@ -159,7 +152,7 @@ export default function Demo() {
                   </fieldset>
 
                   <Field label="Faixa de pedidos mensais" htmlFor="f-orders">
-                    <select id="f-orders" className={inputCls} style={inputStyle} value={form.monthlyOrders} onChange={(e) => set('monthlyOrders', e.target.value)}>
+                    <select id="f-orders" className="vt-input" value={form.monthlyOrders} onChange={(e) => set('monthlyOrders', e.target.value)}>
                       <option value="">Selecione (opcional)</option>
                       {ORDER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
@@ -167,26 +160,26 @@ export default function Demo() {
                 </div>
               )}
 
-              <label className="mt-5 flex items-start gap-2.5 text-[13px]" style={{ color: 'var(--s-ink-soft)' }}>
+              <label className="mt-5 flex items-start gap-2.5 text-[13px] vt-muted">
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />
-                <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: 'var(--s-blue-ink)', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
+                <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: '#4FD9C9', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
               </label>
               {errors.consent && <p className="mt-1 text-[12px]" style={{ color: 'var(--s-rose)' }}>{errors.consent}</p>}
 
               {status === 'unconfigured' && (
-                <p className="mt-4 flex items-start gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(233,168,58,0.1)', border: '1px solid rgba(233,168,58,0.28)', color: '#7A5410' }}>
+                <p className="mt-4 flex items-start gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(233,168,58,0.12)', border: '1px solid rgba(233,168,58,0.3)', color: '#F0C572' }}>
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>O envio automático ainda não está configurado neste ambiente. {contact.email ? <>Escreva para <a href={`mailto:${contact.email}`} style={{ textDecoration: 'underline' }}>{contact.email}</a>.</> : 'Configure LEADS_WEBHOOK_URL para ativar o recebimento.'}</span>
                 </p>
               )}
               {status === 'error' && (
-                <p className="mt-4 flex items-center gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(240,70,108,0.08)', border: '1px solid rgba(240,70,108,0.24)', color: 'var(--s-rose)' }}>
+                <p className="mt-4 flex items-center gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(240,70,108,0.12)', border: '1px solid rgba(240,70,108,0.3)', color: '#FF8FA6' }}>
                   <AlertCircle className="h-4 w-4" /> Não foi possível enviar agora. Tente novamente em instantes.
                 </p>
               )}
 
               <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-6 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
-                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <>Solicitar demonstração <ArrowRight className="h-4 w-4" /></>}
+                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <>Fale com um especialista <ArrowRight className="h-4 w-4" /></>}
               </button>
             </form>
           </Reveal>
@@ -199,9 +192,9 @@ export default function Demo() {
 function Field({ label, error, htmlFor, children, className = '' }: { label: string; error?: string; htmlFor: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-semibold" style={{ color: 'var(--s-ink-soft)' }}>{label}</label>
+      <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-semibold vt-muted">{label}</label>
       {children}
-      {error && <p className="mt-1 text-[12px]" style={{ color: 'var(--s-rose)' }} role="alert">{error}</p>}
+      {error && <p className="mt-1 text-[12px]" style={{ color: '#FF8FA6' }} role="alert">{error}</p>}
     </div>
   )
 }

@@ -462,3 +462,203 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 @media (max-width: 640px) {
   .hero-float-a, .hero-float-b { animation: none; }
 }
+
+/* ==========================================================================
+   DIREÇÃO PREMIUM VINTEC — hero escura petróleo/teal + sistema visual.
+   Base dark-first: gradientes fortes, glass, orbs, anéis. Coerente com a
+   identidade dark do produto (ver skill ecom-saas-style). Escopo isolado
+   sob .site-root, não afeta o app.
+   ========================================================================== */
+
+/* ---- Hero escura ---- */
+.hero-vt {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(1100px 720px at 80% -10%, rgba(31, 185, 168, 0.22), transparent 60%),
+    radial-gradient(880px 620px at 6% 24%, rgba(20, 120, 140, 0.20), transparent 58%),
+    linear-gradient(158deg, #06232C 0%, #072A34 44%, #0A3A45 100%);
+  color: #EAF4F3;
+}
+/* Grade técnica sutil, mascarada pro canto da pessoa */
+.hero-vt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 62px 62px;
+  -webkit-mask-image: radial-gradient(82% 62% at 72% 34%, #000 0%, transparent 74%);
+  mask-image: radial-gradient(82% 62% at 72% 34%, #000 0%, transparent 74%);
+}
+.hero-vt > * { position: relative; z-index: 1; }
+
+/* Orbs difusos e anéis concêntricos atrás da pessoa */
+.hero-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(64px);
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-ring {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 185, 168, 0.16);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Chip glass grande dos marketplaces / capacidades */
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 15px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 20px 44px -18px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  color: #EAF4F3;
+  font-weight: 700;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.hero-chip__mp {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.hero-chip__mp svg,
+.hero-chip__mp span[role='img'] { width: 34px !important; height: 34px !important; }
+.hero-chip__dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+
+/* Fade suave ao trocar slide */
+.hero-fade { animation: hero-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes hero-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Mais variações de flutuação pros chips */
+.hero-float-c { animation: hero-float-a 7.4s ease-in-out infinite; }
+.hero-float-d { animation: hero-float-b 8.8s ease-in-out infinite; }
+
+/* Botão on-dark sólido (CTA secundário do hero) */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #EAF4F3;
+}
+.btn-glass:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+/* ---- Header dark glass (só na home, via modificador) ---- */
+/* Fixo (não sticky) pra o hero petróleo subir atrás do header transparente;
+   o hero compensa com padding-top. */
+.site-header--dark {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-bottom-color: transparent;
+}
+.site-header--dark:not([data-scrolled='true']) {
+  background: transparent;
+  box-shadow: none;
+}
+.site-header--dark[data-scrolled='true'] {
+  background: rgba(7, 34, 42, 0.82);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.7);
+}
+.vt-nav-link {
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(234, 244, 243, 0.82);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.vt-nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+
+@media (max-width: 640px) {
+  .hero-float-c, .hero-float-d { animation: none; }
+}
+
+/* ---- Home dark-first: base + seções tonais + cards premium ---- */
+.site-root--dark { background: #06222B; }
+
+.sec-deep { background: linear-gradient(180deg, #06222B 0%, #072932 100%); color: #EAF4F3; }
+.sec-mid { background: linear-gradient(180deg, #08303C 0%, #0A3A45 100%); color: #EAF4F3; }
+.sec-glow {
+  position: relative;
+  background:
+    radial-gradient(820px 440px at 50% -12%, rgba(31, 185, 168, 0.14), transparent 62%),
+    linear-gradient(180deg, #072A34 0%, #06222B 100%);
+  color: #EAF4F3;
+}
+
+/* Card glass escuro premium */
+.vt-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 48px -22px rgba(0, 0, 0, 0.7);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.vt-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(31, 185, 168, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(31, 185, 168, 0.22), 0 30px 60px -24px rgba(0, 0, 0, 0.78);
+}
+.vt-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(31, 185, 168, 0.12);
+  border: 1px solid rgba(31, 185, 168, 0.28);
+  color: #4FD9C9;
+}
+.vt-ico--blue { background: rgba(76, 130, 247, 0.12); border-color: rgba(76, 130, 247, 0.3); color: #8FB3FF; }
+.vt-ink { color: #EAF4F3; }
+.vt-muted { color: rgba(214, 235, 232, 0.68); }
+.vt-hair { border-color: rgba(255, 255, 255, 0.1) !important; }
+
+/* Inputs escuros (formulário de conversão no dark) */
+.vt-input {
+  width: 100%;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  font-size: 14.5px;
+  color: #EAF4F3;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.vt-input::placeholder { color: rgba(214, 235, 232, 0.4); }
+.vt-input:focus {
+  border-color: #1FB9A8;
+  background: rgba(31, 185, 168, 0.08);
+  box-shadow: 0 0 0 3px rgba(31, 185, 168, 0.18);
+}
+.vt-input option { color: #0B1220; }

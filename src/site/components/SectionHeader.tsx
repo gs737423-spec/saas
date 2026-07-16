@@ -20,7 +20,7 @@ export default function SectionHeader({ label, title, desc, align = 'left', tone
       {label && (
         <span
           className="site-label mb-3"
-          style={tone === 'dark' ? { color: 'var(--s-blue-bright)' } : undefined}
+          style={tone === 'dark' ? { color: '#4FD9C9' } : undefined}
         >
           <span
             aria-hidden="true"
