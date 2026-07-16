@@ -17,6 +17,14 @@ const statusStyle: Record<ChannelStatus, { color: string; bg: string }> = {
   'Crítico': { color: '#F4436C', bg: 'rgba(244,67,108,0.12)' },
 }
 
+// Rótulo exibido no badge ao lado dos percentuais D-1/D-7/D-30/D-365 — deixa
+// explícito que o badge "Saudável" se refere ao crescimento nesses períodos.
+const statusLabel: Record<ChannelStatus, string> = {
+  'Saudável': 'Crescimento',
+  'Atenção': 'Atenção',
+  'Crítico': 'Crítico',
+}
+
 const brl = (v: number) => v.toLocaleString('pt-BR')
 const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
@@ -36,7 +44,7 @@ function StatusBadge({ status }: { status: ChannelStatus }) {
   const st = statusStyle[status]
   return (
     <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: st.color, background: st.bg }}>
-      {status}
+      {statusLabel[status]}
     </span>
   )
 }

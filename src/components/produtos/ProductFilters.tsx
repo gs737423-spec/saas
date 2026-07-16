@@ -8,7 +8,7 @@ const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja 
 export interface ProductFilterState {
   search: string
   marketplaces: Set<Marketplace>
-  category: string
+  categories: Set<string>
 }
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 export const defaultProductFilters: ProductFilterState = {
   search: '',
   marketplaces: new Set(),
-  category: 'all',
+  categories: new Set(),
 }
 
 function MultiMarketplaceDropdown({
@@ -138,16 +138,14 @@ function MultiMarketplaceDropdown({
   )
 }
 
-function Dropdown<T extends string>({
-  value,
-  onChange,
+function MultiCategoryDropdown({
   options,
-  labelFn,
+  selected,
+  onChange,
 }: {
-  value: T
-  onChange: (v: T) => void
-  options: T[]
-  labelFn: (v: T) => string
+  options: string[]
+  selected: Set<string>
+  onChange: (next: Set<string>) => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -160,6 +158,20 @@ function Dropdown<T extends string>({
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [])
 
+  const toggle = (category: string) => {
+    const next = new Set(selected)
+    if (next.has(category)) next.delete(category)
+    else next.add(category)
+    onChange(next)
+  }
+
+  const label =
+    selected.size === 0
+      ? 'Todas as categorias'
+      : selected.size === 1
+        ? [...selected][0]
+        : `${selected.size} categorias`
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -167,27 +179,38 @@ function Dropdown<T extends string>({
         onClick={() => setOpen((o) => !o)}
         className="motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50"
       >
-        <span className="truncate">{labelFn(value)}</span>
+        <span className="truncate">{label}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-1.5 w-full min-w-[180px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => {
-                onChange(opt)
-                setOpen(false)
-              }}
-              className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-                value === opt ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
-              }`}
-            >
-              {labelFn(opt)}
-              {value === opt && <Check className="h-3.5 w-3.5 shrink-0" />}
-            </button>
-          ))}
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-full min-w-[200px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+          <button
+            type="button"
+            onClick={() => { onChange(new Set()); setOpen(false) }}
+            className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
+              selected.size === 0 ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+            }`}
+          >
+            Todas as categorias
+            {selected.size === 0 && <Check className="h-3.5 w-3.5 shrink-0" />}
+          </button>
+          <div className="mx-3 border-t border-border-subtle" />
+          {options.map((category) => {
+            const active = selected.has(category)
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => toggle(category)}
+                className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
+                  active ? 'bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                }`}
+              >
+                {category}
+                {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-blue" />}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
@@ -195,7 +218,7 @@ function Dropdown<T extends string>({
 }
 
 export default function ProductFilters({ filters, onChange }: Props) {
-  const categoryOptions: string[] = ['all', ...productCategories]
+  const categoryOptions: string[] = [...productCategories]
 
   return (
     <div className="overview-glass motion-panel rounded-xl p-3">
@@ -214,11 +237,10 @@ export default function ProductFilters({ filters, onChange }: Props) {
           selected={filters.marketplaces}
           onChange={(v) => onChange({ ...filters, marketplaces: v })}
         />
-        <Dropdown
-          value={filters.category}
-          onChange={(v) => onChange({ ...filters, category: v })}
+        <MultiCategoryDropdown
           options={categoryOptions}
-          labelFn={(v) => (v === 'all' ? 'Todas as categorias' : v)}
+          selected={filters.categories}
+          onChange={(v) => onChange({ ...filters, categories: v })}
         />
       </div>
     </div>
