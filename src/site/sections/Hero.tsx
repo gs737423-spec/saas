@@ -3,8 +3,8 @@ import { ArrowRight, ChevronLeft, ChevronRight, Wallet, ShoppingCart, Percent, B
 import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
-function mpLogo(name: string) {
-  return marketplaces.find((m) => m.name === name)?.Logo
+function mpBrand(name: string) {
+  return marketplaces.find((m) => m.name === name)
 }
 
 type Chip =
@@ -77,9 +77,9 @@ const slides: Slide[] = [
     personAlt: 'Profissional com um smartphone, ilustrando o acompanhamento próximo da operação com a Vintec',
     chips: [
       { kind: 'kpi', label: 'Operação conectada', icon: Network, pos: POS.a, float: 'hero-float-a' },
-      { kind: 'kpi', label: 'Dados por empresa', icon: Building2, pos: POS.b, float: 'hero-float-b' },
+      { kind: 'kpi', label: 'API', icon: Plug, pos: POS.b, float: 'hero-float-b' },
       { kind: 'kpi', label: 'Acompanhamento', icon: Activity, pos: POS.c, float: 'hero-float-c' },
-      { kind: 'kpi', label: 'API', icon: Plug, pos: POS.d, float: 'hero-float-d' },
+      { kind: 'kpi', label: 'Dados organizados', icon: Building2, pos: POS.d, float: 'hero-float-d' },
     ],
     ctaLabel: 'Fale com um especialista',
     ctaSecondary: 'Ver como funciona',
@@ -89,19 +89,21 @@ const slides: Slide[] = [
 
 const AUTOPLAY_MS = 7500
 
-function HeroChip({ chip }: { chip: Chip }) {
+function HeroChip({ chip, hideOnMobile }: { chip: Chip; hideOnMobile?: boolean }) {
+  const mob = hideOnMobile ? ' hero-balloon--hide-mobile' : ''
   if (chip.kind === 'brand') {
-    const Logo = mpLogo(chip.mp)
+    const brand = mpBrand(chip.mp)
+    // Logo oficial inteira (já contém o nome da marca) — object-fit: contain,
+    // proporção preservada, sem texto de nome separado (evita duplicar).
     return (
-      <span aria-hidden="true" className={`hero-balloon hero-balloon--brand absolute ${chip.float}`} style={chip.pos}>
-        <span className="hero-balloon__logo">{Logo ? <Logo /> : null}</span>
-        {chip.mp}
+      <span aria-hidden="true" className={`hero-balloon hero-balloon--brand absolute ${chip.float}${mob}`} style={chip.pos}>
+        {brand ? <img src={brand.logoSrc} alt={chip.mp} className="hero-balloon__img" style={{ height: brand.logoH }} /> : null}
       </span>
     )
   }
   const Icon = chip.icon
   return (
-    <span aria-hidden="true" className={`hero-balloon hero-balloon--kpi absolute ${chip.float}`} style={chip.pos}>
+    <span aria-hidden="true" className={`hero-balloon hero-balloon--kpi absolute ${chip.float}${mob}`} style={chip.pos}>
       <span className="hero-balloon__ico"><Icon className="h-[18px] w-[18px]" /></span>
       {chip.label}
     </span>
@@ -166,9 +168,9 @@ export default function Hero() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="site-container grid items-end gap-10 pt-24 md:pt-28 lg:grid-cols-[46fr_54fr] lg:gap-8 lg:pt-32">
+      <div className="site-container site-container--tight grid items-end gap-10 pt-24 md:pt-24 lg:grid-cols-[42fr_58fr] lg:gap-10 lg:pt-24">
         {/* Texto */}
-        <div key={`t-${active}`} className="hero-fade max-w-xl pb-12 md:pb-16 lg:pb-24">
+        <div key={`t-${active}`} className="hero-fade max-w-xl pb-12 md:pb-14 lg:pb-20">
           <span
             className="mb-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold"
             style={{ background: 'rgba(105,201,149,0.16)', border: '1px solid rgba(105,201,149,0.36)', color: '#B8F0DC' }}
@@ -177,11 +179,11 @@ export default function Hero() {
             {slide.eyebrow}
           </span>
 
-          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2.45rem, 4.8vw, 4rem)', lineHeight: 1.03, letterSpacing: '-0.035em' }}>
+          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2.2rem, 3.7vw, 3.55rem)', lineHeight: 1.02, letterSpacing: '-0.03em' }}>
             {slide.title}
           </h1>
 
-          <p className="mt-5 max-w-md text-[1.05rem]" style={{ color: 'rgba(223,240,237,0.88)', lineHeight: 1.55 }}>
+          <p className="mt-5 max-w-[520px] text-[1.15rem]" style={{ color: 'rgba(223,240,237,0.88)', lineHeight: 1.55 }}>
             {slide.sub}
           </p>
 
@@ -216,9 +218,9 @@ export default function Hero() {
 
         {/* Pessoa ancorada na base + composição (altura fixa, sem layout shift).
             Coluna encosta no fundo da hero (items-end + sem pb) — pessoa apoiada. */}
-        <div className="relative mx-auto h-[440px] w-full max-w-[560px] sm:h-[500px] lg:h-[600px]">
+        <div className="relative mx-auto h-[400px] w-full max-w-[560px] sm:h-[460px] lg:h-[512px]">
           {/* Forma orgânica de apoio atrás da pessoa */}
-          <span className="hero-shape" style={{ width: '86%', height: '70%', top: '6%', left: '50%', transform: 'translateX(-50%)' }} />
+          <span className="hero-shape" style={{ width: '92%', height: '80%', top: '3%', left: '52%', transform: 'translateX(-50%)' }} />
           {/* Sombra de contato na base */}
           <span className="hero-contact-shadow" />
 
@@ -227,15 +229,16 @@ export default function Hero() {
             <img
               src={slide.person}
               alt={slide.personAlt}
-              className="max-h-[440px] w-auto object-contain sm:max-h-[500px] lg:max-h-[600px]"
+              className="max-h-[400px] w-auto object-contain sm:max-h-[460px] lg:max-h-[512px]"
               draggable={false}
             />
           </div>
 
-          {/* Balões — escondidos em telas muito estreitas pra não poluir */}
-          <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 z-[2] hidden sm:block">
+          {/* Balões — no mobile só os 2 laterais (índices 2 e 3), pra não
+              cobrir rosto nem poluir; no sm+ os 4. */}
+          <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 z-[2]">
             {slide.chips.map((chip, i) => (
-              <HeroChip key={i} chip={chip} />
+              <HeroChip key={i} chip={chip} hideOnMobile={i < 2} />
             ))}
           </div>
         </div>

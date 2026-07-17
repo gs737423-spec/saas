@@ -87,6 +87,8 @@
   margin-inline: auto;
   padding-inline: clamp(20px, 5vw, 56px);
 }
+/* Container mais estreito p/ hero e 2ª seção — densidade/proporção Petina. */
+.site-container--tight { max-width: 1210px; }
 
 /* Tipografia utilitária */
 .site-display {
@@ -485,22 +487,30 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  /* Degradê comercial e limpo: petróleo à esquerda, teal/verde-água à
-     direita. Mais claro que a versão anterior, sem grade/glow/fumaça. */
-  background: linear-gradient(100deg, #0a4b57 0%, #13787a 58%, #1c9a86 100%);
+  /* Degradê comercial e limpo: petróleo à esquerda, teal ao centro, verde-água
+     à direita. Mais claro/comercial, sem grade/glow/fumaça. */
+  background: linear-gradient(108deg, #155668 0%, #197f82 48%, #55b995 100%);
   color: #F4FCFB;
 }
 
-/* Forma orgânica de apoio atrás da pessoa (lógica Petina): destaca a modelo,
-   cria profundidade, tom verde-água relacionado à paleta, degradê interno
-   suave. Sem glow forte, sem fumaça. */
+/* Forma orgânica de apoio atrás da pessoa (lógica Petina): assimétrica, verde-
+   mint, mais clara que o fundo, com degradê interno. Duas camadas (a principal
+   + uma segunda mais translúcida deslocada) pra dar profundidade. Sem círculo,
+   sem glow, sem borrão sem forma. */
 .hero-shape {
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
-  background: radial-gradient(115% 115% at 42% 32%, rgba(150, 230, 190, 0.58), rgba(70, 190, 165, 0.30) 52%, rgba(70, 190, 165, 0) 78%);
-  filter: blur(4px);
+  border-radius: 42% 58% 54% 46% / 38% 44% 56% 62%;
+  background: linear-gradient(135deg, rgba(109, 217, 166, 0.95), rgba(86, 192, 179, 0.72));
+}
+/* Segunda camada — deslocada, mais translúcida, reforça o contorno orgânico */
+.hero-shape::before {
+  content: '';
+  position: absolute;
+  inset: -8% -12% -4% -4%;
+  border-radius: 56% 44% 48% 52% / 60% 52% 48% 40%;
+  background: linear-gradient(140deg, rgba(140, 230, 190, 0.42), rgba(86, 192, 179, 0));
 }
 
 /* Sombra de contato — ancora a pessoa na base, extremamente discreta. */
@@ -556,20 +566,33 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   line-height: 1.1;
   white-space: nowrap;
 }
-.hero-balloon--brand { min-width: 132px; max-width: 172px; }
-.hero-balloon--kpi { min-width: 118px; max-width: 158px; }
+/* Balão de marca: hospeda a logo oficial com respiro (padding maior), largura
+   dirigida pelo conteúdo (cada logo tem proporção própria). */
+.hero-balloon--brand { padding: 12px 18px; }
+.hero-balloon__img {
+  display: block;
+  width: auto;
+  max-width: 168px;
+  object-fit: contain;
+}
+.hero-balloon--kpi { min-width: 120px; max-width: 160px; }
+/* Esconde balões no mobile (vence .hero-balloon display:inline-flex via
+   !important) — no mobile mostramos só os 2 laterais/baixos, não os do topo. */
+@media (max-width: 639px) {
+  .hero-balloon--hide-mobile { display: none !important; }
+}
 .hero-balloon__logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
 }
 .hero-balloon__logo svg,
-.hero-balloon__logo span[role='img'] { width: 30px !important; height: 30px !important; }
+.hero-balloon__logo span[role='img'] { width: 38px !important; height: 38px !important; }
 .hero-balloon__ico {
   display: inline-flex;
   align-items: center;

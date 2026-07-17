@@ -29,13 +29,19 @@ export const nav = [
 export interface MarketplaceItem {
   name: string
   Logo: ComponentType
+  // Logo oficial (PNG, fundo transparente) usado nos balões do hero — imagem
+  // real da marca, object-fit: contain, sem redesenho/recolor/distorção.
+  // `logoH` = altura de render (px) por marca, pois as proporções diferem
+  // (ML é lockup quase quadrado; Amazon/Shopee/Leroy são horizontais).
+  logoSrc: string
+  logoH: number
 }
 
 export const marketplaces: MarketplaceItem[] = [
-  { name: 'Mercado Livre', Logo: LogoMercadoLivre },
-  { name: 'Amazon', Logo: LogoAmazon },
-  { name: 'Shopee', Logo: LogoShopee },
-  { name: 'Leroy Merlin', Logo: LogoLeroyMerlin },
+  { name: 'Mercado Livre', Logo: LogoMercadoLivre, logoSrc: '/site/brands/mercado-livre.png', logoH: 46 },
+  { name: 'Amazon', Logo: LogoAmazon, logoSrc: '/site/brands/amazon.png', logoH: 24 },
+  { name: 'Shopee', Logo: LogoShopee, logoSrc: '/site/brands/shopee.png', logoH: 26 },
+  { name: 'Leroy Merlin', Logo: LogoLeroyMerlin, logoSrc: '/site/brands/leroy-merlin.png', logoH: 40 },
 ]
 
 // Faixa de prova técnica — confiança, não logos repetidos.
@@ -48,21 +54,31 @@ export const trustStrip = [
 
 // "Quem é a Vintec" + números — só indicadores estruturais verificáveis,
 // nunca métricas de clientes/faturamento/uso inventadas.
+// Bloco "Quem Somos" — 2 parágrafos institucionais (estrutura editorial Petina).
 export const about = {
-  label: 'Quem é a Vintec',
-  title: 'Mais clareza para a sua operação multicanal.',
-  text: 'A Vintec centraliza a operação de quem vende em marketplaces: conecta os canais por API, organiza os dados em um modelo único e transforma isso em uma visão executiva para decidir com mais controle.',
+  label: 'Quem Somos',
+  title: 'Quem Somos',
+  paragraphs: [
+    'A Vintec nasceu para simplificar a gestão de empresas que operam em diferentes marketplaces. Nossa plataforma conecta os principais canais por API, organiza informações dispersas e transforma os dados da operação em uma visão centralizada e mais fácil de acompanhar.',
+    'Com uma estrutura voltada para operações multicanal, ajudamos empresas a visualizar faturamento, pedidos, desempenho, participação por canal e outros indicadores em um único ambiente. O objetivo é reduzir a dispersão de informações e apoiar decisões com mais clareza, agilidade e controle.',
+  ],
 }
 
-// Indicadores estruturais da 2ª seção (grid editorial 2×2). Números reais do
-// posicionamento — nada de CMV/margem por custo (não contemplados na v1: o
-// líquido é apurado por taxas/descontos, ver ledger BRUTO→DESCONTO→LÍQUIDO).
-export const numbers = [
-  { value: '4', label: 'canais conectados', desc: 'Mercado Livre, Amazon, Shopee e Leroy Merlin em uma única operação.' },
-  { value: '6', label: 'visões executivas', desc: 'Faturamento, pedidos, ticket médio, descontos, líquido e participação por canal.' },
-  { value: '1', label: 'painel central', desc: 'Leitura consolidada da operação sem alternar entre várias telas.' },
-  { value: 'API', label: 'base de conexão', desc: 'Integração como base da operação e do acompanhamento.' },
-]
+// ⚠️ MÉTRICAS INSTITUCIONAIS — PROVISÓRIAS / NÃO VALIDADAS.
+// TODO: validar cada número com a direção da Vintec antes de considerar
+// definitivo. Estes valores são conteúdo TEMPORÁRIO só para montar o layout
+// (padrão da referência Petina). NÃO são dados verificados, não têm fonte
+// confirmada e não devem ser publicados como reais sem autorização.
+// Ponto único de edição: trocar aqui reflete em toda a seção.
+export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
+export const institutionalMetrics = [
+  { icon: 'users', value: '+1.000', desc: 'clientes atendidos' },
+  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado' },
+  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados' },
+  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma' },
+  { icon: 'team', value: '+50', desc: 'especialistas e parceiros' },
+  { icon: 'channels', value: '+4', desc: 'marketplaces integrados' },
+] as const
 
 // "O que a Vintec faz" — 4 blocos, capacidades reais do produto.
 export const whatWeDo = [

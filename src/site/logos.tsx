@@ -52,32 +52,19 @@ export function LogoAmazon() {
   )
 }
 
-// Leroy Merlin: sem asset oficial disponível localmente. Regra do projeto
-// proíbe desenhar uma aproximação geométrica da marca de terceiro — por
-// isso aqui é wordmark tipográfico (fallback permitido), não um ícone
-// inventado. Trocar por asset oficial documentado assim que disponível.
+// Leroy Merlin: a marca é um WORDMARK (não há símbolo/ícone oficial). Recriação
+// fiel do lockup — tile verde da marca (#78BE20) com o wordmark "LEROY MERLIN"
+// empilhado em branco. NÃO usar o monograma "LM" (não é a marca). Substituir
+// pelo SVG oficial quando disponível. Mantém proporção ~quadrada para caber
+// tanto no balão do hero quanto nos cards/marquee da seção de marketplaces.
 export function LogoLeroyMerlin() {
   return (
-    <span
-      role="img"
-      aria-label="Leroy Merlin"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: SIZE,
-        height: SIZE,
-        borderRadius: 8,
-        background: '#78BE20',
-        color: '#fff',
-        fontFamily: 'Inter, sans-serif',
-        fontWeight: 800,
-        fontSize: 12,
-        letterSpacing: '-0.02em',
-      }}
-    >
-      LM
-    </span>
+    <svg role="img" aria-label="Leroy Merlin" viewBox="0 0 28 28" width={SIZE} height={SIZE} style={{ display: 'block' }}>
+      <title>Leroy Merlin</title>
+      <rect width="28" height="28" rx="8" fill="#78BE20" />
+      <text x="14" y="12.5" textAnchor="middle" fontFamily="Inter, Arial, sans-serif" fontWeight="800" fontSize="6.2" letterSpacing="-0.2" fill="#fff">LEROY</text>
+      <text x="14" y="21" textAnchor="middle" fontFamily="Inter, Arial, sans-serif" fontWeight="800" fontSize="6.2" letterSpacing="-0.2" fill="#fff">MERLIN</text>
+    </svg>
   )
 }
 

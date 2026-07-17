@@ -37,8 +37,8 @@ export default function SiteHeader() {
       >
         {/* Logo → topo */}
         <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Vintec — início">
-          <img src={mark} alt="" width={38} height={38} className="h-9 w-9 object-contain" draggable={false} />
-          <span className="text-[17px] font-extrabold tracking-tight" style={{ color: '#F2FBFA' }}>Vintec</span>
+          <img src={mark} alt="" width={44} height={44} className="h-11 w-11 object-contain" draggable={false} />
+          <span className="text-[20px] font-extrabold tracking-tight" style={{ color: '#F2FBFA' }}>Vintec</span>
         </a>
 
         {/* Nav desktop — breakpoint 1100px (nav:) */}
@@ -59,7 +59,7 @@ export default function SiteHeader() {
           >
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.6rem 1.15rem' }}>
+          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
             Fale com um especialista
           </a>
         </div>
