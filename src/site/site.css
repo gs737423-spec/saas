@@ -493,24 +493,18 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   color: #F4FCFB;
 }
 
-/* Forma orgânica de apoio atrás da pessoa (lógica Petina): assimétrica, verde-
-   mint, mais clara que o fundo, com degradê interno. Duas camadas (a principal
-   + uma segunda mais translúcida deslocada) pra dar profundidade. Sem círculo,
-   sem glow, sem borrão sem forma. */
-.hero-shape {
+/* Forma orgânica assimétrica (SVG path) atrás da pessoa — identidade visual,
+   não efeito. Uma única forma (nada de elipses concêntricas), deslocada à
+   direita, cobrindo tronco/cabeça. Degradê interno definido no próprio SVG. */
+.hero-organic {
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  border-radius: 42% 58% 54% 46% / 38% 44% 56% 62%;
-  background: linear-gradient(135deg, rgba(109, 217, 166, 0.95), rgba(86, 192, 179, 0.72));
-}
-/* Segunda camada — deslocada, mais translúcida, reforça o contorno orgânico */
-.hero-shape::before {
-  content: '';
-  position: absolute;
-  inset: -8% -12% -4% -4%;
-  border-radius: 56% 44% 48% 52% / 60% 52% 48% 40%;
-  background: linear-gradient(140deg, rgba(140, 230, 190, 0.42), rgba(86, 192, 179, 0));
+  width: 90%;
+  height: 82%;
+  top: 4%;
+  left: 54%;
+  transform: translateX(-50%);
 }
 
 /* Sombra de contato — ancora a pessoa na base, extremamente discreta. */
@@ -544,65 +538,36 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   z-index: 0;
 }
 
-/* Balões flutuantes do hero — presença real (não "chips perdidos"), fundo
-   claro, sobre a pessoa. Dois tamanhos: marca (logo+nome) e indicador
-   (ícone+termo). Largura controlada por min/max-width, conforme briefing. */
-.hero-balloon {
+/* Tiles flutuantes do hero — só logo (marca) ou só ícone (conceito), sem
+   texto. Pequeno cartão claro discreto pra dar contraste à logo/ícone, não
+   uma pill de filtro. Complementar à composição. */
+.hero-tile {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 15px;
-  /* Discreto mas presente: fundo claro levemente translúcido (cinza-esverdeado),
-     borda e sombra leves. Complementar, não protagonista. */
-  background: rgba(240, 248, 245, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  box-shadow: 0 12px 26px -14px rgba(4, 30, 34, 0.4);
-  color: #16403C;
-  font-weight: 650;
-  font-size: 13px;
-  line-height: 1.1;
-  white-space: nowrap;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(248, 252, 250, 0.88);
+  box-shadow: 0 10px 24px -14px rgba(4, 30, 34, 0.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
-/* Balão de marca: hospeda a logo oficial com respiro (padding maior), largura
-   dirigida pelo conteúdo (cada logo tem proporção própria). */
-.hero-balloon--brand { padding: 12px 18px; }
-.hero-balloon__img {
+/* Marca: logo oficial com respiro, largura dirigida pela proporção da logo. */
+.hero-tile--brand { padding: 10px 15px; }
+.hero-tile__img {
   display: block;
   width: auto;
-  max-width: 168px;
+  max-width: 150px;
   object-fit: contain;
 }
-.hero-balloon--kpi { min-width: 120px; max-width: 160px; }
-/* Esconde balões no mobile (vence .hero-balloon display:inline-flex via
-   !important) — no mobile mostramos só os 2 laterais/baixos, não os do topo. */
-@media (max-width: 639px) {
-  .hero-balloon--hide-mobile { display: none !important; }
-}
-.hero-balloon__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.hero-balloon__logo svg,
-.hero-balloon__logo span[role='img'] { width: 38px !important; height: 38px !important; }
-.hero-balloon__ico {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  background: rgba(20, 122, 120, 0.14);
+/* Conceito: ícone teal em tile ~quadrado. */
+.hero-tile--kpi {
+  width: 56px;
+  height: 56px;
   color: #10756A;
+}
+/* No mobile mostramos só os 2 laterais/baixos (vence o inline-flex). */
+@media (max-width: 639px) {
+  .hero-tile--hide-mobile { display: none !important; }
 }
 
 /* Fade suave ao trocar slide */
