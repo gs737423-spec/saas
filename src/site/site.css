@@ -87,8 +87,8 @@
   margin-inline: auto;
   padding-inline: clamp(20px, 5vw, 56px);
 }
-/* Container mais estreito p/ hero e 2ª seção — densidade/proporção Petina. */
-.site-container--tight { max-width: 1210px; }
+/* Container central p/ hero e seções institucionais — proporção Petina. */
+.site-container--tight { max-width: 1280px; }
 
 /* Tipografia utilitária */
 .site-display {
@@ -482,92 +482,105 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
    sob .site-root, não afeta o app.
    ========================================================================== */
 
-/* ---- Hero escura ---- */
+/* ---- Hero comercial (fidelidade à referência Petina) ---- */
 .hero-vt {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  /* Degradê comercial e limpo: petróleo à esquerda, teal ao centro, verde-água
-     à direita. Mais claro/comercial, sem grade/glow/fumaça. */
-  background: linear-gradient(108deg, #155668 0%, #197f82 48%, #55b995 100%);
+  /* Preenche praticamente toda a primeira tela (descontando o header),
+     com piso pra telas baixas. Evita faixa vazia depois do hero. */
+  min-height: max(580px, calc(100vh - 76px));
+  /* Degradê limpo/luminoso: petróleo à esquerda → teal → verde-água à direita. */
+  background: linear-gradient(108deg, #124f61 0%, #18787c 46%, #57bd9c 100%);
   color: #F4FCFB;
-}
-
-/* Forma orgânica assimétrica (SVG path) atrás da pessoa — identidade visual,
-   não efeito. Uma única forma (nada de elipses concêntricas), deslocada à
-   direita, cobrindo tronco/cabeça. Degradê interno definido no próprio SVG. */
-.hero-organic {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  width: 90%;
-  height: 82%;
-  top: 4%;
-  left: 54%;
-  transform: translateX(-50%);
-}
-
-/* Sombra de contato — ancora a pessoa na base, extremamente discreta. */
-.hero-contact-shadow {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 72%;
-  height: 38px;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(3, 24, 28, 0.4), rgba(3, 24, 28, 0) 70%);
-  filter: blur(7px);
 }
 .hero-vt > * { position: relative; z-index: 1; }
 
-/* Orbs difusos e anéis concêntricos atrás da pessoa */
-.hero-orb {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(64px);
-  pointer-events: none;
-  z-index: 0;
+/* Forma orgânica multi-camada atrás da pessoa — moldura, não bola central.
+   Cada camada tem cor própria (--blob-back/mid/front definidas por slide). */
+.hero-shape { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-blob { position: absolute; }
+/* Camadas grandes e assimétricas que sangram pelas bordas (o overflow:hidden
+   do hero recorta pelas laterais — sensação de expansão da referência). */
+.hero-blob--back {
+  width: 96%; height: 88%;
+  top: -8%; right: -12%;
+  background: var(--blob-back, #8ee2a9);
+  opacity: 0.55;
+  border-radius: 58% 42% 46% 54% / 52% 44% 56% 48%;
 }
-.hero-ring {
-  position: absolute;
-  border-radius: 999px;
-  border: 1px solid rgba(31, 185, 168, 0.16);
-  pointer-events: none;
-  z-index: 0;
+.hero-blob--mid {
+  width: 104%; height: 104%;
+  bottom: -6%; right: -16%;
+  background: var(--blob-mid, #67cbd0);
+  opacity: 0.4;
+  border-radius: 48% 52% 40% 60% / 46% 40% 60% 54%;
+}
+.hero-blob--front {
+  width: 58%; height: 62%;
+  bottom: 4%; right: 16%;
+  background: var(--blob-front, #cae86b);
+  opacity: 0.38;
+  border-radius: 52% 48% 56% 44% / 56% 52% 48% 44%;
 }
 
-/* Tiles flutuantes do hero — só logo (marca) ou só ícone (conceito), sem
-   texto. Pequeno cartão claro discreto pra dar contraste à logo/ícone, não
-   uma pill de filtro. Complementar à composição. */
+/* Sombra de contato — ancora a pessoa na base, discreta. */
+.hero-contact-shadow {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 66%; height: 32px;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(3, 28, 30, 0.3), rgba(3, 28, 30, 0) 70%);
+  filter: blur(7px);
+}
+
+/* Orbs/anéis difusos — usados pelos banners comerciais (mantidos). */
+.hero-orb { position: absolute; border-radius: 999px; filter: blur(64px); pointer-events: none; z-index: 0; }
+.hero-ring { position: absolute; border-radius: 999px; border: 1px solid rgba(31, 185, 168, 0.16); pointer-events: none; z-index: 0; }
+
+/* Balões flutuantes (§12): translúcidos, leves, comerciais — não chips. */
 .hero-tile {
+  position: absolute;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
-  background: rgba(248, 252, 250, 0.88);
-  box-shadow: 0 10px 24px -14px rgba(4, 30, 34, 0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border-radius: 16px;
+  background: rgba(240, 250, 247, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  box-shadow: 0 10px 26px rgba(8, 60, 62, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
-/* Marca: logo oficial com respiro, largura dirigida pela proporção da logo. */
-.hero-tile--brand { padding: 10px 15px; }
-.hero-tile__img {
-  display: block;
-  width: auto;
-  max-width: 150px;
-  object-fit: contain;
+/* Tipo A — marketplace: logo oficial grande, respiro interno. */
+.hero-tile--brand {
+  min-width: 130px;
+  max-width: 178px;
+  height: 72px;
+  padding: 0 18px;
 }
-/* Conceito: ícone teal em tile ~quadrado. */
+.hero-tile__img { display: block; width: auto; object-fit: contain; }
+/* Tipo B — indicador: ícone maior + texto curto, empilhados. */
 .hero-tile--kpi {
-  width: 56px;
-  height: 56px;
-  color: #10756A;
+  flex-direction: column;
+  gap: 5px;
+  width: 116px;
+  min-height: 86px;
+  padding: 12px 10px;
+  color: #0F7A6E;
 }
-/* No mobile mostramos só os 2 laterais/baixos (vence o inline-flex). */
+.hero-tile__label {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  color: #124F52;
+}
 @media (max-width: 639px) {
   .hero-tile--hide-mobile { display: none !important; }
+  .hero-tile--brand { min-width: 110px; height: 62px; padding: 0 12px; }
+  .hero-tile--kpi { width: 98px; min-height: 76px; }
 }
 
 /* Fade suave ao trocar slide */
@@ -608,11 +621,12 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   box-shadow: none;
 }
 .site-header--dark[data-scrolled='true'] {
-  background: rgba(7, 34, 42, 0.82);
-  backdrop-filter: saturate(160%) blur(14px);
-  -webkit-backdrop-filter: saturate(160%) blur(14px);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.7);
+  /* Petróleo translúcido (não quase-preto) pra não quebrar a composição. */
+  background: rgba(19, 87, 102, 0.86);
+  backdrop-filter: saturate(150%) blur(12px);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -22px rgba(0, 0, 0, 0.55);
 }
 .vt-nav-link {
   border-radius: 10px;
@@ -641,9 +655,98 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   color: #EAF4F3;
 }
 
-/* Segunda seção — quebra de contraste após a hero escura (referência Petina) */
+/* Segunda seção — quebra de contraste off-white após a hero (referência Petina) */
 .vt-light {
-  background: #F7FAF9;
+  background: #f6f7f4;
+}
+
+/* Seção institucional clara e elegante (gradiente leve, sem peso escuro). */
+.sec-soft {
+  background: linear-gradient(160deg, #eef6f3 0%, #ffffff 55%, #f4faf7 100%);
+}
+
+/* Bloco único da seção "A plataforma Vintec" — card branco elegante. */
+.platform-block {
+  background: #ffffff;
+  border: 1px solid #e6ebe6;
+  border-radius: 24px;
+  padding: clamp(24px, 3vw, 40px);
+  box-shadow: 0 1px 2px rgba(23, 50, 77, 0.04), 0 26px 56px -30px rgba(23, 50, 77, 0.22);
+}
+
+/* Cards da seção "A plataforma Vintec" — claros, robustos, compactos. */
+.platform-card {
+  background: #ffffff;
+  border: 1px solid #e6ebe6;
+  border-radius: 18px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 1px 2px rgba(23, 50, 77, 0.04), 0 16px 32px -20px rgba(23, 50, 77, 0.18);
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.26s ease, box-shadow 0.26s ease;
+}
+.platform-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(31, 169, 143, 0.5);
+  box-shadow: 0 2px 4px rgba(23, 50, 77, 0.05), 0 26px 48px -22px rgba(23, 50, 77, 0.26);
+}
+.platform-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(31, 169, 143, 0.1);
+  border: 1px solid rgba(31, 169, 143, 0.24);
+  color: #0F8A7C;
+  margin-bottom: 14px;
+}
+.platform-card__pill {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0F8A7C;
+  background: rgba(31, 169, 143, 0.1);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+/* Faixa compacta de métricas (sec-mid) — número teal + legenda pequena. */
+.strip-metric__value {
+  display: block;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #7EE8DA;
+  font-size: clamp(1.7rem, 2.4vw, 2.15rem);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Métricas institucionais — sem cards: força vem de tipografia + disposição.
+   Número grande em cima; abaixo, ícone (mint) + legenda forte (§20-21). */
+.metric__value {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+  color: #17324d;
+  font-size: clamp(2.4rem, 3.3vw, 3.4rem);
+  font-variant-numeric: tabular-nums;
+}
+.metric__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+}
+.metric__icon { flex-shrink: 0; color: #1FA98F; margin-top: 1px; }
+.metric__caption {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: #17324d;
+  max-width: 15ch;
 }
 
 /* Card glass escuro premium */

@@ -2,22 +2,22 @@ import { useEffect } from 'react'
 import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
+import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
+import PlatformFeaturesSection from '@/site/sections/PlatformFeaturesSection'
 import NumbersSection from '@/site/sections/NumbersSection'
-import ServicesSection from '@/site/sections/ServicesSection'
 import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
 import HowItWorks from '@/site/sections/HowItWorks'
 import DifferentialsSection from '@/site/sections/DifferentialsSection'
-import CommercialBanner from '@/site/sections/CommercialBanner'
 import Demo from '@/site/sections/Demo'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
-import { commercialBanners } from '@/site/content'
 
-// Home dark-first (direção premium Vintec). Seções antigas baseadas em
-// screenshot de dashboard (ProblemSection, PlatformShowcase,
-// DiagnosticSection, IntegrationsSecurity) e o WhatWeDo (fundido no bloco
-// institucional) continuam no repo, fora da renderização pública.
+// Home dark-first (direção premium Vintec). Seções antigas preservadas no
+// repo mas fora da renderização pública: ProblemSection, PlatformShowcase,
+// DiagnosticSection, IntegrationsSecurity (screenshot de dashboard),
+// ServicesSection, WhatWeDo e CommercialBanner (substituídas pelas seções
+// institucional + plataforma).
 export default function SitePage() {
   useEffect(() => {
     document.documentElement.classList.add('site-active')
@@ -28,23 +28,21 @@ export default function SitePage() {
     <div className="site-root site-root--dark">
       <SiteHeader />
       <main>
-        {/* 1. Promessa — hero slider dark */}
+        {/* 1. Hero slider */}
         <Hero />
-        {/* 2. Institucional + números + o que resolve */}
+        {/* 2. Quem Somos + números */}
         <NumbersSection />
-        {/* 3. Soluções */}
-        <ServicesSection />
-        {/* 4. Marketplaces */}
+        {/* 3. Institucional — plataforma + pessoa */}
+        <InstitutionalPlatformSection />
+        {/* 4. A plataforma Vintec — bloco único */}
+        <PlatformFeaturesSection />
+        {/* 5. Marketplaces */}
         <EcosystemMarquee />
-        {/* 5. Como funciona */}
+        {/* 6. Como funciona */}
         <HowItWorks />
-        {/* 6. Banner humanizado — organização */}
-        <CommercialBanner content={commercialBanners[0]} />
         {/* 7. Diferenciais */}
         <DifferentialsSection />
-        {/* 8. Banner humanizado — proximidade / especialista */}
-        <CommercialBanner content={commercialBanners[1]} />
-        {/* 9. Conversão final */}
+        {/* 8. Conversão final */}
         <Demo />
         <Faq />
       </main>

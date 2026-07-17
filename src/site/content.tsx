@@ -56,29 +56,82 @@ export const trustStrip = [
 // nunca métricas de clientes/faturamento/uso inventadas.
 // Bloco "Quem Somos" — 2 parágrafos institucionais (estrutura editorial Petina).
 export const about = {
-  label: 'Quem Somos',
-  title: 'Quem Somos',
+  label: 'Quem somos',
+  title: 'Quem somos',
   paragraphs: [
-    'A Vintec nasceu para simplificar a gestão de empresas que operam em diferentes marketplaces. Nossa plataforma conecta os principais canais por API, organiza informações dispersas e transforma os dados da operação em uma visão centralizada e mais fácil de acompanhar.',
-    'Com uma estrutura voltada para operações multicanal, ajudamos empresas a visualizar faturamento, pedidos, desempenho, participação por canal e outros indicadores em um único ambiente. O objetivo é reduzir a dispersão de informações e apoiar decisões com mais clareza, agilidade e controle.',
+    'A Vintec nasceu para simplificar a rotina de empresas que vendem em diferentes marketplaces.',
+    'Nossa plataforma reúne pedidos, produtos, estoque, vendas e resultados que normalmente ficam espalhados em vários canais. Assim, sua equipe acompanha o negócio com mais clareza, reduz controles paralelos e ganha tempo no dia a dia.',
   ],
 }
 
-// ⚠️ MÉTRICAS INSTITUCIONAIS — PROVISÓRIAS / NÃO VALIDADAS.
-// TODO: validar cada número com a direção da Vintec antes de considerar
-// definitivo. Estes valores são conteúdo TEMPORÁRIO só para montar o layout
-// (padrão da referência Petina). NÃO são dados verificados, não têm fonte
-// confirmada e não devem ser publicados como reais sem autorização.
-// Ponto único de edição: trocar aqui reflete em toda a seção.
-export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
-export const institutionalMetrics = [
-  { icon: 'users', value: '+1.000', desc: 'clientes atendidos' },
-  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado' },
-  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados' },
-  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma' },
-  { icon: 'team', value: '+50', desc: 'especialistas e parceiros' },
-  { icon: 'channels', value: '+4', desc: 'marketplaces integrados' },
-] as const
+// ⚠️⚠️ MÉTRICAS INSTITUCIONAIS — PLACEHOLDERS DE DEMONSTRAÇÃO, NÃO VALIDADOS. ⚠️⚠️
+// TODO: substituir por métricas REAIS validadas antes da publicação.
+// Estes valores são conteúdo TEMPORÁRIO só para montar/avaliar o layout
+// (referência editorial Petina). NÃO são dados verificados, não têm fonte
+// confirmada e NÃO devem ir para produção como fatos sem autorização
+// explícita da direção da Vintec. Ponto único de edição.
+//
+// Estrutura preparada para contador animado: o valor é numérico + partes de
+// formatação (prefixo/sufixo/casas/separador de milhar), pra o count-up
+// preservar "+", "BI", "MI", "%", ponto de milhar e vírgula decimal.
+export const institutionalMetricsTitle = 'Esse é o tamanho do nosso alcance'
+
+export interface InstitutionalMetric {
+  icon: 'users' | 'gmv' | 'orders' | 'uptime' | 'team' | 'channels'
+  prefix: string
+  value: number
+  decimals: number
+  suffix: string
+  thousands: boolean
+  caption: string
+}
+
+export const institutionalMetrics: InstitutionalMetric[] = [
+  { icon: 'users', prefix: '+', value: 2922, decimals: 0, suffix: '', thousands: true, caption: 'Clientes atendidos' },
+  { icon: 'gmv', prefix: '+', value: 2.1, decimals: 1, suffix: ' BI', thousands: false, caption: 'em GMV acompanhado' },
+  { icon: 'orders', prefix: '+', value: 4.5, decimals: 1, suffix: ' MI', thousands: false, caption: 'de pedidos monitorados por ano' },
+  { icon: 'uptime', prefix: '+', value: 99.5, decimals: 1, suffix: '%', thousands: false, caption: 'de disponibilidade da plataforma' },
+  { icon: 'team', prefix: '+', value: 70, decimals: 0, suffix: '', thousands: false, caption: 'especialistas e parceiros' },
+  { icon: 'channels', prefix: '+', value: 4, decimals: 0, suffix: '', thousands: false, caption: 'marketplaces integrados' },
+]
+
+// 3ª seção — institucional estilo "Nossos negócios" (pessoa + forma + texto).
+export const institutionalSection = {
+  label: 'Plataforma Vintec',
+  title: 'Mais organização para quem vende em marketplaces.',
+  paragraphs: [
+    'A Vintec ajuda empresas a centralizar a rotina de venda em marketplaces, reunindo pedidos, produtos, estoque e desempenho em um só lugar.',
+    'Com menos informação espalhada e mais clareza no acompanhamento, sua equipe ganha tempo, reduz retrabalho e consegue agir com mais segurança no dia a dia.',
+  ],
+  ctaLabel: 'Conheça a plataforma',
+  ctaHref: '#plataforma-cards',
+  // Reaproveita uma das 3 fotos (não há 4ª imagem humana disponível ainda —
+  // trocar por asset próprio quando existir).
+  photoSrc: '/site/people/processed/vintec-banner-laptop.webp',
+  photoAlt: 'Profissional usando um notebook, representando a organização da rotina de marketplaces com a Vintec',
+}
+
+// 4ª seção — "A plataforma Vintec": UM único bloco/card principal (não vários).
+// Linguagem simples e comercial (sem jargão técnico frio).
+export const platformFeaturesTitle = 'A plataforma Vintec'
+export const platformFeaturesSubtitle =
+  'Tudo o que você precisa para acompanhar seus marketplaces com mais clareza, organização e controle.'
+
+export const platformBlock = {
+  pill: 'Plataforma',
+  title: 'Centralize sua rotina de marketplace em um só lugar',
+  text: 'A Vintec reúne os dados mais importantes da sua operação para que você acompanhe pedidos, produtos, estoque, vendas e desempenho sem depender de várias telas e controles paralelos.',
+  bullets: [
+    'Conecte seus marketplaces',
+    'Veja pedidos e estoque em um só lugar',
+    'Entenda melhor o que está vendendo',
+    'Ganhe mais clareza para decidir os próximos passos',
+  ],
+  ctaLabel: 'Quero conhecer a plataforma',
+  // Print da plataforma dentro de moldura de navegador (asset já existente).
+  image: '/site/dashboard-overview.webp',
+  imageAlt: 'Painel da plataforma Vintec com pedidos, estoque e desempenho em uma visão só',
+}
 
 // "O que a Vintec faz" — 4 blocos, capacidades reais do produto.
 export const whatWeDo = [

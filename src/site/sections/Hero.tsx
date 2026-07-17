@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Layers, BarChart3, Share2, Wallet, ShoppingCart, Percent, Boxes, Network, Building2, Activity, Plug, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRight, ChevronLeft, ChevronRight, Layers, BarChart3, Share2,
+  Wallet, ShoppingCart, Boxes, Network, Activity, TrendingUp,
+  type LucideIcon,
+} from 'lucide-react'
 import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
@@ -7,113 +11,94 @@ function mpBrand(name: string) {
   return marketplaces.find((m) => m.name === name)
 }
 
-// Elementos flutuantes: só logo (marca) ou só ícone (conceito) — sem texto.
+// Balão: marca (logo oficial) ou indicador (ícone + texto curto — nunca só
+// ícone nos slides 2/3, o visitante precisa entender sem adivinhar).
 type Chip =
-  | { kind: 'brand'; mp: string; pos: CSSProperties; float: string }
-  | { kind: 'kpi'; icon: LucideIcon; pos: CSSProperties; float: string }
+  | { kind: 'brand'; mp: string; pos: CSSProperties }
+  | { kind: 'kpi'; icon: LucideIcon; label: string; pos: CSSProperties }
 
 interface Slide {
   eyebrowIcon: LucideIcon
-  eyebrowLabel: string // só p/ leitor de tela (a11y), não renderiza como badge
+  label: string
   title: React.ReactNode
   sub: string
   person: string
   personAlt: string
+  personEager?: boolean
+  blob: CSSProperties // cores das 3 camadas da forma (--blob-*)
   chips: Chip[]
   waMessage: string
-}
-
-// 4 âncoras assimétricas ao redor da pessoa. Evitam rosto (topo-centro) e
-// mãos/dispositivo (centro).
-const POS = {
-  a: { top: '9%', left: '4%' } as CSSProperties, // superior-esquerda
-  b: { top: '24%', right: '2%' } as CSSProperties, // superior-direita
-  c: { top: '55%', left: '1%' } as CSSProperties, // meio-esquerda
-  d: { bottom: '14%', right: '4%' } as CSSProperties, // inferior-direita
 }
 
 const slides: Slide[] = [
   {
     eyebrowIcon: Layers,
-    eyebrowLabel: 'Gestão multicanal',
+    label: 'Gestão multicanal',
     title: <>Todos os seus marketplaces em uma só operação.</>,
     sub: 'Vendas, pedidos, estoque e desempenho reunidos em uma única visão.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal centralizada pela Vintec',
+    personEager: true,
+    blob: { ['--blob-back' as string]: '#8ee2a9', ['--blob-mid' as string]: '#67cbd0', ['--blob-front' as string]: '#9fe0c0' },
     chips: [
-      { kind: 'brand', mp: 'Mercado Livre', pos: POS.a, float: 'hero-float-a' },
-      { kind: 'brand', mp: 'Amazon', pos: POS.b, float: 'hero-float-b' },
-      { kind: 'brand', mp: 'Shopee', pos: POS.c, float: 'hero-float-c' },
-      { kind: 'brand', mp: 'Leroy Merlin', pos: POS.d, float: 'hero-float-d' },
+      { kind: 'brand', mp: 'Mercado Livre', pos: { top: '16%', left: '0%' } },
+      { kind: 'brand', mp: 'Amazon', pos: { top: '33%', right: '-2%' } },
+      { kind: 'brand', mp: 'Shopee', pos: { top: '60%', left: '-4%' } },
+      { kind: 'brand', mp: 'Leroy Merlin', pos: { bottom: '12%', right: '0%' } },
     ],
     waMessage: 'Olá! Gostaria de conhecer a Vintec e entender como ela conecta meus marketplaces em uma só operação.',
   },
   {
     eyebrowIcon: BarChart3,
-    eyebrowLabel: 'Visão executiva',
-    title: <>Enxergue o resultado sem trocar de painel.</>,
-    sub: 'Compare canais, acompanhe margens e entenda onde sua operação realmente cresce.',
+    label: 'Visão mais clara',
+    title: <>Entenda o que vende, onde cresce e onde precisa agir.</>,
+    sub: 'Acompanhe resultados, margens e pedidos sem trocar de painel o tempo todo.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, ilustrando a visão executiva única da operação na Vintec',
+    personAlt: 'Profissional com um notebook, acompanhando os resultados da operação na Vintec',
+    blob: { ['--blob-back' as string]: '#67cbd0', ['--blob-mid' as string]: '#8ec9e6', ['--blob-front' as string]: '#bfe6d6' },
     chips: [
-      { kind: 'kpi', icon: Wallet, pos: POS.a, float: 'hero-float-a' },
-      { kind: 'kpi', icon: ShoppingCart, pos: POS.b, float: 'hero-float-b' },
-      { kind: 'kpi', icon: Percent, pos: POS.c, float: 'hero-float-c' },
-      { kind: 'kpi', icon: Boxes, pos: POS.d, float: 'hero-float-d' },
+      { kind: 'kpi', icon: ShoppingCart, label: 'Pedidos', pos: { top: '15%', left: '-2%' } },
+      { kind: 'kpi', icon: Boxes, label: 'Estoque', pos: { top: '42%', right: '-3%' } },
+      { kind: 'kpi', icon: Wallet, label: 'Vendas', pos: { bottom: '14%', left: '2%' } },
     ],
-    waMessage: 'Olá! Gostaria de entender como a Vintec mostra o resultado da operação sem trocar de painel.',
+    waMessage: 'Olá! Gostaria de entender como a Vintec ajuda a acompanhar os resultados dos meus marketplaces.',
   },
   {
     eyebrowIcon: Share2,
-    eyebrowLabel: 'Operação conectada',
-    title: <>Mais canais. Menos operação espalhada.</>,
-    sub: 'Centralize informações e cresça com mais organização, clareza e controle.',
+    label: 'Crescimento organizado',
+    title: <>Mais canais. Menos bagunça na rotina.</>,
+    sub: 'Centralize informações e ganhe mais clareza para vender melhor nos marketplaces.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
-    personAlt: 'Profissional com um smartphone, ilustrando a operação conectada e organizada com a Vintec',
+    personAlt: 'Profissional com um smartphone, organizando a rotina de vendas em marketplaces com a Vintec',
+    blob: { ['--blob-back' as string]: '#cae86b', ['--blob-mid' as string]: '#8ee2a9', ['--blob-front' as string]: '#67cbd0' },
     chips: [
-      { kind: 'kpi', icon: Plug, pos: POS.a, float: 'hero-float-a' },
-      { kind: 'kpi', icon: Network, pos: POS.b, float: 'hero-float-b' },
-      { kind: 'kpi', icon: Building2, pos: POS.c, float: 'hero-float-c' },
-      { kind: 'kpi', icon: Activity, pos: POS.d, float: 'hero-float-d' },
+      { kind: 'kpi', icon: TrendingUp, label: 'Mais canais', pos: { top: '15%', left: '-2%' } },
+      { kind: 'kpi', icon: Activity, label: 'Desempenho', pos: { top: '42%', right: '-3%' } },
+      { kind: 'kpi', icon: Network, label: 'Mais clareza', pos: { bottom: '14%', left: '2%' } },
     ],
-    waMessage: 'Olá! Gostaria de centralizar minha operação multicanal com a Vintec e crescer com mais controle.',
+    waMessage: 'Olá! Gostaria de organizar minha rotina de vendas em marketplaces com a Vintec.',
   },
 ]
 
-const AUTOPLAY_MS = 7500
+const AUTOPLAY_MS = 5000
+const FLOATS = ['hero-float-a', 'hero-float-b', 'hero-float-c', 'hero-float-d']
 
-function HeroChip({ chip, hideOnMobile }: { chip: Chip; hideOnMobile?: boolean }) {
+function HeroChip({ chip, float, hideOnMobile }: { chip: Chip; float: string; hideOnMobile?: boolean }) {
   const mob = hideOnMobile ? ' hero-tile--hide-mobile' : ''
   if (chip.kind === 'brand') {
     const brand = mpBrand(chip.mp)
     return (
-      <span aria-hidden="true" className={`hero-tile hero-tile--brand absolute ${chip.float}${mob}`} style={chip.pos}>
-        {brand ? <img src={brand.logoSrc} alt={chip.mp} className="hero-tile__img" style={{ height: brand.logoH }} /> : null}
+      <span aria-hidden="true" className={`hero-tile hero-tile--brand ${float}${mob}`} style={chip.pos}>
+        {brand ? <img src={brand.logoSrc} alt="" className="hero-tile__img" style={{ height: brand.logoH, maxWidth: 140 }} /> : null}
       </span>
     )
   }
   const Icon = chip.icon
   return (
-    <span aria-hidden="true" className={`hero-tile hero-tile--kpi absolute ${chip.float}${mob}`} style={chip.pos}>
-      <Icon className="h-[22px] w-[22px]" strokeWidth={2} />
+    <span aria-hidden="true" className={`hero-tile hero-tile--kpi ${float}${mob}`} style={chip.pos}>
+      <Icon className="h-[26px] w-[26px]" strokeWidth={2} />
+      <span className="hero-tile__label">{chip.label}</span>
     </span>
-  )
-}
-
-// Forma orgânica assimétrica (SVG) atrás da pessoa — identidade, não efeito.
-function HeroShape() {
-  return (
-    <svg className="hero-organic" viewBox="0 0 240 200" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="heroShapeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(163,236,197,0.92)" />
-          <stop offset="55%" stopColor="rgba(103,206,181,0.60)" />
-          <stop offset="100%" stopColor="rgba(86,192,179,0.26)" />
-        </linearGradient>
-      </defs>
-      {/* Forma assimétrica: lobo maior à direita, base mais reta à esquerda */}
-      <path d="M58,44 C92,14 150,8 190,30 C226,50 236,92 226,130 C216,168 182,190 138,190 C96,190 66,178 40,150 C18,126 20,96 34,72 C42,58 48,52 58,44 Z" fill="url(#heroShapeGrad)" />
-    </svg>
   )
 }
 
@@ -176,75 +161,88 @@ export default function Hero() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="site-container site-container--tight grid items-end gap-8 pt-20 md:pt-20 lg:grid-cols-[44fr_56fr] lg:gap-10 lg:pt-20">
+      <div
+        className="site-container site-container--tight grid items-stretch gap-8 lg:grid-cols-[42fr_58fr] lg:gap-10"
+        style={{ minHeight: 'clamp(520px, calc(100vh - 74px), 620px)' }}
+      >
         {/* Texto */}
-        <div key={`t-${active}`} className="hero-fade max-w-xl pb-10 md:pb-12 lg:pb-16">
-          {/* Símbolo do slide (sem badge/caixa) */}
-          <span className="mb-4 inline-flex" aria-hidden="true">
-            <EyebrowIcon className="h-[52px] w-[52px]" style={{ color: '#8FE6C4' }} strokeWidth={1.6} />
-          </span>
+        <div key={`t-${active}`} className="hero-fade flex flex-col justify-center pt-[104px] pb-8 md:pb-10 lg:pt-[96px]">
+          <div className="mb-5 inline-flex items-center gap-2" aria-hidden="true">
+            <EyebrowIcon className="h-[17px] w-[17px]" style={{ color: '#bff0d8' }} strokeWidth={2.2} />
+            <span style={{ color: '#bff0d8', fontWeight: 700, fontSize: 15, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{slide.label}</span>
+          </div>
 
-          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2rem, 3vw, 3rem)', lineHeight: 1.04, letterSpacing: '-0.03em', maxWidth: 500 }}>
+          <h1
+            className="font-extrabold"
+            style={{ color: '#F7FEFD', fontSize: 'clamp(2.5rem, 4.4vw, 4.05rem)', lineHeight: 1.02, letterSpacing: '-0.025em', maxWidth: 580 }}
+          >
             {slide.title}
           </h1>
 
-          <p className="mt-4 max-w-[500px] text-[1.12rem]" style={{ color: 'rgba(223,240,237,0.9)', lineHeight: 1.5 }}>
+          <p className="mt-5" style={{ color: 'rgba(233,247,244,0.94)', fontSize: 'clamp(1.06rem, 1.4vw, 1.3rem)', lineHeight: 1.5, maxWidth: 480 }}>
             {slide.sub}
           </p>
 
-          <div className="mt-6">
-            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.8rem 1.6rem', fontSize: '0.98rem' }}>
-              Fale com um especialista <ArrowRight className="h-4 w-4" />
+          <div className="mt-8">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '1.05rem 2.1rem', fontSize: '1.05rem', borderRadius: 13 }}>
+              Fale com um especialista <ArrowRight className="h-[18px] w-[18px]" />
             </a>
-          </div>
-
-          {/* Controles do slider — discretos */}
-          <div className="mt-8 flex items-center gap-3">
-            <button type="button" aria-label="Slide anterior" onClick={() => goTo(active - 1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(234,244,243,0.85)' }}>
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="flex items-center gap-2" role="tablist" aria-label="Slides">
-              {slides.map((_, i) => (
-                <button key={i} role="tab" aria-selected={i === active} aria-label={`Ir para slide ${i + 1}`}
-                  onClick={() => goTo(i)} className="h-2 rounded-full transition-all"
-                  style={{ width: i === active ? 26 : 8, background: i === active ? '#69c995' : 'rgba(255,255,255,0.25)' }} />
-              ))}
-            </div>
-            <button type="button" aria-label="Próximo slide" onClick={() => goTo(active + 1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(234,244,243,0.85)' }}>
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
         </div>
 
-        {/* Pessoa ancorada na base + forma orgânica (sem layout shift). */}
-        <div className="relative mx-auto h-[400px] w-full max-w-[580px] sm:h-[450px] lg:h-[500px]">
-          <HeroShape />
-          <span className="hero-contact-shadow" />
-
-          {/* Pessoa muda por slide — apoiada na base, grande */}
-          <div key={`p-${active}`} className="hero-fade absolute inset-x-0 bottom-0 z-[1] flex justify-center">
-            <img
-              src={slide.person}
-              alt={slide.personAlt}
-              className="max-h-[400px] w-auto object-contain sm:max-h-[450px] lg:max-h-[520px]"
-              draggable={false}
-            />
+        {/* Composição visual — pessoa ancorada na base + forma + balões */}
+        <div className="relative min-h-[440px] pt-[92px] lg:min-h-0 lg:pt-0">
+          {/* Forma orgânica multi-camada (cores por slide) */}
+          <div key={`s-${active}`} className="hero-shape hero-fade" style={slide.blob}>
+            <span className="hero-blob hero-blob--back" />
+            <span className="hero-blob hero-blob--mid" />
+            <span className="hero-blob hero-blob--front" />
           </div>
 
-          {/* Tiles flutuantes — no mobile só os 2 laterais/baixos (índices 2,3). */}
+          <span className="hero-contact-shadow" />
+
+          {/* Pessoa — muda por slide, apoiada na base, sem distorção */}
+          <img
+            key={`p-${active}`}
+            src={slide.person}
+            alt={slide.personAlt}
+            className="hero-fade absolute bottom-0 left-1/2 z-[1] w-auto max-w-full -translate-x-1/2 object-contain"
+            style={{ height: '96%', maxHeight: 660, objectPosition: 'bottom center' }}
+            loading={slide.personEager ? 'eager' : 'lazy'}
+            draggable={false}
+          />
+
+          {/* Balões — no mobile só os 2 últimos */}
           <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 z-[2]">
             {slide.chips.map((chip, i) => (
-              <HeroChip key={i} chip={chip} hideOnMobile={i < 2} />
+              <HeroChip key={i} chip={chip} float={FLOATS[i]} hideOnMobile={i < slide.chips.length - 2} />
             ))}
           </div>
         </div>
       </div>
 
-      <p className="sr-only" aria-live="polite">{`Slide ${active + 1} de ${slides.length}: ${slide.eyebrowLabel}`}</p>
+      {/* Controles do carrossel — centralizados na base do hero (estilo Petina) */}
+      <div className="absolute bottom-6 left-1/2 z-[4] flex -translate-x-1/2 items-center gap-3">
+        <button type="button" aria-label="Slide anterior" onClick={() => goTo(active - 1)}
+          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+          style={{ border: '1px solid rgba(255,255,255,0.35)', color: 'rgba(244,252,251,0.95)', background: 'rgba(255,255,255,0.06)' }}>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-2" role="tablist" aria-label="Slides">
+          {slides.map((_, i) => (
+            <button key={i} role="tab" aria-selected={i === active} aria-label={`Ir para slide ${i + 1}`}
+              onClick={() => goTo(i)} className="h-2.5 rounded-full transition-all"
+              style={{ width: i === active ? 28 : 10, background: i === active ? '#8fe6c4' : 'rgba(255,255,255,0.5)' }} />
+          ))}
+        </div>
+        <button type="button" aria-label="Próximo slide" onClick={() => goTo(active + 1)}
+          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+          style={{ border: '1px solid rgba(255,255,255,0.35)', color: 'rgba(244,252,251,0.95)', background: 'rgba(255,255,255,0.06)' }}>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      <p className="sr-only" aria-live="polite">{`Slide ${active + 1} de ${slides.length}: ${slide.label}`}</p>
     </section>
   )
 }
