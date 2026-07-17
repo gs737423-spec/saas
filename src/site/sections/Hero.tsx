@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Wallet, ShoppingCart, Percent, Boxes, Network, Building2, Activity, Plug, type LucideIcon } from 'lucide-react'
 import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
@@ -8,8 +8,8 @@ function mpLogo(name: string) {
 }
 
 type Chip =
-  | { mp: string; pos: CSSProperties; float: string }
-  | { label: string; tone: string; pos: CSSProperties; float: string }
+  | { kind: 'brand'; mp: string; pos: CSSProperties; float: string }
+  | { kind: 'kpi'; label: string; icon: LucideIcon; pos: CSSProperties; float: string }
 
 interface Slide {
   eyebrow: string
@@ -23,79 +23,86 @@ interface Slide {
   waMessage: string
 }
 
-// 3 slides, mesma proposta (Vintec: operação multicanal por API) sob ângulos
-// diferentes — centralização, clareza, decisão. Cada slide troca pessoa,
-// headline curta e arranjo de chips.
+// 4 âncoras assimétricas ao redor da pessoa (coluna alta, pessoa ancorada na
+// base). Evitam rosto (topo-centro) e mãos/dispositivo (centro). Mesmas
+// posições nos 3 slides — a composição muda pelo conteúdo dos balões.
+const POS = {
+  a: { top: '11%', left: '3%' } as CSSProperties, // superior-esquerda
+  b: { top: '25%', right: '1%' } as CSSProperties, // superior-direita
+  c: { top: '54%', left: '0%' } as CSSProperties, // meio-esquerda
+  d: { bottom: '15%', right: '3%' } as CSSProperties, // inferior-direita
+}
+
+// 3 slides, 3 composições reais (pessoa + label + headline + subtítulo +
+// balões diferentes). Ordem das pessoas: tablet (mulher), notebook (homem),
+// smartphone (homem) — recortes reprocessados com fundo transparente real.
 const slides: Slide[] = [
   {
-    eyebrow: 'Operação multicanal',
-    title: <>Todos os seus canais.<br />Uma só operação.</>,
-    sub: 'Mercado Livre, Amazon, Shopee e Leroy Merlin conectados por API em uma estrutura só.',
+    eyebrow: 'Gestão multicanal',
+    title: <>Uma operação.<br />Todos os seus marketplaces.</>,
+    sub: 'Mercado Livre, Amazon, Shopee e Leroy Merlin conectados por API para você acompanhar tudo com mais clareza.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
-    personAlt: 'Pessoa segurando um tablet, representando a operação multicanal acompanhada pela Vintec',
+    personAlt: 'Profissional segurando um tablet, representando a operação multicanal acompanhada pela Vintec',
     chips: [
-      { mp: 'Mercado Livre', pos: { top: '4%', left: '-6%' }, float: 'hero-float-a' },
-      { mp: 'Amazon', pos: { top: '20%', right: '-7%' }, float: 'hero-float-b' },
-      { mp: 'Shopee', pos: { bottom: '24%', left: '-9%' }, float: 'hero-float-c' },
-      { mp: 'Leroy Merlin', pos: { bottom: '6%', right: '-4%' }, float: 'hero-float-d' },
-      { label: 'Operação conectada', tone: '#1FB9A8', pos: { top: '48%', left: '-12%' }, float: 'hero-float-b' },
+      { kind: 'brand', mp: 'Mercado Livre', pos: POS.a, float: 'hero-float-a' },
+      { kind: 'brand', mp: 'Amazon', pos: POS.b, float: 'hero-float-b' },
+      { kind: 'brand', mp: 'Shopee', pos: POS.c, float: 'hero-float-c' },
+      { kind: 'brand', mp: 'Leroy Merlin', pos: POS.d, float: 'hero-float-d' },
     ],
     ctaLabel: 'Fale com um especialista',
     ctaSecondary: 'Conheça as soluções',
-    waMessage: 'Olá! Gostaria de conhecer a Vintec e entender como ela pode ajudar na minha operação de marketplaces.',
+    waMessage: 'Olá! Gostaria de conhecer a Vintec e entender como ela conecta meus marketplaces por API.',
   },
   {
-    eyebrow: 'Clareza operacional',
-    title: <>Mais clareza para<br />acompanhar tudo.</>,
-    sub: 'Pedidos, produtos e estoque de todos os canais organizados em uma única visão executiva.',
+    eyebrow: 'Visão centralizada',
+    title: <>Decida sem<br />trocar de painel.</>,
+    sub: 'Reúna faturamento, pedidos, margem, estoque e produtos em uma leitura única da operação.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Pessoa segurando um notebook, ilustrando o acompanhamento da operação na Vintec',
+    personAlt: 'Profissional com um notebook, ilustrando a leitura única da operação na Vintec',
     chips: [
-      { label: 'Visão centralizada', tone: '#1FB9A8', pos: { top: '6%', left: '-8%' }, float: 'hero-float-a' },
-      { mp: 'Mercado Livre', pos: { top: '22%', right: '-6%' }, float: 'hero-float-b' },
-      { label: 'Pedidos', tone: '#4C82F7', pos: { top: '50%', left: '-11%' }, float: 'hero-float-c' },
-      { mp: 'Shopee', pos: { bottom: '20%', right: '-7%' }, float: 'hero-float-d' },
-      { label: 'Estoque', tone: '#E9A83A', pos: { bottom: '5%', left: '-3%' }, float: 'hero-float-b' },
-    ],
-    ctaLabel: 'Solicitar contato',
-    ctaSecondary: 'Ver como funciona',
-    waMessage: 'Olá! Gostaria de entender como a Vintec dá mais clareza para a operação multicanal.',
-  },
-  {
-    eyebrow: 'Decisão com controle',
-    title: <>Decida com controle<br />da operação.</>,
-    sub: 'Uma leitura executiva para priorizar onde agir primeiro e crescer com mais segurança.',
-    person: '/site/people/processed/vintec-banner-smartphone.webp',
-    personAlt: 'Pessoa segurando um smartphone, ilustrando o contato e a decisão apoiada pela Vintec',
-    chips: [
-      { label: 'Desempenho', tone: '#1FB9A8', pos: { top: '5%', left: '-7%' }, float: 'hero-float-a' },
-      { mp: 'Amazon', pos: { top: '24%', right: '-6%' }, float: 'hero-float-b' },
-      { mp: 'Leroy Merlin', pos: { top: '52%', left: '-11%' }, float: 'hero-float-c' },
-      { label: 'API', tone: '#4C82F7', pos: { bottom: '22%', right: '-5%' }, float: 'hero-float-d' },
-      { label: 'Decisão', tone: '#12B981', pos: { bottom: '6%', left: '-2%' }, float: 'hero-float-b' },
+      { kind: 'kpi', label: 'Faturamento', icon: Wallet, pos: POS.a, float: 'hero-float-a' },
+      { kind: 'kpi', label: 'Pedidos', icon: ShoppingCart, pos: POS.b, float: 'hero-float-b' },
+      { kind: 'kpi', label: 'Margem', icon: Percent, pos: POS.c, float: 'hero-float-c' },
+      { kind: 'kpi', label: 'Estoque', icon: Boxes, pos: POS.d, float: 'hero-float-d' },
     ],
     ctaLabel: 'Fale com um especialista',
     ctaSecondary: 'Ver como funciona',
-    waMessage: 'Olá! Gostaria de entender como a Vintec apoia a decisão sobre a minha operação multicanal.',
+    waMessage: 'Olá! Gostaria de entender como a Vintec reúne faturamento, pedidos e estoque em uma leitura só.',
+  },
+  {
+    eyebrow: 'Crescimento organizado',
+    title: <>Mais canais,<br />sem perder o controle.</>,
+    sub: 'Estruture sua operação multicanal para crescer com dados organizados, prioridades claras e acompanhamento próximo.',
+    person: '/site/people/processed/vintec-banner-smartphone.webp',
+    personAlt: 'Profissional com um smartphone, ilustrando o acompanhamento próximo da operação com a Vintec',
+    chips: [
+      { kind: 'kpi', label: 'Operação conectada', icon: Network, pos: POS.a, float: 'hero-float-a' },
+      { kind: 'kpi', label: 'Dados por empresa', icon: Building2, pos: POS.b, float: 'hero-float-b' },
+      { kind: 'kpi', label: 'Acompanhamento', icon: Activity, pos: POS.c, float: 'hero-float-c' },
+      { kind: 'kpi', label: 'API', icon: Plug, pos: POS.d, float: 'hero-float-d' },
+    ],
+    ctaLabel: 'Fale com um especialista',
+    ctaSecondary: 'Ver como funciona',
+    waMessage: 'Olá! Gostaria de estruturar minha operação multicanal com a Vintec para crescer com mais controle.',
   },
 ]
 
-const AUTOPLAY_MS = 8000
+const AUTOPLAY_MS = 7500
 
 function HeroChip({ chip }: { chip: Chip }) {
-  const common = `hero-chip absolute ${chip.float}`
-  if ('mp' in chip) {
+  if (chip.kind === 'brand') {
     const Logo = mpLogo(chip.mp)
     return (
-      <span aria-hidden="true" className={common} style={chip.pos}>
-        <span className="hero-chip__mp">{Logo ? <Logo /> : null}</span>
+      <span aria-hidden="true" className={`hero-balloon hero-balloon--brand absolute ${chip.float}`} style={chip.pos}>
+        <span className="hero-balloon__logo">{Logo ? <Logo /> : null}</span>
         {chip.mp}
       </span>
     )
   }
+  const Icon = chip.icon
   return (
-    <span aria-hidden="true" className={common} style={chip.pos}>
-      <span className="hero-chip__dot" style={{ background: chip.tone }} />
+    <span aria-hidden="true" className={`hero-balloon hero-balloon--kpi absolute ${chip.float}`} style={chip.pos}>
+      <span className="hero-balloon__ico"><Icon className="h-[18px] w-[18px]" /></span>
       {chip.label}
     </span>
   )
@@ -159,26 +166,22 @@ export default function Hero() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* Orbs de profundidade */}
-      <span className="hero-orb" style={{ width: 420, height: 420, top: -120, right: 40, background: 'radial-gradient(circle, rgba(31,185,168,0.4), transparent 70%)' }} />
-      <span className="hero-orb" style={{ width: 360, height: 360, bottom: -140, left: -60, background: 'radial-gradient(circle, rgba(76,130,247,0.28), transparent 70%)' }} />
-
-      <div className="site-container grid items-center gap-10 pb-14 pt-28 md:pb-20 md:pt-32 lg:grid-cols-[46fr_54fr] lg:gap-8 lg:pb-24 lg:pt-36">
+      <div className="site-container grid items-end gap-10 pt-24 md:pt-28 lg:grid-cols-[46fr_54fr] lg:gap-8 lg:pt-32">
         {/* Texto */}
-        <div key={`t-${active}`} className="hero-fade max-w-xl">
+        <div key={`t-${active}`} className="hero-fade max-w-xl pb-12 md:pb-16 lg:pb-24">
           <span
             className="mb-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold"
-            style={{ background: 'rgba(31,185,168,0.14)', border: '1px solid rgba(31,185,168,0.3)', color: '#7EE8DA' }}
+            style={{ background: 'rgba(105,201,149,0.16)', border: '1px solid rgba(105,201,149,0.36)', color: '#B8F0DC' }}
           >
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: '#1FB9A8', display: 'inline-block' }} />
+            <span style={{ width: 7, height: 7, borderRadius: 999, background: '#69c995', display: 'inline-block' }} />
             {slide.eyebrow}
           </span>
 
-          <h1 className="font-extrabold tracking-tight" style={{ color: '#F4FCFB', fontSize: 'clamp(2.3rem, 4.6vw, 3.9rem)', lineHeight: 1.04, letterSpacing: '-0.03em' }}>
+          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2.45rem, 4.8vw, 4rem)', lineHeight: 1.03, letterSpacing: '-0.035em' }}>
             {slide.title}
           </h1>
 
-          <p className="mt-5 max-w-md text-[1.05rem]" style={{ color: 'rgba(214,235,232,0.82)', lineHeight: 1.55 }}>
+          <p className="mt-5 max-w-md text-[1.05rem]" style={{ color: 'rgba(223,240,237,0.88)', lineHeight: 1.55 }}>
             {slide.sub}
           </p>
 
@@ -200,7 +203,7 @@ export default function Hero() {
               {slides.map((_, i) => (
                 <button key={i} role="tab" aria-selected={i === active} aria-label={`Ir para slide ${i + 1}`}
                   onClick={() => goTo(i)} className="h-2 rounded-full transition-all"
-                  style={{ width: i === active ? 26 : 8, background: i === active ? '#1FB9A8' : 'rgba(255,255,255,0.25)' }} />
+                  style={{ width: i === active ? 26 : 8, background: i === active ? '#69c995' : 'rgba(255,255,255,0.25)' }} />
               ))}
             </div>
             <button type="button" aria-label="Próximo slide" onClick={() => goTo(active + 1)}
@@ -211,26 +214,26 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Pessoa + composição (altura fixa, sem layout shift) */}
-        <div className="relative mx-auto w-full max-w-[520px]" style={{ minHeight: 560 }}>
-          {/* Anéis concêntricos + glow atrás */}
-          <span className="hero-ring" style={{ width: 520, height: 520, top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
-          <span className="hero-ring" style={{ width: 380, height: 380, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', borderColor: 'rgba(31,185,168,0.26)' }} />
-          <span className="hero-orb" style={{ width: 340, height: 340, top: '46%', left: '50%', transform: 'translate(-50%,-50%)', background: 'radial-gradient(circle, rgba(31,185,168,0.34), transparent 68%)' }} />
+        {/* Pessoa ancorada na base + composição (altura fixa, sem layout shift).
+            Coluna encosta no fundo da hero (items-end + sem pb) — pessoa apoiada. */}
+        <div className="relative mx-auto h-[440px] w-full max-w-[560px] sm:h-[500px] lg:h-[600px]">
+          {/* Forma orgânica de apoio atrás da pessoa */}
+          <span className="hero-shape" style={{ width: '86%', height: '70%', top: '6%', left: '50%', transform: 'translateX(-50%)' }} />
+          {/* Sombra de contato na base */}
+          <span className="hero-contact-shadow" />
 
           {/* Pessoa muda por slide */}
-          <div key={`p-${active}`} className="hero-fade absolute inset-x-0 bottom-0 flex justify-center">
+          <div key={`p-${active}`} className="hero-fade absolute inset-x-0 bottom-0 z-[1] flex justify-center">
             <img
               src={slide.person}
               alt={slide.personAlt}
-              className="max-h-[560px] w-auto object-contain"
-              style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.45))' }}
+              className="max-h-[440px] w-auto object-contain sm:max-h-[500px] lg:max-h-[600px]"
               draggable={false}
             />
           </div>
 
-          {/* Chips glass — escondidos em telas muito estreitas pra não poluir */}
-          <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 hidden sm:block">
+          {/* Balões — escondidos em telas muito estreitas pra não poluir */}
+          <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 z-[2] hidden sm:block">
             {slide.chips.map((chip, i) => (
               <HeroChip key={i} chip={chip} />
             ))}

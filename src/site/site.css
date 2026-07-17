@@ -34,6 +34,16 @@
   --s-petrol: #0B2E3C;
   --s-petrol-deep: #061E28;
 
+  /* Tokens de marca Vintec — hero petróleo/teal PLANO (não preto/navy).
+     Base da direção comercial: degradê limpo, sem ruído. */
+  --vintec-petroleum: #0b4d59;
+  --vintec-teal: #147a78;
+  --vintec-mint: #69c995;
+  --vintec-navy: #17324d;
+  --vintec-off-white: #f8f9f6;
+  --vintec-white: #ffffff;
+  --vintec-text-muted: #52677a;
+
   /* Acentos */
   --s-blue: #3D74F0;
   --s-blue-bright: #4C82F7;
@@ -214,11 +224,11 @@
 /* ---- Float dos cards do hero (poucos px, velocidades distintas) ---------- */
 @keyframes hero-float-a {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-9px); }
+  50% { transform: translateY(-6px); }
 }
 @keyframes hero-float-b {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(7px); }
+  50% { transform: translateY(5px); }
 }
 .hero-float-a { animation: hero-float-a 6.5s ease-in-out infinite; }
 .hero-float-b { animation: hero-float-b 7.8s ease-in-out infinite; }
@@ -475,25 +485,36 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background:
-    radial-gradient(1100px 720px at 80% -10%, rgba(31, 185, 168, 0.22), transparent 60%),
-    radial-gradient(880px 620px at 6% 24%, rgba(20, 120, 140, 0.20), transparent 58%),
-    linear-gradient(158deg, #06232C 0%, #072A34 44%, #0A3A45 100%);
-  color: #EAF4F3;
+  /* Degradê comercial e limpo: petróleo à esquerda, teal/verde-água à
+     direita. Mais claro que a versão anterior, sem grade/glow/fumaça. */
+  background: linear-gradient(100deg, #0a4b57 0%, #13787a 58%, #1c9a86 100%);
+  color: #F4FCFB;
 }
-/* Grade técnica sutil, mascarada pro canto da pessoa */
-.hero-vt::after {
-  content: '';
+
+/* Forma orgânica de apoio atrás da pessoa (lógica Petina): destaca a modelo,
+   cria profundidade, tom verde-água relacionado à paleta, degradê interno
+   suave. Sem glow forte, sem fumaça. */
+.hero-shape {
   position: absolute;
-  inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 62px 62px;
-  -webkit-mask-image: radial-gradient(82% 62% at 72% 34%, #000 0%, transparent 74%);
-  mask-image: radial-gradient(82% 62% at 72% 34%, #000 0%, transparent 74%);
+  border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
+  background: radial-gradient(115% 115% at 42% 32%, rgba(150, 230, 190, 0.58), rgba(70, 190, 165, 0.30) 52%, rgba(70, 190, 165, 0) 78%);
+  filter: blur(4px);
+}
+
+/* Sombra de contato — ancora a pessoa na base, extremamente discreta. */
+.hero-contact-shadow {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72%;
+  height: 38px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(3, 24, 28, 0.4), rgba(3, 24, 28, 0) 70%);
+  filter: blur(7px);
 }
 .hero-vt > * { position: relative; z-index: 1; }
 
@@ -513,34 +534,53 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   z-index: 0;
 }
 
-/* Chip glass grande dos marketplaces / capacidades */
-.hero-chip {
+/* Balões flutuantes do hero — presença real (não "chips perdidos"), fundo
+   claro, sobre a pessoa. Dois tamanhos: marca (logo+nome) e indicador
+   (ícone+termo). Largura controlada por min/max-width, conforme briefing. */
+.hero-balloon {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 15px;
+  padding: 10px 14px;
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: 0 20px 44px -18px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  color: #EAF4F3;
-  font-weight: 700;
-  font-size: 13.5px;
+  /* Discreto mas presente: fundo claro levemente translúcido (cinza-esverdeado),
+     borda e sombra leves. Complementar, não protagonista. */
+  background: rgba(240, 248, 245, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  box-shadow: 0 12px 26px -14px rgba(4, 30, 34, 0.4);
+  color: #16403C;
+  font-weight: 650;
+  font-size: 13px;
+  line-height: 1.1;
   white-space: nowrap;
 }
-.hero-chip__mp {
+.hero-balloon--brand { min-width: 132px; max-width: 172px; }
+.hero-balloon--kpi { min-width: 118px; max-width: 158px; }
+.hero-balloon__logo {
   display: inline-flex;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
   overflow: hidden;
   flex-shrink: 0;
 }
-.hero-chip__mp svg,
-.hero-chip__mp span[role='img'] { width: 34px !important; height: 34px !important; }
-.hero-chip__dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+.hero-balloon__logo svg,
+.hero-balloon__logo span[role='img'] { width: 30px !important; height: 30px !important; }
+.hero-balloon__ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(20, 122, 120, 0.14);
+  color: #10756A;
+}
 
 /* Fade suave ao trocar slide */
 .hero-fade { animation: hero-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -611,6 +651,11 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
     radial-gradient(820px 440px at 50% -12%, rgba(31, 185, 168, 0.14), transparent 62%),
     linear-gradient(180deg, #072A34 0%, #06222B 100%);
   color: #EAF4F3;
+}
+
+/* Segunda seção — quebra de contraste após a hero escura (referência Petina) */
+.vt-light {
+  background: #F7FAF9;
 }
 
 /* Card glass escuro premium */

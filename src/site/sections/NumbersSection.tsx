@@ -1,46 +1,36 @@
-import { Layers, FolderTree, Eye, Compass } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
-import { about, numbers, whatWeDo } from '@/site/content'
+import { about, numbers } from '@/site/content'
 
-const doIcons = [Layers, FolderTree, Eye, Compass]
-
-// Bloco institucional: "o que é a Vintec e por que importa" + números
-// estruturais reais + os 4 highlights do que ela resolve (fusão do antigo
-// WhatWeDo). Fundo escuro premium.
+// Segunda seção — quebra de contraste logo após a hero: fundo off-white,
+// leitura editorial em duas colunas (texto institucional à esquerda, bloco de
+// indicadores à direita), na lógica do "Quem Somos" da Petina. Números grandes,
+// labels pequenas, divisórias discretas — sem cards, sem glass, sem dashboard.
 export default function NumbersSection() {
   return (
-    <section id="sobre" className="sec-glow scroll-mt-24">
+    <section id="sobre" className="vt-light scroll-mt-24">
       <div className="site-container py-14 md:py-20">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-20">
+          {/* Coluna esquerda — institucional */}
           <Reveal>
-            <span className="site-label mb-3" style={{ color: '#4FD9C9' }}>{about.label}</span>
-            <h2 className="site-h2 vt-ink">{about.title}</h2>
-            <p className="site-lead mt-4 vt-muted">{about.text}</p>
+            <span className="site-label mb-3" style={{ color: '#0F8A7C' }}>{about.label}</span>
+            <h2 className="site-h2" style={{ color: '#17324d' }}>{about.title}</h2>
+            <p className="site-lead mt-5" style={{ color: '#52677a' }}>{about.text}</p>
           </Reveal>
 
-          <Reveal delay={80} className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-            {numbers.map((n) => (
-              <div key={n.label} className="vt-card p-5">
-                <div className="text-[2.5rem] font-extrabold leading-none tracking-tight" style={{ color: '#4FD9C9' }}>{n.value}</div>
-                <div className="mt-2 text-[14px] font-bold vt-ink">{n.label}</div>
-                <div className="mt-1 text-[12.5px] vt-muted">{n.desc}</div>
+          {/* Coluna direita — indicadores em grid editorial 2×2 */}
+          <Reveal delay={80} className="grid grid-cols-1 gap-x-10 gap-y-9 sm:grid-cols-2">
+            {numbers.map((n, i) => (
+              <div
+                key={n.label}
+                className={`${i % 2 === 1 ? 'sm:border-l sm:pl-10' : ''} ${i >= 2 ? 'border-t pt-8' : ''}`}
+                style={{ borderColor: 'rgba(23,50,77,0.12)' }}
+              >
+                <div className="text-[3.4rem] font-extrabold leading-[0.9] tracking-tight" style={{ color: '#17324d' }}>{n.value}</div>
+                <div className="mt-3 text-[14.5px] font-bold" style={{ color: '#17324d' }}>{n.label}</div>
+                <div className="mt-1.5 text-[13px]" style={{ color: '#6B8688', lineHeight: 1.5 }}>{n.desc}</div>
               </div>
             ))}
           </Reveal>
-        </div>
-
-        {/* Highlights: o que a Vintec resolve */}
-        <div className="mt-12 grid gap-4 border-t pt-12 vt-hair sm:grid-cols-2 lg:grid-cols-4">
-          {whatWeDo.map((item, i) => {
-            const Icon = doIcons[i]
-            return (
-              <Reveal key={item.title} delay={i * 70} className="vt-card p-5">
-                <span className="vt-ico"><Icon className="h-5 w-5" /></span>
-                <h3 className="mt-4 text-[15px] font-bold vt-ink">{item.title}</h3>
-                <p className="mt-2 text-[13px] vt-muted" style={{ lineHeight: 1.55 }}>{item.text}</p>
-              </Reveal>
-            )
-          })}
         </div>
       </div>
     </section>

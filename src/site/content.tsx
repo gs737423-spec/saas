@@ -54,10 +54,14 @@ export const about = {
   text: 'A Vintec centraliza a operação de quem vende em marketplaces: conecta os canais por API, organiza os dados em um modelo único e transforma isso em uma visão executiva para decidir com mais controle.',
 }
 
+// Indicadores estruturais da 2ª seção (grid editorial 2×2). Números reais do
+// posicionamento — nada de CMV/margem por custo (não contemplados na v1: o
+// líquido é apurado por taxas/descontos, ver ledger BRUTO→DESCONTO→LÍQUIDO).
 export const numbers = [
-  { value: '4', label: 'canais prioritários', desc: 'Mercado Livre, Amazon, Shopee e Leroy Merlin.' },
-  { value: '1', label: 'visão central da operação', desc: 'Todos os canais em um único painel.' },
-  { value: 'API', label: 'como base de conexão', desc: 'Sem planilha, sem upload manual.' },
+  { value: '4', label: 'canais conectados', desc: 'Mercado Livre, Amazon, Shopee e Leroy Merlin em uma única operação.' },
+  { value: '6', label: 'visões executivas', desc: 'Faturamento, pedidos, ticket médio, descontos, líquido e participação por canal.' },
+  { value: '1', label: 'painel central', desc: 'Leitura consolidada da operação sem alternar entre várias telas.' },
+  { value: 'API', label: 'base de conexão', desc: 'Integração como base da operação e do acompanhamento.' },
 ]
 
 // "O que a Vintec faz" — 4 blocos, capacidades reais do produto.
