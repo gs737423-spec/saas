@@ -95,6 +95,38 @@ export const institutionalMetrics = [
   { icon: 'channels', value: '+4', desc: 'marketplaces integrados' },
 ] as const
 
+// 4ª seção — "O que você recebe": UM único card vertical (estrutura da
+// referência Petina). Nada de dashboard aqui — o print vai na seção de prévia.
+export const platformSectionTitle = 'O que você recebe com a Vintec'
+export const platformSectionSubtitle = 'Uma plataforma feita para simplificar a rotina de quem vende em marketplaces.'
+export const platformCard = {
+  pill: 'PLATAFORMA PARA MARKETPLACES',
+  title: 'Gestão centralizada',
+  subtitle: 'SEUS CANAIS EM UM SÓ LUGAR',
+  text: 'Acompanhe os principais pontos da sua venda em marketplaces sem depender de várias telas, planilhas e controles separados.',
+  bullets: [
+    'Pedidos reunidos em um único ambiente',
+    'Estoque mais fácil de acompanhar',
+    'Comparação das vendas por marketplace',
+    'Produtos organizados por canal',
+    'Informações mais claras para sua equipe',
+  ],
+  ctaLabel: 'Conheça a plataforma Vintec',
+}
+// Lado complementar (não é outro card) — título institucional + frase curta.
+export const platformAside = {
+  title: 'Tudo o que sua equipe precisa acompanhar, reunido em um só lugar.',
+  text: 'Menos telas, menos planilhas e mais clareza para o dia a dia de quem vende em marketplaces.',
+}
+
+// 5ª seção — prévia da plataforma (o print sai do card e ganha seção própria).
+export const previewSection = {
+  title: 'Veja sua operação com mais clareza',
+  text: 'Uma visão organizada dos seus marketplaces para acompanhar o que importa no dia a dia.',
+  image: '/site/dashboard-overview.webp',
+  imageAlt: 'Prévia do painel da Vintec com a visão geral da operação multicanal',
+}
+
 // "O que a Vintec faz" — 4 blocos, capacidades reais do produto.
 export const whatWeDo = [
   {

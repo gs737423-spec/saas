@@ -4,7 +4,8 @@ import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
 import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
-import ServicesSection from '@/site/sections/ServicesSection'
+import PlatformCardSection from '@/site/sections/PlatformCardSection'
+import PreviewSection from '@/site/sections/PreviewSection'
 import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
 import HowItWorks from '@/site/sections/HowItWorks'
 import DifferentialsSection from '@/site/sections/DifferentialsSection'
@@ -35,8 +36,10 @@ export default function SitePage() {
         <NumbersSection />
         {/* 3. Institucional — pessoa consultora + texto */}
         <InstitutionalPlatformSection />
-        {/* 4. Soluções */}
-        <ServicesSection />
+        {/* 4. O que você recebe — card vertical único */}
+        <PlatformCardSection />
+        {/* 5. Prévia da plataforma — print do dashboard */}
+        <PreviewSection />
         {/* 4. Marketplaces */}
         <EcosystemMarquee />
         {/* 5. Como funciona */}
