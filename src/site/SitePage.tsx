@@ -3,6 +3,7 @@ import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
+import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
 import ServicesSection from '@/site/sections/ServicesSection'
 import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
 import HowItWorks from '@/site/sections/HowItWorks'
@@ -30,9 +31,11 @@ export default function SitePage() {
       <main>
         {/* 1. Promessa — hero slider dark */}
         <Hero />
-        {/* 2. Institucional + números + o que resolve */}
+        {/* 2. Quem Somos + números */}
         <NumbersSection />
-        {/* 3. Soluções */}
+        {/* 3. Institucional — pessoa consultora + texto */}
+        <InstitutionalPlatformSection />
+        {/* 4. Soluções */}
         <ServicesSection />
         {/* 4. Marketplaces */}
         <EcosystemMarquee />

@@ -59,9 +59,24 @@ export const about = {
   label: 'Quem Somos',
   title: 'Quem Somos',
   paragraphs: [
-    'A Vintec nasceu para simplificar a gestão de empresas que operam em diferentes marketplaces. Nossa plataforma conecta os principais canais por API, organiza informações dispersas e transforma os dados da operação em uma visão centralizada e mais fácil de acompanhar.',
-    'Com uma estrutura voltada para operações multicanal, ajudamos empresas a visualizar faturamento, pedidos, desempenho, participação por canal e outros indicadores em um único ambiente. O objetivo é reduzir a dispersão de informações e apoiar decisões com mais clareza, agilidade e controle.',
+    'A Vintec nasceu para simplificar a rotina de empresas que vendem em diferentes marketplaces. Nossa plataforma reúne pedidos, produtos, estoque, vendas e resultados que normalmente ficam espalhados em vários canais.',
+    'Assim, sua equipe acompanha o negócio com mais clareza, reduz controles paralelos e ganha tempo no dia a dia.',
   ],
+}
+
+// Seção institucional (3ª) — pessoa corporativa à ESQUERDA, conteúdo à direita.
+// Pessoa exclusiva desta seção (não aparece no hero). Linguagem simples.
+export const institutionalSection = {
+  label: 'SOBRE A VINTEC',
+  title: 'Feita para quem precisa organizar as vendas em vários marketplaces.',
+  paragraphs: [
+    'Gerenciar diferentes canais pode transformar a rotina em uma sequência de telas, planilhas e informações espalhadas.',
+    'A Vintec reúne o que sua equipe precisa acompanhar em um único ambiente. Assim, fica mais fácil visualizar pedidos, conferir estoque, comparar vendas e entender o desempenho de cada marketplace.',
+  ],
+  ctaLabel: 'Conheça a Vintec',
+  ctaHref: '#plataforma-cards',
+  photoSrc: '/site/people/vintec-institutional-consultant.png',
+  photoAlt: 'Especialista da Vintec segurando um tablet',
 }
 
 // ⚠️ MÉTRICAS INSTITUCIONAIS — PROVISÓRIAS / NÃO VALIDADAS.
