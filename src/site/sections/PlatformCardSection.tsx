@@ -28,7 +28,7 @@ export default function PlatformCardSection() {
             <p className="platform-card__text">{c.text}</p>
             <ul className="platform-card__list">
               {c.bullets.map((b) => (
-                <li key={b}><Check className="h-[16px] w-[16px] shrink-0" style={{ color: '#1FA98F' }} strokeWidth={2.6} /> {b}</li>
+                <li key={b}><Check className="h-[16px] w-[16px] shrink-0" style={{ color: '#1F4BD8' }} strokeWidth={2.6} /> {b}</li>
               ))}
             </ul>
             <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary platform-card__cta">

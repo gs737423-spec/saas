@@ -26,7 +26,7 @@ export default function InstitutionalPlatformSection() {
 
         {/* Conteúdo */}
         <Reveal className="order-1 flex flex-col justify-center lg:order-2">
-          <span className="mb-3 inline-block text-[13px] font-bold uppercase" style={{ color: '#0F8A7C', letterSpacing: '0.12em' }}>
+          <span className="mb-3 inline-block text-[13px] font-bold uppercase" style={{ color: '#1F4BD8', letterSpacing: '0.12em' }}>
             {s.label}
           </span>
           <h2 className="font-extrabold" style={{ color: '#17324d', fontSize: 'clamp(1.9rem, 3vw, 2.6rem)', lineHeight: 1.1, letterSpacing: '-0.02em', maxWidth: 560 }}>

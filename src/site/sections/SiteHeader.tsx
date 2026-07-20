@@ -57,7 +57,7 @@ export default function SiteHeader() {
           >
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
+          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
             Fale com um especialista
           </a>
         </div>

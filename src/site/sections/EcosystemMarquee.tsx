@@ -4,57 +4,89 @@ import { marketplaces, trustStrip } from '@/site/content'
 
 const trustIcons = [ShieldCheck, Building2, Network, UserCheck]
 
-// Marketplaces — bloco forte no dark: cards grandes com logo + nome,
-// marquee de reforço abaixo, faixa de confiança. API-first, sem selo de
-// status. Composição com presença, não 4 quadradinhos.
-export default function EcosystemMarquee() {
-  const Row = ({ items, reverse, big }: { items: typeof marketplaces; reverse?: boolean; big?: boolean }) => (
-    <div className={`marquee ${reverse ? 'marquee--reverse' : ''}`}>
-      <div className="marquee__track" style={{ ['--marquee-duration' as string]: reverse ? '38s' : '30s' }}>
-        {[0, 1].map((copy) => (
-          <ul key={copy} className="flex shrink-0 items-center" aria-hidden={copy === 1 || undefined}
-            style={{ gap: 'clamp(48px, 6vw, 84px)', paddingInline: 'clamp(48px, 6vw, 84px)' }}>
-            {items.map((m) => (
-              <li key={m.name} className={`flex shrink-0 items-center gap-2.5 whitespace-nowrap ${big ? 'marquee-logo--lg' : ''}`}>
-                <span className="marquee-logo shrink-0" style={{ opacity: 1, filter: 'none' }}><m.Logo /></span>
-                <span className="shrink-0 whitespace-nowrap text-[15px] font-bold vt-ink">{m.name}</span>
-              </li>
-            ))}
-          </ul>
-        ))}
-      </div>
-    </div>
-  )
+// Posições dos 4 nós ao redor do símbolo central (percentuais do palco).
+const NODE_POS = [
+  { top: '4%', left: '6%' },
+  { top: '4%', right: '6%' },
+  { bottom: '4%', left: '6%' },
+  { bottom: '4%', right: '6%' },
+]
 
+function ConnectorLines() {
+  // Curvas do centro (50,50) até cada nó — desenhadas em coordenadas de um
+  // viewBox 100x100, animam uma vez via stroke-dashoffset ao entrar na tela.
+  const paths = [
+    'M50,50 C38,38 24,26 14,14',
+    'M50,50 C62,38 76,26 86,14',
+    'M50,50 C38,62 24,74 14,86',
+    'M50,50 C62,62 76,74 86,86',
+  ]
   return (
-    <section id="marketplaces" aria-label="Marketplaces atendidos" className="sec-mid scroll-mt-24">
+    <svg className="ecosystem-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      {paths.map((d) => (
+        <path key={d} d={d} className="ecosystem-lines__path" />
+      ))}
+    </svg>
+  )
+}
+
+// Ecossistema — rede conectada: símbolo Vintec no centro, os 4 marketplaces em
+// nós ao redor ligados por curvas SVG. Faixa marquee de reforço abaixo.
+export default function EcosystemMarquee() {
+  return (
+    <section id="marketplaces" aria-label="Marketplaces atendidos" className="ecosystem-section scroll-mt-24">
       <div className="site-container py-14 md:py-20">
         <SectionHeader
           align="center"
           tone="dark"
-          label="Marketplaces"
-          title="Canais integrados à operação"
-          desc="Começando pelos principais canais da operação, com estrutura projetada para conectar por API e evoluir para novos marketplaces."
+          label="Ecossistema conectado"
+          title="Os principais canais da sua operação, conectados em uma única visão."
+          desc="Mercado Livre, Amazon, Shopee e Leroy Merlin organizados para sua equipe acompanhar a operação com mais clareza."
         />
 
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {marketplaces.map((m) => (
-            <div key={m.name} className="vt-card flex flex-col items-center gap-3 p-6 text-center" style={{ minHeight: 150 }}>
-              <span className="flex h-14 w-14 items-center justify-center" style={{ transform: 'scale(1.6)' }}>
-                <m.Logo />
-              </span>
-              <span className="mt-2 text-[14px] font-bold vt-ink">{m.name}</span>
-              <span className="text-[11px]" style={{ color: '#4FD9C9' }}>Conexão por API</span>
+        {/* Rede: símbolo central + 4 nós conectados por curvas (desktop/tablet) */}
+        <div className="ecosystem-network">
+          <ConnectorLines />
+          <div className="ecosystem-network__center" aria-hidden="true">V</div>
+          {marketplaces.map((m, i) => (
+            <div key={m.name} className="ecosystem-node" style={NODE_POS[i]}>
+              <img src={m.logoSrc} alt={m.name} style={{ height: m.logoH, maxWidth: 150 }} />
+              <span className="ecosystem-node__caption">Conectado por API</span>
             </div>
           ))}
         </div>
 
-        <div className="mt-12" style={{ opacity: 0.9 }}>
-          <Row items={marketplaces} big />
+        {/* Mobile: símbolo no topo + grid 2×2 (a rede completa não cabe apertada) */}
+        <div className="ecosystem-network-mobile">
+          <div className="ecosystem-network__center" style={{ position: 'static', transform: 'none', margin: '0 auto 20px' }} aria-hidden="true">V</div>
+          <div className="grid grid-cols-2 gap-3">
+            {marketplaces.map((m) => (
+              <div key={m.name} className="ecosystem-node" style={{ position: 'static', width: '100%' }}>
+                <img src={m.logoSrc} alt={m.name} style={{ height: m.logoH * 0.85, maxWidth: 130 }} />
+                <span className="ecosystem-node__caption">Conectado por API</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Faixa lenta de reforço */}
+        <div className="mt-14 marquee" style={{ opacity: 0.85 }}>
+          <div className="marquee__track" style={{ ['--marquee-duration' as string]: '34s' }}>
+            {[0, 1].map((copy) => (
+              <ul key={copy} className="flex shrink-0 items-center" aria-hidden={copy === 1 || undefined}
+                style={{ gap: 'clamp(72px, 8vw, 110px)', paddingInline: 'clamp(48px, 6vw, 84px)' }}>
+                {marketplaces.map((m) => (
+                  <li key={m.name} className="flex shrink-0 items-center">
+                    <img src={m.logoSrc} alt="" style={{ height: m.logoH * 0.9, maxWidth: 140, opacity: 0.85 }} />
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
         </div>
 
         {/* Faixa de confiança */}
-        <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-10 vt-hair sm:grid-cols-4">
+        <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-10 vt-hair sm:grid-cols-4">
           {trustStrip.map((t, i) => {
             const Icon = trustIcons[i]
             return (

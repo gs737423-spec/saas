@@ -11,7 +11,7 @@ export default function DifferentialsSection() {
         <div className="mt-10 grid gap-3 sm:grid-cols-2">
           {differentials.map((d, i) => (
             <Reveal key={d} delay={(i % 4) * 60} className="vt-card flex items-center gap-3 px-4 py-3.5">
-              <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: '#4FD9C9' }} />
+              <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: '#6EC8FF' }} />
               <span className="text-[14px] font-medium vt-ink">{d}</span>
             </Reveal>
           ))}

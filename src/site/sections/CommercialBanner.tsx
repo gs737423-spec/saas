@@ -9,7 +9,7 @@ export default function CommercialBanner({ content }: { content: CommercialBanne
 
   const photo = (
     <div className="relative mx-auto w-full max-w-[420px]" style={{ minHeight: 360 }}>
-      <span aria-hidden="true" className="hero-orb" style={{ width: 340, height: 340, top: '46%', left: '50%', transform: 'translate(-50%,-50%)', background: 'radial-gradient(circle, rgba(31,185,168,0.3), transparent 68%)' }} />
+      <span aria-hidden="true" className="hero-orb" style={{ width: 340, height: 340, top: '46%', left: '50%', transform: 'translate(-50%,-50%)', background: 'radial-gradient(circle, rgba(39, 93, 255,0.3), transparent 68%)' }} />
       <span aria-hidden="true" className="hero-ring" style={{ width: 380, height: 380, top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
       <div className="relative flex items-end justify-center">
         <img
@@ -26,7 +26,7 @@ export default function CommercialBanner({ content }: { content: CommercialBanne
 
   const text = (
     <Reveal className="flex flex-col justify-center">
-      <span className="site-label mb-3" style={{ color: '#4FD9C9' }}>{content.eyebrow}</span>
+      <span className="site-label mb-3" style={{ color: '#6EC8FF' }}>{content.eyebrow}</span>
       <h2 className="site-h2 vt-ink">{content.title}</h2>
       <p className="site-lead mt-4 vt-muted">{content.text}</p>
       <div className="mt-6">

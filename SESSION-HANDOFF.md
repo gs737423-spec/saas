@@ -36,3 +36,36 @@
 ## Próximas ações sugeridas
 - Revisão visual do dono nos screenshots.
 - Se aprovado: commit na branch v2 (sem push/deploy até autorização).
+
+---
+
+## Sessão 2 — Master Prompt (direção criativa completa)
+
+Skills citadas no master prompt (Impeccable, UI/UX Pro Max, Taste, Astryx) **não existem neste ambiente** — não instaladas, não simuladas. Único skill real: `ecom-saas-style`.
+
+### Implementado nesta passada
+1. **Tokens de cor oficiais** (`site.css`): `--vt-petroleum-950/900/800`, `--vt-teal-700..400`, `--vt-mint-400/300/200`, `--vt-blue-900/800`, `--vt-offwhite/surface/border/muted`. Aliases legados mantidos (evita quebrar componentes existentes).
+2. **Hero**: gradiente oficial (radial mint + linear petróleo→teal), altura `clamp(700px,86svh,900px)`. Setas laterais reais (`top:50%`, 52px, fora do texto/pessoa) — antes só existiam dentro dos controles da base. Indicadores agora só dots na base. Balões de logo maiores (140–190px, min-height 62px).
+3. **`siteMetrics.ts`** (`src/site/data/`): estrutura `SiteMetric{value,prefix,suffix,decimals,label,verified:false,source:null,showInProduction:false}`. Substituiu o array antigo duplicado em `content.tsx` (removida duplicação).
+4. **`AnimatedMetric.tsx`**: contador real com `requestAnimationFrame` + easing, dispara via IntersectionObserver (com fallback scroll/rect), formata com `Intl.NumberFormat('pt-BR')`, preserva prefixo/sufixo/decimais, respeita `prefers-reduced-motion`, roda uma vez. Linha mint crescendo abaixo do número (`.metric-underline`).
+5. **`EcosystemMarquee.tsx` reconstruída**: rede conectada (símbolo "V" central + 4 nós com logos oficiais `logoSrc` ligados por curvas SVG animadas `stroke-dashoffset`), marquee de reforço abaixo, faixa de confiança preservada. Mobile: fallback grid 2×2 com símbolo no topo (rede completa escondida <768px, conforme brief §23).
+
+### Validado (Playwright real, headless instalado no scratchpad)
+- Build tsc+vite: limpo. Console: 0 erros.
+- Overflow: false em 1440/1366/390/360.
+- Hero: 86% (1440) / 91% (1366) da viewport. 4 logos, 3 formas, sem preview/dashboard.
+- Screenshots gerados e inspecionados visualmente (hero slide 1 com setas+logos+header text-only; rede de marketplaces completa com V central e 4 nós).
+
+### NÃO implementado nesta passada (fora do tempo/escopo desta sessão — brief tem 43 seções)
+- Divisor institucional com monograma (item 20).
+- Seção "O que a Vintec organiza" reformulada como lista (não cards) — item 21.
+- Serviços em composição assimétrica 1 grande + 3 pequenos (item 22) — mantém versão anterior (card vertical único).
+- CTA humanizado com 4ª pessoa nova (item 26) — mantém banners existentes.
+- Reorganização/consolidação de containers, breakpoints extras (1600/1280/1024).
+- Altura total da página ainda ~7780px em 1440 (meta do brief: 5500–6800px) — não foram cortadas/fundidas seções.
+- Formulário/FAQ/footer não tocados nesta passada.
+
+### Confirmações
+- Nenhum print/mockup/screenshot da plataforma na home (verificado por DOM).
+- Nenhuma métrica falsa marcada como fato — `verified:false` estrutural.
+- Sem commit, sem push, sem deploy nesta passada também.

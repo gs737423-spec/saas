@@ -79,28 +79,9 @@ export const institutionalSection = {
   photoAlt: 'Especialista da Vintec segurando um tablet',
 }
 
-// ⚠️⚠️ MÉTRICAS INSTITUCIONAIS — DEMONSTRAÇÃO, NÃO VALIDADAS (verified:false). ⚠️⚠️
-// NÃO publicar como fatos reais. Cada item carrega `verified:false` e
-// `source:null` até validação comercial da direção da Vintec. NÃO fazer deploy
-// com estes valores sem aprovação. Ponto único de edição.
+// Métricas institucionais: ver src/site/data/siteMetrics.ts (verified:false,
+// source:null — NÃO publicar como fatos reais sem validação comercial).
 export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
-
-export interface InstitutionalMetric {
-  icon: 'users' | 'gmv' | 'orders' | 'uptime' | 'team' | 'channels'
-  value: string
-  desc: string
-  verified: boolean
-  source: string | null
-}
-
-export const institutionalMetrics: InstitutionalMetric[] = [
-  { icon: 'users', value: '+1.000', desc: 'clientes atendidos', verified: false, source: null },
-  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado', verified: false, source: null },
-  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados', verified: false, source: null },
-  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma', verified: false, source: null },
-  { icon: 'team', value: '+50', desc: 'especialistas e parceiros', verified: false, source: null },
-  { icon: 'channels', value: '+4', desc: 'marketplaces integrados', verified: false, source: null },
-]
 
 // 4ª seção — "O que você recebe": UM único card vertical (estrutura da
 // referência Petina). Nada de dashboard aqui — o print vai na seção de prévia.

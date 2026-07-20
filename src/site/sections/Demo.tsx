@@ -76,7 +76,7 @@ export default function Demo() {
       <section id="demonstracao" className="sec-glow">
         <div className="site-container py-16 md:py-20">
           <Reveal className="vt-card mx-auto max-w-xl p-10 text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(31,185,168,0.14)', color: '#4FD9C9' }}>
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(39, 93, 255,0.14)', color: '#6EC8FF' }}>
               <CheckCircle2 className="h-7 w-7" />
             </span>
             <h2 className="site-h3 mt-5 vt-ink">Pedido recebido!</h2>
@@ -92,19 +92,19 @@ export default function Demo() {
       <div className="site-container py-16 md:py-24">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
-            <span className="site-label mb-3" style={{ color: '#4FD9C9' }}>Fale com a Vintec</span>
+            <span className="site-label mb-3" style={{ color: '#6EC8FF' }}>Fale com a Vintec</span>
             <h2 className="site-h2 vt-ink">Vamos conversar sobre a sua operação?</h2>
             <p className="site-lead mt-4 vt-muted">Entenda como a Vintec pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
             <ul className="mt-6 space-y-2.5">
               {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px] vt-muted">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: '#4FD9C9' }} /> {t}
+                  <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: '#6EC8FF' }} /> {t}
                 </li>
               ))}
             </ul>
 
             {waHref.startsWith('http') && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#4FD9C9' }}>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#6EC8FF' }}>
                 <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
               </a>
             )}
@@ -143,7 +143,7 @@ export default function Demo() {
                           <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
                             aria-pressed={on}
                             className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
-                            style={on ? { background: '#1FB9A8', color: '#062229', border: '1px solid #1FB9A8' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                            style={on ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
                             {c}
                           </button>
                         )
@@ -162,7 +162,7 @@ export default function Demo() {
 
               <label className="mt-5 flex items-start gap-2.5 text-[13px] vt-muted">
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />
-                <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: '#4FD9C9', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
+                <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: '#6EC8FF', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
               </label>
               {errors.consent && <p className="mt-1 text-[12px]" style={{ color: 'var(--s-rose)' }}>{errors.consent}</p>}
 
