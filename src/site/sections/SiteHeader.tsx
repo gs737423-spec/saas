@@ -33,7 +33,7 @@ export default function SiteHeader() {
     <header className="site-header site-header--dark" data-scrolled={scrolled}>
       <div
         className="site-container flex items-center justify-between gap-4 transition-[height] duration-300"
-        style={{ height: scrolled ? 62 : 76 }}
+        style={{ height: scrolled ? 60 : 70 }}
       >
         {/* Logo → topo */}
         <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Vintec — início">

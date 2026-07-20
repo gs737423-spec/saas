@@ -88,7 +88,7 @@
   padding-inline: clamp(20px, 5vw, 56px);
 }
 /* Container mais estreito p/ hero e 2ª seção — densidade/proporção Petina. */
-.site-container--tight { max-width: 1210px; }
+.site-container--tight { max-width: 1240px; }
 
 /* Tipografia utilitária */
 .site-display {
@@ -538,37 +538,53 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   z-index: 0;
 }
 
-/* Tiles flutuantes do hero — só logo (marca) ou só ícone (conceito), sem
-   texto. Pequeno cartão claro discreto pra dar contraste à logo/ícone, não
-   uma pill de filtro. Complementar à composição. */
-.hero-tile {
+/* Chip flutuante do hero — pequeno, translúcido, borda fina, ícone + rótulo
+   curto. Não é card de dashboard. Máximo 2 por slide. */
+.hero-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: rgba(248, 252, 250, 0.88);
-  box-shadow: 0 10px 24px -14px rgba(4, 30, 34, 0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  box-shadow: 0 8px 20px -12px rgba(3, 24, 28, 0.5);
+  color: #F1FBF8;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-/* Marca: logo oficial com respiro, largura dirigida pela proporção da logo. */
-.hero-tile--brand { padding: 10px 15px; }
-.hero-tile__img {
-  display: block;
-  width: auto;
-  max-width: 150px;
-  object-fit: contain;
-}
-/* Conceito: ícone teal em tile ~quadrado. */
-.hero-tile--kpi {
-  width: 56px;
-  height: 56px;
-  color: #10756A;
-}
-/* No mobile mostramos só os 2 laterais/baixos (vence o inline-flex). */
+.hero-chip svg { color: #9DEBCF; }
+/* No mobile esconde o chip superior (deixa 1 só), pra não competir com a pessoa. */
 @media (max-width: 639px) {
   .hero-tile--hide-mobile { display: none !important; }
 }
+
+/* Controles do carrossel — centralizados na base do hero, sobre a área visual */
+.hero-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero-controls__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(234, 244, 243, 0.85);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.hero-controls__arrow:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.4); }
 
 /* Fade suave ao trocar slide */
 .hero-fade { animation: hero-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
