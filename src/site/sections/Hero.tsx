@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, ShoppingCart, Boxes, TrendingUp, BarChart3, Share2, ListChecks, type LucideIcon } from 'lucide-react'
-import { specialistHref } from '@/site/content'
+import { ArrowRight, ChevronLeft, ChevronRight, Plug, Database, Share2, Wallet, Percent, Boxes, Activity, type LucideIcon } from 'lucide-react'
+import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
-// Chip pequeno, translúcido, com ícone + rótulo curto (não card de dashboard).
-interface Chip { label: string; icon: LucideIcon; pos: CSSProperties; float: string }
+function mp(name: string) {
+  return marketplaces.find((m) => m.name === name)
+}
+
+// Balão: logo oficial de marketplace (slide 1) OU conceito curto (slides 2/3).
+type Chip =
+  | { kind: 'logo'; name: string; pos: CSSProperties; float: string }
+  | { kind: 'concept'; label: string; icon: LucideIcon; pos: CSSProperties; float: string }
 
 interface Slide {
   label: string
@@ -12,14 +18,24 @@ interface Slide {
   sub: string
   person: string
   personAlt: string
+  // Cores das formas orgânicas (2 preenchidas + 1 contorno) por slide.
+  b1: string
+  b2: string
   chips: Chip[]
   waMessage: string
 }
 
-// Só 2 âncoras por slide (máx. 2 chips) — evitam rosto/mãos/dispositivo.
-const POS = {
-  top: { top: '16%', right: '-2%' } as CSSProperties,
-  bottom: { bottom: '18%', left: '0%' } as CSSProperties,
+// Posições assimétricas — evitam rosto (topo-centro) e mãos/dispositivo (centro).
+const P = {
+  tl: { top: '9%', left: '-5%' } as CSSProperties,
+  tr: { top: '19%', right: '-5%' } as CSSProperties,
+  ml: { top: '50%', left: '-7%' } as CSSProperties,
+  br: { bottom: '13%', right: '-3%' } as CSSProperties,
+}
+const P3 = {
+  tr: { top: '14%', right: '-4%' } as CSSProperties,
+  ml: { top: '47%', left: '-6%' } as CSSProperties,
+  br: { bottom: '15%', right: '-2%' } as CSSProperties,
 }
 
 const slides: Slide[] = [
@@ -29,9 +45,12 @@ const slides: Slide[] = [
     sub: 'Acompanhe pedidos, estoque, vendas e desempenho sem depender de várias telas.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a gestão de marketplaces em um só lugar com a Vintec',
+    b1: '#8ee2a9', b2: '#67cbd0',
     chips: [
-      { label: 'Pedidos', icon: ShoppingCart, pos: POS.top, float: 'hero-float-a' },
-      { label: 'Estoque', icon: Boxes, pos: POS.bottom, float: 'hero-float-c' },
+      { kind: 'logo', name: 'Mercado Livre', pos: P.tl, float: 'hero-float-a' },
+      { kind: 'logo', name: 'Amazon', pos: P.tr, float: 'hero-float-b' },
+      { kind: 'logo', name: 'Shopee', pos: P.ml, float: 'hero-float-c' },
+      { kind: 'logo', name: 'Leroy Merlin', pos: P.br, float: 'hero-float-d' },
     ],
     waMessage: 'Olá! Gostaria de conhecer a Vintec e reunir meus marketplaces em um só lugar.',
   },
@@ -41,9 +60,11 @@ const slides: Slide[] = [
     sub: 'Compare seus canais e encontre rapidamente o que precisa da sua atenção.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
     personAlt: 'Profissional com um notebook, ilustrando resultados mais claros da operação na Vintec',
+    b1: '#67cbd0', b2: '#8ec9e6',
     chips: [
-      { label: 'Vendas', icon: TrendingUp, pos: POS.top, float: 'hero-float-a' },
-      { label: 'Resultados', icon: BarChart3, pos: POS.bottom, float: 'hero-float-c' },
+      { kind: 'concept', label: 'Conexão por API', icon: Plug, pos: P3.tr, float: 'hero-float-a' },
+      { kind: 'concept', label: 'Dados organizados', icon: Database, pos: P3.ml, float: 'hero-float-c' },
+      { kind: 'concept', label: 'Canais conectados', icon: Share2, pos: P3.br, float: 'hero-float-b' },
     ],
     waMessage: 'Olá! Gostaria de entender melhor os resultados da minha operação com a Vintec.',
   },
@@ -53,9 +74,11 @@ const slides: Slide[] = [
     sub: 'Reúna as informações dos marketplaces e trabalhe com mais clareza e controle.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
     personAlt: 'Profissional com um smartphone, ilustrando uma rotina mais organizada com a Vintec',
+    b1: '#cae86b', b2: '#8ee2a9',
     chips: [
-      { label: 'Mais canais', icon: Share2, pos: POS.top, float: 'hero-float-a' },
-      { label: 'Mais organização', icon: ListChecks, pos: POS.bottom, float: 'hero-float-c' },
+      { kind: 'concept', label: 'Faturamento', icon: Wallet, pos: P3.tr, float: 'hero-float-a' },
+      { kind: 'concept', label: 'Margem', icon: Percent, pos: P3.ml, float: 'hero-float-c' },
+      { kind: 'concept', label: 'Estoque', icon: Boxes, pos: P3.br, float: 'hero-float-b' },
     ],
     waMessage: 'Olá! Gostaria de organizar a rotina da minha operação multicanal com a Vintec.',
   },
@@ -64,8 +87,16 @@ const slides: Slide[] = [
 const AUTOPLAY_MS = 5000
 
 function HeroChip({ chip, hideOnMobile }: { chip: Chip; hideOnMobile?: boolean }) {
-  const Icon = chip.icon
   const mob = hideOnMobile ? ' hero-tile--hide-mobile' : ''
+  if (chip.kind === 'logo') {
+    const brand = mp(chip.name)
+    return (
+      <span aria-hidden="true" className={`hero-logo absolute ${chip.float}${mob}`} style={chip.pos}>
+        {brand ? <img src={brand.logoSrc} alt="" style={{ height: brand.logoH, maxWidth: 148 }} /> : null}
+      </span>
+    )
+  }
+  const Icon = chip.icon
   return (
     <span aria-hidden="true" className={`hero-chip absolute ${chip.float}${mob}`} style={chip.pos}>
       <Icon className="h-[15px] w-[15px]" strokeWidth={2} />
@@ -74,18 +105,14 @@ function HeroChip({ chip, hideOnMobile }: { chip: Chip; hideOnMobile?: boolean }
   )
 }
 
-function HeroShape() {
+// 2 formas orgânicas preenchidas + 1 contorno (cores por slide).
+function HeroShapes({ b1, b2 }: { b1: string; b2: string }) {
   return (
-    <svg className="hero-organic" viewBox="0 0 240 200" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="heroShapeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(163,236,197,0.92)" />
-          <stop offset="55%" stopColor="rgba(103,206,181,0.60)" />
-          <stop offset="100%" stopColor="rgba(86,192,179,0.26)" />
-        </linearGradient>
-      </defs>
-      <path d="M58,44 C92,14 150,8 190,30 C226,50 236,92 226,130 C216,168 182,190 138,190 C96,190 66,178 40,150 C18,126 20,96 34,72 C42,58 48,52 58,44 Z" fill="url(#heroShapeGrad)" />
-    </svg>
+    <div className="hero-shapes" style={{ ['--b1' as string]: b1, ['--b2' as string]: b2 }} aria-hidden="true">
+      <span className="hero-blob hero-blob--a" />
+      <span className="hero-blob hero-blob--b" />
+      <span className="hero-blob hero-blob--c" />
+    </div>
   )
 }
 
@@ -97,8 +124,8 @@ export default function Hero() {
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   ).current
 
-  // Autoplay 5s. Depende de `active` → toda troca (manual OU automática)
-  // limpa e recria o intervalo, reiniciando a contagem. Sem múltiplos timers.
+  // Autoplay 5s. Depende de `active` → toda troca (manual OU automática) limpa
+  // e recria o intervalo, reiniciando a contagem. Sem múltiplos timers.
   useEffect(() => {
     if (reducedMotion || paused) return
     timerRef.current = window.setInterval(() => setActive((i) => (i + 1) % slides.length), AUTOPLAY_MS)
@@ -141,14 +168,14 @@ export default function Hero() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="site-container site-container--tight grid items-end gap-8 pt-20 md:pt-20 lg:grid-cols-[44fr_56fr] lg:gap-10 lg:pt-20">
+      <div className="site-container site-container--tight grid items-end gap-8 pt-24 lg:grid-cols-[44fr_56fr] lg:gap-10 lg:pt-24">
         {/* Texto */}
-        <div key={`t-${active}`} className="hero-fade max-w-xl pb-16 md:pb-16 lg:pb-20">
+        <div key={`t-${active}`} className="hero-fade max-w-xl pb-14 md:pb-16 lg:pb-24">
           <span className="mb-4 inline-block text-[12.5px] font-bold uppercase" style={{ color: '#8FE6C4', letterSpacing: '0.14em' }}>
             {slide.label}
           </span>
 
-          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2rem, 3vw, 3rem)', lineHeight: 1.04, letterSpacing: '-0.03em', maxWidth: 500 }}>
+          <h1 className="font-extrabold" style={{ color: '#F4FCFB', fontSize: 'clamp(2.1rem, 3.3vw, 3.3rem)', lineHeight: 1.04, letterSpacing: '-0.03em', maxWidth: 520 }}>
             {slide.title}
           </h1>
 
@@ -156,30 +183,32 @@ export default function Hero() {
             {slide.sub}
           </p>
 
-          <div className="mt-6">
-            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.8rem 1.6rem', fontSize: '0.98rem' }}>
-              Fale com um especialista <ArrowRight className="h-4 w-4" />
+          <div className="mt-7">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
+              Fale com um especialista <ArrowRight className="h-[18px] w-[18px]" />
             </a>
           </div>
         </div>
 
-        {/* Pessoa ancorada na base + forma orgânica */}
-        <div className="relative mx-auto h-[400px] w-full max-w-[580px] sm:h-[450px] lg:h-[500px]">
-          <HeroShape />
+        {/* Pessoa ancorada na base + formas orgânicas + balões */}
+        <div className="relative mx-auto h-[440px] w-full max-w-[600px] sm:h-[500px] lg:h-[600px]">
+          <HeroShapes b1={slide.b1} b2={slide.b2} />
           <span className="hero-contact-shadow" />
 
           <div key={`p-${active}`} className="hero-fade absolute inset-x-0 bottom-0 z-[1] flex justify-center">
             <img
               src={slide.person}
               alt={slide.personAlt}
-              className="max-h-[400px] w-auto object-contain sm:max-h-[450px] lg:max-h-[520px]"
+              className="max-h-[440px] w-auto object-contain sm:max-h-[500px] lg:max-h-[620px]"
+              style={{ objectPosition: 'bottom center' }}
+              loading={active === 0 ? 'eager' : 'lazy'}
               draggable={false}
             />
           </div>
 
           <div key={`c-${active}`} className="hero-fade pointer-events-none absolute inset-0 z-[2]">
             {slide.chips.map((chip, i) => (
-              <HeroChip key={i} chip={chip} hideOnMobile={i === 0} />
+              <HeroChip key={i} chip={chip} hideOnMobile={i >= 2} />
             ))}
           </div>
         </div>

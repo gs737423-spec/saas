@@ -79,21 +79,28 @@ export const institutionalSection = {
   photoAlt: 'Especialista da Vintec segurando um tablet',
 }
 
-// ⚠️ MÉTRICAS INSTITUCIONAIS — PROVISÓRIAS / NÃO VALIDADAS.
-// TODO: validar cada número com a direção da Vintec antes de considerar
-// definitivo. Estes valores são conteúdo TEMPORÁRIO só para montar o layout
-// (padrão da referência Petina). NÃO são dados verificados, não têm fonte
-// confirmada e não devem ser publicados como reais sem autorização.
-// Ponto único de edição: trocar aqui reflete em toda a seção.
+// ⚠️⚠️ MÉTRICAS INSTITUCIONAIS — DEMONSTRAÇÃO, NÃO VALIDADAS (verified:false). ⚠️⚠️
+// NÃO publicar como fatos reais. Cada item carrega `verified:false` e
+// `source:null` até validação comercial da direção da Vintec. NÃO fazer deploy
+// com estes valores sem aprovação. Ponto único de edição.
 export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
-export const institutionalMetrics = [
-  { icon: 'users', value: '+1.000', desc: 'clientes atendidos' },
-  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado' },
-  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados' },
-  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma' },
-  { icon: 'team', value: '+50', desc: 'especialistas e parceiros' },
-  { icon: 'channels', value: '+4', desc: 'marketplaces integrados' },
-] as const
+
+export interface InstitutionalMetric {
+  icon: 'users' | 'gmv' | 'orders' | 'uptime' | 'team' | 'channels'
+  value: string
+  desc: string
+  verified: boolean
+  source: string | null
+}
+
+export const institutionalMetrics: InstitutionalMetric[] = [
+  { icon: 'users', value: '+1.000', desc: 'clientes atendidos', verified: false, source: null },
+  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado', verified: false, source: null },
+  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados', verified: false, source: null },
+  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma', verified: false, source: null },
+  { icon: 'team', value: '+50', desc: 'especialistas e parceiros', verified: false, source: null },
+  { icon: 'channels', value: '+4', desc: 'marketplaces integrados', verified: false, source: null },
+]
 
 // 4ª seção — "O que você recebe": UM único card vertical (estrutura da
 // referência Petina). Nada de dashboard aqui — o print vai na seção de prévia.

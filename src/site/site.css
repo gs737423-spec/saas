@@ -487,24 +487,58 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  /* Ocupa ~78–88vh da primeira dobra (descontando o header), com piso. */
+  min-height: clamp(600px, 84vh, 820px);
   /* Degradê comercial e limpo: petróleo à esquerda, teal ao centro, verde-água
      à direita. Mais claro/comercial, sem grade/glow/fumaça. */
   background: linear-gradient(108deg, #155668 0%, #197f82 48%, #55b995 100%);
   color: #F4FCFB;
 }
 
-/* Forma orgânica assimétrica (SVG path) atrás da pessoa — identidade visual,
-   não efeito. Uma única forma (nada de elipses concêntricas), deslocada à
-   direita, cobrindo tronco/cabeça. Degradê interno definido no próprio SVG. */
-.hero-organic {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  width: 90%;
-  height: 82%;
-  top: 4%;
-  left: 54%;
-  transform: translateX(-50%);
+/* Formas orgânicas atrás da pessoa — 2 preenchidas + 1 contorno, assimétricas,
+   cores por slide (--b1/--b2). Sangram pelas bordas (overflow:hidden recorta). */
+.hero-shapes { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero-blob { position: absolute; }
+.hero-blob--a {
+  width: 78%; height: 82%;
+  right: 4%; top: 4%;
+  background: var(--b1, #8ee2a9);
+  opacity: 0.5;
+  border-radius: 60% 40% 55% 45% / 55% 45% 60% 40%;
+}
+.hero-blob--b {
+  width: 58%; height: 62%;
+  right: -8%; bottom: 6%;
+  background: var(--b2, #67cbd0);
+  opacity: 0.4;
+  border-radius: 45% 55% 50% 50% / 52% 55% 45% 48%;
+}
+.hero-blob--c {
+  width: 40%; height: 44%;
+  left: 6%; bottom: 12%;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 52% 48% 46% 54% / 50% 46% 54% 50%;
+  opacity: 0.6;
+}
+
+/* Balão de logo oficial (slide 1) — claro/translúcido, logo grande. 130–190px. */
+.hero-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 128px;
+  max-width: 190px;
+  padding: 15px 22px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 14px 32px -16px rgba(3, 24, 28, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.hero-logo img { display: block; width: auto; object-fit: contain; }
+@media (max-width: 639px) {
+  .hero-logo { min-width: 104px; padding: 11px 15px; }
 }
 
 /* Sombra de contato — ancora a pessoa na base, extremamente discreta. */

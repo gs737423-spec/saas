@@ -5,7 +5,6 @@ import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
 import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
 import PlatformCardSection from '@/site/sections/PlatformCardSection'
-import PreviewSection from '@/site/sections/PreviewSection'
 import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
 import HowItWorks from '@/site/sections/HowItWorks'
 import DifferentialsSection from '@/site/sections/DifferentialsSection'
@@ -38,9 +37,7 @@ export default function SitePage() {
         <InstitutionalPlatformSection />
         {/* 4. O que você recebe — card vertical único */}
         <PlatformCardSection />
-        {/* 5. Prévia da plataforma — print do dashboard */}
-        <PreviewSection />
-        {/* 4. Marketplaces */}
+        {/* 5. Marketplaces */}
         <EcosystemMarquee />
         {/* 5. Como funciona */}
         <HowItWorks />
