@@ -163,7 +163,40 @@ export const services = [
   },
 ]
 
-// Como funciona — 4 etapas, sempre API, nunca planilha.
+// "Como começamos" — seção editorial de implantação acompanhada (2 colunas:
+// intro + 3 etapas em linha horizontal, não timeline de círculos/ícones).
+export const processIntro = {
+  eyebrow: 'IMPLANTAÇÃO ACOMPANHADA',
+  title: 'Organizamos a mudança sem interromper sua operação.',
+  text: 'Primeiro entendemos como sua equipe trabalha. Depois conectamos os marketplaces disponíveis, organizamos as informações e acompanhamos os responsáveis nos primeiros passos.',
+  reassurances: ['Sem mudanças bruscas na rotina atual.', 'Com orientação durante toda a implantação.'],
+  ctaLabel: 'Converse sobre a sua operação',
+  ctaHref: '#demonstracao',
+}
+
+export const processSteps = [
+  {
+    n: '01',
+    title: 'Entendemos sua rotina atual',
+    text: 'Mapeamos onde sua empresa vende, quais planilhas e controles são utilizados e onde a equipe perde mais tempo.',
+    delivery: 'Diagnóstico e plano inicial.',
+  },
+  {
+    n: '02',
+    title: 'Conectamos e organizamos',
+    text: 'Configuramos os marketplaces disponíveis e reunimos pedidos, estoque, vendas e acessos em uma rotina centralizada.',
+    delivery: 'Informações reunidas em um único fluxo.',
+  },
+  {
+    n: '03',
+    title: 'Acompanhamos a entrada da equipe',
+    text: 'Validamos as informações, orientamos os responsáveis e acompanhamos os primeiros dias de utilização.',
+    delivery: 'Equipe preparada para começar.',
+  },
+]
+
+// Legado — mantido só pra não quebrar imports antigos, caso existam fora
+// desta seção. A seção pública usa processIntro/processSteps agora.
 export const howSteps = [
   { n: '01', title: 'Conectar', text: 'Autorize os canais por API, sem compartilhar senhas com a plataforma.' },
   { n: '02', title: 'Organizar', text: 'Os dados recebidos são estruturados em um modelo único de operação.' },
