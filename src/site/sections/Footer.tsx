@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, MessageCircle } from 'lucide-react'
-import mark from '@/assets/acelera-mark.png'
 import { nav, contact, marketplaces, specialistHref } from '@/site/content'
 import { whatsappDemoUrl } from '@/lib/whatsapp'
 
@@ -27,7 +26,6 @@ export default function Footer() {
           {/* Marca + descrição + marketplaces */}
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
-              <img src={mark} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
               <span className="text-[16px] font-extrabold vt-ink">Vintec</span>
             </div>
             <p className="mt-4 text-[13.5px] vt-muted" style={{ lineHeight: 1.6 }}>
@@ -44,7 +42,7 @@ export default function Footer() {
 
           {/* Navegação */}
           <nav aria-label="Rodapé — navegação">
-            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#4FD9C9' }}>Navegação</h2>
+            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6EC8FF' }}>Navegação</h2>
             <ul className="mt-4 space-y-2.5">
               {nav.map((n) => (
                 <li key={n.href}><a href={n.href} className="text-[14px] vt-ink hover:underline">{n.label}</a></li>
@@ -55,7 +53,7 @@ export default function Footer() {
 
           {/* Institucional + contato */}
           <div>
-            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#4FD9C9' }}>Institucional</h2>
+            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6EC8FF' }}>Institucional</h2>
             <ul className="mt-4 space-y-2.5">
               <li><Link to="/privacidade" className="text-[14px] vt-ink hover:underline">Política de Privacidade</Link></li>
               <li><Link to="/termos" className="text-[14px] vt-ink hover:underline">Termos de Uso</Link></li>
@@ -64,7 +62,7 @@ export default function Footer() {
               )}
               {wa && (
                 <li>
-                  <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[14px]" style={{ color: '#4FD9C9' }}>
+                  <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[14px]" style={{ color: '#6EC8FF' }}>
                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                   </a>
                 </li>
@@ -75,7 +73,7 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[12.5px] vt-muted">&copy; {year} Vintec. Todos os direitos reservados.</p>
-          <a href="#topo" className="text-[12.5px] font-semibold" style={{ color: '#4FD9C9' }}>Voltar ao topo ↑</a>
+          <a href="#topo" className="text-[12.5px] font-semibold" style={{ color: '#6EC8FF' }}>Voltar ao topo ↑</a>
         </div>
       </div>
     </footer>

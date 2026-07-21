@@ -79,21 +79,9 @@ export const institutionalSection = {
   photoAlt: 'Especialista da Vintec segurando um tablet',
 }
 
-// ⚠️ MÉTRICAS INSTITUCIONAIS — PROVISÓRIAS / NÃO VALIDADAS.
-// TODO: validar cada número com a direção da Vintec antes de considerar
-// definitivo. Estes valores são conteúdo TEMPORÁRIO só para montar o layout
-// (padrão da referência Petina). NÃO são dados verificados, não têm fonte
-// confirmada e não devem ser publicados como reais sem autorização.
-// Ponto único de edição: trocar aqui reflete em toda a seção.
+// Métricas institucionais: ver src/site/data/siteMetrics.ts (verified:false,
+// source:null — NÃO publicar como fatos reais sem validação comercial).
 export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
-export const institutionalMetrics = [
-  { icon: 'users', value: '+1.000', desc: 'clientes atendidos' },
-  { icon: 'gmv', value: '+100 MI', desc: 'em GMV acompanhado' },
-  { icon: 'orders', value: '+2 MI', desc: 'de pedidos monitorados' },
-  { icon: 'uptime', value: '+99,5%', desc: 'de disponibilidade da plataforma' },
-  { icon: 'team', value: '+50', desc: 'especialistas e parceiros' },
-  { icon: 'channels', value: '+4', desc: 'marketplaces integrados' },
-] as const
 
 // 4ª seção — "O que você recebe": UM único card vertical (estrutura da
 // referência Petina). Nada de dashboard aqui — o print vai na seção de prévia.
@@ -175,7 +163,40 @@ export const services = [
   },
 ]
 
-// Como funciona — 4 etapas, sempre API, nunca planilha.
+// "Como começamos" — seção editorial de implantação acompanhada (2 colunas:
+// intro + 3 etapas em linha horizontal, não timeline de círculos/ícones).
+export const processIntro = {
+  eyebrow: 'IMPLANTAÇÃO ACOMPANHADA',
+  title: 'Organizamos a mudança sem interromper sua operação.',
+  text: 'Primeiro entendemos como sua equipe trabalha. Depois conectamos os marketplaces disponíveis, organizamos as informações e acompanhamos os responsáveis nos primeiros passos.',
+  reassurances: ['Sem mudanças bruscas na rotina atual.', 'Com orientação durante toda a implantação.'],
+  ctaLabel: 'Converse sobre a sua operação',
+  ctaHref: '#demonstracao',
+}
+
+export const processSteps = [
+  {
+    n: '01',
+    title: 'Entendemos sua rotina atual',
+    text: 'Mapeamos onde sua empresa vende, quais planilhas e controles são utilizados e onde a equipe perde mais tempo.',
+    delivery: 'Diagnóstico e plano inicial.',
+  },
+  {
+    n: '02',
+    title: 'Conectamos e organizamos',
+    text: 'Configuramos os marketplaces disponíveis e reunimos pedidos, estoque, vendas e acessos em uma rotina centralizada.',
+    delivery: 'Informações reunidas em um único fluxo.',
+  },
+  {
+    n: '03',
+    title: 'Acompanhamos a entrada da equipe',
+    text: 'Validamos as informações, orientamos os responsáveis e acompanhamos os primeiros dias de utilização.',
+    delivery: 'Equipe preparada para começar.',
+  },
+]
+
+// Legado — mantido só pra não quebrar imports antigos, caso existam fora
+// desta seção. A seção pública usa processIntro/processSteps agora.
 export const howSteps = [
   { n: '01', title: 'Conectar', text: 'Autorize os canais por API, sem compartilhar senhas com a plataforma.' },
   { n: '02', title: 'Organizar', text: 'Os dados recebidos são estruturados em um modelo único de operação.' },

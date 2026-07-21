@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, ArrowRight, Lock } from 'lucide-react'
-import mark from '@/assets/acelera-mark.png'
 import { nav, specialistHref } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
 
@@ -35,10 +34,9 @@ export default function SiteHeader() {
         className="site-container flex items-center justify-between gap-4 transition-[height] duration-300"
         style={{ height: scrolled ? 60 : 70 }}
       >
-        {/* Logo → topo */}
-        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="Vintec — início">
-          <img src={mark} alt="" width={44} height={44} className="h-11 w-11 object-contain" draggable={false} />
-          <span className="text-[20px] font-extrabold tracking-tight" style={{ color: '#F2FBFA' }}>Vintec</span>
+        {/* Marca tipográfica temporária — só o nome, sem símbolo. */}
+        <a href="#topo" className="flex shrink-0 items-center" aria-label="Vintec — início">
+          <span className="text-[26px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>Vintec</span>
         </a>
 
         {/* Nav desktop — breakpoint 1100px (nav:) */}
@@ -59,7 +57,7 @@ export default function SiteHeader() {
           >
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
+          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
             Fale com um especialista
           </a>
         </div>

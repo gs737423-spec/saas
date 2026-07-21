@@ -12,7 +12,7 @@ export default function Faq() {
       <div className="site-container py-14 md:py-20">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <Reveal>
-            <span className="site-label mb-2" style={{ color: '#4FD9C9' }}>Perguntas frequentes</span>
+            <span className="site-label mb-2" style={{ color: '#6EC8FF' }}>Perguntas frequentes</span>
             <h2 className="text-[22px] font-extrabold tracking-tight vt-ink md:text-[26px]">
               Ainda com dúvidas?
             </h2>
@@ -38,7 +38,7 @@ export default function Faq() {
                         className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
                       >
                         <span className="text-[14px] font-bold vt-ink">{item.q}</span>
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(31,185,168,0.14)', color: '#4FD9C9' }}>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(39, 93, 255,0.14)', color: '#6EC8FF' }}>
                           {isOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                         </span>
                       </button>
