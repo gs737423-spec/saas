@@ -7,14 +7,14 @@ export default function ProdutoKPIs({ product, stock }: { product: Product; stoc
   const marketingSpend = Math.round(product.revenue * 0.08)
 
   const cards = [
-    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'vs período anterior', icon: Receipt, primary: '#4C82F7', secondary: '#22D3EE' },
-    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#16C784', secondary: '#22D3EE' },
-    { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#9061F9', secondary: '#4C82F7' },
-    { label: 'Margem', value: `${product.margin}%`, context: 'sobre o faturamento', icon: Percent, primary: '#F5A524', secondary: '#F5C24B' },
-    { label: 'Estoque Atual', value: stock ? String(stock.stock) : '—', context: 'unidades disponíveis', icon: Boxes, primary: '#22D3EE', secondary: '#4C82F7' },
+    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'vs período anterior', icon: Receipt, primary: '#3568F5', secondary: '#73C6FA' },
+    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#16C784', secondary: '#73C6FA' },
+    { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#9061F9', secondary: '#3568F5' },
+    { label: 'Margem', value: `${product.margin}%`, context: 'sobre o faturamento', icon: Percent, primary: '#F5A524', secondary: '#F3B65D' },
+    { label: 'Estoque Atual', value: stock ? String(stock.stock) : '—', context: 'unidades disponíveis', icon: Boxes, primary: '#73C6FA', secondary: '#3568F5' },
     { label: 'Cobertura', value: stock ? `${stock.coverageDays} dias` : '—', context: 'cobertura estimada', icon: Clock, primary: '#F9603C', secondary: '#F4436C' },
     { label: 'Tendência', value: `${positive ? '+' : ''}${product.trend}%`, context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#16C784' : '#F4436C', secondary: '#F5A524' },
-    { label: 'Gasto em Marketing', value: `R$ ${marketingSpend.toLocaleString('pt-BR')}`, context: 'investimento atribuído', icon: Megaphone, primary: '#9061F9', secondary: '#22D3EE' },
+    { label: 'Gasto em Marketing', value: `R$ ${marketingSpend.toLocaleString('pt-BR')}`, context: 'investimento atribuído', icon: Megaphone, primary: '#9061F9', secondary: '#73C6FA' },
   ]
 
   return (

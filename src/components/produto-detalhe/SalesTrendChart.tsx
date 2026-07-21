@@ -87,13 +87,13 @@ export default function SalesTrendChart({ sku }: { sku: string }) {
         <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#22D3EE" stopOpacity="1" />
+              <stop offset="0%" stopColor="#73C6FA" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#73C6FA" stopOpacity="1" />
             </linearGradient>
           </defs>
-          <path d={path} fill="none" stroke="url(#trendLine)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" style={{ filter: 'drop-shadow(0 0 5px #22D3EEaa)' }} />
+          <path d={path} fill="none" stroke="url(#trendLine)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" style={{ filter: 'drop-shadow(0 0 5px #73C6FAaa)' }} />
           {hoverIdx !== null && (
-            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#22D3EE" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#73C6FA" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
           )}
         </svg>
 
@@ -109,8 +109,8 @@ export default function SalesTrendChart({ sku }: { sku: string }) {
                   className="w-full rounded-t-md transition-all duration-300"
                   style={{
                     height: `${(d.units / maxUnits) * 100}%`,
-                    background: hoverIdx === i ? 'linear-gradient(180deg, #6C9BFF, #4C82F760)' : 'linear-gradient(180deg, #4C82F7, #4C82F730)',
-                    boxShadow: hoverIdx === i ? '0 0 16px -2px #4C82F7cc' : '0 0 10px -4px #4C82F799',
+                    background: hoverIdx === i ? 'linear-gradient(180deg, #6C9BFF, #3568F560)' : 'linear-gradient(180deg, #3568F5, #3568F530)',
+                    boxShadow: hoverIdx === i ? '0 0 16px -2px #3568F5cc' : '0 0 10px -4px #3568F599',
                   }}
                 />
               </div>

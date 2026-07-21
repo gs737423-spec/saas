@@ -27,17 +27,17 @@ export default function HowItWorks() {
             <span className="process-intro__accent" aria-hidden="true" />
           </Reveal>
 
-          <ol className="process-steps">
+          <ol className="vintec-process-steps">
             {processSteps.map((s, i) => (
-              <Reveal as="li" key={s.n} delay={i * 60} className="process-step">
-                <span className="process-step__number">{s.n}</span>
-                <div className="process-step__body">
-                  <h3 className="process-step__title">{s.title}</h3>
-                  <p className="process-step__text">{s.text}</p>
+              <Reveal as="li" key={s.n} delay={i * 60} className="vintec-process-step">
+                <span className="vintec-process-step__number">{s.n}</span>
+                <div className="vintec-process-step__body">
+                  <h3 className="vintec-process-step__title">{s.title}</h3>
+                  <p className="vintec-process-step__text">{s.text}</p>
                 </div>
-                <div className="process-step__result">
-                  <span className="process-step__result-label">Resultado</span>
-                  <span className="process-step__result-value">{s.delivery}</span>
+                <div className="vintec-process-step__result">
+                  <span className="vintec-process-step__result-label">Resultado</span>
+                  <span className="vintec-process-step__result-value">{s.delivery}</span>
                 </div>
               </Reveal>
             ))}

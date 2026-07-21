@@ -4,7 +4,7 @@ import { stockItems, getMarketplaceColor, type StockItem } from '@/data/mockData
 const statusConfig: Record<StockItem['status'], { label: string; color: string; bg: string; bar: string; rank: number }> = {
   critical: { label: 'Crítico', color: 'text-accent-rose', bg: 'bg-accent-rose/10', bar: '#F4436C', rank: 0 },
   stalled: { label: 'Parado', color: 'text-accent-violet', bg: 'bg-accent-violet/10', bar: '#9061F9', rank: 1 },
-  low: { label: 'Baixo', color: 'text-accent-amber', bg: 'bg-accent-amber/10', bar: '#F5C24B', rank: 2 },
+  low: { label: 'Baixo', color: 'text-accent-amber', bg: 'bg-accent-amber/10', bar: '#F3B65D', rank: 2 },
   ok: { label: 'Saudável', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', bar: '#16C784', rank: 3 },
 }
 

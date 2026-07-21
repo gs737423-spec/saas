@@ -11,8 +11,8 @@ const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
 
 const severityColor: Record<ExecutiveAlertSeverity, string> = {
   danger: '#F4436C',
-  warning: '#F5C24B',
-  info: '#4C82F7',
+  warning: '#F3B65D',
+  info: '#3568F5',
 }
 
 export default function NotificationsMenu() {

@@ -17,23 +17,23 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  --color-bg-primary: #060A16;
-  --color-bg-secondary: #0A0F1E;
-  --color-bg-card: #0C1324;
-  --color-bg-card-hover: #111A30;
-  --color-bg-elevated: #131D34;
-  --color-border-subtle: #1A2542;
-  --color-border-default: #26345A;
+  --color-bg-primary: #071426;
+  --color-bg-secondary: #0B1E36;
+  --color-bg-card: #0E203C;
+  --color-bg-card-hover: #132A4C;
+  --color-bg-elevated: #173A67;
+  --color-border-subtle: #1D3258;
+  --color-border-default: #2A4570;
 
   --color-text-primary: #F4F7FD;
   --color-text-secondary: #97A3BD;
   --color-text-muted: #59688A;
 
-  --color-accent-cyan: #22D3EE;
-  --color-accent-blue: #4C82F7;
-  --color-accent-blue-hover: #3B6FE6;
+  --color-accent-cyan: #73C6FA;
+  --color-accent-blue: #3568F5;
+  --color-accent-blue-hover: #244FD7;
   --color-accent-emerald: #16C784;
-  --color-accent-amber: #F5C24B;
+  --color-accent-amber: #F3B65D;
   --color-accent-rose: #F4436C;
   --color-accent-violet: #9061F9;
 
@@ -46,6 +46,15 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-default) transparent;
+}
+
+/* Degradê azul-marinho Vintec nos cards do app — sobrescreve a cor sólida do
+   token `bg-bg-card` (usado em ~30 componentes do dashboard) com um
+   gradiente sutil, sem precisar editar cada componente individualmente. */
+.bg-bg-card {
+  background-image:
+    linear-gradient(165deg, rgba(115, 198, 250, 0.05), rgba(115, 198, 250, 0) 45%),
+    linear-gradient(180deg, #16294A 0%, #0E203C 100%) !important;
 }
 
 html {
@@ -61,9 +70,9 @@ body {
   letter-spacing: -0.011em;
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(1200px 620px at 8% -10%, rgba(34, 96, 200, 0.16), transparent 58%),
-    radial-gradient(1000px 640px at 100% -6%, rgba(76, 130, 247, 0.12), transparent 55%),
-    radial-gradient(1100px 720px at 50% 128%, rgba(34, 211, 238, 0.06), transparent 60%);
+    radial-gradient(1200px 620px at 8% -10%, rgba(53, 104, 245, 0.16), transparent 58%),
+    radial-gradient(1000px 640px at 100% -6%, rgba(115, 198, 250, 0.1), transparent 55%),
+    radial-gradient(1100px 720px at 50% 128%, rgba(36, 79, 215, 0.08), transparent 60%);
   background-repeat: no-repeat;
 }
 

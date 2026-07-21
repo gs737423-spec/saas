@@ -3,7 +3,7 @@ import type { ProductHealthScore, StockItem } from '@/data/mockData'
 
 const statusColor: Record<string, string> = {
   'Saudável': '#16C784',
-  'Atenção': '#F5C24B',
+  'Atenção': '#F3B65D',
   'Crítico': '#F4436C',
   'Parado': '#9061F9',
 }
@@ -14,9 +14,9 @@ interface Props {
 }
 
 export default function ProdutoHealthScore({ health, stock }: Props) {
-  const color = statusColor[health.status] ?? '#4C82F7'
+  const color = statusColor[health.status] ?? '#3568F5'
   const ruptureRisk = stock ? (stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo') : null
-  const riskColor = ruptureRisk === 'Alto' ? '#F4436C' : ruptureRisk === 'Médio' ? '#F5C24B' : '#16C784'
+  const riskColor = ruptureRisk === 'Alto' ? '#F4436C' : ruptureRisk === 'Médio' ? '#F3B65D' : '#16C784'
 
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">

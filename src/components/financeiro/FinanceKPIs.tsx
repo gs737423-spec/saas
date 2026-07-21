@@ -23,7 +23,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Total vendido no período',
       icon: DollarSign,
-      tone: '#22D3EE',
+      tone: '#73C6FA',
     },
     {
       key: 'fees',
@@ -32,7 +32,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Retido pelos canais de venda',
       icon: Percent,
-      tone: '#F5C24B',
+      tone: '#F3B65D',
     },
     {
       key: 'refunds',

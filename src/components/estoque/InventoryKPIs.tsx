@@ -38,8 +38,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}`,
       sub: 'estoque × custo unitário',
       icon: Wallet,
-      primary: '#22D3EE',
-      secondary: '#4C82F7',
+      primary: '#73C6FA',
+      secondary: '#3568F5',
     },
     {
       key: 'total',
@@ -48,8 +48,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => String(Math.round(v)),
       sub: 'produtos ativos · clique para limpar filtros',
       icon: Boxes,
-      primary: '#4C82F7',
-      secondary: '#22D3EE',
+      primary: '#3568F5',
+      secondary: '#73C6FA',
       apply: () => ({ ...defaultInventoryFilters, abc: new Set() }),
       isActive: (f) => f.abc.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch,
     },
@@ -73,7 +73,7 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       sub: 'vendas ÷ estoque médio',
       icon: RefreshCw,
       primary: '#F5A524',
-      secondary: '#F5C24B',
+      secondary: '#F3B65D',
     },
     {
       key: 'curveA',
@@ -83,7 +83,7 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       sub: 'maior share de faturamento',
       icon: Crown,
       primary: '#16C784',
-      secondary: '#22D3EE',
+      secondary: '#73C6FA',
       apply: (f) => ({ ...defaultInventoryFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set(['A' as const]) }),
       isActive: (f) => f.abc.has('A') && f.abc.size === 1 && !f.onlyLowCoverage,
     },
@@ -127,10 +127,10 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
           type="button"
           onClick={() => onChange({ ...defaultInventoryFilters, onlyExcess: !filters.onlyExcess })}
           className="cursor-pointer pl-2 text-left"
-          style={excessActive ? { boxShadow: `inset 0 0 0 1.5px #22D3EE99` } : undefined}
+          style={excessActive ? { boxShadow: `inset 0 0 0 1.5px #73C6FA99` } : undefined}
         >
           <div className="flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5" style={{ color: '#22D3EE' }} />
+            <Layers className="h-3.5 w-3.5" style={{ color: '#73C6FA' }} />
             <span className="font-mono text-[16px] font-bold leading-none text-text-primary">
               <AnimatedNumber value={excess} format={(v) => String(Math.round(v))} />
             </span>

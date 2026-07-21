@@ -20,6 +20,7 @@ export default function HeroPersonStage({
         src={person}
         alt={personAlt}
         className="hero-person"
+        data-active="true"
         loading={eager ? 'eager' : 'lazy'}
         draggable={false}
       />

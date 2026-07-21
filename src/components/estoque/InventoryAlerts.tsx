@@ -4,8 +4,8 @@ import { getInventoryAlerts, type InventoryAlert } from '@/data/mockData'
 
 const severityConfig: Record<InventoryAlert['severity'], { icon: typeof AlertTriangle; color: string; bg: string; border: string }> = {
   danger: { icon: AlertCircle, color: '#F4436C', bg: 'rgba(244,67,108,0.08)', border: 'rgba(244,67,108,0.25)' },
-  warning: { icon: AlertTriangle, color: '#F5C24B', bg: 'rgba(245,194,75,0.08)', border: 'rgba(245,194,75,0.25)' },
-  info: { icon: Info, color: '#4C82F7', bg: 'rgba(76,130,247,0.08)', border: 'rgba(76,130,247,0.25)' },
+  warning: { icon: AlertTriangle, color: '#F3B65D', bg: 'rgba(245,194,75,0.08)', border: 'rgba(245,194,75,0.25)' },
+  info: { icon: Info, color: '#3568F5', bg: 'rgba(53,104,245,0.08)', border: 'rgba(53,104,245,0.25)' },
 }
 
 export default function InventoryAlerts() {

@@ -1,8 +1,8 @@
 import { Download, FileSpreadsheet, Upload, ShieldCheck, RefreshCw } from 'lucide-react'
 
 const steps = [
-  { icon: Download, label: 'Baixar modelo', color: '#4C82F7' },
-  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#22D3EE' },
+  { icon: Download, label: 'Baixar modelo', color: '#3568F5' },
+  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#73C6FA' },
   { icon: Upload, label: 'Enviar arquivo', color: '#9061F9' },
   { icon: ShieldCheck, label: 'Validar dados', color: '#F5A524' },
   { icon: RefreshCw, label: 'Atualizar dashboard', color: '#16C784' },
