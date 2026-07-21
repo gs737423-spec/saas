@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, MessageCircle } from 'lucide-react'
-import mark from '@/assets/acelera-mark.png'
 import { nav, contact, marketplaces, specialistHref } from '@/site/content'
 import { whatsappDemoUrl } from '@/lib/whatsapp'
 
@@ -27,7 +26,6 @@ export default function Footer() {
           {/* Marca + descrição + marketplaces */}
           <div className="max-w-xs">
             <div className="flex items-center gap-2.5">
-              <img src={mark} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
               <span className="text-[16px] font-extrabold vt-ink">Vintec</span>
             </div>
             <p className="mt-4 text-[13.5px] vt-muted" style={{ lineHeight: 1.6 }}>
