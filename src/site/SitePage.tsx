@@ -3,22 +3,24 @@ import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
-import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
-import PlatformCardSection from '@/site/sections/PlatformCardSection'
-import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
+import ServicesSection from '@/site/sections/ServicesSection'
+import MarketplacesSection from '@/site/sections/MarketplacesSection'
 import HowItWorks from '@/site/sections/HowItWorks'
 import DifferentialsSection from '@/site/sections/DifferentialsSection'
-import CommercialBanner from '@/site/sections/CommercialBanner'
-import Demo from '@/site/sections/Demo'
+import ConversionSection from '@/site/sections/ConversionSection'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
-import { commercialBanners } from '@/site/content'
 
-// Home dark-first (direção premium Vintec). Seções antigas baseadas em
-// screenshot de dashboard (ProblemSection, PlatformShowcase,
-// DiagnosticSection, IntegrationsSecurity) e o WhatWeDo (fundido no bloco
-// institucional) continuam no repo, fora da renderização pública.
+// Home institucional Vintec — 9 seções, narrativa comercial direta (hero →
+// Quem Somos → o que muda na prática → marketplaces → como começamos → por
+// que Vintec → conversão → FAQ → footer). A antiga seção institucional com
+// pessoa (InstitutionalSolutionSection/InstitutionalPlatformSection) foi
+// removida da renderização: repetia o argumento do hero e de Quem Somos sem
+// resposta comercial nova. Demais seções antigas (ProblemSection,
+// PlatformShowcase, DiagnosticSection, IntegrationsSecurity, WhatWeDo,
+// PreviewSection, PlatformCardSection, EcosystemMarquee, CommercialBanner,
+// Demo) continuam no repo fora da renderização pública.
 export default function SitePage() {
   useEffect(() => {
     document.documentElement.classList.add('site-active')
@@ -29,26 +31,21 @@ export default function SitePage() {
     <div className="site-root site-root--dark">
       <SiteHeader />
       <main>
-        {/* 1. Promessa — hero slider dark */}
+        {/* 1. Hero — gradiente escuro azul-marinho */}
         <Hero />
-        {/* 2. Quem Somos + números */}
+        {/* 2. Quem Somos + métricas — canvas */}
         <NumbersSection />
-        {/* 3. Institucional — pessoa consultora + texto */}
-        <InstitutionalPlatformSection />
-        {/* 4. O que você recebe — card vertical único */}
-        <PlatformCardSection />
-        {/* 5. Marketplaces */}
-        <EcosystemMarquee />
-        {/* 5. Como funciona */}
+        {/* 3. O que muda na prática — warm */}
+        <ServicesSection />
+        {/* 4. Marketplaces — ink-900 */}
+        <MarketplacesSection />
+        {/* 5. Como começamos — cool */}
         <HowItWorks />
-        {/* 6. Banner humanizado — organização */}
-        <CommercialBanner content={commercialBanners[0]} />
-        {/* 7. Diferenciais */}
+        {/* 6. Por que Vintec — warm */}
         <DifferentialsSection />
-        {/* 8. Banner humanizado — proximidade / especialista */}
-        <CommercialBanner content={commercialBanners[1]} />
-        {/* 9. Conversão final */}
-        <Demo />
+        {/* 7. Conversão — gradiente escuro azul → azul vivo */}
+        <ConversionSection />
+        {/* 8. FAQ — canvas */}
         <Faq />
       </main>
       <Footer />

@@ -8,10 +8,10 @@ const stalled = stockItems.filter((i) => i.status === 'stalled').length
 const rupture = stockItems.filter((i) => i.coverageDays <= 7).length
 
 const cards = [
-  { label: 'Itens em Estoque', value: totalStock.toLocaleString('pt-BR'), sub: `${stockItems.length} SKUs ativos`, icon: Boxes, primary: '#4C82F7', secondary: '#22D3EE' },
+  { label: 'Itens em Estoque', value: totalStock.toLocaleString('pt-BR'), sub: `${stockItems.length} SKUs ativos`, icon: Boxes, primary: '#3568F5', secondary: '#73C6FA' },
   { label: 'Estoque Crítico', value: String(critical), sub: 'produtos em estado crítico', icon: AlertTriangle, primary: '#F4436C', secondary: '#F9603C' },
-  { label: 'Cobertura Média', value: `${avgCoverage} dias`, sub: 'estimativa de duração', icon: Clock, primary: '#F5A524', secondary: '#F5C24B' },
-  { label: 'Produtos Parados', value: String(stalled), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', secondary: '#4C82F7' },
+  { label: 'Cobertura Média', value: `${avgCoverage} dias`, sub: 'estimativa de duração', icon: Clock, primary: '#F5A524', secondary: '#F3B65D' },
+  { label: 'Produtos Parados', value: String(stalled), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', secondary: '#3568F5' },
   { label: 'Ruptura Estimada', value: String(rupture), sub: 'ruptura em ≤ 7 dias', icon: PackageX, primary: '#F9603C', secondary: '#F4436C' },
 ]
 

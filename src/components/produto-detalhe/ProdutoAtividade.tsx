@@ -4,8 +4,8 @@ import { productActivity, type ProductActivity } from '@/data/mockData'
 const typeConfig: Record<ProductActivity['type'], { icon: typeof ShoppingCart; color: string; bg: string; dot: string }> = {
   venda: { icon: ShoppingCart, color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', dot: '#16C784' },
   alerta: { icon: AlertTriangle, color: 'text-accent-rose', bg: 'bg-accent-rose/10', dot: '#F4436C' },
-  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#F5C24B' },
-  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#4C82F7' },
+  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#F3B65D' },
+  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#3568F5' },
   campanha: { icon: Megaphone, color: 'text-accent-violet', bg: 'bg-accent-violet/10', dot: '#9061F9' },
 }
 

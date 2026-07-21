@@ -8,8 +8,8 @@ const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 const typeTone: Record<FinanceTransactionType, string> = {
   Venda: '#16C784',
-  Comissão: '#F5C24B',
-  Tarifa: '#F5C24B',
+  Comissão: '#F3B65D',
+  Tarifa: '#F3B65D',
   Estorno: '#F4436C',
   Devolução: '#F4436C',
   Ajuste: '#59688A',

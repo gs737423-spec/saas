@@ -2,7 +2,7 @@ import { stockItems, type StockItem } from '@/data/mockData'
 
 const statusColor: Record<StockItem['status'], string> = {
   ok: '#16C784',
-  low: '#F5C24B',
+  low: '#F3B65D',
   critical: '#F4436C',
   stalled: '#9061F9',
 }
@@ -20,7 +20,7 @@ export default function GiroEstoqueChart() {
         </div>
         <div className="hidden items-center gap-3 text-[10px] text-text-secondary sm:flex">
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#16C784]" />Saudável</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F5C24B]" />Baixo</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F3B65D]" />Baixo</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F4436C]" />Crítico</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#9061F9]" />Parado</span>
         </div>

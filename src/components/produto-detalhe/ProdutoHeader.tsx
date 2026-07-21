@@ -4,7 +4,7 @@ import { getMarketplaceColor, getProductHealthSummary, type Product, type Produc
 
 const statusConfig: Record<ProductStatus, { color: string; bg: string; border: string; dot: string }> = {
   'Saudável': { color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20', dot: '#16C784' },
-  'Atenção': { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20', dot: '#F5C24B' },
+  'Atenção': { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20', dot: '#F3B65D' },
   'Crítico': { color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20', dot: '#F4436C' },
   'Parado': { color: 'text-accent-violet', bg: 'bg-accent-violet/10', border: 'border-accent-violet/20', dot: '#9061F9' },
 }

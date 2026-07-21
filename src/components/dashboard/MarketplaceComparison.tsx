@@ -13,7 +13,7 @@ const sortOptions: { key: SortKey; label: string }[] = [
 
 const statusStyle: Record<ChannelStatus, { color: string; bg: string }> = {
   'Saudável': { color: '#16C784', bg: 'rgba(22,199,132,0.12)' },
-  'Atenção': { color: '#F5C24B', bg: 'rgba(245,194,75,0.12)' },
+  'Atenção': { color: '#F3B65D', bg: 'rgba(245,194,75,0.12)' },
   'Crítico': { color: '#F4436C', bg: 'rgba(244,67,108,0.12)' },
 }
 

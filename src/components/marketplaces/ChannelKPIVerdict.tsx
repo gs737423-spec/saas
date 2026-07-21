@@ -46,7 +46,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byOrders[0].marketplace,
       sub: `ticket R$ ${brl2(sorted.byOrders[0].avgTicket)}`,
       icon: ShoppingCart,
-      tone: '#4C82F7',
+      tone: '#3568F5',
     },
     {
       label: 'Maior Crescimento',
@@ -55,7 +55,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byGrowth[0].marketplace,
       sub: `líquido R$ ${brl(sorted.byGrowth[0].netRevenue)}`,
       icon: TrendingUp,
-      tone: '#22D3EE',
+      tone: '#73C6FA',
     },
     {
       label: 'Maior Impacto de Comissão',
@@ -64,7 +64,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byFees[0].marketplace,
       sub: `R$ ${brl(sorted.byFees[0].fees)} retidos`,
       icon: Shield,
-      tone: '#F5C24B',
+      tone: '#F3B65D',
     },
     {
       label: 'Canal em Atenção',

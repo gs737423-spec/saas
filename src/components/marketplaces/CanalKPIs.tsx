@@ -8,10 +8,10 @@ const bestGrowth = [...marketplaceMetrics].sort((a, b) => b.trend - a.trend)[0]
 const attention = marketplaceMetrics.find((m) => m.status !== 'Saudável') ?? marketplaceMetrics[marketplaceMetrics.length - 1]
 
 const cards = [
-  { label: 'Faturamento Total', value: `R$ ${totalRevenue.toLocaleString('pt-BR')}`, sub: `${marketplaceMetrics.length} canais ativos`, icon: Wallet, primary: '#4C82F7', secondary: '#22D3EE' },
-  { label: 'Canal Líder', value: leader.marketplace, sub: `R$ ${leader.revenue.toLocaleString('pt-BR')} · ${leader.sharePct}% do total`, icon: Crown, primary: '#F5A524', secondary: '#F5C24B' },
-  { label: 'Melhor Ticket Médio', value: `R$ ${bestTicket.avgTicket.toFixed(0)}`, sub: bestTicket.marketplace, icon: Tag, primary: '#9061F9', secondary: '#4C82F7' },
-  { label: 'Maior Crescimento', value: `+${bestGrowth.trend}%`, sub: bestGrowth.marketplace, icon: Rocket, primary: '#16C784', secondary: '#22D3EE' },
+  { label: 'Faturamento Total', value: `R$ ${totalRevenue.toLocaleString('pt-BR')}`, sub: `${marketplaceMetrics.length} canais ativos`, icon: Wallet, primary: '#3568F5', secondary: '#73C6FA' },
+  { label: 'Canal Líder', value: leader.marketplace, sub: `R$ ${leader.revenue.toLocaleString('pt-BR')} · ${leader.sharePct}% do total`, icon: Crown, primary: '#F5A524', secondary: '#F3B65D' },
+  { label: 'Melhor Ticket Médio', value: `R$ ${bestTicket.avgTicket.toFixed(0)}`, sub: bestTicket.marketplace, icon: Tag, primary: '#9061F9', secondary: '#3568F5' },
+  { label: 'Maior Crescimento', value: `+${bestGrowth.trend}%`, sub: bestGrowth.marketplace, icon: Rocket, primary: '#16C784', secondary: '#73C6FA' },
   { label: 'Canal com Atenção', value: attention.marketplace, sub: `Margem ${attention.margin}% · ${attention.status}`, icon: AlertTriangle, primary: '#F4436C', secondary: '#F9603C' },
 ]
 

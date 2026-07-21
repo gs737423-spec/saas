@@ -5,7 +5,6 @@ import {
   ArrowRight, ShieldCheck, Plug, LayoutDashboard, AlertTriangle, Building2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import mark from '@/assets/acelera-mark.png';
 import { whatsappAccessHelpUrl, whatsappDemoUrl } from '@/lib/whatsapp';
 import '@/site/site.css';
 
@@ -21,8 +20,8 @@ type View = 'login' | 'forgot';
 
 const ink = '#F4F7FD';
 const muted = '#93A0BC';
-const blue = '#4C82F7';
-const cardBorder = 'rgba(76,130,247,0.16)';
+const blue = '#3568F5';
+const cardBorder = 'rgba(53,104,245,0.16)';
 
 const benefits = [
   { icon: Plug, label: 'Integrações por API' },
@@ -128,8 +127,8 @@ export default function Login() {
   const inputStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: ink };
   const focusIn = (e: React.FocusEvent<HTMLInputElement>) => {
     e.currentTarget.style.borderColor = blue;
-    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(76,130,247,0.18), 0 0 24px -8px rgba(76,130,247,0.5)';
-    e.currentTarget.style.background = 'rgba(76,130,247,0.06)';
+    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(53,104,245,0.18), 0 0 24px -8px rgba(53,104,245,0.5)';
+    e.currentTarget.style.background = 'rgba(53,104,245,0.06)';
   };
   const focusOut = (e: React.FocusEvent<HTMLInputElement>) => {
     e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
@@ -140,7 +139,7 @@ export default function Login() {
   return (
     <div className="site-root fixed inset-0 overflow-y-auto site-dark" style={{ minHeight: '100vh' }}>
       {/* Halos de profundidade — respiram devagar, CSS puro */}
-      <span aria-hidden="true" className="ambient-halo" style={{ width: 480, height: 480, top: '-12%', left: '-8%', background: 'radial-gradient(circle, rgba(76,130,247,0.22), transparent 70%)' }} />
+      <span aria-hidden="true" className="ambient-halo" style={{ width: 480, height: 480, top: '-12%', left: '-8%', background: 'radial-gradient(circle, rgba(53,104,245,0.22), transparent 70%)' }} />
       <span aria-hidden="true" className="ambient-halo" style={{ width: 420, height: 420, bottom: '-14%', right: '-6%', background: 'radial-gradient(circle, rgba(124,92,246,0.18), transparent 70%)', animationDelay: '3s' }} />
       <div
         aria-hidden="true"
@@ -158,8 +157,7 @@ export default function Login() {
         {/* Header compacto */}
         <header className="flex items-center justify-between px-5 py-3 sm:px-8">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={mark} alt="Vintec" width={32} height={32} className="h-8 w-8 object-contain" />
-            <span className="text-[14px] font-extrabold" style={{ color: ink }}>Vintec</span>
+            <span className="text-[16px] font-extrabold" style={{ color: ink }}>Vintec</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/" className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors sm:flex" style={{ color: muted }}>

@@ -8,8 +8,8 @@ const GOAL_LINE = (100 / SCALE) * 100 // horizontal position of the meta line
 
 // Above goal → cyan, medium → yellow, low → red
 function perf(goalPct: number) {
-  if (goalPct >= 100) return { color: '#22D3EE', label: 'Acima da meta' }
-  if (goalPct >= 85) return { color: '#F5C24B', label: 'Na meta' }
+  if (goalPct >= 100) return { color: '#73C6FA', label: 'Acima da meta' }
+  if (goalPct >= 85) return { color: '#F3B65D', label: 'Na meta' }
   return { color: '#F4436C', label: 'Abaixo da meta' }
 }
 
@@ -23,8 +23,8 @@ export default function ProductPerformance() {
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden items-center gap-3.5 text-[11px] text-text-secondary sm:flex">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#22D3EE]" />Acima</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F5C24B]" />Na meta</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#73C6FA]" />Acima</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F3B65D]" />Na meta</span>
             <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F4436C]" />Abaixo</span>
           </div>
           <button className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary">

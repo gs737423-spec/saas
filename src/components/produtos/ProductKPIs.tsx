@@ -23,11 +23,11 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
   const avgTicket = products.reduce((s, p) => s + p.revenue, 0) / products.reduce((s, p) => s + p.units, 0)
 
   const cards: Card[] = [
-    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#4C82F7' },
+    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3568F5' },
     { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#16C784' },
     { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#F9603C' },
     { label: 'Margem Média', value: avgMargin, format: (v) => `${Math.round(v)}%`, sub: 'todos os produtos', icon: Percent, primary: '#9061F9' },
-    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#22D3EE' },
+    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#73C6FA' },
   ]
 
   return (

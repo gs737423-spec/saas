@@ -61,9 +61,9 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
     thresholds: { criticoMaxDays: 7, atencaoMaxDays: 20, saudavelMaxDays: 45 },
     colors: {
       'Crítico': '#F4436C',
-      'Atenção': '#F5C24B',
+      'Atenção': '#F3B65D',
       'Saudável': '#16C784',
-      'Excesso': '#22D3EE',
+      'Excesso': '#73C6FA',
     },
   },
   stock: {
