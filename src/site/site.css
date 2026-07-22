@@ -678,6 +678,46 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   .hero-stage-base { width: 260px; }
 }
 
+/* ---- Slide 2 do hero (índice 1) — composição de 2 pessoas ----
+   Reaproveita o MESMO arco azul (.hero-stage-main), só alargado via
+   [data-duo='true']. Nenhuma forma nova, nenhuma bolinha. As 2 pessoas
+   dividem a mesma base (bottom:0) e a mesma altura (escala coerente). */
+.hero-stage[data-duo='true'] .hero-stage-main {
+  width: min(94%, 600px);
+  height: min(90%, 630px);
+  border-radius: 200px 200px 64px 64px;
+}
+.hero-stage[data-duo='true'] .hero-stage-secondary {
+  width: min(64%, 400px);
+  left: calc(50% + 60px);
+}
+
+.hero-person--duo-a,
+.hero-person--duo-b {
+  height: clamp(340px, 40vw, 480px);
+  filter: drop-shadow(0 16px 16px rgba(4, 12, 28, 0.22));
+}
+/* Mulher (parceira) — lado esquerdo do arco */
+.hero-person--duo-a { left: 37%; z-index: 2; }
+.hero-person--duo-a[data-active='true'] { transform: translate3d(-50%, 0, 0) scale(1); }
+/* Homem (pessoa do próprio slide 2) — lado direito, ligeiramente à frente */
+.hero-person--duo-b { left: 66%; z-index: 3; }
+.hero-person--duo-b[data-active='true'] { transform: translate3d(-50%, 0, 0) scale(1); }
+
+@media (max-width: 1023px) and (min-width: 640px) {
+  .hero-stage[data-duo='true'] .hero-stage-main { width: min(96%, 520px); }
+  .hero-person--duo-a, .hero-person--duo-b { height: clamp(300px, 42vw, 400px); }
+  .hero-person--duo-a { left: 34%; }
+  .hero-person--duo-b { left: 68%; }
+}
+@media (max-width: 639px) {
+  .hero-stage[data-duo='true'] .hero-stage-main { width: min(96%, 360px); height: min(88%, 480px); }
+  .hero-stage[data-duo='true'] .hero-stage-base { width: 300px; }
+  .hero-person--duo-a, .hero-person--duo-b { height: clamp(240px, 56vw, 320px); }
+  .hero-person--duo-a { left: 32%; }
+  .hero-person--duo-b { left: 70%; }
+}
+
 /* Orbs/anéis difusos — usados pelos banners comerciais fora do hero. */
 .hero-orb { position: absolute; border-radius: 999px; filter: blur(64px); pointer-events: none; z-index: 0; }
 .hero-ring { position: absolute; border-radius: 999px; border: 1px solid rgba(39, 93, 255, 0.16); pointer-events: none; z-index: 0; }
