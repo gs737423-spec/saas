@@ -1,76 +1,73 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle, Lock } from 'lucide-react'
-import { contact, marketplaces, specialistHref } from '@/site/content'
-import { whatsappDemoUrl } from '@/lib/whatsapp'
+import { ArrowRight } from 'lucide-react'
+import { marketplaces, specialistHref } from '@/site/content'
 
-// Footer compacto — 5 colunas, ink-950 flat. Sem CTA duplicado (a conversão
-// já está unificada em ConversionSection, logo acima).
+// Footer editorial — wordmark textual (sem símbolo), bloco institucional +
+// 4 colunas de navegação, barra legal inferior. Fundo azul-marinho.
 export default function Footer() {
   const year = new Date().getFullYear()
-  const wa = whatsappDemoUrl()
   const specialist = specialistHref()
 
   return (
-    <footer id="privacidade-anchor" className="sec-footer-flat" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="site-container py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="max-w-[220px] sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[15px] font-extrabold" style={{ color: '#EAF4F3' }}>Vintec</span>
-            </div>
-            <p className="mt-3 text-[13px]" style={{ color: 'rgba(214,235,232,0.65)', lineHeight: 1.55 }}>
-              A Vintec ajuda empresas que vendem em vários marketplaces a reunir informações e acompanhar a rotina com menos controles paralelos.
+    <footer id="privacidade-anchor" className="sec-footer-flat">
+      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 72, paddingBottom: 32 }}>
+        <div className="grid gap-12 lg:grid-cols-[30%_1fr]">
+          <div className="max-w-[320px]">
+            <span className="footer-word">Vintec</span>
+            <h2 className="footer-tagline">Menos telas. Mais controle sobre a operação.</h2>
+            <p className="footer-desc">
+              A Vintec reúne pedidos, estoque, vendas e resultados dos marketplaces para que gestores e equipes acompanhem a operação com menos controles paralelos.
             </p>
+            <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-cta">
+              Fale com um especialista <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
 
-          <nav aria-label="Rodapé — navegação">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#78CAFF' }}>Navegação</h2>
-            <ul className="mt-3.5 space-y-2">
-              <li><a href="#servicos" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Soluções</a></li>
-              <li><a href="#como-funciona" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Como funciona</a></li>
-              <li><a href="#diferenciais" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Por que Vintec</a></li>
-            </ul>
-          </nav>
+          <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
+            <nav aria-label="Rodapé — navegação">
+              <h3 className="footer-col-title">Navegação</h3>
+              <ul className="footer-col-list">
+                <li><a href="#servicos" className="footer-link">Soluções</a></li>
+                <li><a href="#marketplaces" className="footer-link">Marketplaces</a></li>
+                <li><a href="#como-funciona" className="footer-link">Como funciona</a></li>
+                <li><a href="#como-funciona" className="footer-link">Por que Vintec</a></li>
+              </ul>
+            </nav>
 
-          <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#78CAFF' }}>Marketplaces</h2>
-            <ul className="mt-3.5 space-y-2">
-              {marketplaces.map((m) => (
-                <li key={m.name} className="text-[13.5px]" style={{ color: 'rgba(234,244,243,0.82)' }}>{m.name}</li>
-              ))}
-            </ul>
-          </div>
+            <div>
+              <h3 className="footer-col-title">Marketplaces</h3>
+              <ul className="footer-col-list">
+                {marketplaces.map((m) => (
+                  <li key={m.name} className="footer-link footer-link--static">{m.name}</li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#78CAFF' }}>Institucional</h2>
-            <ul className="mt-3.5 space-y-2">
-              <li><a href="#sobre" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Quem somos</a></li>
-              <li><a href="#faq" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>FAQ</a></li>
-              <li><a href="#conversao" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Contato</a></li>
-            </ul>
-          </div>
+            <div>
+              <h3 className="footer-col-title">Institucional</h3>
+              <ul className="footer-col-list">
+                <li><a href="#sobre" className="footer-link">Quem somos</a></li>
+                <li><a href="#faq" className="footer-link">FAQ</a></li>
+                <li><a href="#conversao" className="footer-link">Contato</a></li>
+              </ul>
+            </div>
 
-          <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#78CAFF' }}>Acesso</h2>
-            <ul className="mt-3.5 space-y-2">
-              <li><Link to="/login" className="inline-flex items-center gap-1.5 text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}><Lock className="h-3.5 w-3.5" /> Entrar</Link></li>
-              {wa && (
-                <li><a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[13.5px]" style={{ color: '#78CAFF' }}><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</a></li>
-              )}
-              {contact.email && (
-                <li><a href={`mailto:${contact.email}`} className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>{contact.email}</a></li>
-              )}
-              <li><a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="text-[13.5px] hover:underline" style={{ color: '#EAF4F3' }}>Fale com um especialista</a></li>
-            </ul>
+            <div>
+              <h3 className="footer-col-title">Acesso</h3>
+              <ul className="footer-col-list">
+                <li><Link to="/login" className="footer-link">Entrar</Link></li>
+                <li><a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-link">Fale com um especialista</a></li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div className="mt-9 flex flex-col items-center justify-between gap-3 border-t pt-5 sm:flex-row" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex items-center gap-4">
-            <Link to="/privacidade" className="text-[12px] hover:underline" style={{ color: 'rgba(214,235,232,0.65)' }}>Política de Privacidade</Link>
-            <Link to="/termos" className="text-[12px] hover:underline" style={{ color: 'rgba(214,235,232,0.65)' }}>Termos de Uso</Link>
+        <div className="footer-legal">
+          <div className="footer-legal__links">
+            <Link to="/privacidade" className="footer-link">Política de Privacidade</Link>
+            <Link to="/termos" className="footer-link">Termos de Uso</Link>
           </div>
-          <p className="text-[12px]" style={{ color: 'rgba(214,235,232,0.55)' }}>&copy; {year} Vintec. Todos os direitos reservados.</p>
+          <p className="footer-legal__copy">&copy; {year} Vintec. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

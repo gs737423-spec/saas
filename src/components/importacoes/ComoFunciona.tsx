@@ -1,11 +1,11 @@
 import { Download, FileSpreadsheet, Upload, ShieldCheck, RefreshCw } from 'lucide-react'
 
 const steps = [
-  { icon: Download, label: 'Baixar modelo', color: '#3568F5' },
-  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#73C6FA' },
-  { icon: Upload, label: 'Enviar arquivo', color: '#9061F9' },
-  { icon: ShieldCheck, label: 'Validar dados', color: '#F5A524' },
-  { icon: RefreshCw, label: 'Atualizar dashboard', color: '#16C784' },
+  { icon: Download, label: 'Baixar modelo', color: '#2F6BFF' },
+  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#5AB7FF' },
+  { icon: Upload, label: 'Enviar arquivo', color: '#194B9B' },
+  { icon: ShieldCheck, label: 'Validar dados', color: '#FFC857' },
+  { icon: RefreshCw, label: 'Atualizar dashboard', color: '#2BD6A0' },
 ]
 
 export default function ComoFunciona() {

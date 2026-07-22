@@ -22,7 +22,6 @@ export const nav = [
   { label: 'Soluções', href: '#servicos' },
   { label: 'Marketplaces', href: '#marketplaces' },
   { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'Por que Vintec', href: '#diferenciais' },
   { label: 'FAQ', href: '#faq' },
 ]
 
@@ -160,38 +159,6 @@ export const services = [
   {
     title: 'Indicadores para tomada de decisão',
     text: 'Prioridades claras em vez de números soltos espalhados por telas diferentes.',
-  },
-]
-
-// "Como começamos" — seção editorial de implantação acompanhada (painel
-// azul-marinho + 3 etapas em linha, não jornada de 4 marcadores circulares).
-export const processIntro = {
-  eyebrow: 'IMPLANTAÇÃO ACOMPANHADA',
-  title: 'Organizamos a mudança sem interromper sua operação.',
-  text: 'Primeiro entendemos como sua equipe trabalha. Depois conectamos os marketplaces disponíveis, organizamos as informações e acompanhamos os responsáveis nos primeiros passos.',
-  reassurances: ['Sem mudanças bruscas na rotina atual.', 'Com orientação durante toda a implantação.'],
-  ctaLabel: 'Converse sobre a sua operação',
-  ctaHref: '#conversao',
-}
-
-export const processSteps = [
-  {
-    n: '01',
-    title: 'Entendemos sua rotina atual',
-    text: 'Mapeamos onde sua empresa vende, quais planilhas e controles são utilizados e onde a equipe perde mais tempo.',
-    delivery: 'Diagnóstico e plano inicial.',
-  },
-  {
-    n: '02',
-    title: 'Conectamos e organizamos',
-    text: 'Configuramos os marketplaces disponíveis e reunimos pedidos, estoque, vendas e acessos em uma rotina centralizada.',
-    delivery: 'Informações reunidas em um único fluxo.',
-  },
-  {
-    n: '03',
-    title: 'Acompanhamos a entrada da equipe',
-    text: 'Validamos as informações, orientamos os responsáveis e acompanhamos os primeiros dias de utilização.',
-    delivery: 'Equipe preparada para começar.',
   },
 ]
 

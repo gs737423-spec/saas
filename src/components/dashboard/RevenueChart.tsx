@@ -35,7 +35,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function RevenueChart() {
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:rounded-3xl sm:p-7">
+    <div className="glass-panel rounded-2xl p-4 sm:p-7">
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-base font-semibold text-text-primary">Receita por Marketplace</h3>
@@ -77,9 +77,9 @@ export default function RevenueChart() {
               <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1E1E2E" vertical={false} />
-          <XAxis dataKey="month" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-          <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatCurrency} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#223D5E" vertical={false} />
+          <XAxis dataKey="month" stroke="#6F829B" fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis stroke="#6F829B" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatCurrency} />
           <Tooltip content={<CustomTooltip />} />
           <Legend
             verticalAlign="top"

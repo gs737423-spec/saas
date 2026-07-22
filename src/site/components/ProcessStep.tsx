@@ -1,18 +1,19 @@
-import type { LucideIcon } from 'lucide-react'
 import type { ProcessStepItem } from '@/site/data/processSteps'
 
-// Um passo da jornada — marcador grande numerado + ícone + título + texto +
-// tag de resultado concreto. Sem card pesado.
-export default function ProcessStep({ step, Icon, delay }: { step: ProcessStepItem; Icon: LucideIcon; delay: number }) {
+// Etapa da implantação — número, título+descrição, marcador "RESULTADO",
+// resultado concreto. Divisor sutil, sem caixa, sem ícone, sem timeline.
+export default function ProcessStep({ step, index }: { step: ProcessStepItem; index: number }) {
   return (
-    <li className="process-step" style={{ ['--reveal-delay' as string]: `${delay}ms` }}>
-      <span className="process-step__marker" aria-hidden="true">{step.n}</span>
-      <div className="process-step__head">
-        <Icon className="process-step__icon" aria-hidden="true" />
-        <h3 className="process-step__title">{step.title}</h3>
+    <li className={`impl-step${index === 1 ? ' impl-step--mid' : ''}`}>
+      <span className="impl-step__n">{step.n}</span>
+      <div className="impl-step__body">
+        <h3 className="impl-step__title">{step.title}</h3>
+        <p className="impl-step__desc">{step.text}</p>
       </div>
-      <p className="process-step__text">{step.text}</p>
-      <span className="process-step__result">{step.result}</span>
+      <div className="impl-step__result">
+        <span className="impl-step__result-label">RESULTADO</span>
+        <span className="impl-step__result-value">{step.result}</span>
+      </div>
     </li>
   )
 }

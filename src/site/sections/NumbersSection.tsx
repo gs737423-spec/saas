@@ -14,7 +14,7 @@ const metricIcons: LucideIcon[] = [Users, CircleDollarSign, ShoppingCart, Activi
 export default function NumbersSection() {
   return (
     <section id="sobre" className="vt-light scroll-mt-24">
-      <div className="site-container site-container--tight grid gap-14 py-14 md:py-16 lg:grid-cols-[40fr_56fr] lg:gap-24">
+      <div className="site-container site-container--tight grid gap-14 py-14 md:py-[92px] lg:grid-cols-[40fr_56fr] lg:gap-24">
         <Reveal>
           <span className="mb-3 inline-block text-[13px] font-bold uppercase" style={{ color: 'var(--vintec-blue-700)', letterSpacing: '0.12em' }}>
             {about.label}

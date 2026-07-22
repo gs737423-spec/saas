@@ -31,12 +31,12 @@ const iconByKey: Record<string, typeof DollarSign> = {
 }
 
 const toneColor: Record<KpiTone, string> = {
-  blue: '#3568F5',
-  emerald: '#16C784',
-  cyan: '#73C6FA',
-  amber: '#F3B65D',
-  violet: '#9061F9',
-  neutral: '#59688A',
+  blue: '#2F6BFF',
+  emerald: '#2BD6A0',
+  cyan: '#5AB7FF',
+  amber: '#FFC857',
+  violet: '#194B9B',
+  neutral: '#6F829B',
 }
 
 function Delta({ change }: { change: number }) {

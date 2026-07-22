@@ -10,7 +10,7 @@ const typeConfig = {
 
 export default function AlertsPanel() {
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:rounded-3xl sm:p-7">
+    <div className="glass-panel rounded-2xl p-4 sm:p-7">
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-base font-semibold text-text-primary">Alertas Inteligentes</h3>

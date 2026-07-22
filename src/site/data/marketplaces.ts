@@ -1,20 +1,22 @@
 // Módulos de integração (MarketplacesSection) — reaproveita nome/logo/altura
-// de `@/site/content` (fonte única dos assets de marca) e só adiciona a
-// descrição institucional de cada módulo.
+// de `@/site/content` (fonte única dos assets de marca) e só adiciona
+// título curto + frase prática por marketplace.
 import { marketplaces, type MarketplaceItem } from '@/site/content'
 
 export interface MarketplaceIntegration extends MarketplaceItem {
+  title: string
   description: string
 }
 
-const descriptions: Record<string, string> = {
-  'Mercado Livre': 'Acompanhe pedidos, estoque e resultados do marketplace com menos controles paralelos.',
-  Amazon: 'Reúna as informações da Amazon na mesma rotina utilizada para acompanhar os outros marketplaces.',
-  Shopee: 'Evite consultar o canal separadamente toda vez que precisar entender vendas ou pedidos.',
-  'Leroy Merlin': 'Acompanhe o canal junto aos demais marketplaces em que sua empresa opera.',
+const copy: Record<string, { title: string; description: string }> = {
+  'Mercado Livre': { title: 'Pedidos e estoque acompanhados', description: 'Consulte os principais movimentos do marketplace junto aos demais canais.' },
+  Amazon: { title: 'Resultados na mesma rotina', description: 'Compare vendas e desempenho sem alternar entre diferentes painéis.' },
+  Shopee: { title: 'Menos consultas separadas', description: 'Acompanhe pedidos e vendas sem reconstruir as informações manualmente.' },
+  'Leroy Merlin': { title: 'Mais controle sobre o canal', description: 'Visualize o desempenho junto aos outros marketplaces em que a empresa vende.' },
 }
 
 export const marketplaceIntegrations: MarketplaceIntegration[] = marketplaces.map((m) => ({
   ...m,
-  description: descriptions[m.name] ?? '',
+  title: copy[m.name]?.title ?? '',
+  description: copy[m.name]?.description ?? '',
 }))

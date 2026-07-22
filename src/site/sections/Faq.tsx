@@ -12,7 +12,6 @@ export default function Faq() {
       <div className="site-container py-14 md:py-20">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <Reveal>
-            <span className="site-label mb-2" style={{ color: 'var(--vintec-blue-700)' }}>Perguntas frequentes</span>
             <h2 className="text-[22px] font-extrabold tracking-tight md:text-[26px]" style={{ color: 'var(--vintec-text)' }}>
               Ainda com dúvidas?
             </h2>
@@ -21,18 +20,17 @@ export default function Faq() {
             </p>
           </Reveal>
 
-          <Reveal delay={60}>
-            <ul className="space-y-2.5">
+          <Reveal delay={60} className="max-w-xl">
+            <ul className="space-y-2">
               {faqItems.map((item, i) => {
                 const isOpen = open === i
                 const bodyId = `faq-body-${i}`
                 const btnId = `faq-btn-${i}`
                 return (
                   <li key={item.q} className="overflow-hidden" style={{
-                    borderRadius: 16,
+                    borderRadius: 12,
                     background: '#FFFFFF',
                     border: `1px solid ${isOpen ? 'var(--vintec-blue-500)' : 'var(--vintec-border)'}`,
-                    boxShadow: '0 12px 28px -22px rgba(20,36,59,0.18)',
                   }}>
                     <h3>
                       <button
@@ -40,7 +38,7 @@ export default function Faq() {
                         aria-expanded={isOpen}
                         aria-controls={bodyId}
                         onClick={() => setOpen(isOpen ? null : i)}
-                        className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
+                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
                       >
                         <span className="text-[14px] font-bold" style={{ color: 'var(--vintec-text)' }}>{item.q}</span>
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(53,104,255,0.1)', color: 'var(--vintec-blue-600)' }}>
@@ -50,7 +48,7 @@ export default function Faq() {
                     </h3>
                     <div id={bodyId} role="region" aria-labelledby={btnId} className="faq-body" data-open={isOpen}>
                       <div>
-                        <p className="px-4 pb-4 text-[13.5px]" style={{ color: 'var(--vintec-text-soft)', lineHeight: 1.55 }}>{item.a}</p>
+                        <p className="px-4 pb-4 text-[14px]" style={{ color: 'var(--vintec-text-soft)', lineHeight: 1.6 }}>{item.a}</p>
                       </div>
                     </div>
                   </li>

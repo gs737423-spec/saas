@@ -13,7 +13,7 @@ export default function StockHealth({ stock }: { stock: StockItem | undefined })
 
   const minStock = Math.round(stock.stock / (stock.coverageDays / 7 || 1))
   const ruptureRisk = stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo'
-  const riskColor = ruptureRisk === 'Alto' ? '#F4436C' : ruptureRisk === 'Médio' ? '#F3B65D' : '#16C784'
+  const riskColor = ruptureRisk === 'Alto' ? '#FF5F7A' : ruptureRisk === 'Médio' ? '#FFC857' : '#2BD6A0'
   const recommended = ruptureRisk !== 'Baixo' ? Math.max(50, Math.round(stock.stock * 1.5)) : 0
   const coveragePct = Math.min(100, Math.round((stock.coverageDays / 60) * 100))
 

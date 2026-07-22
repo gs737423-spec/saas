@@ -14,7 +14,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const mp = getMarketplaceColor('Mercado Livre')
 
   return (
-    <div className="overview-glass-elevated flex flex-col rounded-2xl p-4 sm:rounded-3xl sm:p-5">
+    <div className="overview-glass-elevated flex flex-col rounded-2xl p-4 sm:p-5">
       <div className="mb-3.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
         <p className="mt-0.5 text-xs text-text-muted">{items.length} produtos sincronizados do Mercado Livre</p>

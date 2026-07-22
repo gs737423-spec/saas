@@ -105,10 +105,10 @@ export default function ConversionSection() {
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <span className="site-label mb-3" style={{ color: '#78CAFF' }}>Próximo passo</span>
-            <h2 className="site-h2 vt-ink">Descubra onde sua gestão perde tempo e clareza hoje.</h2>
-            <p className="site-lead mt-4 vt-muted">Conte como sua empresa acompanha os marketplaces. Nossa equipe analisa a rotina atual e mostra como a Vintec pode ajudar.</p>
+            <h2 className="site-h2 vt-ink">Vamos entender como sua equipe acompanha os marketplaces hoje.</h2>
+            <p className="site-lead mt-4 vt-muted">Conte brevemente como sua empresa trabalha. A equipe da Vintec analisa o cenário e explica de que forma pode ajudar.</p>
             <ul className="mt-6 space-y-2.5">
-              {['Entendemos como sua equipe trabalha', 'Identificamos controles paralelos', 'Avaliamos os marketplaces utilizados', 'Orientamos os próximos passos'].map((t) => (
+              {['Entendemos os controles utilizados', 'Verificamos os marketplaces', 'Identificamos tarefas repetidas', 'Explicamos os próximos passos'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px] vt-muted">
                   <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: '#78CAFF' }} /> {t}
                 </li>
@@ -196,7 +196,7 @@ export default function ConversionSection() {
               )}
 
               <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-6 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
-                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <>Quero conversar com um especialista <ArrowRight className="h-4 w-4" /></>}
+                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <>Fale com um especialista <ArrowRight className="h-4 w-4" /></>}
               </button>
             </form>
           </Reveal>

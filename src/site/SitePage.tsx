@@ -6,21 +6,19 @@ import NumbersSection from '@/site/sections/NumbersSection'
 import ServicesSection from '@/site/sections/ServicesSection'
 import MarketplacesSection from '@/site/sections/MarketplacesSection'
 import HowItWorks from '@/site/sections/HowItWorks'
-import DifferentialsSection from '@/site/sections/DifferentialsSection'
 import ConversionSection from '@/site/sections/ConversionSection'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 
-// Home institucional Vintec — 9 seções, narrativa comercial direta (hero →
-// Quem Somos → o que muda na prática → marketplaces → como começamos → por
-// que Vintec → conversão → FAQ → footer). A antiga seção institucional com
-// pessoa (InstitutionalSolutionSection/InstitutionalPlatformSection) foi
-// removida da renderização: repetia o argumento do hero e de Quem Somos sem
-// resposta comercial nova. Demais seções antigas (ProblemSection,
-// PlatformShowcase, DiagnosticSection, IntegrationsSecurity, WhatWeDo,
-// PreviewSection, PlatformCardSection, EcosystemMarquee, CommercialBanner,
-// Demo) continuam no repo fora da renderização pública.
+// Home institucional Vintec — 8 seções. "Por que Vintec" deixou de ser
+// seção independente (repetia argumentos de benefícios/como funciona) e foi
+// incorporada como faixa final compacta dentro de HowItWorks. Demais seções
+// antigas (ProblemSection, PlatformShowcase, DiagnosticSection,
+// IntegrationsSecurity, WhatWeDo, PreviewSection, PlatformCardSection,
+// EcosystemMarquee, CommercialBanner, Demo, InstitutionalPlatformSection,
+// InstitutionalSolutionSection, DifferentialsSection) continuam no repo fora
+// da renderização pública.
 export default function SitePage() {
   useEffect(() => {
     document.documentElement.classList.add('site-active')
@@ -31,21 +29,19 @@ export default function SitePage() {
     <div className="site-root site-root--dark">
       <SiteHeader />
       <main>
-        {/* 1. Hero — gradiente escuro azul-marinho */}
+        {/* 1. Hero — escuro, gradiente */}
         <Hero />
-        {/* 2. Quem Somos + métricas — canvas */}
+        {/* 2. Quem Somos + métricas — claro */}
         <NumbersSection />
-        {/* 3. O que muda na prática — warm */}
+        {/* 3. Benefícios — escuro */}
         <ServicesSection />
-        {/* 4. Marketplaces — ink-900 */}
+        {/* 4. Marketplaces — claro */}
         <MarketplacesSection />
-        {/* 5. Como começamos — cool */}
+        {/* 5. Como funciona (+ faixa final) — claro */}
         <HowItWorks />
-        {/* 6. Por que Vintec — warm */}
-        <DifferentialsSection />
-        {/* 7. Conversão — gradiente escuro azul → azul vivo */}
+        {/* 6. Conversão — escuro, gradiente */}
         <ConversionSection />
-        {/* 8. FAQ — canvas */}
+        {/* 7. FAQ — claro */}
         <Faq />
       </main>
       <Footer />

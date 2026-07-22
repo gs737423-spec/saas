@@ -17,25 +17,36 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  --color-bg-primary: #071426;
-  --color-bg-secondary: #0B1E36;
-  --color-bg-card: #0E203C;
-  --color-bg-card-hover: #132A4C;
-  --color-bg-elevated: #173A67;
-  --color-border-subtle: #1D3258;
-  --color-border-default: #2A4570;
+  /* Escuro, profundidade por níveis de superfície (plataforma /app) — sem
+     preto puro, sem roxo/ciano neon. Nomes de token preservados (dezenas de
+     componentes já referenciam essas classes Tailwind geradas).
+     accent-violet reaproveita o sky (sem roxo). Namespace isolado do site
+     institucional (site.css usa --vintec-*, não consome nada daqui). */
+  --color-bg-primary: #050F1D;
+  --color-bg-secondary: #071426;
+  --color-bg-card: #0B1B30;
+  --color-bg-card-hover: #183452;
+  --color-bg-elevated: #10233B;
+  --color-bg-highlight: #142B48;
+  --color-bg-header: #061326;
+  --color-border-subtle: rgba(87, 123, 163, 0.26);
+  --color-border-default: rgba(99, 179, 255, 0.28);
+  --color-border-active: rgba(99, 179, 255, 0.68);
 
-  --color-text-primary: #F4F7FD;
-  --color-text-secondary: #97A3BD;
-  --color-text-muted: #59688A;
+  --color-text-primary: #F5F8FC;
+  --color-text-secondary: #A8B7C9;
+  --color-text-muted: #788AA1;
 
-  --color-accent-cyan: #73C6FA;
-  --color-accent-blue: #3568F5;
-  --color-accent-blue-hover: #244FD7;
-  --color-accent-emerald: #16C784;
-  --color-accent-amber: #F3B65D;
-  --color-accent-rose: #F4436C;
-  --color-accent-violet: #9061F9;
+  --color-accent-cyan: #63B3FF;
+  --color-accent-blue: #2F6BFF;
+  --color-accent-blue-hover: #4C82FF;
+  --color-accent-blue-deep: #194B9B;
+  --color-accent-emerald: #2BD6A0;
+  --color-accent-amber: #FFBE63;
+  --color-accent-warning: #FFC857;
+  --color-accent-rose: #FF5F7A;
+  --color-accent-info: #5AB7FF;
+  --color-accent-violet: #63B3FF;
 
   --color-ml-orange: #FFE600;
   --color-shopee-orange: #EE4D2D;
@@ -46,15 +57,6 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-default) transparent;
-}
-
-/* Degradê azul-marinho Vintec nos cards do app — sobrescreve a cor sólida do
-   token `bg-bg-card` (usado em ~30 componentes do dashboard) com um
-   gradiente sutil, sem precisar editar cada componente individualmente. */
-.bg-bg-card {
-  background-image:
-    linear-gradient(165deg, rgba(115, 198, 250, 0.05), rgba(115, 198, 250, 0) 45%),
-    linear-gradient(180deg, #16294A 0%, #0E203C 100%) !important;
 }
 
 html {
@@ -70,33 +72,86 @@ body {
   letter-spacing: -0.011em;
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(1200px 620px at 8% -10%, rgba(53, 104, 245, 0.16), transparent 58%),
-    radial-gradient(1000px 640px at 100% -6%, rgba(115, 198, 250, 0.1), transparent 55%),
-    radial-gradient(1100px 720px at 50% 128%, rgba(36, 79, 215, 0.08), transparent 60%);
+    radial-gradient(circle at 82% -8%, rgba(47, 107, 255, 0.14), transparent 32%),
+    radial-gradient(circle at 12% 105%, rgba(99, 179, 255, 0.07), transparent 34%),
+    linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 48%, var(--color-bg-elevated) 100%);
+  background-attachment: fixed;
   background-repeat: no-repeat;
+}
+
+/* ==========================================================================
+   Sistema responsivo da plataforma (/app) — faixas conceituais:
+   360–479 mobile · 480–767 mobile grande · 768–1023 tablet ·
+   1024–1279 tablet horizontal/notebook pequeno · 1280–1439 notebook ·
+   1440–1599 desktop · 1600+ desktop grande.
+   Container e altura do header já eram centralizados em um único ponto
+   (App.tsx envolve todas as 9 rotas com o mesmo wrapper) — os tokens abaixo
+   só formalizam isso, sem duplicar regra por página.
+   ========================================================================== */
+:root {
+  --app-header-height: 72px;
+  --space-page-x: 24px;
+  --space-page-y: 18px;
+  --space-section: 18px;
+  --space-panel: 16px;
+  --space-card: 14px;
+  --space-grid: 12px;
+}
+@media (max-width: 1279px) {
+  :root {
+    --app-header-height: 66px;
+    --space-page-x: 20px;
+    --space-page-y: 16px;
+    --space-section: 16px;
+    --space-panel: 14px;
+    --space-card: 12px;
+    --space-grid: 10px;
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --space-page-x: 16px;
+    --space-page-y: 14px;
+  }
+}
+@media (max-width: 767px) {
+  :root { --app-header-height: 58px; }
+}
+@media (max-width: 479px) {
+  :root {
+    --space-page-x: 12px;
+    --space-page-y: 12px;
+    --space-section: 12px;
+    --space-panel: 12px;
+    --space-grid: 8px;
+  }
+}
+
+@layer utilities {
+  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; }
+  .app-main { width: 100%; min-width: 0; }
+  .app-page-container {
+    width: min(100%, 1600px);
+    margin-inline: auto;
+    padding-inline: var(--space-page-x);
+  }
 }
 
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #33334a; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-active); }
 
 @layer utilities {
-  /* Premium glass panel — promovido para a linguagem de profundidade validada
-     na Visão Geral. Agora padrão global (todas as páginas herdam). */
+  /* Painel padrão (nível 2) — superfície sólida, sem gradiente (gradiente
+     fica reservado a .overview-hero-card). Sombra padronizada única. */
   .glass-panel {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
-      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
-    border: 1px solid #2C3E66;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-subtle);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 4px 8px -2px rgba(0, 0, 0, 0.55),
-      0 16px 32px -12px rgba(0, 0, 0, 0.62),
-      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
   }
 
   /* Baseline untouched — shared by pages outside Stage 2's validated scope
@@ -105,19 +160,18 @@ body {
      additive override on the specific in-scope card instead. */
   .glass-panel-hover {
     transition:
-      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.3s ease,
-      border-color 0.3s ease;
+      transform 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
   }
   .glass-panel-hover:hover {
-    transform: translateY(-4px);
-    border-color: #43578A;
+    transform: translateY(-1px);
+    background-color: var(--color-bg-card-hover);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 6px 12px -2px rgba(0, 0, 0, 0.55),
-      0 28px 56px -14px rgba(0, 0, 0, 0.74),
-      0 84px 134px -40px rgba(4, 10, 30, 0.96);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .glow-blue {
@@ -158,22 +212,22 @@ body {
     pointer-events: none;
     overflow: hidden;
   }
+  /* Glows ambiente — família azul institucional (sem roxo, sem ciano neon). */
   .app-bg-subtle::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(1300px 780px at 8% -8%, rgba(76, 130, 247, 0.32), transparent 62%),
-      radial-gradient(1200px 760px at 100% 0%, rgba(144, 97, 249, 0.26), transparent 60%),
-      radial-gradient(1100px 700px at 50% 118%, rgba(34, 211, 238, 0.14), transparent 62%);
+      radial-gradient(1300px 780px at 8% -8%, rgba(47, 107, 255, 0.16), transparent 62%),
+      radial-gradient(1100px 700px at 100% 0%, rgba(99, 179, 255, 0.1), transparent 60%);
   }
   .app-bg-subtle::after {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(150, 180, 240, 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(150, 180, 240, 0.07) 1px, transparent 1px);
+      linear-gradient(rgba(99, 179, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99, 179, 255, 0.04) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
     -webkit-mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
     mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
@@ -183,31 +237,26 @@ body {
     position: absolute;
     border-radius: 50%;
   }
-  /* Sem filter:blur — a suavidade vem só do radial-gradient com borda
-     transparente. Estático: nenhuma animação, nenhum will-change. */
   .bg-glow-static {
     width: 820px;
     height: 820px;
     top: -14%;
     left: -10%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.5) 0%, rgba(144, 97, 249, 0.12) 45%, rgba(144, 97, 249, 0) 72%);
+    background: radial-gradient(circle, rgba(47, 107, 255, 0.2) 0%, rgba(47, 107, 255, 0.06) 45%, transparent 72%);
   }
-  /* Terceiro glow — estático, sem custo de animação. Cobre o canto oposto
-     pra plataforma não ficar "vazia" fora da área dos dois glows acima. */
   .bg-glow-accent {
     width: 620px;
     height: 620px;
     bottom: -16%;
     left: 8%;
-    background: radial-gradient(circle, rgba(22, 199, 132, 0.22) 0%, rgba(22, 199, 132, 0) 70%);
+    background: radial-gradient(circle, rgba(99, 179, 255, 0.1) 0%, transparent 70%);
   }
-  /* Único elemento animado do modo subtle — translate + opacity apenas. */
   .bg-glow-moving {
     width: 780px;
     height: 780px;
     bottom: -18%;
     right: -10%;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.48) 0%, rgba(76, 130, 247, 0.16) 45%, rgba(34, 211, 238, 0) 72%);
+    background: radial-gradient(circle, rgba(99, 179, 255, 0.14) 0%, rgba(47, 107, 255, 0.06) 45%, transparent 72%);
     animation: bg-glow-drift 40s ease-in-out infinite;
   }
   @keyframes bg-glow-drift {
@@ -228,54 +277,37 @@ body {
      Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
      definida, sombra de contato + longa mais forte → mais "flutuando". */
 
-  /* Nível 1 — painel estrutural */
+  /* Nível 2 — painel estrutural, superfície sólida (sem gradiente) */
   .overview-glass {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
-      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
-    border: 1px solid #2C3E66;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-subtle);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 4px 8px -2px rgba(0, 0, 0, 0.55),
-      0 16px 32px -12px rgba(0, 0, 0, 0.62),
-      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
   }
 
-  /* Nível 2 — painel primário (comparativo, painel de decisão) */
+  /* Nível 3 — card elevado, superfície sólida (sem gradiente: usado em 6+
+     componentes distintos, não é um elemento "principal/selecionado" único
+     — gradiente fica reservado só para .overview-hero-card abaixo). */
   .overview-glass-elevated {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.025) 22%, rgba(255, 255, 255, 0) 58%),
-      radial-gradient(130% 90% at 50% -12%, rgba(76, 130, 247, 0.15), transparent 60%),
-      linear-gradient(180deg, #1A2846 0%, #0D1629 100%);
-    border: 1px solid #3A4F7C;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-      inset 0 -18px 36px -22px rgba(0, 0, 0, 0.6),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 5px 10px -2px rgba(0, 0, 0, 0.55),
-      0 22px 46px -14px rgba(0, 0, 0, 0.68),
-      0 62px 108px -36px rgba(4, 10, 30, 0.92);
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
   }
 
-  /* Nível 3 — hero (Faturamento Líquido): mais elevado, rim emerald */
+  /* Único card com gradiente aprovado — hero (Faturamento Líquido). Destaque
+     vem da superfície/contraste, não de borda colorida — sem rim verde. */
   .overview-hero-card {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.025) 24%, rgba(255, 255, 255, 0) 60%),
-      radial-gradient(150% 110% at 50% -16%, rgba(22, 199, 132, 0.22), transparent 58%),
-      linear-gradient(180deg, #142C43 0%, #0B1A2B 100%);
-    border: 1px solid #2A625A;
+    background: linear-gradient(135deg, #0B1B30 0%, #10294A 58%, #173A66 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
-      inset 0 -18px 38px -22px rgba(0, 0, 0, 0.55),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 5px 10px -2px rgba(0, 0, 0, 0.55),
-      0 24px 50px -14px rgba(0, 0, 0, 0.68),
-      0 66px 116px -36px rgba(4, 26, 20, 0.9);
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
   }
 
   /* Hover tátil — elevação + borda aquece + glow (todos os níveis).
@@ -286,37 +318,31 @@ body {
   /* Linha de marketplace — card executivo sobre o painel pai */
   .overview-marketplace-row {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 46%),
-      linear-gradient(180deg, #12203A 0%, #0B1324 100%);
-    border: 1px solid #26365A;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-subtle);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
-      0 1px 1px 0 rgba(0, 0, 0, 0.5),
-      0 10px 24px -12px rgba(0, 0, 0, 0.62);
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
     transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    border-color: #3B4F79;
+    background-color: var(--color-bg-card-hover);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.11),
-      0 8px 20px -10px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
   /* Canal Nº1 — dominante, mais corpo e luz */
   .overview-marketplace-row-lead {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%),
-      radial-gradient(130% 110% at 50% -22%, rgba(76, 130, 247, 0.14), transparent 62%),
-      linear-gradient(180deg, #172E4E 0%, #0C1628 100%);
-    border: 1px solid #3F547E;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.5),
-      0 1px 1px 0 rgba(0, 0, 0, 0.55),
-      0 18px 40px -12px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Trilho das barras de participação */
@@ -338,24 +364,19 @@ body {
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:hover {
-    background: linear-gradient(180deg, rgba(76, 130, 247, 0.12), rgba(76, 130, 247, 0.04));
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 0 0 1px rgba(76, 130, 247, 0.16),
-      0 0 20px -6px rgba(76, 130, 247, 0.45);
+    background: rgba(47, 107, 255, 0.08);
   }
   .rail-item:active {
-    transform: translateY(-1px) scale(0.985);
-  }
-  .rail-item:hover :is(svg) {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 6px rgba(76, 130, 247, 0.5));
+    transform: scale(0.985);
   }
   .rail-item :is(svg) {
-    transition: transform var(--motion-duration-fast) var(--motion-ease-hover), filter var(--motion-duration-fast) var(--motion-ease-standard);
+    transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:focus-visible {
-    box-shadow: 0 0 0 2px rgba(76, 130, 247, 0.55), 0 0 20px -6px rgba(76, 130, 247, 0.5);
+    box-shadow: 0 0 0 2px var(--color-border-active);
+  }
+  .rail-item.topnav-item-active {
+    background: rgba(47, 107, 255, 0.06);
   }
   /* Base do sublinhado ativo — sempre presente, opacity/scale animam a
      entrada/saída ao trocar de página em vez de aparecer/sumir abrupto. */
@@ -367,8 +388,8 @@ body {
     bottom: -1px;
     height: 2px;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #6FA0FF, #4C82F7);
-    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+    background: linear-gradient(90deg, var(--color-accent-cyan), var(--color-accent-blue));
+    box-shadow: 0 0 10px 0 rgba(47, 107, 255, 0.8);
     opacity: 0;
     transform: scaleX(0.6);
     transition: opacity var(--motion-duration-normal) var(--motion-ease-standard),
@@ -397,8 +418,8 @@ body {
     width: 3px;
     transform: translateY(-50%);
     border-radius: 9999px;
-    background: linear-gradient(180deg, #6FA0FF, #4C82F7);
-    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+    background: linear-gradient(180deg, var(--color-accent-cyan), var(--color-accent-blue));
+    box-shadow: 0 0 10px 0 rgba(47, 107, 255, 0.8);
   }
 
   /* Superfície da própria sidebar — camada com profundidade + glow ambiental.
@@ -452,20 +473,21 @@ body {
   /* ---- Top nav (substitui a sidebar) --------------------------------------
      Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
      horizontal e fixa no topo. */
+  /* Header — presença azul maior que o workspace, mesma família. */
   .topnav-surface {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
-      linear-gradient(180deg, rgba(12, 20, 36, 0.82) 0%, rgba(10, 17, 32, 0.86) 100%);
+      var(--color-bg-header);
     box-shadow:
-      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
-      0 12px 28px -16px rgba(0, 0, 0, 0.8);
+      inset 0 -1px 0 0 rgba(99, 179, 255, 0.06),
+      0 12px 28px -16px rgba(0, 6, 18, 0.5);
   }
   .topnav-surface::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(60% 160% at 8% 50%, rgba(76, 130, 247, 0.1), transparent 70%);
+    background: radial-gradient(60% 160% at 8% 50%, rgba(47, 107, 255, 0.1), transparent 70%);
   }
 
   /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
@@ -503,27 +525,27 @@ body {
     transform: scale(0.985);
   }
 
-  /* KPI-style small cards — max 2px lift, tokenized timing */
+  /* KPI-style small cards — max 1px lift, leve iluminação de superfície */
   .overview-card-hover {
     transition:
       transform var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-card-hover:hover {
-    transform: translateY(-2px);
-    border-color: #3A4E78;
+    transform: translateY(-1px);
+    background-color: var(--color-bg-highlight);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
+  /* Card principal (Faturamento Líquido) já tem gradiente próprio — no
+     hover só intensifica a borda (sem rim colorido, sem trocar de fundo). */
   .overview-hero-card.overview-card-hover:hover {
-    border-color: #2E6A5F;
-    box-shadow:
-      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 22px 44px -16px rgba(4, 26, 20, 0.75);
+    background-color: transparent;
+    border-color: var(--color-border-active);
   }
   /* Highlight superior — visível sempre em baixa opacidade, reforça no hover */
   .overview-card-hover::before {
@@ -531,7 +553,7 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99, 179, 255, 0.24), transparent);
     opacity: 0.5;
     pointer-events: none;
     transition: opacity var(--motion-duration-fast) var(--motion-ease-hover);
@@ -552,12 +574,11 @@ body {
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .glass-panel-hover.motion-card-tight:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    background-color: var(--color-bg-card-hover);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 6px 12px -2px rgba(0, 0, 0, 0.55),
-      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Big panels (GMV, Receita por Marketplace, Catálogo, Estoque, filtros) —
@@ -568,11 +589,10 @@ body {
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .motion-panel:hover {
-    border-color: #3A4E78;
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      0 1px 1px 0 rgba(0, 0, 0, 0.55),
-      0 24px 48px -20px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Table rows — background/border only, never transform */
@@ -626,12 +646,12 @@ body {
     }
   }
 
-  /* Glow concentrado no número/ícone principal (hero, líder) */
+  /* Número/ícone principal (hero, líder) — sem glow, só contraste */
   .num-glow {
-    text-shadow: 0 0 20px rgba(185, 212, 255, 0.22);
+    text-shadow: none;
   }
   .icon-halo {
-    filter: drop-shadow(0 0 8px rgba(22, 199, 132, 0.45));
+    filter: none;
   }
 
   /* ---- Transição de página --------------------------------------------
@@ -683,7 +703,7 @@ body {
     min-height: 0;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    scrollbar-color: var(--color-border-default) transparent;
   }
   .data-table-viewport::-webkit-scrollbar {
     width: 8px;
@@ -693,11 +713,12 @@ body {
     background: transparent;
   }
   .data-table-viewport::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--color-border-default);
     border-radius: 999px;
   }
   .data-table-viewport:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-accent-cyan);
+    opacity: 0.5;
   }
   .data-table-viewport:focus-visible {
     outline: 2px solid var(--color-accent-blue);

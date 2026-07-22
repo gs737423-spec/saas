@@ -1,5 +1,4 @@
-// Jornada do cliente ("Como começamos") — cada etapa mostra o que a Vintec
-// faz e o resultado concreto que o cliente recebe.
+// Implantação — 3 etapas editoriais dentro de uma única superfície escura.
 export interface ProcessStepItem {
   n: string
   title: string
@@ -8,8 +7,7 @@ export interface ProcessStepItem {
 }
 
 export const processSteps: ProcessStepItem[] = [
-  { n: '01', title: 'Entendemos sua rotina', text: 'Mapeamos os marketplaces utilizados, os controles atuais e os pontos que mais consomem tempo.', result: 'Diagnóstico inicial' },
-  { n: '02', title: 'Conectamos os marketplaces', text: 'Realizamos as conexões disponíveis com Mercado Livre, Amazon, Shopee e Leroy Merlin.', result: 'Marketplaces conectados' },
-  { n: '03', title: 'Organizamos o acompanhamento', text: 'Pedidos, estoque, vendas e resultados passam a seguir uma estrutura mais fácil de consultar.', result: 'Rotina organizada' },
-  { n: '04', title: 'Sua equipe identifica prioridades', text: 'Gestores e equipes passam a enxergar o que precisa de atenção sem reunir informações manualmente.', result: 'Próximos passos mais claros' },
+  { n: '01', title: 'Entendemos sua rotina atual', text: 'Mapeamos onde sua empresa vende, quais controles são utilizados e quais tarefas consomem mais tempo da equipe.', result: 'Diagnóstico e plano inicial.' },
+  { n: '02', title: 'Conectamos e organizamos', text: 'Configuramos os marketplaces disponíveis e reunimos pedidos, estoque, vendas e acessos em uma rotina de acompanhamento.', result: 'Informações reunidas em um único fluxo.' },
+  { n: '03', title: 'Acompanhamos sua equipe', text: 'Validamos as informações, orientamos os responsáveis e esclarecemos dúvidas durante os primeiros dias de utilização.', result: 'Equipe preparada para começar.' },
 ]

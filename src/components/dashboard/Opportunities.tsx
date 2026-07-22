@@ -16,7 +16,7 @@ const impactColors = {
 
 export default function Opportunities() {
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:rounded-3xl sm:p-7">
+    <div className="glass-panel rounded-2xl p-4 sm:p-7">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-text-primary">Oportunidades Inteligentes</h3>

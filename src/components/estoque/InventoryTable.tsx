@@ -14,9 +14,9 @@ interface Props {
 }
 
 const abcStyle: Record<'A' | 'B' | 'C', { color: string; bg: string }> = {
-  A: { color: '#16C784', bg: 'rgba(22,199,132,0.14)' },
-  B: { color: '#3568F5', bg: 'rgba(53,104,245,0.14)' },
-  C: { color: '#59688A', bg: 'rgba(89,104,138,0.16)' },
+  A: { color: '#2BD6A0', bg: 'rgba(43,214,160,0.14)' },
+  B: { color: '#2F6BFF', bg: 'rgba(47,107,255,0.14)' },
+  C: { color: '#6F829B', bg: 'rgba(111,130,155,0.16)' },
 }
 
 type SortKey = 'revenue' | 'stock' | 'coverageDays' | 'units30d'
@@ -62,7 +62,7 @@ export default function InventoryTable({ filters, onChange }: Props) {
   const sorted = useMemo(() => [...filtered].sort((a, b) => (b[sort] as number) - (a[sort] as number)), [filtered, sort])
 
   return (
-    <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-4 sm:rounded-3xl sm:p-5">
+    <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-4 sm:p-5">
       <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>

@@ -59,11 +59,14 @@ export default function TopNav() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12.5px] font-medium transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active text-accent-blue' : 'text-text-muted hover:text-text-primary'
+      isActive ? 'topnav-item-active text-accent-cyan' : 'text-text-muted hover:text-text-primary'
     }`
 
   return (
-    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-16 md:px-4 lg:px-6">
+    <header
+      className="topnav-surface fixed inset-x-0 top-0 z-40 flex items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:px-4 lg:px-6"
+      style={{ height: 'var(--app-header-height)' }}
+    >
       <Brand />
 
       <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
@@ -94,7 +97,7 @@ export default function TopNav() {
           title="Configurações"
           className={({ isActive }) =>
             `motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex ${
-              isActive ? 'text-accent-blue' : ''
+              isActive ? 'text-accent-cyan' : ''
             }`
           }
         >
