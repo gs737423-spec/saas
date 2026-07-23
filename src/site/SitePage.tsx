@@ -15,10 +15,10 @@ import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 // seção independente (repetia argumentos de benefícios/como funciona) e foi
 // incorporada como faixa final compacta dentro de HowItWorks. Demais seções
 // antigas (ProblemSection, PlatformShowcase, DiagnosticSection,
-// IntegrationsSecurity, WhatWeDo, PreviewSection, PlatformCardSection,
-// EcosystemMarquee, CommercialBanner, Demo, InstitutionalPlatformSection,
-// InstitutionalSolutionSection, DifferentialsSection) continuam no repo fora
-// da renderização pública.
+// IntegrationsSecurity, WhatWeDo, PreviewSection, CommercialBanner, Demo,
+// InstitutionalPlatformSection, InstitutionalSolutionSection,
+// DifferentialsSection) continuam no repo fora da renderização pública.
+// (PlatformCardSection e EcosystemMarquee foram removidos — órfãos, sem uso.)
 export default function SitePage() {
   useEffect(() => {
     document.documentElement.classList.add('site-active')
