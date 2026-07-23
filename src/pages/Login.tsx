@@ -15,6 +15,16 @@ const SOFT_COOLDOWN_MS = 30_000
 
 type View = 'login' | 'forgot'
 
+// Mesmas 3 telas reais já usadas na seção Marketplaces do site institucional
+// (ver src/site/sections/MarketplacesSection.tsx) — reaproveitadas aqui como
+// pano de fundo decorativo, sem duplicar assets novos.
+const PREVIEW_IMAGES = [
+  '/site/platform-showcase/platform-overview.webp',
+  '/site/platform-showcase/platform-marketplaces.webp',
+  '/site/platform-showcase/platform-products.webp',
+]
+const PREVIEW_INTERVAL_MS = 4500
+
 export default function Login() {
   const { signIn, resetPassword, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -38,7 +48,23 @@ export default function Login() {
 
   const passwordRef = useRef<HTMLInputElement>(null)
 
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const reducedMotion = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  ).current
+
   useEffect(() => setMounted(true), [])
+
+  // Alterna as telas do preview decorativo — para com reduced motion (fica
+  // só na primeira imagem, estática).
+  useEffect(() => {
+    if (reducedMotion) return
+    const id = window.setInterval(
+      () => setPreviewIndex((i) => (i + 1) % PREVIEW_IMAGES.length),
+      PREVIEW_INTERVAL_MS,
+    )
+    return () => window.clearInterval(id)
+  }, [reducedMotion])
 
   // Contagem regressiva do cooldown local
   useEffect(() => {
@@ -137,15 +163,19 @@ export default function Login() {
             Entre para acompanhar marketplaces, pedidos, estoque, produtos e resultados em uma única rotina de gestão.
           </p>
           <div className="login-visual__preview">
-            <img
-              src="/site/platform-showcase/platform-overview.webp"
-              alt=""
-              width={1200}
-              height={713}
-              className="login-visual__preview-img"
-              loading="eager"
-              draggable={false}
-            />
+            {PREVIEW_IMAGES.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                width={1200}
+                height={713}
+                className="login-visual__preview-img"
+                data-active={i === previewIndex}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                draggable={false}
+              />
+            ))}
           </div>
         </section>
 

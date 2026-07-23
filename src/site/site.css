@@ -2370,14 +2370,35 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   max-width: 420px;
 }
 .login-visual__preview {
+  position: relative;
   margin-top: 28px;
   padding: 10px;
   border-radius: 18px;
+  aspect-ratio: 1200 / 713;
+  overflow: hidden;
   background: linear-gradient(160deg, rgba(49, 104, 255, 0.22), rgba(10, 32, 60, 0.35));
   border: 1px solid var(--login-border);
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.6);
 }
-.login-visual__preview-img { display: block; width: 100%; height: auto; border-radius: 11px; }
+/* Telas empilhadas — crossfade com leve desfoque na entrada/saída, sem corte
+   seco e sem alterar a altura do container (mesma proporção nas 3 imagens). */
+.login-visual__preview-img {
+  position: absolute;
+  inset: 10px;
+  display: block;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  object-fit: contain;
+  border-radius: 11px;
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity 700ms ease, filter 700ms ease;
+  pointer-events: none;
+}
+.login-visual__preview-img[data-active='true'] { opacity: 1; filter: blur(0); }
+@media (prefers-reduced-motion: reduce) {
+  .login-visual__preview-img { transition: opacity 1ms linear; filter: none; }
+}
 
 .login-card-wrap {
   display: flex;
