@@ -26,7 +26,7 @@ const STORAGE_KEY = 'acelera_auth';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12h
 
 const USERS: Record<string, { hash: string; name: string }> = {
-  'rogger.salazar@climario.com.br': {
+  'rogsalazar1@gmail.com': {
     hash: '0447f69377d581d341919f31c041985547f3a5a6e7216d3c010162062853c728',
     name: 'Rogger Salazar',
   },
