@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Maximize2, X } from 'lucide-react'
 import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
@@ -63,6 +63,7 @@ export default function MarketplacesSection() {
   const [hovering, setHovering] = useState(false)
   const [focused, setFocused] = useState(false)
   const [tabHidden, setTabHidden] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const timerRef = useRef<number | null>(null)
   const reducedMotion = useRef(
@@ -71,7 +72,7 @@ export default function MarketplacesSection() {
 
   useEffect(() => { preloadImages() }, [])
 
-  const paused = hovering || focused || tabHidden
+  const paused = hovering || focused || tabHidden || lightboxOpen
 
   // Autoplay: depende de `active` de propósito — qualquer troca (clique,
   // teclado ou o próprio tick) desmonta o interval antigo e agenda um novo
@@ -101,6 +102,23 @@ export default function MarketplacesSection() {
   const onBlurSection = (e: React.FocusEvent<HTMLElement>) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false)
   }
+  // Clique de mouse deixa o <button> com foco nativo do navegador (Chrome/
+  // Firefox); sem o blur explícito, esse foco residual mantinha `focused`
+  // sempre true depois do primeiro clique e travava o autoplay para sempre.
+  // Navegação por teclado (goTo) continua focando o próximo tab normalmente.
+  const onTabClick = (e: React.MouseEvent<HTMLButtonElement>, i: number) => {
+    setActive(i)
+    e.currentTarget.blur()
+  }
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxOpen(false) }
+    document.addEventListener('keydown', onKeyDown)
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', onKeyDown); document.body.style.overflow = overflow }
+  }, [lightboxOpen])
 
   const waHref = whatsappContactUrl('Olá! Quero ver a Vintec na minha operação.') ?? specialistHref('Olá! Quero ver a Vintec na minha operação.')
   const tab = tabs[active]
@@ -140,7 +158,7 @@ export default function MarketplacesSection() {
               tabIndex={i === active ? 0 : -1}
               className="marketplace-showcase__tab"
               data-active={i === active}
-              onClick={() => setActive(i)}
+              onClick={(e) => onTabClick(e, i)}
             >
               <span className="marketplace-showcase__tab-index">{String(i + 1).padStart(2, '0')}</span>
               <span className="marketplace-showcase__tab-body">
@@ -157,9 +175,16 @@ export default function MarketplacesSection() {
           <div className="marketplace-showcase__frame-bar">
             <span className="marketplace-showcase__frame-name">{tab.navLabel}</span>
             <span className="marketplace-showcase__frame-meta">Visualização da plataforma</span>
-            <span className="marketplace-showcase__frame-demo">Demonstração</span>
           </div>
-          <div className="marketplace-showcase__frame-body" id="mp-tabpanel" role="tabpanel" aria-labelledby={`mp-tab-${tab.id}`}>
+          <button
+            type="button"
+            className="marketplace-showcase__frame-body"
+            id="mp-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`mp-tab-${tab.id}`}
+            aria-label="Ampliar screenshot da plataforma"
+            onClick={(e) => { setLightboxOpen(true); e.currentTarget.blur() }}
+          >
             {tabs.map((t, i) => (
               <img
                 key={t.id}
@@ -172,7 +197,10 @@ export default function MarketplacesSection() {
                 draggable={false}
               />
             ))}
-          </div>
+            <span className="marketplace-showcase__zoom-hint" aria-hidden="true">
+              <Maximize2 className="h-4 w-4" />
+            </span>
+          </button>
 
           {/* Faixa de logos — decorativa, independente da aba ativa (sem key
               ligada a `active`) para nunca remontar/reiniciar o marquee. */}
@@ -218,6 +246,32 @@ export default function MarketplacesSection() {
         </a>
         <p className="marketplace-showcase__cta-note">Conversa inicial para entender como sua equipe trabalha hoje.</p>
       </div>
+
+      {lightboxOpen && (
+        <div
+          className="marketplace-showcase__lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${tab.navLabel} — visualização ampliada`}
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            className="marketplace-showcase__lightbox-close"
+            aria-label="Fechar visualização ampliada"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={tab.image}
+            alt={tab.imageAlt}
+            className="marketplace-showcase__lightbox-image"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
+        </div>
+      )}
     </section>
   )
 }

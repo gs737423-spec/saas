@@ -1,53 +1,114 @@
-import { LayoutGrid, Target, FileMinus2 } from 'lucide-react'
-import Reveal from '@/site/components/Reveal'
-import DifferentialRow from '@/site/components/DifferentialRow'
-import { outcomes } from '@/site/data/outcomes'
+import { specialistHref } from '@/site/content'
 
-const outcomeIcons = [LayoutGrid, Target, FileMinus2]
+interface PanelItem {
+  label: string
+  text: string
+}
 
-// Benefícios — editorial, sem comparação, sem cards. Painel principal à
-// esquerda (título + lista + fechamento âmbar), três linhas de resultado à
-// direita. Fundo escuro.
+// Plataforma + Gestão especializada — composição editorial em dois painéis
+// simultâneos (não sequenciais, sem etapas/números/setas). Ver brief:
+// reconstrução da seção "O que muda na prática".
+const platformItems: PanelItem[] = [
+  { label: 'VENDAS E PEDIDOS', text: 'Acompanhe o que foi vendido e como cada marketplace está contribuindo para o resultado.' },
+  { label: 'ESTOQUE E PRODUTOS', text: 'Encontre produtos parados, riscos de ruptura e itens que exigem reposição.' },
+  { label: 'RESULTADOS E DESEMPENHO', text: 'Compare marketplaces, identifique diferenças e acompanhe os principais indicadores da operação.' },
+]
+
+const managementItems: PanelItem[] = [
+  { label: 'IMPLANTAÇÃO ACOMPANHADA', text: 'Entendemos a rotina atual, configuramos as conexões disponíveis e orientamos a entrada da equipe.' },
+  { label: 'LEITURA DA OPERAÇÃO', text: 'Analisamos resultados, diferenças entre marketplaces, estoque e pontos que precisam de atenção.' },
+  { label: 'DEFINIÇÃO DE PRIORIDADES', text: 'Ajudamos a identificar onde a empresa está perdendo tempo, margem ou oportunidade.' },
+  { label: 'ACOMPANHAMENTO DA EVOLUÇÃO', text: 'A gestão é revisada conforme a empresa amplia produtos, volume de vendas e marketplaces.' },
+]
+
+const results: PanelItem[] = [
+  { label: 'MENOS TRABALHO MANUAL', text: 'Menos dependência de planilhas, conferências e relatórios separados.' },
+  { label: 'MAIS CLAREZA GERENCIAL', text: 'Gestores e equipes enxergam o mesmo cenário e entendem onde agir primeiro.' },
+  { label: 'MAIS SEGURANÇA PARA CRESCER', text: 'A operação ganha estrutura para ampliar canais, produtos e volume de vendas.' },
+]
+
 export default function ServicesSection() {
+  const waHref = specialistHref('Olá! Quero entender como funciona o gerenciamento da Vintec.')
+
   return (
     <section id="servicos" className="sec-dark-flat scroll-mt-24">
       <div className="site-container site-container--tight py-16 md:py-[88px]" style={{ maxWidth: 1220 }}>
-        <Reveal>
-          <span className="mb-4 inline-block text-[12.5px] font-bold uppercase" style={{ color: '#9DDCFF', letterSpacing: '0.14em' }}>
-            O QUE MUDA NA PRÁTICA
-          </span>
-          <h2 className="font-extrabold" style={{ color: '#fff', fontSize: 'clamp(1.9rem, 2.8vw, 2.65rem)', lineHeight: 1.15, letterSpacing: '-0.02em', maxWidth: 760 }}>
-            Sua equipe para de procurar informações e começa a agir mais rápido.
-          </h2>
-          <p className="mt-4" style={{ color: 'rgba(255,255,255,0.72)', fontSize: '1.02rem', lineHeight: 1.6, maxWidth: 720 }}>
-            A Vintec reúne o que hoje está espalhado entre painéis, planilhas e pessoas para que sua equipe enxergue prioridades antes que os problemas cresçam.
-          </p>
-        </Reveal>
+        <span className="svc2-eyebrow">PLATAFORMA E GESTÃO ESPECIALIZADA</span>
+        <h2 className="svc2-title">Tecnologia para enxergar a operação. Especialistas para ajudar sua empresa a decidir.</h2>
+        <p className="svc2-sub">
+          A Vintec reúne as informações dos marketplaces e acompanha sua operação de perto. Nossa equipe participa da
+          implantação, analisa os resultados, identifica pontos de atenção e ajuda a definir as prioridades da gestão.
+        </p>
+        <p className="svc2-reinforce">
+          Você não recebe apenas um painel. Recebe uma estrutura de gestão para acompanhar a operação com mais clareza e direção.
+        </p>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-12">
-          <Reveal delay={70} className="lg:col-span-7">
-            <div className="services-panel">
-              <h3 className="font-extrabold" style={{ color: '#fff', fontSize: '1.35rem', letterSpacing: '-0.01em' }}>
-                Uma visão única para acompanhar a operação
-              </h3>
-              <p className="mt-3" style={{ color: 'rgba(255,255,255,0.72)', fontSize: '14.5px', lineHeight: 1.6 }}>
-                Pedidos, estoque, vendas e resultados deixam de ficar espalhados em diferentes acessos e passam a seguir uma mesma rotina de acompanhamento.
-              </p>
-              <ul className="services-list">
-                <li>Veja o que aconteceu em cada marketplace.</li>
-                <li>Acompanhe pedidos e estoque com menos buscas.</li>
-                <li>Compare resultados sem montar relatórios separados.</li>
-                <li>Identifique rapidamente o que precisa de atenção.</li>
-              </ul>
-              <p className="services-closing">Menos tempo procurando números. Mais tempo tomando decisões.</p>
+        <div className="svc2-grid">
+          <div className="svc2-panel svc2-panel--platform">
+            <span className="svc2-panel-label">PLATAFORMA VINTEC</span>
+            <h3 className="svc2-panel-title">Tudo o que sua equipe precisa acompanhar, reunido em uma mesma rotina.</h3>
+            <p className="svc2-panel-text">
+              Pedidos, estoque, vendas e resultados dos diferentes marketplaces deixam de ficar espalhados entre painéis,
+              planilhas e pessoas.
+            </p>
+            <div className="svc2-items">
+              {platformItems.map((item) => (
+                <div key={item.label} className="svc2-item">
+                  <span className="svc2-item-label">{item.label}</span>
+                  <p className="svc2-item-text">{item.text}</p>
+                </div>
+              ))}
             </div>
-          </Reveal>
+            <div className="svc2-highlight">
+              <span className="svc2-highlight-label">RESULTADO PARA A OPERAÇÃO</span>
+              <p className="svc2-highlight-text">Menos tempo procurando números. Mais clareza para entender o que precisa de atenção.</p>
+            </div>
+          </div>
 
-          <Reveal delay={120} className="lg:col-span-5">
-            {outcomes.map((item, i) => (
-              <DifferentialRow key={item.n} item={item} Icon={outcomeIcons[i]} dark />
+          <div className="svc2-panel svc2-panel--mgmt">
+            <span className="svc2-panel-label">GESTÃO VINTEC</span>
+            <h3 className="svc2-panel-title">Nossa equipe acompanha a operação junto com você.</h3>
+            <p className="svc2-panel-text">
+              A tecnologia organiza as informações. A equipe Vintec ajuda a transformar essas informações em prioridades e
+              decisões para o negócio.
+            </p>
+            <div className="svc2-items">
+              {managementItems.map((item) => (
+                <div key={item.label} className="svc2-item">
+                  <span className="svc2-item-label">{item.label}</span>
+                  <p className="svc2-item-text">{item.text}</p>
+                </div>
+              ))}
+            </div>
+            <div className="svc2-highlight">
+              <p className="svc2-highlight-text svc2-highlight-text--lead">Você não fica sozinho tentando interpretar mais um sistema.</p>
+              <p className="svc2-highlight-text">A Vintec participa da rotina para ajudar sua equipe a transformar informação em ação gerencial.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="svc2-band">
+          <div className="svc2-band-intro">
+            <h3 className="svc2-band-title">GESTÃO ACOMPANHADA PARA SUA EMPRESA</h3>
+            <p className="svc2-band-text">
+              Plataforma, informações organizadas e uma equipe especializada acompanhando os pontos que influenciam o
+              desempenho da operação.
+            </p>
+          </div>
+          <div className="svc2-results">
+            {results.map((r) => (
+              <div key={r.label} className="svc2-result">
+                <span className="svc2-result-label">{r.label}</span>
+                <p className="svc2-result-text">{r.text}</p>
+              </div>
             ))}
-          </Reveal>
+          </div>
+          <div className="svc2-cta">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              Quero entender como funciona o gerenciamento
+            </a>
+            <p className="svc2-cta-note">Converse com a equipe Vintec sobre a rotina atual da sua operação.</p>
+          </div>
         </div>
       </div>
     </section>
