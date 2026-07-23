@@ -678,46 +678,6 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   .hero-stage-base { width: 260px; }
 }
 
-/* ---- Slide 2 do hero (índice 1) — composição de 2 pessoas ----
-   Reaproveita o MESMO arco azul (.hero-stage-main), só alargado via
-   [data-duo='true']. Nenhuma forma nova, nenhuma bolinha. As 2 pessoas
-   dividem a mesma base (bottom:0) e a mesma altura (escala coerente). */
-.hero-stage[data-duo='true'] .hero-stage-main {
-  width: min(94%, 600px);
-  height: min(90%, 630px);
-  border-radius: 200px 200px 64px 64px;
-}
-.hero-stage[data-duo='true'] .hero-stage-secondary {
-  width: min(64%, 400px);
-  left: calc(50% + 60px);
-}
-
-.hero-person--duo-a,
-.hero-person--duo-b {
-  height: clamp(340px, 40vw, 480px);
-  filter: drop-shadow(0 16px 16px rgba(4, 12, 28, 0.22));
-}
-/* Mulher (parceira) — lado esquerdo do arco */
-.hero-person--duo-a { left: 37%; z-index: 2; }
-.hero-person--duo-a[data-active='true'] { transform: translate3d(-50%, 0, 0) scale(1); }
-/* Homem (pessoa do próprio slide 2) — lado direito, ligeiramente à frente */
-.hero-person--duo-b { left: 66%; z-index: 3; }
-.hero-person--duo-b[data-active='true'] { transform: translate3d(-50%, 0, 0) scale(1); }
-
-@media (max-width: 1023px) and (min-width: 640px) {
-  .hero-stage[data-duo='true'] .hero-stage-main { width: min(96%, 520px); }
-  .hero-person--duo-a, .hero-person--duo-b { height: clamp(300px, 42vw, 400px); }
-  .hero-person--duo-a { left: 34%; }
-  .hero-person--duo-b { left: 68%; }
-}
-@media (max-width: 639px) {
-  .hero-stage[data-duo='true'] .hero-stage-main { width: min(96%, 360px); height: min(88%, 480px); }
-  .hero-stage[data-duo='true'] .hero-stage-base { width: 300px; }
-  .hero-person--duo-a, .hero-person--duo-b { height: clamp(240px, 56vw, 320px); }
-  .hero-person--duo-a { left: 32%; }
-  .hero-person--duo-b { left: 70%; }
-}
-
 /* Orbs/anéis difusos — usados pelos banners comerciais fora do hero. */
 .hero-orb { position: absolute; border-radius: 999px; filter: blur(64px); pointer-events: none; z-index: 0; }
 .hero-ring { position: absolute; border-radius: 999px; border: 1px solid rgba(39, 93, 255, 0.16); pointer-events: none; z-index: 0; }
@@ -1359,6 +1319,178 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 }
 .mp-results__item:first-child { padding-left: 0; border-left: none; }
 .mp-results__dot { width: 5px; height: 5px; border-radius: 999px; background: #2F6BFF; flex-shrink: 0; }
+
+/* ==========================================================================
+   Marketplace showcase — seção #marketplaces (product showcase com telas
+   reais da plataforma). Fundo navy escuro, frame proprietário (sem bolinhas
+   de navegador), 3 abas verticais + 1 frame grande. Classes prefixadas
+   .marketplace-showcase* — escopo isolado, não reutiliza .mp-* (acima,
+   agora sem uso) nem classes de outras seções.
+   ========================================================================== */
+.marketplace-showcase {
+  background: linear-gradient(180deg, #07182F 0%, #0A2345 100%);
+  padding-top: 88px;
+  padding-bottom: 88px;
+  color: #F7FAFF;
+}
+.marketplace-showcase__intro { margin-bottom: 48px; }
+.marketplace-showcase__eyebrow {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #63C7FF;
+  margin-bottom: 14px;
+}
+.marketplace-showcase__title {
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  color: #F7FAFF;
+  max-width: 720px;
+}
+.marketplace-showcase__desc {
+  margin-top: 16px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #AAB8CB;
+  max-width: 640px;
+}
+
+.marketplace-showcase__layout { display: grid; gap: 28px; grid-template-columns: 1fr; }
+@media (min-width: 1024px) {
+  .marketplace-showcase__layout { grid-template-columns: 34% 1fr; gap: 40px; align-items: stretch; }
+}
+
+/* Coluna esquerda — seletores verticais */
+.marketplace-showcase__tabs { display: flex; flex-direction: column; gap: 12px; }
+.marketplace-showcase__tab {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(99, 199, 255, 0.16);
+  background: #0D2748;
+  cursor: pointer;
+  transition: background-color 220ms ease, border-color 220ms ease;
+}
+.marketplace-showcase__tab:hover { border-color: rgba(99, 199, 255, 0.32); }
+.marketplace-showcase__tab:focus-visible { outline: 2px solid #63C7FF; outline-offset: 2px; }
+.marketplace-showcase__tab[data-active='true'] {
+  background: linear-gradient(135deg, #153A69, #1B4A8A);
+  border-color: #275DFF;
+}
+.marketplace-showcase__tab-index {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 13px;
+  color: #63C7FF;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.marketplace-showcase__tab[data-active='true'] .marketplace-showcase__tab-index { color: #9DDCFF; }
+.marketplace-showcase__tab-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.marketplace-showcase__tab-title { font-weight: 700; font-size: 15px; color: #F7FAFF; }
+.marketplace-showcase__tab-desc { font-size: 13px; line-height: 1.5; color: #AAB8CB; }
+.marketplace-showcase__tab[data-active='true'] .marketplace-showcase__tab-desc { color: #C2CCDA; }
+.marketplace-showcase__tab-outcome { margin-top: 4px; font-size: 12px; line-height: 1.5; color: #63C7FF; font-weight: 600; }
+
+/* Coluna direita — frame proprietário Vintec (NÃO é mockup de navegador) */
+.marketplace-showcase__frame {
+  position: relative;
+  isolation: isolate;
+  border-radius: 24px;
+  background: #0D2748;
+  border: 1px solid rgba(99, 199, 255, 0.16);
+  padding: 12px;
+  box-shadow: 0 30px 70px -30px rgba(3, 10, 25, 0.7);
+}
+.marketplace-showcase__frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: 26px;
+  background: radial-gradient(60% 60% at 50% 0%, rgba(39, 93, 255, 0.22), transparent 70%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+.marketplace-showcase__frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(99, 199, 255, 0.12);
+}
+.marketplace-showcase__frame-name { font-weight: 700; font-size: 13px; color: #F7FAFF; }
+.marketplace-showcase__frame-meta { font-size: 12px; color: #AAB8CB; }
+.marketplace-showcase__frame-demo {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #63C7FF;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(99, 199, 255, 0.28);
+  background: rgba(99, 199, 255, 0.08);
+}
+/* As 3 imagens têm o mesmo aspect-ratio (mesma captura/viewport) — altura do
+   frame fica estável entre abas, sem salto de layout. */
+.marketplace-showcase__frame-body {
+  position: relative;
+  margin-top: 10px;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 3200 / 1900;
+  background: #081426;
+}
+.marketplace-showcase__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+.marketplace-showcase__image[data-active='true'] { opacity: 1; transform: translateY(0); pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-showcase__image { transition: opacity 1ms linear; transform: none; }
+}
+
+/* Faixa de benefícios — 3 colunas, divisores finos, sem cards/círculos */
+.marketplace-showcase__benefits {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(99, 199, 255, 0.14);
+}
+.marketplace-showcase__benefit { padding: 24px 28px; border-right: 1px solid rgba(99, 199, 255, 0.14); }
+.marketplace-showcase__benefit:first-child { padding-left: 0; }
+.marketplace-showcase__benefit:last-child { border-right: none; }
+.marketplace-showcase__benefit-title { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.1em; color: #63C7FF; }
+.marketplace-showcase__benefit-text { margin-top: 8px; font-size: 13.5px; line-height: 1.55; color: #AAB8CB; }
+
+.marketplace-showcase__cta { margin-top: 48px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.marketplace-showcase__cta-note { font-size: 12.5px; color: #AAB8CB; }
+
+@media (max-width: 1023px) {
+  .marketplace-showcase__benefits { grid-template-columns: 1fr; border-top: none; }
+  .marketplace-showcase__benefit { border-right: none; border-top: 1px solid rgba(99, 199, 255, 0.14); padding: 20px 0; }
+  .marketplace-showcase__benefit:first-child { border-top: none; padding-top: 0; }
+}
+@media (max-width: 639px) {
+  .marketplace-showcase__cta .btn-primary { width: 100%; justify-content: center; }
+}
 
 /* ---- Benefícios/soluções — bloco principal + complementares ---- */
 .svc-main {

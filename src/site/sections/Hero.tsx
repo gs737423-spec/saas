@@ -33,8 +33,8 @@ const slides: Slide[] = [
   },
   {
     eyebrow: 'UMA ROTINA PARA TODOS OS MARKETPLACES',
-    title: <>Seus marketplaces reunidos em uma operação mais clara.</>,
-    sub: 'Pedidos, estoque, vendas e resultados ficam reunidos em uma única rotina para sua equipe acompanhar a operação com mais clareza.',
+    title: <>Venda em vários marketplaces sem perder o controle da operação.</>,
+    sub: 'A Vintec organiza as informações de Mercado Livre, Amazon, Shopee e Leroy Merlin em uma única rotina de acompanhamento.',
     ctaPrimary: 'Quero centralizar meus marketplaces',
     ctaSecondary: 'Conheça as soluções',
     ctaSecondaryHref: '#servicos',
@@ -172,7 +172,6 @@ export default function Hero() {
           <HeroPersonStage
             people={slides.map((s) => ({ src: s.person, alt: s.personAlt }))}
             activeIndex={active}
-            duo={{ index: 1, partner: { src: slides[0].person, alt: 'a mesma profissional do primeiro slide, ao lado' } }}
           />
         </div>
       </div>
