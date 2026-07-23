@@ -2,6 +2,7 @@ import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import SitePage from '@/site/SitePage'
 import './index.css'
 
@@ -10,6 +11,7 @@ import './index.css'
 // visitante do site não baixar o bundle pesado da plataforma.
 const App = lazy(() => import('./App'))
 const Login = lazy(() => import('@/pages/Login'))
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
 const LegalPage = lazy(() => import('@/site/LegalPage'))
 
 createRoot(document.getElementById('root')!).render(
@@ -24,8 +26,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/termos" element={<LegalPage variant="termos" />} />
             {/* Login da plataforma */}
             <Route path="/login" element={<Login />} />
-            {/* Área autenticada (dashboard e subrotas) */}
-            <Route path="/app/*" element={<App />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
+            {/* Área autenticada (dashboard e subrotas) — sessão real do Supabase Auth */}
+            <Route path="/app/*" element={<ProtectedRoute><App /></ProtectedRoute>} />
           </Routes>
         </Suspense>
       </AuthProvider>

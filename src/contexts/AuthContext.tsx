@@ -1,131 +1,112 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import type { Session, User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient'
 
-interface User {
-  email: string;
-  name: string;
-}
-
-interface StoredSession extends User {
-  /** epoch ms — sessão expira mesmo sem fechar a aba (defesa extra) */
-  expiresAt: number;
+interface AuthResult {
+  error: string | null
 }
 
 interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  user: User | null
+  session: Session | null
+  isAuthenticated: boolean
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<AuthResult>
+  signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<AuthResult>
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null)
 
-const STORAGE_KEY = 'acelera_auth';
-// Validade absoluta da sessão — mesmo sem fechar a aba, expira depois disso.
-// Fechar a aba/navegador já derruba a sessão antes (sessionStorage, não
-// localStorage: não sobrevive ao fechamento, diferente de antes).
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12h
-
-const USERS: Record<string, { hash: string; name: string }> = {
-  'rogsalazar1@gmail.com': {
-    hash: '0447f69377d581d341919f31c041985547f3a5a6e7216d3c010162062853c728',
-    name: 'Rogger Salazar',
-  },
-  'g.souza.woork@gmail.com': {
-    hash: '97624060b50cc4e421a8f4b6ae079676bbf9f973018423de1f2098d1ebe21bb3',
-    name: 'G. Souza',
-  },
-};
-
-// Optional demo/QA login, off by default. Only active when BOTH env vars are set —
-// intended for local dev / Vercel Preview only. Never set VITE_DEMO_EMAIL or
-// VITE_DEMO_PASSWORD_HASH in the Production environment target: like the rest of
-// this login system, the check runs client-side, so whatever is set here ends up
-// readable in the shipped JS bundle exactly like the two accounts above already are.
-// See .env.example for how to generate the hash.
-const demoEmail = import.meta.env.VITE_DEMO_EMAIL as string | undefined;
-const demoPasswordHash = import.meta.env.VITE_DEMO_PASSWORD_HASH as string | undefined;
-if (demoEmail && demoPasswordHash) {
-  USERS[demoEmail.toLowerCase().trim()] = { hash: demoPasswordHash, name: 'Demo' };
-}
-
-async function sha256(message: string): Promise<string> {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function deriveNameFromEmail(email: string): string {
-  const local = email.split('@')[0];
-  return local
-    .split(/[._]/)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function readStoredUser(): User | null {
-  try {
-    // sessionStorage: some navegador limpa ao fechar a aba/janela — era o
-    // bug reportado ("quase não pede senha mais"). localStorage sobrevive
-    // indefinidamente entre sessões; sessionStorage não.
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
-    const parsed = JSON.parse(stored) as StoredSession;
-    if (!parsed.email) return null;
-    if (!parsed.expiresAt || Date.now() > parsed.expiresAt) {
-      sessionStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-    return { email: parsed.email, name: parsed.name };
-  } catch {
-    sessionStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
+// Mensagem sempre genérica — não revela se o e-mail existe, se a senha está
+// errada, ou se a conta está desativada (evita enumeração de usuários).
+const GENERIC_LOGIN_ERROR = 'Não foi possível entrar com as credenciais informadas.'
+const GENERIC_NETWORK_ERROR = 'Não foi possível concluir o acesso agora. Verifique sua conexão e tente novamente.'
+const RATE_LIMIT_ERROR = 'Muitas tentativas. Aguarde alguns instantes antes de tentar novamente.'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Lido de forma síncrona no initializer (não em useEffect): se a leitura
-  // acontecesse após o primeiro render, /login desenharia o formulário por
-  // um instante mesmo para quem já está autenticado, antes do redirect —
-  // um flash perceptível. Assim, isAuthenticated já vem correto na primeira
-  // pintura da tela.
-  const [user, setUser] = useState<User | null>(() => readStoredUser());
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    const normalizedEmail = email.toLowerCase().trim();
-    const knownUser = USERS[normalizedEmail];
-    if (!knownUser) return false;
+  useEffect(() => {
+    let active = true
 
-    const passwordHash = await sha256(password);
-    if (passwordHash !== knownUser.hash) return false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      setSession(data.session)
+      setLoading(false)
+    })
 
-    const loggedInUser: User = {
-      email: normalizedEmail,
-      name: knownUser.name || deriveNameFromEmail(normalizedEmail),
-    };
+    // SIGNED_IN / SIGNED_OUT / TOKEN_REFRESHED / PASSWORD_RECOVERY — o SDK do
+    // Supabase já assina e renova o token sozinho (autoRefreshToken: true em
+    // supabaseClient.ts); aqui só refletimos a sessão atual no contexto.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!active) return
+      setSession(newSession)
+      setLoading(false)
+    })
 
-    setUser(loggedInUser);
-    const session: StoredSession = { ...loggedInUser, expiresAt: Date.now() + SESSION_TTL_MS };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    return true;
-  }, []);
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
-  const logout = useCallback(() => {
-    setUser(null);
-    sessionStorage.removeItem(STORAGE_KEY);
-  }, []);
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      if (error) {
+        // 429 = rate limit do próprio Supabase Auth (real, no servidor) —
+        // distinguir isso da credencial errada não abre brecha de
+        // enumeração, só informa que a tentativa foi limitada.
+        if (error.status === 429) return { error: RATE_LIMIT_ERROR }
+        return { error: GENERIC_LOGIN_ERROR }
+      }
+      return { error: null }
+    } catch {
+      return { error: GENERIC_NETWORK_ERROR }
+    }
+  }, [])
 
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut()
+  }, [])
+
+  const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {
+    try {
+      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      })
+      // O Supabase já responde de forma genérica (não confirma existência de
+      // conta) — repassamos a mesma mensagem neutra independentemente do
+      // resultado real, para não abrir brecha de enumeração no futuro caso
+      // essa API mude de comportamento.
+      return { error: null }
+    } catch {
+      return { error: GENERIC_NETWORK_ERROR }
+    }
+  }, [])
+
+  const value: AuthContextType = {
+    user: session?.user ?? null,
+    session,
+    isAuthenticated: !!session,
+    loading,
+    signIn,
+    signOut,
+    resetPassword,
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
+  return context
 }

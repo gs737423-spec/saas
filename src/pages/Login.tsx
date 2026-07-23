@@ -5,19 +5,18 @@ import { useAuth } from '@/contexts/AuthContext'
 import { whatsappAccessHelpUrl, whatsappDemoUrl } from '@/lib/whatsapp'
 import '@/site/site.css'
 
-// Limite de tentativas ANTES de um cooldown local. Isto é apenas fricção de
-// UX contra reenvio acidental/repetido no mesmo dispositivo — NÃO é controle
-// de segurança (reseta ao recarregar a página, é só estado em memória). A
-// proteção real contra força bruta precisa acontecer no servidor, quando
-// existir um endpoint de autenticação; hoje o login é 100% client-side (ver
-// AuthContext.tsx e docs/02-Decisions — auditoria de segurança pendente).
+// Limite de tentativas ANTES de um cooldown local. Isto é só fricção de UX
+// contra reenvio acidental/repetido no mesmo dispositivo (reseta ao
+// recarregar a página) — a proteção real contra força bruta é o rate limit
+// do próprio Supabase Auth no servidor (ver AuthContext.tsx, tratamento do
+// erro 429 em signIn).
 const SOFT_ATTEMPT_LIMIT = 5
 const SOFT_COOLDOWN_MS = 30_000
 
 type View = 'login' | 'forgot'
 
 export default function Login() {
-  const { login, isAuthenticated } = useAuth()
+  const { signIn, resetPassword, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
   const [view, setView] = useState<View>('login')
@@ -31,6 +30,7 @@ export default function Login() {
 
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
 
   const attemptsRef = useRef(0)
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
@@ -56,8 +56,11 @@ export default function Login() {
     return () => window.clearInterval(id)
   }, [cooldownUntil])
 
-  // Já autenticado: AuthContext hidrata de forma síncrona, então isso já
-  // resolve antes da primeira pintura — sem flash do formulário.
+  // Enquanto a sessão inicial ainda está sendo verificada, não renderiza nada
+  // — evita tanto mostrar o formulário para quem já está logado quanto
+  // redirecionar cedo demais (flash em qualquer uma das direções).
+  if (authLoading) return null
+
   if (isAuthenticated) {
     return <Navigate to="/app" replace />
   }
@@ -71,24 +74,20 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const success = await login(email, password)
-      if (success) {
+      const { error: signInError } = await signIn(email, password)
+      if (!signInError) {
         attemptsRef.current = 0
         navigate('/app', { replace: true })
         return
       }
 
+      setError(signInError)
       attemptsRef.current += 1
-      // Mensagem sempre genérica — não revela se o e-mail existe, se a
-      // senha está errada, ou se a conta está ativa (evita enumeração).
-      setError('Não foi possível entrar com as credenciais informadas.')
       if (attemptsRef.current >= SOFT_ATTEMPT_LIMIT) {
         setCooldownUntil(Date.now() + SOFT_COOLDOWN_MS)
       }
       passwordRef.current?.focus()
       passwordRef.current?.select()
-    } catch {
-      setError('Não foi possível concluir o acesso agora. Tente novamente em instantes.')
     } finally {
       setLoading(false)
     }
@@ -98,12 +97,17 @@ export default function Login() {
     setCapsLock(e.getModifierState?.('CapsLock') ?? false)
   }
 
-  function handleForgotSubmit(e: FormEvent) {
+  async function handleForgotSubmit(e: FormEvent) {
     e.preventDefault()
-    // Sem backend de recuperação nesta arquitetura: não fingimos envio de
-    // e-mail. A mensagem é honesta e genérica (não confirma se a conta
-    // existe), e o caminho real de recuperação hoje é o suporte humano.
-    setForgotSent(true)
+    if (forgotLoading) return
+    setForgotLoading(true)
+    try {
+      await resetPassword(forgotEmail)
+    } finally {
+      // Resposta sempre a mesma, exista ou não a conta — evita enumeração.
+      setForgotLoading(false)
+      setForgotSent(true)
+    }
   }
 
   const accessHelpUrl = whatsappAccessHelpUrl()
@@ -261,11 +265,11 @@ export default function Login() {
                 </button>
 
                 <h2 className="login-card__title">Recuperar acesso</h2>
-                <p className="login-card__desc">Informe seu e-mail. Se houver uma conta ativa vinculada a ele, enviaremos as instruções.</p>
+                <p className="login-card__desc">Informe seu e-mail. Se houver uma conta vinculada a ele, enviaremos as instruções.</p>
 
                 {forgotSent ? (
                   <div className="login-alert login-alert--success" style={{ marginTop: 24 }}>
-                    Caso exista uma conta ativa vinculada a este e-mail, enviaremos as instruções de recuperação.
+                    Se existir uma conta vinculada a esse e-mail, você receberá as instruções de recuperação.
                   </div>
                 ) : (
                   <form onSubmit={handleForgotSubmit} noValidate className="login-form" style={{ marginTop: 20 }}>
@@ -282,11 +286,15 @@ export default function Login() {
                           required
                           autoComplete="username"
                           inputMode="email"
+                          disabled={forgotLoading}
                           className="login-input"
                         />
                       </div>
                     </div>
-                    <button type="submit" className="login-submit">Enviar instruções</button>
+                    <button type="submit" disabled={forgotLoading} className="login-submit">
+                      {forgotLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {forgotLoading ? 'Enviando...' : 'Enviar instruções'}
+                    </button>
                   </form>
                 )}
 

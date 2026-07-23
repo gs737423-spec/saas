@@ -2,7 +2,6 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { ConnectionProvider } from '@/contexts/ConnectionContext'
 import { PeriodProvider } from '@/contexts/PeriodContext'
 import { InventorySettingsProvider } from '@/contexts/InventorySettingsContext'
-import { useAuth } from '@/contexts/AuthContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
 import Dashboard from '@/pages/Dashboard'
@@ -15,16 +14,13 @@ import Placeholder from '@/pages/Placeholder'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
-// Shell autenticado da plataforma. Montado em `/app/*` (ver main.tsx). O site
-// institucional público vive em `/` e não passa por aqui. Rotas filhas são
-// relativas ao base `/app`.
+// Shell autenticado da plataforma. Montado em `/app/*` sob <ProtectedRoute>
+// (ver main.tsx) — a guarda de sessão real já aconteceu lá, este componente
+// não precisa (e não deve) checar autenticação de novo. O site institucional
+// público vive em `/` e não passa por aqui. Rotas filhas são relativas ao
+// base `/app`.
 export default function App() {
-  const { isAuthenticated } = useAuth()
   const location = useLocation()
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  }
 
   return (
     <ConnectionProvider>
