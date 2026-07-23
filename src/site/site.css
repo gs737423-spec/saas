@@ -1358,26 +1358,30 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   max-width: 640px;
 }
 
-.marketplace-showcase__layout { display: grid; gap: 28px; grid-template-columns: 1fr; }
+.marketplace-showcase__layout { display: grid; gap: 20px; grid-template-columns: 1fr; }
 @media (min-width: 1024px) {
-  .marketplace-showcase__layout { grid-template-columns: 34% 1fr; gap: 40px; align-items: stretch; }
+  .marketplace-showcase__layout {
+    grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+    gap: 28px;
+    align-items: stretch;
+  }
 }
 
-/* Coluna esquerda — seletores verticais */
-.marketplace-showcase__tabs { display: flex; flex-direction: column; gap: 12px; }
+/* Coluna esquerda — seletores verticais, compactos */
+.marketplace-showcase__tabs { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .marketplace-showcase__tab {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
   text-align: left;
-  padding: 18px 20px;
+  padding: 16px 18px;
   border-radius: 14px;
   border: 1px solid rgba(99, 199, 255, 0.16);
   background: #0D2748;
   cursor: pointer;
-  transition: background-color 220ms ease, border-color 220ms ease;
+  transition: background-color 220ms ease, border-color 220ms ease, transform 180ms ease;
 }
-.marketplace-showcase__tab:hover { border-color: rgba(99, 199, 255, 0.32); }
+.marketplace-showcase__tab:hover { border-color: rgba(99, 199, 255, 0.32); transform: translateY(-2px); }
 .marketplace-showcase__tab:focus-visible { outline: 2px solid #63C7FF; outline-offset: 2px; }
 .marketplace-showcase__tab[data-active='true'] {
   background: linear-gradient(135deg, #153A69, #1B4A8A);
@@ -1386,23 +1390,25 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .marketplace-showcase__tab-index {
   font-family: ui-monospace, monospace;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #63C7FF;
   padding-top: 2px;
   flex-shrink: 0;
 }
 .marketplace-showcase__tab[data-active='true'] .marketplace-showcase__tab-index { color: #9DDCFF; }
-.marketplace-showcase__tab-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.marketplace-showcase__tab-title { font-weight: 700; font-size: 15px; color: #F7FAFF; }
-.marketplace-showcase__tab-desc { font-size: 13px; line-height: 1.5; color: #AAB8CB; }
+.marketplace-showcase__tab-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.marketplace-showcase__tab-title { font-weight: 700; font-size: 16px; line-height: 1.2; color: #F7FAFF; }
+.marketplace-showcase__tab-desc { font-size: 13px; line-height: 1.3; color: #AAB8CB; }
 .marketplace-showcase__tab[data-active='true'] .marketplace-showcase__tab-desc { color: #C2CCDA; }
-.marketplace-showcase__tab-outcome { margin-top: 4px; font-size: 12px; line-height: 1.5; color: #63C7FF; font-weight: 600; }
+.marketplace-showcase__tab-outcome { margin-top: 2px; font-size: 12px; line-height: 1.3; color: #63C7FF; font-weight: 600; }
 
 /* Coluna direita — frame proprietário Vintec (NÃO é mockup de navegador) */
 .marketplace-showcase__frame {
   position: relative;
   isolation: isolate;
-  border-radius: 24px;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 20px;
   background: #0D2748;
   border: 1px solid rgba(99, 199, 255, 0.16);
   padding: 12px;
@@ -1413,7 +1419,7 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   position: absolute;
   inset: -2px;
   z-index: -1;
-  border-radius: 26px;
+  border-radius: 22px;
   background: radial-gradient(60% 60% at 50% 0%, rgba(39, 93, 255, 0.22), transparent 70%);
   filter: blur(24px);
   pointer-events: none;
@@ -1422,8 +1428,9 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: 14px 14px 0 0;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-radius: 12px 12px 0 0;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(99, 199, 255, 0.12);
 }
@@ -1431,40 +1438,119 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .marketplace-showcase__frame-meta { font-size: 12px; color: #AAB8CB; }
 .marketplace-showcase__frame-demo {
   margin-left: auto;
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: #63C7FF;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid rgba(99, 199, 255, 0.28);
   background: rgba(99, 199, 255, 0.08);
 }
-/* As 3 imagens têm o mesmo aspect-ratio (mesma captura/viewport) — altura do
-   frame fica estável entre abas, sem salto de layout. */
+/* Viewport próprio da screenshot — altura controlada (NÃO a largura da
+   coluna) que dita o tamanho visual, independente da resolução real do
+   arquivo (3200×1900). Em mobile a imagem preenche em largura total e a
+   altura acompanha via aspect-ratio; do tablet pra cima a altura fica fixa
+   e a imagem (object-fit: contain) aparece inteira, centralizada, sem cortar
+   nem esticar — só reduz o espaço que ocupa na página. */
 .marketplace-showcase__frame-body {
   position: relative;
   margin-top: 10px;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 3200 / 1900;
+  height: auto;
+  min-height: 0;
   background: #081426;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 330px; max-height: 330px; }
+}
+@media (min-width: 1024px) {
+  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 400px; max-height: 430px; }
 }
 .marketplace-showcase__image {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
   object-fit: contain;
+  object-position: center top;
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 .marketplace-showcase__image[data-active='true'] { opacity: 1; transform: translateY(0); pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) {
   .marketplace-showcase__image { transition: opacity 1ms linear; transform: none; }
+}
+
+/* Faixa de logos — dentro do mesmo frame, abaixo da screenshot. Marquee
+   contínuo, decorativo, independente da aba ativa (não recebe key/estado
+   ligado a `active`). Reaproveita @keyframes marquee-scroll (já existe,
+   usado hoje só pela EcosystemMarquee morta) para não duplicar a animação;
+   classes próprias porque .marquee/.marquee__track genéricas só pausam no
+   :hover, sem :focus-within. */
+.marketplace-showcase__brands {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  min-height: 68px;
+  border-top: 1px solid rgba(99, 199, 255, 0.12);
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+.marketplace-showcase__brands-caption {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7C8CA3;
+  white-space: nowrap;
+}
+.marketplace-showcase__brands-viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marketplace-showcase__brands-track {
+  display: flex;
+  width: max-content;
+  flex-wrap: nowrap;
+  animation: marquee-scroll 20s linear infinite;
+  will-change: transform;
+}
+.marketplace-showcase__brands:hover .marketplace-showcase__brands-track,
+.marketplace-showcase__brands:focus-within .marketplace-showcase__brands-track {
+  animation-play-state: paused;
+}
+.marketplace-showcase__brands-set { display: flex; align-items: center; flex-shrink: 0; gap: 52px; padding-inline: 26px; list-style: none; }
+.marketplace-showcase__brand { display: flex; align-items: center; flex-shrink: 0; }
+.marketplace-showcase__brand-logo { display: block; width: auto; max-width: 120px; }
+.marketplace-showcase__brand-logo[data-brand='Mercado Livre'] { height: 34px; }
+.marketplace-showcase__brand-logo[data-brand='Amazon']        { height: 29px; }
+.marketplace-showcase__brand-logo[data-brand='Shopee']        { height: 31px; }
+.marketplace-showcase__brand-logo[data-brand='Leroy Merlin']  { height: 32px; }
+
+@media (max-width: 640px) {
+  .marketplace-showcase__brands { min-height: 62px; padding: 10px 12px; gap: 14px; }
+  .marketplace-showcase__brands-set { gap: 40px; padding-inline: 20px; }
+  .marketplace-showcase__brand-logo[data-brand='Mercado Livre'] { height: 28px; }
+  .marketplace-showcase__brand-logo[data-brand='Amazon']        { height: 25px; }
+  .marketplace-showcase__brand-logo[data-brand='Shopee']        { height: 26px; }
+  .marketplace-showcase__brand-logo[data-brand='Leroy Merlin']  { height: 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-showcase__brands-track { animation: none !important; transform: none !important; }
+  .marketplace-showcase__brands-set[aria-hidden='true'] { display: none !important; }
 }
 
 /* Faixa de benefícios — 3 colunas, divisores finos, sem cards/círculos */

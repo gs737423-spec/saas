@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { specialistHref } from '@/site/content'
+import { marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
 interface ShowcaseTab {
@@ -60,9 +60,34 @@ function preloadImages() {
 
 export default function MarketplacesSection() {
   const [active, setActive] = useState(0)
+  const [hovering, setHovering] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const [tabHidden, setTabHidden] = useState(false)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const timerRef = useRef<number | null>(null)
+  const reducedMotion = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  ).current
 
   useEffect(() => { preloadImages() }, [])
+
+  const paused = hovering || focused || tabHidden
+
+  // Autoplay: depende de `active` de propósito — qualquer troca (clique,
+  // teclado ou o próprio tick) desmonta o interval antigo e agenda um novo
+  // com 2s cheios, o que já garante que o clique manual reinicia a contagem.
+  useEffect(() => {
+    if (reducedMotion || paused) return
+    timerRef.current = window.setInterval(() => setActive((i) => (i + 1) % tabs.length), 2000)
+    return () => { if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null } }
+  }, [active, paused, reducedMotion])
+
+  // Aba oculta pausa e retoma (setState próprio, não só "stop" como no Hero).
+  useEffect(() => {
+    const onVisibility = () => setTabHidden(document.hidden)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
 
   const goTo = (i: number) => {
     const next = (i + tabs.length) % tabs.length
@@ -73,12 +98,21 @@ export default function MarketplacesSection() {
     if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); goTo(active + 1) }
     if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); goTo(active - 1) }
   }
+  const onBlurSection = (e: React.FocusEvent<HTMLElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false)
+  }
 
   const waHref = whatsappContactUrl('Olá! Quero ver a Vintec na minha operação.') ?? specialistHref('Olá! Quero ver a Vintec na minha operação.')
   const tab = tabs[active]
 
   return (
-    <section id="marketplaces" aria-label="A plataforma Vintec em uso" className="marketplace-showcase scroll-mt-24">
+    <section
+      id="marketplaces"
+      aria-label="A plataforma Vintec em uso"
+      className="marketplace-showcase scroll-mt-24"
+      onFocus={() => setFocused(true)}
+      onBlur={onBlurSection}
+    >
       <div className="site-container site-container--tight marketplace-showcase__intro" style={{ maxWidth: 1220 }}>
         <span className="marketplace-showcase__eyebrow">A OPERAÇÃO INTEIRA EM UMA ÚNICA VISÃO</span>
         <h2 className="marketplace-showcase__title">Veja o que acontece em todos os seus marketplaces sem trocar de painel.</h2>
@@ -87,7 +121,12 @@ export default function MarketplacesSection() {
         </p>
       </div>
 
-      <div className="site-container site-container--tight marketplace-showcase__layout" style={{ maxWidth: 1220 }}>
+      <div
+        className="site-container site-container--tight marketplace-showcase__layout"
+        style={{ maxWidth: 1220 }}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
         {/* Coluna esquerda — seletores */}
         <div className="marketplace-showcase__tabs" role="tablist" aria-label="Telas da plataforma Vintec" aria-orientation="vertical" onKeyDown={onKeyDown}>
           {tabs.map((t, i) => (
@@ -133,6 +172,31 @@ export default function MarketplacesSection() {
                 draggable={false}
               />
             ))}
+          </div>
+
+          {/* Faixa de logos — decorativa, independente da aba ativa (sem key
+              ligada a `active`) para nunca remontar/reiniciar o marquee. */}
+          <div className="marketplace-showcase__brands">
+            <span className="marketplace-showcase__brands-caption">MARKETPLACES</span>
+            <div className="marketplace-showcase__brands-viewport">
+              <div className="marketplace-showcase__brands-track">
+                {[0, 1].map((copy) => (
+                  <ul key={copy} className="marketplace-showcase__brands-set" aria-hidden={copy === 1 || undefined}>
+                    {marketplaces.map((m) => (
+                      <li key={m.name} className="marketplace-showcase__brand">
+                        <img
+                          src={m.logoSrc}
+                          alt={copy === 0 ? m.name : ''}
+                          className="marketplace-showcase__brand-logo"
+                          data-brand={m.name}
+                          draggable={false}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
