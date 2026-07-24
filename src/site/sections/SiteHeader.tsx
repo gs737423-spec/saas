@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X, ArrowRight, Lock } from 'lucide-react'
+import { Menu, X, Lock } from 'lucide-react'
 import { nav, specialistHref } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
 
@@ -54,7 +54,7 @@ export default function SiteHeader() {
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
           <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
-            Fale com um especialista
+            Falar com um especialista
           </a>
         </div>
 
@@ -127,7 +127,7 @@ export default function SiteHeader() {
                   onClick={() => setOpen(false)}
                   className="btn btn-primary w-full"
                 >
-                  Fale com um especialista <ArrowRight className="h-4 w-4" />
+                  Falar com um especialista
                 </a>
               </div>
             </div>

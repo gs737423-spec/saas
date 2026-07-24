@@ -901,6 +901,8 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .vt-light {
   background: var(--vintec-canvas);
 }
+.numbers-section { position: relative; }
+.numbers-compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
 
 /* ---- 4ª seção — card vertical único (referência Petina) ---- */
 .platform-card {
@@ -1330,12 +1332,14 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
    agora sem uso) nem classes de outras seções.
    ========================================================================== */
 .marketplace-showcase {
+  position: relative;
   background: linear-gradient(180deg, #07182F 0%, #0A2345 100%);
-  padding-top: 88px;
-  padding-bottom: 88px;
+  padding-top: 64px;
+  padding-bottom: 64px;
   color: #F7FAFF;
 }
-.marketplace-showcase__intro { margin-bottom: 48px; }
+.marketplace-showcase__compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
+.marketplace-showcase__intro { margin-bottom: 36px; }
 .marketplace-showcase__eyebrow {
   display: block;
   font-size: 12.5px;
@@ -1357,6 +1361,14 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   font-size: 1.05rem;
   line-height: 1.6;
   color: #AAB8CB;
+  max-width: 640px;
+}
+.marketplace-showcase__highlight {
+  margin-top: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #F7FAFF;
   max-width: 640px;
 }
 
@@ -1903,6 +1915,135 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   .svc2-cta { padding-left: 28px; border-left: 1px solid rgba(168, 224, 252, 0.16); }
 }
 
+/* ==========================================================================
+   Serviços da consultoria — ServicosSection (id="servicos"). Substitui de
+   vez a antiga ExperienceSection: painel único (42/58), título+texto à
+   esquerda, 4 serviços em grade 2×2 à direita (a plataforma é um deles),
+   frase de fechamento + CTA fora do painel. Sem cards grandes, sem
+   numeração, sem timeline, sem setas. Classes servicos- isoladas.
+   ========================================================================== */
+.servicos-container { padding-top: 40px; padding-bottom: 40px; }
+@media (min-width: 1024px) { .servicos-container { padding-top: 48px; padding-bottom: 48px; } }
+
+.servicos-eyebrow {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--vintec-sky-400);
+  margin-bottom: 14px;
+}
+
+.servicos-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--vintec-ink-850);
+  border: 1px solid var(--vintec-border-dark);
+  box-shadow: 0 20px 44px -24px rgba(0, 0, 0, 0.5);
+}
+@media (min-width: 1024px) {
+  .servicos-panel { grid-template-columns: 0.72fr 1fr; gap: 32px; padding: 26px 30px; align-items: center; }
+}
+
+.servicos-panel__title { font-weight: 700; font-size: clamp(1.4rem, 1.2rem + 0.7vw, 1.8125rem); line-height: 1.18; color: #fff; }
+.servicos-panel__text { margin-top: 10px; font-size: 14.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.78); }
+
+.servicos-grid { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .servicos-grid { grid-template-columns: 1fr 1fr; } }
+
+.servicos-item { padding: 13px 0; }
+.servicos-item:not(:first-child) {
+  border-top: 1px solid rgba(168, 224, 252, 0.14);
+  margin-top: 2px;
+  padding-top: 13px;
+}
+@media (min-width: 640px) {
+  .servicos-item { padding: 13px 18px; }
+  .servicos-item:nth-child(odd) { padding-left: 0; }
+  .servicos-item:nth-child(-n+2) { border-top: none; margin-top: 0; padding-top: 0; }
+  .servicos-item:nth-child(even) { border-left: 1px solid rgba(168, 224, 252, 0.14); }
+  .servicos-item:nth-child(n+3) { border-top: 1px solid rgba(168, 224, 252, 0.14); margin-top: 0; padding-top: 13px; }
+}
+.servicos-item__label { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.07em; color: var(--vintec-sky-400); margin-bottom: 4px; }
+.servicos-item__text { font-size: 13.5px; line-height: 1.42; color: rgba(255, 255, 255, 0.78); }
+
+.servicos-closing {
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 720px;
+}
+
+.servicos-cta { margin-top: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.servicos-cta .btn { padding: 0.75rem 1.4rem; font-size: 0.95rem; }
+.servicos-cta-note { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+@media (max-width: 639px) { .servicos-cta .btn { width: 100%; justify-content: center; } }
+
+/* ==========================================================================
+   Como trabalhamos — ComoTrabalhamosSection (id="como-trabalhamos"). Bem
+   compacta: cabeçalho curto + um painel com 3 momentos + frase final. Sem
+   números, sem timeline, sem setas, sem CTA próprio (evita duplicar o CTA
+   final). Classes trabalhamos- isoladas.
+   ========================================================================== */
+.trabalhamos-section { position: relative; }
+.trabalhamos-compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
+.trabalhamos-container { padding-top: 36px; padding-bottom: 36px; }
+@media (min-width: 1024px) { .trabalhamos-container { padding-top: 44px; padding-bottom: 44px; } }
+
+.trabalhamos-eyebrow {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--vintec-blue-700);
+  margin-bottom: 12px;
+}
+.trabalhamos-title {
+  max-width: 720px;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 1.05rem + 1.8vw, 2.25rem);
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+  color: var(--vintec-text);
+}
+
+.trabalhamos-panel {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid var(--vintec-border);
+  box-shadow: var(--vintec-shadow-sm);
+}
+@media (min-width: 1024px) { .trabalhamos-panel { padding: 22px 26px; } }
+
+.trabalhamos-moments { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .trabalhamos-moments { grid-template-columns: repeat(3, 1fr); } }
+
+.trabalhamos-moment { padding: 12px 0; }
+.trabalhamos-moment + .trabalhamos-moment { border-top: 1px solid var(--vintec-border); margin-top: 2px; padding-top: 12px; }
+@media (min-width: 768px) {
+  .trabalhamos-moment { padding: 0 20px; }
+  .trabalhamos-moment:first-child { padding-left: 0; }
+  .trabalhamos-moment + .trabalhamos-moment { border-top: none; border-left: 1px solid var(--vintec-border); margin-top: 0; padding-top: 0; }
+}
+.trabalhamos-moment__label { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.07em; color: var(--vintec-blue-700); margin-bottom: 5px; }
+.trabalhamos-moment__text { font-size: 14px; line-height: 1.48; color: var(--vintec-text-soft); }
+
+.trabalhamos-panel__base {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--vintec-border);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--vintec-text);
+}
+
 /* ---- Footer editorial — wordmark textual, sem símbolo ---- */
 .sec-footer-flat {
   background: linear-gradient(135deg, #061426 0%, #081A33 58%, #10294A 100%);
@@ -1977,6 +2118,7 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
     radial-gradient(circle at 82% 28%, rgba(115, 198, 250, 0.2), transparent 34%),
     linear-gradient(116deg, #071426 0%, #102B4B 43%, #315DD6 100%);
 }
+.conversion-compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
 
 /* ---- Implantação — introdução + superfície única com 3 etapas (fundo azul-marinho) ---- */
 .sec-implant { background: #081A33; }
