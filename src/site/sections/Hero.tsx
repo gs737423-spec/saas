@@ -32,8 +32,8 @@ const slides: Slide[] = [
     waMessage: 'Olá! Quero agendar uma conversa estratégica sobre minha operação.',
   },
   {
-    eyebrow: 'DECISÕES COM EXPERIÊNCIA',
-    title: <>Uma operação como a sua merece decisões à altura do que já foi construído.</>,
+    eyebrow: 'ANÁLISE E ACOMPANHAMENTO',
+    title: <>Crescer bem exige mais do que esforço. Exige experiência ao lado das suas decisões.</>,
     sub: 'Unimos experiência, análise e acompanhamento para apoiar decisões importantes sobre margem, estoque, canais e desempenho.',
     ctaPrimary: ctaLabels.principal,
     ctaSecondary: 'Conhecer nossos serviços',
