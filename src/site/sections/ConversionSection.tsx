@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Loader2, ArrowRight, AlertCircle, MessageCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, AlertCircle, MessageCircle } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
 import { contact, specialistHref } from '@/site/content'
 
@@ -123,8 +123,12 @@ export default function ConversionSection() {
             )}
           </div>
 
-          <Reveal className="vt-card p-6 md:p-8 lg:col-span-7">
-            <form onSubmit={onSubmit} noValidate>
+          <Reveal className="vt-card p-7 md:p-8 lg:col-span-7">
+            <h3 className="text-[17px] font-bold vt-ink">Receba uma avaliação inicial</h3>
+            <p className="mt-1.5 text-[13.5px] vt-muted" style={{ lineHeight: 1.5 }}>
+              Conte brevemente sobre sua operação. Nossa equipe retorna para entender o cenário.
+            </p>
+            <form onSubmit={onSubmit} noValidate className="mt-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nome completo" error={errors.name} htmlFor="f-name">
                   <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
@@ -171,8 +175,8 @@ export default function ConversionSection() {
                     </select>
                   </Field>
 
-                  <Field label="Qual é a maior dificuldade hoje?" htmlFor="f-difficulty">
-                    <input id="f-difficulty" className="vt-input" value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)} placeholder="Opcional" />
+                  <Field label="Conte um pouco sobre sua rotina" htmlFor="f-difficulty">
+                    <textarea id="f-difficulty" className="vt-input vt-textarea" rows={3} maxLength={400} value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)} placeholder="Opcional — ex.: hoje controlamos tudo em planilha e perdemos tempo comparando os canais" />
                   </Field>
                 </div>
               )}
@@ -196,8 +200,9 @@ export default function ConversionSection() {
               )}
 
               <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-6 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
-                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <>Fale com um especialista <ArrowRight className="h-4 w-4" /></>}
+                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : 'Fale com um especialista'}
               </button>
+              <p className="mt-3 text-center text-[12px] vt-muted">Retorno da equipe Vintec • Conversa inicial sem compromisso</p>
             </form>
           </Reveal>
         </div>

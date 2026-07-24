@@ -1107,22 +1107,24 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 /* Inputs escuros (formulário de conversão no dark) */
 .vt-input {
   width: 100%;
+  min-height: 50px;
   border-radius: 12px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.75rem 0.95rem;
   font-size: 14.5px;
-  color: #EAF4F3;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #F7FAFF;
+  background: rgba(6, 18, 36, 0.55);
+  border: 1px solid rgba(98, 183, 255, 0.22);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
-.vt-input::placeholder { color: rgba(214, 235, 232, 0.4); }
+.vt-input::placeholder { color: rgba(169, 184, 204, 0.6); }
 .vt-input:focus {
   border-color: #275DFF;
-  background: rgba(39, 93, 255, 0.08);
-  box-shadow: 0 0 0 3px rgba(39, 93, 255, 0.18);
+  background: rgba(39, 93, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(39, 93, 255, 0.22);
 }
 .vt-input option { color: #0B1220; }
+.vt-textarea { min-height: 84px; padding-top: 0.7rem; line-height: 1.5; resize: vertical; }
 
 /* Métrica animada (Quem Somos) — número grande → linha de acento → ícone
    GRANDE abaixo + label (editorial, sem card completo). */

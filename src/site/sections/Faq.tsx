@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Plus, Minus } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
-import { faqItems } from '@/site/content'
+import { faqItems, specialistHref } from '@/site/content'
 
 // FAQ — família clara (light-100), título à esquerda, accordion à direita.
 export default function Faq() {
   const [open, setOpen] = useState<number | null>(0)
+  const waHref = specialistHref('Olá! Não encontrei minha dúvida no site e gostaria de falar com a equipe Vintec.')
 
   return (
     <section id="faq" className="sec-cool scroll-mt-24">
@@ -55,6 +56,15 @@ export default function Faq() {
                 )
               })}
             </ul>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-5" style={{ borderColor: 'var(--vintec-border)' }}>
+              <div>
+                <p className="text-[13.5px] font-bold" style={{ color: 'var(--vintec-text)' }}>Não encontrou sua dúvida?</p>
+                <p className="text-[13px]" style={{ color: 'var(--vintec-text-soft)' }}>Fale diretamente com a equipe Vintec.</p>
+              </div>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.6rem 1.1rem', fontSize: '13.5px' }}>
+                Falar com um especialista
+              </a>
+            </div>
           </Reveal>
         </div>
       </div>
