@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 import HeroPersonStage from '@/site/components/HeroPersonStage'
@@ -20,40 +20,40 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
-    title: <>Acompanhe todos os marketplaces em uma única rotina.</>,
-    sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
-    ctaPrimary: 'Quero organizar minha operação',
-    ctaSecondary: 'Ver como funciona',
-    ctaSecondaryHref: '#como-funciona',
+    eyebrow: 'CONSULTORIA ESPECIALIZADA EM E-COMMERCE',
+    title: <>Estratégia e acompanhamento para fazer seu e-commerce crescer com mais direção.</>,
+    sub: 'Com uma liderança que reúne mais de 20 anos de experiência no setor, a Vintec trabalha ao lado da sua gestão para identificar gargalos, encontrar oportunidades e definir as prioridades da operação.',
+    ctaPrimary: 'Falar com um especialista',
+    ctaSecondary: 'Conhecer nossos serviços',
+    ctaSecondaryHref: '#servicos',
     microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
-  },
-  {
-    eyebrow: 'UMA ROTINA PARA TODOS OS MARKETPLACES',
-    title: <>Venda em vários marketplaces sem perder o controle da operação.</>,
-    sub: 'A Vintec organiza as informações de Mercado Livre, Amazon, Shopee e Leroy Merlin em uma única rotina de acompanhamento.',
-    ctaPrimary: 'Quero centralizar meus marketplaces',
-    ctaSecondary: 'Conheça as soluções',
-    ctaSecondaryHref: '#servicos',
-    microcopy: 'Entendemos primeiro como sua equipe trabalha hoje.',
-    person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
-    waMessage: 'Olá! Quero entender melhor os resultados dos meus marketplaces.',
+    waMessage: 'Olá! Quero falar com um especialista da Vintec sobre minha operação.',
   },
   {
     eyebrow: 'CRESCIMENTO COM CONTROLE',
-    title: <>Cresça em novos marketplaces sem aumentar a confusão da equipe.</>,
-    sub: 'Entre em novos canais mantendo pedidos, estoque, vendas e prioridades organizados desde o início.',
-    ctaPrimary: 'Quero preparar minha operação',
-    ctaSecondary: 'Entenda a implantação',
-    ctaSecondaryHref: '#como-funciona',
-    microcopy: 'A implantação é acompanhada pela equipe Vintec.',
+    title: <>Crescer sem controle pode ampliar o faturamento e também os problemas.</>,
+    sub: 'A Vintec ajuda sua empresa a organizar prioridades, acompanhar resultados e desenvolver a operação sem perder visão de margem, estoque e desempenho.',
+    ctaPrimary: 'Falar com um especialista',
+    ctaSecondary: 'Conhecer nossos serviços',
+    ctaSecondaryHref: '#servicos',
+    microcopy: 'Conversa inicial, sem compromisso.',
+    person: '/site/people/processed/vintec-banner-laptop.webp',
+    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
+    waMessage: 'Olá! Quero organizar as prioridades da minha operação com a Vintec.',
+  },
+  {
+    eyebrow: 'DECISÕES COM EXPERIÊNCIA',
+    title: <>Decisões importantes não deveriam depender apenas de tentativa e erro.</>,
+    sub: 'Nossa experiência é aplicada na análise da operação e no acompanhamento das decisões que influenciam o crescimento do negócio.',
+    ctaPrimary: 'Falar com um especialista',
+    ctaSecondary: 'Conhecer nossos serviços',
+    ctaSecondaryHref: '#servicos',
+    microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
     personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
-    waMessage: 'Olá! Quero preparar minha gestão para crescer em novos marketplaces.',
+    waMessage: 'Olá! Quero entender como a Vintec pode apoiar as decisões da minha operação.',
   },
 ]
 
@@ -142,7 +142,7 @@ export default function Hero() {
               {slide.eyebrow}
             </span>
 
-            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.3rem, 3.8vw, 3.6rem)', lineHeight: 1.03, letterSpacing: '-0.025em', maxWidth: 560, textWrap: 'balance' }}>
+            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.1rem, 3vw, 3.1rem)', lineHeight: 1.08, letterSpacing: '-0.02em', maxWidth: 600, textWrap: 'balance' }}>
               {slide.title}
             </h1>
 
@@ -152,7 +152,7 @@ export default function Hero() {
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
-                {slide.ctaPrimary} <ArrowRight className="h-[18px] w-[18px]" />
+                {slide.ctaPrimary}
               </a>
               <a href={slide.ctaSecondaryHref} className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>
                 {slide.ctaSecondary}

@@ -13,11 +13,8 @@ export default function Faq() {
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <Reveal>
             <h2 className="text-[22px] font-extrabold tracking-tight md:text-[26px]" style={{ color: 'var(--vintec-text)' }}>
-              Ainda com dúvidas?
+              Dúvidas antes de começar?
             </h2>
-            <p className="mt-2 max-w-xs text-[14px]" style={{ color: 'var(--vintec-text-soft)', lineHeight: 1.5 }}>
-              Respostas rápidas sobre conexões, implantação e funcionamento da Vintec.
-            </p>
           </Reveal>
 
           <Reveal delay={60} className="max-w-xl">

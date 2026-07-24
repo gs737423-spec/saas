@@ -19,11 +19,20 @@ import { whatsappContactUrl } from '@/lib/whatsapp'
 // scroll-margin-top no CSS, garante que o título fique sempre visível
 // abaixo do header sticky.
 export const nav = [
-  { label: 'Soluções', href: '#servicos' },
-  { label: 'Marketplaces', href: '#marketplaces' },
-  { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Consultoria', href: '#consultoria' },
+  { label: 'Serviços', href: '#servicos' },
+  { label: 'Plataforma', href: '#plataforma' },
+  { label: 'Como trabalhamos', href: '#como-trabalhamos' },
 ]
+
+// Textos de CTA padronizados — usar só estes em toda a home (regra do
+// reposicionamento "consultoria de e-commerce como produto principal"),
+// nunca variações.
+export const ctaLabels = {
+  principal: 'Falar com um especialista',
+  plataforma: 'Conhecer a plataforma da Vintec',
+  contexto: 'Conversar sobre minha operação',
+}
 
 export interface MarketplaceItem {
   name: string
@@ -55,11 +64,11 @@ export const trustStrip = [
 // nunca métricas de clientes/faturamento/uso inventadas.
 // Bloco "Quem Somos" — 2 parágrafos institucionais (estrutura editorial Petina).
 export const about = {
-  label: 'Quem Somos',
-  title: 'Criada para substituir controles paralelos por uma rotina mais clara.',
+  label: 'EXPERIÊNCIA PARA ORIENTAR DECISÕES',
+  title: 'Mais de 20 anos de e-commerce aplicados à realidade de cada operação.',
   paragraphs: [
-    'A Vintec ajuda empresas que vendem em diferentes marketplaces a reunir pedidos, estoque, vendas e resultados em uma rotina mais fácil de acompanhar.',
-    'Assim, gestores e equipes passam menos tempo procurando informações e ganham mais segurança para decidir o que precisa de atenção.',
+    'Nossa liderança conhece os desafios de vender, proteger margem, administrar estoque, desenvolver canais e conduzir equipes em um mercado que muda constantemente.',
+    'Esse conhecimento sustenta os diagnósticos, análises e recomendações realizados pela Vintec ao longo do relacionamento com cada cliente.',
   ],
 }
 
@@ -225,28 +234,28 @@ export const commercialBanners: CommercialBannerContent[] = [
 // FAQ — respostas honestas sobre posicionamento comercial e forma de uso.
 export const faqItems = [
   {
-    q: 'O que a Vintec faz na prática?',
-    a: 'A Vintec reúne informações importantes dos marketplaces em uma rotina mais organizada, ajudando equipes e gestores a acompanhar pedidos, estoque, vendas e resultados com menos controles paralelos.',
+    q: 'A Vintec é uma plataforma ou uma consultoria?',
+    a: 'A experiência e o acompanhamento são o centro da entrega. A plataforma organiza os dados dos marketplaces e dá suporte às análises e decisões realizadas junto com o cliente.',
   },
   {
-    q: 'Quais marketplaces podem ser conectados?',
+    q: 'Como os mais de 20 anos de experiência são aplicados na minha empresa?',
+    a: 'Esse conhecimento é utilizado para interpretar o cenário, reconhecer padrões, identificar gargalos e ajudar a empresa a definir onde concentrar esforços.',
+  },
+  {
+    q: 'A Vintec garante aumento de faturamento?',
+    a: 'Nenhuma empresa pode garantir crescimento. A Vintec ajuda sua operação a identificar oportunidades, corrigir gargalos e tomar decisões com mais informação e experiência.',
+  },
+  {
+    q: 'O acompanhamento termina depois da implantação?',
+    a: 'Não. A implantação é apenas o começo. A proposta inclui acompanhamento da evolução da operação e revisão das prioridades ao longo do relacionamento.',
+  },
+  {
+    q: 'Preciso abandonar todos os controles atuais?',
+    a: 'Não necessariamente. Primeiro entendemos a estrutura atual e organizamos a transição de acordo com as necessidades e conexões disponíveis.',
+  },
+  {
+    q: 'Quais marketplaces podem ser acompanhados?',
     a: 'Os marketplaces prioritários são Mercado Livre, Amazon, Shopee e Leroy Merlin, com estrutura projetada para evoluir para novos canais.',
-  },
-  {
-    q: 'Vou precisar continuar alimentando planilhas?',
-    a: 'A proposta é reduzir a dependência de planilhas e atualizações manuais usando conexões diretas com os marketplaces disponíveis.',
-  },
-  {
-    q: 'Como os marketplaces são conectados?',
-    a: 'A conexão utiliza as integrações oficiais disponíveis para cada marketplace. Durante a implantação, a equipe da Vintec orienta as etapas necessárias.',
-  },
-  {
-    q: 'A equipe da Vintec ajuda na implantação?',
-    a: 'Sim. A equipe acompanha a configuração, a conexão dos marketplaces e a entrada da sua equipe na nova rotina.',
-  },
-  {
-    q: 'Como funciona a conversa inicial?',
-    a: 'É uma conversa sem compromisso para entender como sua equipe vende e acompanha os marketplaces hoje, antes de qualquer proposta.',
   },
 ]
 
