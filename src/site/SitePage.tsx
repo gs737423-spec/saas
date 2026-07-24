@@ -3,22 +3,22 @@ import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
-import InstitutionalPlatformSection from '@/site/sections/InstitutionalPlatformSection'
-import PlatformCardSection from '@/site/sections/PlatformCardSection'
-import EcosystemMarquee from '@/site/sections/EcosystemMarquee'
+import ServicesSection from '@/site/sections/ServicesSection'
+import MarketplacesSection from '@/site/sections/MarketplacesSection'
 import HowItWorks from '@/site/sections/HowItWorks'
-import DifferentialsSection from '@/site/sections/DifferentialsSection'
-import CommercialBanner from '@/site/sections/CommercialBanner'
-import Demo from '@/site/sections/Demo'
+import ConversionSection from '@/site/sections/ConversionSection'
 import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
-import { commercialBanners } from '@/site/content'
 
-// Home dark-first (direção premium Vintec). Seções antigas baseadas em
-// screenshot de dashboard (ProblemSection, PlatformShowcase,
-// DiagnosticSection, IntegrationsSecurity) e o WhatWeDo (fundido no bloco
-// institucional) continuam no repo, fora da renderização pública.
+// Home institucional Vintec — 8 seções. "Por que Vintec" deixou de ser
+// seção independente (repetia argumentos de benefícios/como funciona) e foi
+// incorporada como faixa final compacta dentro de HowItWorks. Demais seções
+// antigas (ProblemSection, PlatformShowcase, DiagnosticSection,
+// IntegrationsSecurity, WhatWeDo, PreviewSection, CommercialBanner, Demo,
+// InstitutionalPlatformSection, InstitutionalSolutionSection,
+// DifferentialsSection) continuam no repo fora da renderização pública.
+// (PlatformCardSection e EcosystemMarquee foram removidos — órfãos, sem uso.)
 export default function SitePage() {
   useEffect(() => {
     document.documentElement.classList.add('site-active')
@@ -29,26 +29,19 @@ export default function SitePage() {
     <div className="site-root site-root--dark">
       <SiteHeader />
       <main>
-        {/* 1. Promessa — hero slider dark */}
+        {/* 1. Hero — escuro, gradiente */}
         <Hero />
-        {/* 2. Quem Somos + números */}
+        {/* 2. Quem Somos + métricas — claro */}
         <NumbersSection />
-        {/* 3. Institucional — pessoa consultora + texto */}
-        <InstitutionalPlatformSection />
-        {/* 4. O que você recebe — card vertical único */}
-        <PlatformCardSection />
-        {/* 5. Marketplaces */}
-        <EcosystemMarquee />
-        {/* 5. Como funciona */}
+        {/* 3. Benefícios — escuro */}
+        <ServicesSection />
+        {/* 4. Marketplaces — claro */}
+        <MarketplacesSection />
+        {/* 5. Como funciona (+ faixa final) — claro */}
         <HowItWorks />
-        {/* 6. Banner humanizado — organização */}
-        <CommercialBanner content={commercialBanners[0]} />
-        {/* 7. Diferenciais */}
-        <DifferentialsSection />
-        {/* 8. Banner humanizado — proximidade / especialista */}
-        <CommercialBanner content={commercialBanners[1]} />
-        {/* 9. Conversão final */}
-        <Demo />
+        {/* 6. Conversão — escuro, gradiente */}
+        <ConversionSection />
+        {/* 7. FAQ — claro */}
         <Faq />
       </main>
       <Footer />

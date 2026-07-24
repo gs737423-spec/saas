@@ -1,47 +1,51 @@
-import { ArrowRight, Check } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
-import { processIntro, processSteps } from '@/site/content'
+import ProcessStep from '@/site/components/ProcessStep'
+import { processSteps } from '@/site/data/processSteps'
+import { specialistHref } from '@/site/content'
 
-// "Como começamos" — composição editorial assimétrica de implantação
-// acompanhada: painel azul-marinho (âncora institucional) à esquerda +
-// lista contínua de 3 etapas em superfície clara à direita, formando um
-// único bloco conectado (não duas colunas soltas). Fundo geral claro
-// (off-white/soft-blue), reutiliza os tokens já usados no hero/CTA.
+const trustPoints = [
+  'Sem mudanças bruscas na rotina atual.',
+  'Orientação durante a configuração e os primeiros dias.',
+]
+
+// Implantação — introdução + pontos de confiança à esquerda, uma única
+// superfície elevada com 3 etapas editoriais à direita. Fundo azul-marinho.
 export default function HowItWorks() {
   return (
-    <section id="como-funciona" className="process-section scroll-mt-24">
-      <div className="process-section__container">
-        <div className="process-panel">
-          <Reveal as="div" className="process-intro">
-            <span className="process-intro__eyebrow">{processIntro.eyebrow}</span>
-            <h2 className="process-intro__title">{processIntro.title}</h2>
-            <p className="process-intro__text">{processIntro.text}</p>
-            <ul className="process-intro__reassurances">
-              {processIntro.reassurances.map((r) => (
-                <li key={r}><Check className="h-[13px] w-[13px]" strokeWidth={2.5} /> {r}</li>
+    <section id="como-funciona" className="sec-implant scroll-mt-24">
+      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 104, paddingBottom: 104 }}>
+        <div className="grid gap-14 lg:grid-cols-12 lg:items-center lg:gap-20">
+          <Reveal className="lg:col-span-4">
+            <span className="mb-3 inline-block text-[12.5px] font-bold uppercase" style={{ color: '#68C8FF', letterSpacing: '0.14em' }}>
+              IMPLANTAÇÃO ACOMPANHADA
+            </span>
+            <h2 className="font-extrabold" style={{ color: '#F6F8FC', fontSize: 'clamp(1.9rem, 2.6vw, 2.5rem)', lineHeight: 1.18, letterSpacing: '-0.02em' }}>
+              Da primeira conversa à rotina organizada.
+            </h2>
+            <p className="mt-4" style={{ color: '#AAB8CC', fontSize: '1.02rem', lineHeight: 1.6, maxWidth: '38ch' }}>
+              Entendemos como sua equipe trabalha, configuramos os marketplaces disponíveis e acompanhamos os responsáveis durante os primeiros passos — sem interromper a operação atual.
+            </p>
+
+            <ul className="impl-trust">
+              {trustPoints.map((t) => (
+                <li key={t}>
+                  <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{t}</span>
+                </li>
               ))}
             </ul>
-            <a href={processIntro.ctaHref} className="process-intro__cta">
-              {processIntro.ctaLabel} <ArrowRight className="h-[15px] w-[15px]" />
+
+            <a href={specialistHref('Olá! Quero entender como funciona a implantação da Vintec.')} target="_blank" rel="noopener noreferrer" className="impl-cta">
+              Converse sobre sua operação <ArrowRight className="h-4 w-4" />
             </a>
-            <span className="process-intro__accent" aria-hidden="true" />
           </Reveal>
 
-          <ol className="process-steps">
-            {processSteps.map((s, i) => (
-              <Reveal as="li" key={s.n} delay={i * 60} className="process-step">
-                <span className="process-step__number">{s.n}</span>
-                <div className="process-step__body">
-                  <h3 className="process-step__title">{s.title}</h3>
-                  <p className="process-step__text">{s.text}</p>
-                </div>
-                <div className="process-step__result">
-                  <span className="process-step__result-label">Resultado</span>
-                  <span className="process-step__result-value">{s.delivery}</span>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
+          <Reveal delay={80} className="lg:col-span-7 lg:col-start-6">
+            <ol className="impl-surface">
+              {processSteps.map((s, i) => <ProcessStep key={s.n} step={s} index={i} />)}
+            </ol>
+          </Reveal>
         </div>
       </div>
     </section>

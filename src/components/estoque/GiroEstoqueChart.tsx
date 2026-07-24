@@ -1,9 +1,9 @@
 import { stockItems, type StockItem } from '@/data/mockData'
 
 const statusColor: Record<StockItem['status'], string> = {
-  ok: '#16C784',
-  low: '#F5C24B',
-  critical: '#F4436C',
+  ok: '#2BD6A0',
+  low: '#FFC857',
+  critical: '#FF5F7A',
   stalled: '#9061F9',
 }
 
@@ -19,9 +19,9 @@ export default function GiroEstoqueChart() {
           <p className="mt-0.5 text-xs text-text-muted">Unidades vendidas / estoque médio · por produto</p>
         </div>
         <div className="hidden items-center gap-3 text-[10px] text-text-secondary sm:flex">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#16C784]" />Saudável</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F5C24B]" />Baixo</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F4436C]" />Crítico</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#2BD6A0]" />Saudável</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FFC857]" />Baixo</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FF5F7A]" />Crítico</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#9061F9]" />Parado</span>
         </div>
       </div>

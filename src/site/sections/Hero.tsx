@@ -9,7 +9,10 @@ interface Slide {
   eyebrow: string
   title: React.ReactNode
   sub: string
+  ctaPrimary: string
   ctaSecondary: string
+  ctaSecondaryHref: string
+  microcopy: string
   person: string
   personAlt: string
   waMessage: string
@@ -17,54 +20,84 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    eyebrow: 'INTELIGÊNCIA PARA OPERAÇÕES MULTICANAIS',
-    title: <>Seus marketplaces, uma operação mais clara.</>,
-    sub: 'A Vintec conecta Mercado Livre, Amazon, Shopee e Leroy Merlin para organizar vendas, pedidos, estoque e desempenho em uma única rotina de gestão.',
-    ctaSecondary: 'Entenda como funciona',
+    eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
+    title: <>Acompanhe todos os marketplaces em uma única rotina.</>,
+    sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
+    ctaPrimary: 'Quero organizar minha operação',
+    ctaSecondary: 'Ver como funciona',
+    ctaSecondaryHref: '#como-funciona',
+    microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Gostaria de conhecer a Vintec e organizar meus marketplaces em uma operação mais clara.',
+    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
   },
   {
-    eyebrow: 'MENOS DISPERSÃO. MAIS DIREÇÃO.',
-    title: <>Menos telas para acompanhar. Mais clareza para decidir.</>,
-    sub: 'Reúna as informações dos canais e acompanhe sua operação com mais organização, agilidade e confiança.',
+    eyebrow: 'UMA ROTINA PARA TODOS OS MARKETPLACES',
+    title: <>Venda em vários marketplaces sem perder o controle da operação.</>,
+    sub: 'A Vintec organiza as informações de Mercado Livre, Amazon, Shopee e Leroy Merlin em uma única rotina de acompanhamento.',
+    ctaPrimary: 'Quero centralizar meus marketplaces',
     ctaSecondary: 'Conheça as soluções',
+    ctaSecondaryHref: '#servicos',
+    microcopy: 'Entendemos primeiro como sua equipe trabalha hoje.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
     personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
-    waMessage: 'Olá! Gostaria de entender como a Vintec ajuda a reduzir a dispersão de informações da minha operação.',
+    waMessage: 'Olá! Quero entender melhor os resultados dos meus marketplaces.',
   },
   {
     eyebrow: 'CRESCIMENTO COM CONTROLE',
-    title: <>Cresça em novos canais sem perder o controle.</>,
-    sub: 'Compare os marketplaces, acompanhe os pontos de atenção e descubra onde sua empresa pode avançar.',
-    ctaSecondary: 'Conheça a Vintec',
+    title: <>Cresça em novos marketplaces sem aumentar a confusão da equipe.</>,
+    sub: 'Entre em novos canais mantendo pedidos, estoque, vendas e prioridades organizados desde o início.',
+    ctaPrimary: 'Quero preparar minha operação',
+    ctaSecondary: 'Entenda a implantação',
+    ctaSecondaryHref: '#como-funciona',
+    microcopy: 'A implantação é acompanhada pela equipe Vintec.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
     personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
-    waMessage: 'Olá! Gostaria de entender como crescer em novos marketplaces sem perder o controle da operação.',
+    waMessage: 'Olá! Quero preparar minha gestão para crescer em novos marketplaces.',
   },
 ]
 
 const AUTOPLAY_MS = 5500
 
+// Pré-carrega e decodifica as 3 imagens de pessoa antes de permitir o
+// autoplay — evita que a troca de slide 2/3 mostre a pessoa "atrasada" (o
+// primeiro decode do navegador é o que trava, não a transição em si).
+function preloadPeople(): Promise<void> {
+  return Promise.all(
+    slides.map((s) => {
+      const img = new Image()
+      img.src = s.person
+      return typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve()
+    }),
+  ).then(() => undefined)
+}
+
 export default function Hero() {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [peopleReady, setPeopleReady] = useState(false)
   const timerRef = useRef<number | null>(null)
   const reducedMotion = useRef(
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   ).current
 
-  // Autoplay. Depende de `active` → toda troca (manual ou automática) limpa
-  // e recria o intervalo, reiniciando a contagem. Sem múltiplos timers.
   useEffect(() => {
-    if (reducedMotion || paused) return
+    let cancelled = false
+    preloadPeople().then(() => { if (!cancelled) setPeopleReady(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  // Autoplay só começa depois das 3 imagens decodificadas — o primeiro slide
+  // aparece imediatamente de qualquer forma (peopleReady só bloqueia o
+  // intervalo, não a renderização inicial).
+  useEffect(() => {
+    if (reducedMotion || paused || !peopleReady) return
     timerRef.current = window.setInterval(() => setActive((i) => (i + 1) % slides.length), AUTOPLAY_MS)
     const stop = () => { if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null } }
     const onVisibility = () => { if (document.hidden) stop() }
     document.addEventListener('visibilitychange', onVisibility)
     return () => { stop(); document.removeEventListener('visibilitychange', onVisibility) }
-  }, [paused, reducedMotion, active])
+  }, [paused, reducedMotion, active, peopleReady])
 
   const goTo = (i: number) => setActive((i + slides.length) % slides.length)
 
@@ -109,7 +142,7 @@ export default function Hero() {
               {slide.eyebrow}
             </span>
 
-            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.3rem, 3.8vw, 3.6rem)', lineHeight: 1.03, letterSpacing: '-0.025em', maxWidth: 560 }}>
+            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.3rem, 3.8vw, 3.6rem)', lineHeight: 1.03, letterSpacing: '-0.025em', maxWidth: 560, textWrap: 'balance' }}>
               {slide.title}
             </h1>
 
@@ -119,14 +152,14 @@ export default function Hero() {
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
-                Fale com um especialista <ArrowRight className="h-[18px] w-[18px]" />
+                {slide.ctaPrimary} <ArrowRight className="h-[18px] w-[18px]" />
               </a>
-              <a href="#servicos" className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>
+              <a href={slide.ctaSecondaryHref} className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>
                 {slide.ctaSecondary}
               </a>
             </div>
 
-            <p className="mt-3 text-[12.5px]" style={{ color: 'rgba(226,235,250,0.6)' }}>Diagnóstico inicial, sem compromisso.</p>
+            <p className="mt-3 text-[12.5px]" style={{ color: 'rgba(226,235,250,0.6)' }}>{slide.microcopy}</p>
           </div>
 
           <div className="mt-9">
@@ -134,9 +167,12 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Pessoa ancorada + palco visual (HeroPersonStage) */}
+        {/* Pessoa ancorada + palco visual (camadas persistentes, HeroPersonStage) */}
         <div className="relative mx-auto h-[460px] w-full max-w-[560px] sm:h-[540px] lg:h-[640px]">
-          <HeroPersonStage person={slide.person} personAlt={slide.personAlt} eager={active === 0} />
+          <HeroPersonStage
+            people={slides.map((s) => ({ src: s.person, alt: s.personAlt }))}
+            activeIndex={active}
+          />
         </div>
       </div>
 
@@ -154,7 +190,7 @@ export default function Hero() {
           {slides.map((_, i) => (
             <button key={i} role="tab" aria-selected={i === active} aria-label={`Ir para slide ${i + 1}`}
               onClick={() => goTo(i)} className="hero-dot" data-active={i === active}>
-              {i === active && <span className="hero-dot__progress" style={{ animationDuration: `${AUTOPLAY_MS}ms`, animationPlayState: paused ? 'paused' : 'running' }} />}
+              {i === active && peopleReady && <span className="hero-dot__progress" style={{ animationDuration: `${AUTOPLAY_MS}ms`, animationPlayState: paused ? 'paused' : 'running' }} />}
             </button>
           ))}
         </div>

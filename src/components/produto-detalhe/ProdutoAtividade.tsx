@@ -2,11 +2,11 @@ import { ShoppingCart, AlertTriangle, Star, DownloadCloud, Megaphone } from 'luc
 import { productActivity, type ProductActivity } from '@/data/mockData'
 
 const typeConfig: Record<ProductActivity['type'], { icon: typeof ShoppingCart; color: string; bg: string; dot: string }> = {
-  venda: { icon: ShoppingCart, color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', dot: '#16C784' },
-  alerta: { icon: AlertTriangle, color: 'text-accent-rose', bg: 'bg-accent-rose/10', dot: '#F4436C' },
-  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#F5C24B' },
-  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#4C82F7' },
-  campanha: { icon: Megaphone, color: 'text-accent-violet', bg: 'bg-accent-violet/10', dot: '#9061F9' },
+  venda: { icon: ShoppingCart, color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', dot: '#2BD6A0' },
+  alerta: { icon: AlertTriangle, color: 'text-accent-rose', bg: 'bg-accent-rose/10', dot: '#FF5F7A' },
+  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#FFC857' },
+  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#2F6BFF' },
+  campanha: { icon: Megaphone, color: 'text-accent-violet', bg: 'bg-accent-violet/10', dot: '#194B9B' },
 }
 
 export default function ProdutoAtividade({ sku }: { sku: string }) {

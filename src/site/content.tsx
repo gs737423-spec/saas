@@ -22,7 +22,6 @@ export const nav = [
   { label: 'Soluções', href: '#servicos' },
   { label: 'Marketplaces', href: '#marketplaces' },
   { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'Diferenciais', href: '#diferenciais' },
   { label: 'FAQ', href: '#faq' },
 ]
 
@@ -57,10 +56,10 @@ export const trustStrip = [
 // Bloco "Quem Somos" — 2 parágrafos institucionais (estrutura editorial Petina).
 export const about = {
   label: 'Quem Somos',
-  title: 'Quem Somos',
+  title: 'Criada para substituir controles paralelos por uma rotina mais clara.',
   paragraphs: [
-    'A Vintec nasceu para simplificar a rotina de empresas que vendem em diferentes marketplaces. Nossa plataforma reúne pedidos, produtos, estoque, vendas e resultados que normalmente ficam espalhados em vários canais.',
-    'Assim, sua equipe acompanha o negócio com mais clareza, reduz controles paralelos e ganha tempo no dia a dia.',
+    'A Vintec ajuda empresas que vendem em diferentes marketplaces a reunir pedidos, estoque, vendas e resultados em uma rotina mais fácil de acompanhar.',
+    'Assim, gestores e equipes passam menos tempo procurando informações e ganham mais segurança para decidir o que precisa de atenção.',
   ],
 }
 
@@ -68,13 +67,13 @@ export const about = {
 // Pessoa exclusiva desta seção (não aparece no hero). Linguagem simples.
 export const institutionalSection = {
   label: 'SOBRE A VINTEC',
-  title: 'Feita para quem precisa organizar as vendas em vários marketplaces.',
+  title: 'Feita para organizar operações que vendem em vários marketplaces.',
   paragraphs: [
-    'Gerenciar diferentes canais pode transformar a rotina em uma sequência de telas, planilhas e informações espalhadas.',
-    'A Vintec reúne o que sua equipe precisa acompanhar em um único ambiente. Assim, fica mais fácil visualizar pedidos, conferir estoque, comparar vendas e entender o desempenho de cada marketplace.',
+    'A Vintec reúne os principais canais da operação para sua equipe acompanhar vendas, pedidos, estoque e desempenho com mais clareza e menos controles paralelos.',
+    'Em vez de alternar entre diferentes telas, planilhas e rotinas separadas, gestores e equipes passam a acompanhar os canais em uma estrutura mais organizada.',
   ],
-  ctaLabel: 'Conheça a Vintec',
-  ctaHref: '#plataforma-cards',
+  ctaLabel: 'Conheça nossas soluções',
+  ctaHref: '#servicos',
   photoSrc: '/site/people/vintec-institutional-consultant.png',
   photoAlt: 'Especialista da Vintec segurando um tablet',
 }
@@ -163,40 +162,7 @@ export const services = [
   },
 ]
 
-// "Como começamos" — seção editorial de implantação acompanhada (2 colunas:
-// intro + 3 etapas em linha horizontal, não timeline de círculos/ícones).
-export const processIntro = {
-  eyebrow: 'IMPLANTAÇÃO ACOMPANHADA',
-  title: 'Organizamos a mudança sem interromper sua operação.',
-  text: 'Primeiro entendemos como sua equipe trabalha. Depois conectamos os marketplaces disponíveis, organizamos as informações e acompanhamos os responsáveis nos primeiros passos.',
-  reassurances: ['Sem mudanças bruscas na rotina atual.', 'Com orientação durante toda a implantação.'],
-  ctaLabel: 'Converse sobre a sua operação',
-  ctaHref: '#demonstracao',
-}
-
-export const processSteps = [
-  {
-    n: '01',
-    title: 'Entendemos sua rotina atual',
-    text: 'Mapeamos onde sua empresa vende, quais planilhas e controles são utilizados e onde a equipe perde mais tempo.',
-    delivery: 'Diagnóstico e plano inicial.',
-  },
-  {
-    n: '02',
-    title: 'Conectamos e organizamos',
-    text: 'Configuramos os marketplaces disponíveis e reunimos pedidos, estoque, vendas e acessos em uma rotina centralizada.',
-    delivery: 'Informações reunidas em um único fluxo.',
-  },
-  {
-    n: '03',
-    title: 'Acompanhamos a entrada da equipe',
-    text: 'Validamos as informações, orientamos os responsáveis e acompanhamos os primeiros dias de utilização.',
-    delivery: 'Equipe preparada para começar.',
-  },
-]
-
-// Legado — mantido só pra não quebrar imports antigos, caso existam fora
-// desta seção. A seção pública usa processIntro/processSteps agora.
+// Como funciona — 4 etapas, sempre API, nunca planilha.
 export const howSteps = [
   { n: '01', title: 'Conectar', text: 'Autorize os canais por API, sem compartilhar senhas com a plataforma.' },
   { n: '02', title: 'Organizar', text: 'Os dados recebidos são estruturados em um modelo único de operação.' },
@@ -259,28 +225,28 @@ export const commercialBanners: CommercialBannerContent[] = [
 // FAQ — respostas honestas sobre posicionamento comercial e forma de uso.
 export const faqItems = [
   {
-    q: 'O que a Vintec faz?',
-    a: 'Centraliza a operação de quem vende em marketplaces: conecta os canais por API, organiza os dados em um modelo único e entrega uma visão executiva para apoiar decisões.',
+    q: 'O que a Vintec faz na prática?',
+    a: 'A Vintec reúne informações importantes dos marketplaces em uma rotina mais organizada, ajudando equipes e gestores a acompanhar pedidos, estoque, vendas e resultados com menos controles paralelos.',
   },
   {
-    q: 'Para quais marketplaces a Vintec atende inicialmente?',
-    a: 'Os canais prioritários são Mercado Livre, Amazon, Shopee e Leroy Merlin, com estrutura projetada para evoluir para novos canais.',
+    q: 'Quais marketplaces podem ser conectados?',
+    a: 'Os marketplaces prioritários são Mercado Livre, Amazon, Shopee e Leroy Merlin, com estrutura projetada para evoluir para novos canais.',
   },
   {
-    q: 'Como funciona a integração?',
-    a: 'Por conexão via API. Você autoriza o acesso ao canal e a Vintec recebe e organiza os dados automaticamente — sem enviar planilhas ou compartilhar senhas.',
+    q: 'Vou precisar continuar alimentando planilhas?',
+    a: 'A proposta é reduzir a dependência de planilhas e atualizações manuais usando conexões diretas com os marketplaces disponíveis.',
   },
   {
-    q: 'Os dados entram por planilha?',
-    a: 'Não. A operação é pensada inteiramente via API — planilha e upload manual não fazem parte do fluxo da plataforma.',
+    q: 'Como os marketplaces são conectados?',
+    a: 'A conexão utiliza as integrações oficiais disponíveis para cada marketplace. Durante a implantação, a equipe da Vintec orienta as etapas necessárias.',
   },
   {
-    q: 'A Vintec atende empresas com operação multicanal?',
-    a: 'Sim, esse é o cenário para o qual a Vintec foi desenhada: empresas que vendem em mais de um canal e precisam de uma visão única da operação.',
+    q: 'A equipe da Vintec ajuda na implantação?',
+    a: 'Sim. A equipe acompanha a configuração, a conexão dos marketplaces e a entrada da sua equipe na nova rotina.',
   },
   {
-    q: 'Como posso falar com um especialista?',
-    a: 'Pelos botões "Fale com um especialista" espalhados pelo site, que abrem uma conversa direta no WhatsApp com nossa equipe.',
+    q: 'Como funciona a conversa inicial?',
+    a: 'É uma conversa sem compromisso para entender como sua equipe vende e acompanha os marketplaces hoje, antes de qualquer proposta.',
   },
 ]
 

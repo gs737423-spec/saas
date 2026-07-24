@@ -1,79 +1,73 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, MessageCircle } from 'lucide-react'
-import { nav, contact, marketplaces, specialistHref } from '@/site/content'
-import { whatsappDemoUrl } from '@/lib/whatsapp'
+import { ArrowRight } from 'lucide-react'
+import { marketplaces, specialistHref } from '@/site/content'
 
+// Footer editorial — wordmark textual (sem símbolo), bloco institucional +
+// 4 colunas de navegação, barra legal inferior. Fundo azul-marinho.
 export default function Footer() {
   const year = new Date().getFullYear()
-  const wa = whatsappDemoUrl()
   const specialist = specialistHref()
 
   return (
-    <footer id="privacidade-anchor" className="site-dark" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="site-container py-14">
-        {/* Faixa de CTA */}
-        <div className="vt-card mb-12 flex flex-col items-start justify-between gap-5 p-7 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-[20px] font-extrabold tracking-tight vt-ink md:text-[24px]">Pronto para organizar sua operação multicanal?</h2>
-            <p className="mt-1.5 text-[14px] vt-muted">Fale com um especialista e entenda como a Vintec pode apoiar seus canais.</p>
-          </div>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-primary shrink-0" style={{ padding: '0.85rem 1.5rem' }}>
-            Fale com um especialista <ArrowRight className="h-4 w-4" />
-          </a>
-        </div>
-
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-          {/* Marca + descrição + marketplaces */}
-          <div className="max-w-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[16px] font-extrabold vt-ink">Vintec</span>
-            </div>
-            <p className="mt-4 text-[13.5px] vt-muted" style={{ lineHeight: 1.6 }}>
-              Plataforma de gestão de operações multicanal. Conecta seus canais por API e centraliza a operação em uma visão só.
+    <footer id="privacidade-anchor" className="sec-footer-flat">
+      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 72, paddingBottom: 32 }}>
+        <div className="grid gap-12 lg:grid-cols-[30%_1fr]">
+          <div className="max-w-[320px]">
+            <span className="footer-word">Vintec</span>
+            <h2 className="footer-tagline">Menos telas. Mais controle sobre a operação.</h2>
+            <p className="footer-desc">
+              A Vintec reúne pedidos, estoque, vendas e resultados dos marketplaces para que gestores e equipes acompanhem a operação com menos controles paralelos.
             </p>
-            <div className="mt-5 flex items-center gap-2.5">
-              {marketplaces.map((m) => (
-                <span key={m.name} title={m.name} className="flex h-8 w-8 items-center justify-center">
-                  <m.Logo />
-                </span>
-              ))}
-            </div>
+            <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-cta">
+              Fale com um especialista <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
 
-          {/* Navegação */}
-          <nav aria-label="Rodapé — navegação">
-            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6EC8FF' }}>Navegação</h2>
-            <ul className="mt-4 space-y-2.5">
-              {nav.map((n) => (
-                <li key={n.href}><a href={n.href} className="text-[14px] vt-ink hover:underline">{n.label}</a></li>
-              ))}
-              <li><Link to="/login" className="text-[14px] vt-ink hover:underline">Entrar</Link></li>
-            </ul>
-          </nav>
+          <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
+            <nav aria-label="Rodapé — navegação">
+              <h3 className="footer-col-title">Navegação</h3>
+              <ul className="footer-col-list">
+                <li><a href="#servicos" className="footer-link">Soluções</a></li>
+                <li><a href="#marketplaces" className="footer-link">Marketplaces</a></li>
+                <li><a href="#como-funciona" className="footer-link">Como funciona</a></li>
+                <li><a href="#como-funciona" className="footer-link">Por que Vintec</a></li>
+              </ul>
+            </nav>
 
-          {/* Institucional + contato */}
-          <div>
-            <h2 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6EC8FF' }}>Institucional</h2>
-            <ul className="mt-4 space-y-2.5">
-              <li><Link to="/privacidade" className="text-[14px] vt-ink hover:underline">Política de Privacidade</Link></li>
-              <li><Link to="/termos" className="text-[14px] vt-ink hover:underline">Termos de Uso</Link></li>
-              {contact.email && (
-                <li><a href={`mailto:${contact.email}`} className="text-[14px] vt-ink hover:underline">{contact.email}</a></li>
-              )}
-              {wa && (
-                <li>
-                  <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[14px]" style={{ color: '#6EC8FF' }}>
-                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-                  </a>
-                </li>
-              )}
-            </ul>
+            <div>
+              <h3 className="footer-col-title">Marketplaces</h3>
+              <ul className="footer-col-list">
+                {marketplaces.map((m) => (
+                  <li key={m.name} className="footer-link footer-link--static">{m.name}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="footer-col-title">Institucional</h3>
+              <ul className="footer-col-list">
+                <li><a href="#sobre" className="footer-link">Quem somos</a></li>
+                <li><a href="#faq" className="footer-link">FAQ</a></li>
+                <li><a href="#conversao" className="footer-link">Contato</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="footer-col-title">Acesso</h3>
+              <ul className="footer-col-list">
+                <li><Link to="/login" className="footer-link">Entrar</Link></li>
+                <li><a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-link">Fale com um especialista</a></li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[12.5px] vt-muted">&copy; {year} Vintec. Todos os direitos reservados.</p>
-          <a href="#topo" className="text-[12.5px] font-semibold" style={{ color: '#6EC8FF' }}>Voltar ao topo ↑</a>
+        <div className="footer-legal">
+          <div className="footer-legal__links">
+            <Link to="/privacidade" className="footer-link">Política de Privacidade</Link>
+            <Link to="/termos" className="footer-link">Termos de Uso</Link>
+          </div>
+          <p className="footer-legal__copy">&copy; {year} Vintec. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

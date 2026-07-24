@@ -8,7 +8,7 @@ import { institutionalSection as s } from '@/site/content'
 // seção. Sem chips, sem logos, sem card em volta da pessoa.
 export default function InstitutionalPlatformSection() {
   return (
-    <section id="plataforma" className="sec-soft scroll-mt-24">
+    <section id="solucao" className="sec-soft scroll-mt-24">
       <div className="site-container site-container--tight grid items-stretch gap-10 py-14 md:py-16 lg:grid-cols-[42fr_58fr] lg:gap-16">
         {/* Pessoa + forma orgânica */}
         <div className="institutional-stage order-2 lg:order-1">

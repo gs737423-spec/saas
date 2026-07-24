@@ -5,10 +5,10 @@ const kindIcon = { top: Crown, growth: Rocket, stock: PackageX, loss: TrendingDo
 
 // Per-card accent: top → blue/cyan, growth → green, critical stock → red/orange, opportunities → purple/blue
 const accents = {
-  top: { primary: '#22D3EE', secondary: '#4C82F7' },
-  growth: { primary: '#16C784', secondary: '#22D3EE' },
-  stock: { primary: '#F9603C', secondary: '#F5A524' },
-  loss: { primary: '#9061F9', secondary: '#4C82F7' },
+  top: { primary: '#5AB7FF', secondary: '#2F6BFF' },
+  growth: { primary: '#2BD6A0', secondary: '#5AB7FF' },
+  stock: { primary: '#FF5F7A', secondary: '#FFC857' },
+  loss: { primary: '#194B9B', secondary: '#2F6BFF' },
 }
 
 export default function PerformanceSummary() {

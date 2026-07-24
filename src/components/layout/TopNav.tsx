@@ -38,8 +38,20 @@ const navItems: Item[] = [
 // Unified top navigation bar. Replaces the old fixed sidebar (SideRail) on
 // desktop, and the slim brand-only bar on mobile. Mobile section links still
 // live in BottomNav; here on mobile we only show brand + actions.
+// Deriva um nome de exibição a partir do e-mail (Supabase User não tem campo
+// `name` por padrão — só metadados opcionais que ainda não configuramos).
+function displayNameFromEmail(email: string | undefined): string {
+  if (!email) return 'Usuário'
+  const local = email.split('@')[0]
+  return local
+    .split(/[._]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export default function TopNav() {
-  const { user, logout } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -53,17 +65,24 @@ export default function TopNav() {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [])
 
-  const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : 'US'
+  const displayName = displayNameFromEmail(user?.email)
+  const initials = displayName
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12.5px] font-medium transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active text-accent-blue' : 'text-text-muted hover:text-text-primary'
+      isActive ? 'topnav-item-active text-accent-cyan' : 'text-text-muted hover:text-text-primary'
     }`
 
   return (
-    <header className="topnav-surface fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:h-16 md:px-4 lg:px-6">
+    <header
+      className="topnav-surface fixed inset-x-0 top-0 z-40 flex items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:px-4 lg:px-6"
+      style={{ height: 'var(--app-header-height)' }}
+    >
       <Brand />
 
       <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
@@ -94,7 +113,7 @@ export default function TopNav() {
           title="Configurações"
           className={({ isActive }) =>
             `motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex ${
-              isActive ? 'text-accent-blue' : ''
+              isActive ? 'text-accent-cyan' : ''
             }`
           }
         >
@@ -104,7 +123,7 @@ export default function TopNav() {
         <div ref={menuRef} className="relative">
           <button
             onClick={() => setShowUserMenu(v => !v)}
-            title={user?.name ?? 'Usuário'}
+            title={displayName}
             className="motion-header-control flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet"
           >
             {initials}
@@ -112,7 +131,7 @@ export default function TopNav() {
           {showUserMenu && (
             <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
               <div className="border-b border-border-subtle px-4 py-3">
-                <p className="truncate text-sm font-medium text-text-primary">{user?.name}</p>
+                <p className="truncate text-sm font-medium text-text-primary">{displayName}</p>
                 <p className="truncate text-[11px] text-text-muted">{user?.email}</p>
               </div>
               <NavLink
@@ -124,7 +143,7 @@ export default function TopNav() {
                 Minha Conta
               </NavLink>
               <button
-                onClick={() => { setShowUserMenu(false); logout(); navigate('/') }}
+                onClick={() => { setShowUserMenu(false); void signOut().then(() => navigate('/')) }}
                 className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"
               >
                 <LogOut className="h-4 w-4" />

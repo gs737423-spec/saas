@@ -7,12 +7,12 @@ import DataTableViewport from '@/components/common/DataTableViewport'
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 const typeTone: Record<FinanceTransactionType, string> = {
-  Venda: '#16C784',
-  Comissão: '#F5C24B',
-  Tarifa: '#F5C24B',
-  Estorno: '#F4436C',
-  Devolução: '#F4436C',
-  Ajuste: '#59688A',
+  Venda: '#2BD6A0',
+  Comissão: '#FFC857',
+  Tarifa: '#FFC857',
+  Estorno: '#FF5F7A',
+  Devolução: '#FF5F7A',
+  Ajuste: '#6F829B',
 }
 
 function formatDate(dateStr: string): string {
@@ -76,7 +76,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                 className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
-                    ? { background: '#3B82F618', color: '#3B82F6' }
+                    ? { background: '#2F6BFF18', color: '#2F6BFF' }
                     : { background: 'transparent', color: 'var(--text-muted)' }
                 }
               >

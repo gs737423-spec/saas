@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { getMarketplaceColor, getProductHealthSummary, type Product, type ProductStatus, type StockItem } from '@/data/mockData'
 
 const statusConfig: Record<ProductStatus, { color: string; bg: string; border: string; dot: string }> = {
-  'Saudável': { color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20', dot: '#16C784' },
-  'Atenção': { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20', dot: '#F5C24B' },
-  'Crítico': { color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20', dot: '#F4436C' },
+  'Saudável': { color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20', dot: '#2BD6A0' },
+  'Atenção': { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20', dot: '#FFC857' },
+  'Crítico': { color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20', dot: '#FF5F7A' },
   'Parado': { color: 'text-accent-violet', bg: 'bg-accent-violet/10', border: 'border-accent-violet/20', dot: '#9061F9' },
 }
 
