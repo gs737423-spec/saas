@@ -1350,11 +1350,11 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 }
 .marketplace-showcase__title {
   font-weight: 800;
-  font-size: clamp(1.9rem, 3vw, 2.6rem);
-  line-height: 1.16;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 1.75vw, 1.85rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: #F7FAFF;
-  max-width: 720px;
+  max-width: 1080px;
 }
 .marketplace-showcase__desc {
   margin-top: 16px;
@@ -1642,7 +1642,7 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .marketplace-showcase__benefit-title { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.1em; color: #63C7FF; }
 .marketplace-showcase__benefit-text { margin-top: 8px; font-size: 13.5px; line-height: 1.55; color: #AAB8CB; }
 
-.marketplace-showcase__cta { margin-top: 48px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.marketplace-showcase__cta { margin-top: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .marketplace-showcase__cta-note { font-size: 12.5px; color: #AAB8CB; }
 
 @media (max-width: 1023px) {
@@ -1985,15 +1985,16 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 @media (max-width: 639px) { .servicos-cta .btn { width: 100%; justify-content: center; } }
 
 /* ==========================================================================
-   Como trabalhamos — ComoTrabalhamosSection (id="como-trabalhamos"). Bem
-   compacta: cabeçalho curto + um painel com 3 momentos + frase final. Sem
-   números, sem timeline, sem setas, sem CTA próprio (evita duplicar o CTA
-   final). Classes trabalhamos- isoladas.
+   Como trabalhamos — ComoTrabalhamosSection (id="como-trabalhamos"). Convite
+   comercial pra agendar uma conversa estratégica — título+intro com mais
+   presença, um painel com 3 etapas conectadas (numeração discreta, sem
+   ícone genérico) e um CTA próprio de fechamento, mais destacado que o
+   resto. Classes trabalhamos- isoladas, sem paleta nova.
    ========================================================================== */
 .trabalhamos-section { position: relative; }
 .trabalhamos-compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
-.trabalhamos-container { padding-top: 36px; padding-bottom: 36px; }
-@media (min-width: 1024px) { .trabalhamos-container { padding-top: 44px; padding-bottom: 44px; } }
+.trabalhamos-container { padding-top: 44px; padding-bottom: 48px; }
+@media (min-width: 1024px) { .trabalhamos-container { padding-top: 56px; padding-bottom: 60px; } }
 
 .trabalhamos-eyebrow {
   display: block;
@@ -2001,48 +2002,77 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   font-weight: 800;
   letter-spacing: 0.14em;
   color: var(--vintec-blue-700);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .trabalhamos-title {
-  max-width: 720px;
+  max-width: 760px;
   font-weight: 800;
-  font-size: clamp(1.6rem, 1.05rem + 1.8vw, 2.25rem);
-  line-height: 1.14;
-  letter-spacing: -0.015em;
+  font-size: clamp(1.85rem, 1.15rem + 2.4vw, 2.75rem);
+  line-height: 1.18;
+  letter-spacing: -0.018em;
   color: var(--vintec-text);
+}
+.trabalhamos-intro {
+  margin-top: 16px;
+  max-width: 720px;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--vintec-text-soft);
 }
 
 .trabalhamos-panel {
-  margin-top: 20px;
-  padding: 20px;
-  border-radius: 20px;
+  margin-top: 32px;
+  padding: 26px;
+  border-radius: 22px;
   background: #fff;
   border: 1px solid var(--vintec-border);
-  box-shadow: var(--vintec-shadow-sm);
+  box-shadow: var(--vintec-shadow-md);
 }
-@media (min-width: 1024px) { .trabalhamos-panel { padding: 22px 26px; } }
+@media (min-width: 1024px) { .trabalhamos-panel { padding: 34px 38px; } }
 
-.trabalhamos-moments { display: grid; grid-template-columns: 1fr; }
-@media (min-width: 768px) { .trabalhamos-moments { grid-template-columns: repeat(3, 1fr); } }
+.trabalhamos-steps { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .trabalhamos-steps { grid-template-columns: repeat(3, 1fr); } }
 
-.trabalhamos-moment { padding: 12px 0; }
-.trabalhamos-moment + .trabalhamos-moment { border-top: 1px solid var(--vintec-border); margin-top: 2px; padding-top: 12px; }
+.trabalhamos-step { padding: 16px 0; }
+.trabalhamos-step + .trabalhamos-step { border-top: 1px solid var(--vintec-border); margin-top: 4px; padding-top: 16px; }
 @media (min-width: 768px) {
-  .trabalhamos-moment { padding: 0 20px; }
-  .trabalhamos-moment:first-child { padding-left: 0; }
-  .trabalhamos-moment + .trabalhamos-moment { border-top: none; border-left: 1px solid var(--vintec-border); margin-top: 0; padding-top: 0; }
+  .trabalhamos-step { padding: 0 24px; }
+  .trabalhamos-step:first-child { padding-left: 0; }
+  .trabalhamos-step + .trabalhamos-step { border-top: none; border-left: 1px solid var(--vintec-border); margin-top: 0; padding-top: 0; }
 }
-.trabalhamos-moment__label { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: 0.07em; color: var(--vintec-blue-700); margin-bottom: 5px; }
-.trabalhamos-moment__text { font-size: 14px; line-height: 1.48; color: var(--vintec-text-soft); }
+.trabalhamos-step__index {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--vintec-sky-400);
+  margin-bottom: 8px;
+}
+.trabalhamos-step__label { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: 0.06em; color: var(--vintec-blue-700); margin-bottom: 6px; }
+.trabalhamos-step__text { font-size: 14.5px; line-height: 1.52; color: var(--vintec-text-soft); }
 
 .trabalhamos-panel__base {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 22px;
+  padding-top: 18px;
   border-top: 1px solid var(--vintec-border);
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--vintec-text);
 }
+
+.trabalhamos-cta {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--vintec-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.trabalhamos-cta__btn { padding: 1rem 2.2rem; font-size: 1rem; }
+.trabalhamos-cta-note { font-size: 13px; color: var(--vintec-muted); }
+@media (max-width: 639px) { .trabalhamos-cta__btn { width: 100%; justify-content: center; } }
 
 /* ---- Footer editorial — wordmark textual, sem símbolo ---- */
 .sec-footer-flat {

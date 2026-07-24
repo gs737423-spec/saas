@@ -113,7 +113,7 @@ export default function ConversionSection() {
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <span className="site-label mb-3" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
-            <h2 className="site-h2 vt-ink">Vamos entender os desafios e as oportunidades do seu e-commerce.</h2>
+            <h2 className="site-h2 vt-ink">Vamos entender os desafios e as oportunidades do seu e‑commerce.</h2>
             <p className="site-lead mt-4 vt-muted">Converse com a equipe Vintec sobre seus canais, resultados e objetivos. A partir desse primeiro contato, avaliamos como nossos serviços podem contribuir com a operação.</p>
             <p className="mt-5 text-[13px] vt-muted">Conversa inicial, sem compromisso.</p>
 

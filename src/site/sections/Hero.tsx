@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { specialistHref } from '@/site/content'
+import { ctaLabels, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 import HeroPersonStage from '@/site/components/HeroPersonStage'
 import MarketplaceRail from '@/site/components/MarketplaceRail'
@@ -20,40 +20,40 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    eyebrow: 'CONSULTORIA ESPECIALIZADA EM E-COMMERCE',
-    title: <>Estratégia e acompanhamento para fazer seu e-commerce crescer com mais direção.</>,
-    sub: 'Com uma liderança que reúne mais de 20 anos de experiência no setor, a Vintec trabalha ao lado da sua gestão para identificar gargalos, encontrar oportunidades e definir as prioridades da operação.',
-    ctaPrimary: 'Falar com um especialista',
+    eyebrow: 'CONSULTORIA COM EXPERIÊNCIA',
+    title: <>Decisões à altura do negócio que você construiu.</>,
+    sub: 'A Vintec une experiência em operações de e‑commerce, análise e visão consultiva para entender o momento da sua empresa e apoiar decisões mais claras, rentáveis e sustentáveis.',
+    ctaPrimary: ctaLabels.principal,
     ctaSecondary: 'Conhecer nossos serviços',
     ctaSecondaryHref: '#servicos',
-    microcopy: 'Conversa inicial, sem compromisso.',
+    microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Quero falar com um especialista da Vintec sobre minha operação.',
-  },
-  {
-    eyebrow: 'CRESCIMENTO COM CONTROLE',
-    title: <>Crescer sem controle pode ampliar o faturamento e também os problemas.</>,
-    sub: 'A Vintec ajuda sua empresa a organizar prioridades, acompanhar resultados e desenvolver a operação sem perder visão de margem, estoque e desempenho.',
-    ctaPrimary: 'Falar com um especialista',
-    ctaSecondary: 'Conhecer nossos serviços',
-    ctaSecondaryHref: '#servicos',
-    microcopy: 'Conversa inicial, sem compromisso.',
-    person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
-    waMessage: 'Olá! Quero organizar as prioridades da minha operação com a Vintec.',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica sobre minha operação.',
   },
   {
     eyebrow: 'DECISÕES COM EXPERIÊNCIA',
-    title: <>Decisões importantes não deveriam depender apenas de tentativa e erro.</>,
-    sub: 'Nossa experiência é aplicada na análise da operação e no acompanhamento das decisões que influenciam o crescimento do negócio.',
-    ctaPrimary: 'Falar com um especialista',
+    title: <>Uma operação como a sua merece decisões à altura do que já foi construído.</>,
+    sub: 'Unimos experiência, análise e acompanhamento para apoiar decisões importantes sobre margem, estoque, canais e desempenho.',
+    ctaPrimary: ctaLabels.principal,
     ctaSecondary: 'Conhecer nossos serviços',
     ctaSecondaryHref: '#servicos',
-    microcopy: 'Conversa inicial, sem compromisso.',
+    microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
+    person: '/site/people/processed/vintec-banner-laptop.webp',
+    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
+  },
+  {
+    eyebrow: 'ANÁLISE ESTRATÉGICA DA OPERAÇÃO',
+    title: <>Você já construiu uma operação real. Vamos entender o que ela precisa para o próximo passo.</>,
+    sub: 'Antes de qualquer recomendação, ouvimos como sua empresa opera hoje. A partir disso, ajudamos a organizar prioridades e apoiar decisões mais seguras para os próximos passos.',
+    ctaPrimary: ctaLabels.principal,
+    ctaSecondary: 'Conhecer nossos serviços',
+    ctaSecondaryHref: '#servicos',
+    microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
     personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
-    waMessage: 'Olá! Quero entender como a Vintec pode apoiar as decisões da minha operação.',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
   },
 ]
 

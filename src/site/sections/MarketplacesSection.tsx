@@ -165,6 +165,12 @@ export default function MarketplacesSection() {
               </span>
             </button>
           ))}
+          <div className="marketplace-showcase__cta">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              {ctaLabels.plataforma}
+            </a>
+            <p className="marketplace-showcase__cta-note">Conversa inicial para entender como sua equipe trabalha hoje.</p>
+          </div>
         </div>
 
         {/* Coluna direita — frame proprietário (sem bolinhas de navegador) */}
@@ -224,14 +230,6 @@ export default function MarketplacesSection() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* CTA */}
-      <div className="site-container site-container--tight marketplace-showcase__cta" style={{ maxWidth: 1220 }}>
-        <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-          {ctaLabels.plataforma}
-        </a>
-        <p className="marketplace-showcase__cta-note">Conversa inicial para entender como sua equipe trabalha hoje.</p>
       </div>
 
       {lightboxOpen && (

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, Lock } from 'lucide-react'
-import { nav, specialistHref } from '@/site/content'
+import { ctaLabels, nav, specialistHref } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
 
 // Header dark glass — transparente sobre o hero petróleo no topo, vira barra
@@ -54,7 +54,7 @@ export default function SiteHeader() {
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
           <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
-            Falar com um especialista
+            {ctaLabels.principal}
           </a>
         </div>
 
@@ -127,7 +127,7 @@ export default function SiteHeader() {
                   onClick={() => setOpen(false)}
                   className="btn btn-primary w-full"
                 >
-                  Falar com um especialista
+                  {ctaLabels.principal}
                 </a>
               </div>
             </div>

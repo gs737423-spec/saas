@@ -29,7 +29,7 @@ export const nav = [
 // reposicionamento "consultoria de e-commerce como produto principal"),
 // nunca variações.
 export const ctaLabels = {
-  principal: 'Falar com um especialista',
+  principal: 'Agendar conversa estratégica',
   plataforma: 'Conhecer a plataforma da Vintec',
   contexto: 'Conversar sobre minha operação',
 }
