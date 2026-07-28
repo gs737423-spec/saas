@@ -21,7 +21,7 @@ interface Slide {
 const slides: Slide[] = [
   {
     eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
-    title: <>Acompanhe todos os marketplaces em uma única rotina.</>,
+    title: <>Decisões à altura do negócio que você está construindo.</>,
     sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
     ctaPrimary: 'Quero organizar minha operação',
     ctaSecondary: 'Ver como funciona',
@@ -150,11 +150,14 @@ export default function Hero() {
               {slide.sub}
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
-                {slide.ctaPrimary} <ArrowRight className="h-[18px] w-[18px]" />
+            {/* Os dois CTAs formam um conjunto: mesma altura, padding, radius,
+                tipografia e min-width (o texto curto alarga para casar com o
+                longo). Cor mantém a hierarquia — primary azul, glass secundário. */}
+            <div className="mt-7 flex flex-col items-stretch gap-3 hero-cta-group">
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary hero-cta">
+                {slide.ctaPrimary} <ArrowRight className="hero-cta__arrow h-[18px] w-[18px]" />
               </a>
-              <a href={slide.ctaSecondaryHref} className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>
+              <a href={slide.ctaSecondaryHref} className="btn btn-glass hero-cta">
                 {slide.ctaSecondary}
               </a>
             </div>

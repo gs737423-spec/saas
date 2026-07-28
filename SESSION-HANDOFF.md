@@ -69,3 +69,59 @@ Skills citadas no master prompt (Impeccable, UI/UX Pro Max, Taste, Astryx) **nã
 - Nenhum print/mockup/screenshot da plataforma na home (verificado por DOM).
 - Nenhuma métrica falsa marcada como fato — `verified:false` estrutural.
 - Sem commit, sem push, sem deploy nesta passada também.
+
+---
+
+## Sessão — Login redesign (2026-07-27), branch `feat/login-operations-engine`
+
+### Estado do login
+- Tela `/login` reescrita para **card central único** + ilustração animada
+  **"Vintec Operation Run"** (personagem SVG correndo, coleta pedido/estoque/
+  financeiro, entrega à estação Vintec, sinais organizados). Substituiu:
+  screenshots da plataforma → (1ª tentativa) "Operations Engine" (diagrama técnico,
+  **reprovado**) → Operation Run (atual, aprovado visualmente).
+- **Lógica de autenticação Supabase inalterada** (signIn/resetPassword/cooldown/
+  anti-enumeração em `Login.tsx`). Cadastro segue **fechado**; 2ª ação = "Solicitar
+  demonstração" via `whatsappDemoUrl()` (oculta se `VITE_WHATSAPP_*` ausente).
+- Componentes visuais em `src/site/components/operation-run/` (desacoplados da auth).
+  Reutilizáveis mantidos: `LoginField`, `LoginCommercialAction`.
+- Pasta antiga `operations-engine/` e o CSS `.ope-*` **removidos** (código morto).
+
+### Também nesta branch (refinamento da home — brief anterior)
+- Hero: headline "Decisões à altura do negócio que você está construindo."; 2 CTAs
+  empilhados de largura igual; stagger de entrada.
+- MarketplaceRail: label "Especialistas nas principais plataformas do mercado".
+- Menu: microinterações + item ativo por seção (IntersectionObserver).
+- Botão "Entrar" refinado. Reveal on scroll (`.reveal`/`[data-reveal]`) aplicado a
+  ServicesSection (extensível às demais seções).
+
+### Validação
+- `tsc` + `npm run build` limpos (sem script de lint/testes no projeto).
+- Playwright real (desktop/mobile/reduced-motion): 0 erros, sem overflow, sem
+  screenshots no DOM, narrativa da corrida ok.
+
+### Retomada 2026-07-28 — Fase 1 estática CONCLUÍDA
+- O limite de contexto interrompeu a migração no meio: `Login.tsx` + componentes
+  novos (`login/`, `login-motion/`) estavam salvos, mas `site.css` ficou
+  **parcialmente migrado** (faixa `.lm-*` sem CSS, `.login-body` sem regra, CSS de
+  2 colunas `.login-form-col`/`.login-illustration` e bloco morto `.scene-*` ainda
+  presentes). A tela estava **quebrada** no working tree.
+- Fechada a **Fase 1 estática** só em `src/site/site.css`: card virou **vertical
+  real** (`flex-direction:column`, `max-width 460px`, removido o `@media` de 2
+  colunas), adicionado `.login-body`, adicionado todo o CSS estático `.lm-*` da
+  faixa, e **removidos** os CSS órfãos de 2 colunas + o bloco morto `.scene-*`
+  (auditado: nenhum `.tsx` os referenciava). **Sem animação** — o corredor segue
+  slot reservado "sprite (pendente)".
+- Nenhum `.tsx` tocado nesta retomada; **auth Supabase intacta**.
+- Validação: `npm run build` limpo (não há lint/test no projeto). Playwright real
+  desktop 1440×900 + mobile 390×844: 0 erros de console, `flexDirection:column`,
+  `max-width 460px`, sem duas colunas, sem overflow, sem `img` de plataforma.
+  Capturas no scratchpad da sessão.
+- **Commit local** na branch `feat/login-operations-engine`. **Sem push, sem
+  deploy** (decisão do dono — aguarda revisão das capturas).
+
+### Pendências
+- Login válido ponta a ponta com Supabase + `VITE_WHATSAPP_*` em ambiente configurado.
+- **Fase 2**: fornecer a sprite profissional do corredor + animação (encaixa no
+  `RUNNER_SLOT` de `login-motion/motionConfig.ts`). Não iniciada.
+- Aprovação visual do dono nas capturas antes de push/deploy.

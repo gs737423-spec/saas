@@ -22,7 +22,7 @@ updated: 2026-07-23
 - [ ] Visão Geral — UI existe, dados mockados
 - [ ] Produtos — UI existe, dados mockados
 - [ ] Produto 360 — não auditado nesta rodada
-- [x] Login — real (Supabase Auth), testado com credencial inválida (400) e recuperação de senha (200) via chamada de rede real. Login **válido** ponta a ponta não testado (sem senha real disponível).
+- [x] Login — real (Supabase Auth), testado com credencial inválida (400) e recuperação de senha (200) via chamada de rede real. Login **válido** ponta a ponta não testado (sem senha real disponível). Painel visual redesenhado em 2026-07-27/28 — **Fase 1 estática concluída** (2026-07-28): layout **"Vintec Motion Card"** = **card vertical único centralizado** (`max-width 460px`), com uma **faixa visual compacta no topo** (`login-motion/LoginMotionHeader`, SVG autoral: fragmentado → slot do corredor → organizado) e o **formulário abaixo**. Sem layout em duas colunas. O corredor é um **slot reservado** (marcador "sprite (pendente)") aguardando a **sprite profissional da Fase 2** — **sem animação** nesta fase. Tentativas anteriores reprovadas: "Operations Engine" (diagrama técnico) e "Operation Run/Scene" (personagem/composição hand-code). **Fluxo de auth inalterado** (signIn/resetPassword/cooldown/anti-enumeração). Responsivo desktop 1440×900 e mobile 390×844 (Playwright: 0 erros, sem overflow, sem screenshots de plataforma). Ver `docs/05-Sessions/2026-07-28 - Login Fase 1 estatica.md`.
 - [ ] Multiempresa — não existe ainda (Fase 2, planejada em `docs/02-Decisions/`); `company_id` é string fixa `'default-company'`
 - [ ] Demais módulos — não auditados nesta rodada
 

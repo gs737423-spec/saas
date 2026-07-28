@@ -25,6 +25,30 @@ export default function SitePage() {
     return () => document.documentElement.classList.remove('site-active')
   }, [])
 
+  // Reveal on scroll — primitivo único e reutilizável: qualquer elemento com
+  // [data-reveal] entra (fade + translateY) quando cruza a viewport, uma vez.
+  // Sob prefers-reduced-motion o CSS já mostra tudo; aqui só evitamos o custo
+  // do observer. Um único observer para o site inteiro.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('is-revealed'))
+      return
+    }
+    const obs = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-revealed')
+            observer.unobserve(e.target)
+          }
+        })
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+    )
+    document.querySelectorAll('[data-reveal]').forEach((el) => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   return (
     <div className="site-root site-root--dark">
       <SiteHeader />

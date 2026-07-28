@@ -50,7 +50,7 @@ export default function ServicesSection() {
         </div>
 
         <div className="svc2-grid">
-          <div className="svc2-panel svc2-panel--platform">
+          <div className="svc2-panel svc2-panel--platform reveal" data-reveal>
             <span className="svc2-panel-label">PLATAFORMA VINTEC</span>
             <h3 className="svc2-panel-title">Tudo o que sua equipe precisa acompanhar, reunido em uma mesma rotina.</h3>
             <p className="svc2-panel-text">Pedidos, estoque, vendas e resultados deixam de ficar espalhados entre painéis, planilhas e pessoas.</p>
@@ -68,7 +68,7 @@ export default function ServicesSection() {
             </div>
           </div>
 
-          <div className="svc2-panel svc2-panel--mgmt">
+          <div className="svc2-panel svc2-panel--mgmt reveal" data-reveal>
             <span className="svc2-panel-label">GESTÃO VINTEC</span>
             <h3 className="svc2-panel-title">Nossa equipe acompanha a operação junto com você.</h3>
             <p className="svc2-panel-text">A tecnologia organiza as informações. A equipe Vintec ajuda a transformar esses dados em prioridades e decisões.</p>
