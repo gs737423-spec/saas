@@ -2288,147 +2288,290 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 @media (max-width: 767px) { .closing-strip__row { grid-template-columns: 1fr; gap: 18px; } }
 
 /* ==========================================================================
-   Login (/login) — reconstrucao visual completa. Paleta Vintec propria em
-   tokens locais (nao reutiliza os tokens do site institucional, para evitar
-   acoplamento). Classes login- isoladas, usadas so nesta pagina.
+   Login (/login) — "Vintec Expanding Access". Card central único que abre do
+   estado compacto (marca + headline + botão) para o formulário completo, na
+   mesma superfície. Paleta local (não acopla aos tokens do site). Classes
+   .lx-* isoladas; os campos reutilizam .login-* (LoginField / LoginCommercial).
    ========================================================================== */
-.login-page {
-  --login-bg: #06162B;
-  --login-bg-2: #0A203C;
-  --login-panel: #102A4D;
-  --login-blue: #3168FF;
-  --login-blue-light: #62B7FF;
-  --login-amber: #FFC15C;
-  --login-title: #F6F8FC;
-  --login-text-soft: #A9B8CC;
-  --login-muted: #5C6E8C;
-  --login-border: rgba(98, 183, 255, 0.18);
+.lx-page {
+  /* paleta */
+  --lx-bg: #06162B;
+  --lx-bg-2: #0A203C;
+  --lx-blue: #3168FF;
+  --lx-blue-2: #4A82FF;
+  --lx-blue-light: #62B7FF;
+  --lx-amber: #FFC15C;
+  --lx-title: #F6F8FC;
+  --lx-text-soft: #A9B8CC;
+  --lx-muted: #5C6E8C;
+  --lx-border: rgba(120, 170, 240, 0.16);
+
+  /* aliases p/ os campos reaproveitados (.login-*) */
+  --login-blue: var(--lx-blue);
+  --login-blue-light: var(--lx-blue-light);
+  --login-amber: var(--lx-amber);
+  --login-title: var(--lx-title);
+  --login-text-soft: var(--lx-text-soft);
+  --login-muted: var(--lx-muted);
+  --login-border: var(--lx-border);
+
+  /* dimensões dos estados (desktop) */
+  --lx-w-collapsed: 352px;
+  --lx-h-collapsed: 268px;
+  --lx-r-collapsed: 30px;
+  --lx-w-expanded: 576px;
+  --lx-h-expanded: 688px;
+  --lx-r-expanded: 34px;
+
+  /* animação */
+  --lx-dur-open: 580ms;
+  --lx-dur-close: 540ms;
+  --lx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lx-ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* estado ativo (default = fechado) */
+  --lx-w: var(--lx-w-collapsed);
+  --lx-h: var(--lx-h-collapsed);
+  --lx-r: var(--lx-r-collapsed);
+  --lx-dur: var(--lx-dur-open);
+
+  position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  /* Fundo limpo: navy profundo + um brilho radial discreto atrás do card. */
+  color: var(--lx-title);
   background:
-    radial-gradient(58% 48% at 50% 44%, rgba(49, 104, 255, 0.12), transparent 70%),
-    linear-gradient(180deg, var(--login-bg) 0%, var(--login-bg-2) 100%);
-  color: var(--login-title);
+    radial-gradient(52% 42% at 50% 42%, rgba(49, 104, 255, 0.16), transparent 72%),
+    linear-gradient(180deg, var(--lx-bg) 0%, var(--lx-bg-2) 100%);
+}
+/* vinheta discreta nas bordas */
+.lx-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 180px 40px rgba(2, 8, 22, 0.55);
 }
 
-.login-header {
+/* Barra superior — alinhada à largura do card aberto */
+.lx-topbar {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--lx-w-expanded);
+  margin: 0 auto;
+  padding: 22px clamp(16px, 4vw, 24px) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 1040px;
-  margin-inline: auto;
-  padding-inline: clamp(16px, 4vw, 40px);
 }
-.login-header__brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--login-title); }
-.login-header__actions { display: flex; align-items: center; gap: 18px; }
-.login-header__back { display: none; align-items: center; gap: 6px; font-size: 13px; color: var(--login-text-soft); }
-@media (min-width: 640px) { .login-header__back { display: inline-flex; } }
-.login-header__back:hover { color: var(--login-title); }
-.login-header__help { font-size: 13px; font-weight: 600; color: var(--login-blue-light); }
-.login-header__help:hover { text-decoration: underline; }
+.lx-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--lx-text-soft); transition: color 200ms var(--lx-ease); }
+.lx-back:hover { color: var(--lx-title); }
+.lx-back:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 3px; border-radius: 6px; }
+.lx-help { font-size: 13px; font-weight: 600; color: var(--lx-blue-light); }
+.lx-help:hover { text-decoration: underline; }
 
-/* Palco que centraliza o card (horizontal e verticalmente). */
-.login-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px clamp(16px, 4vw, 40px) 28px;
-}
-
-/* Card central único VERTICAL — faixa visual compacta no topo + formulário
-   abaixo. Uma peça só (a separação é só o gradiente/iluminação da faixa). */
-.login-card {
+/* Palco: centra o card. Grid de item único → crescer o card recentraliza
+   sozinho, sem reflow de vizinhos. */
+.lx-stage {
   position: relative;
-  width: 100%;
-  max-width: 460px;
-  display: flex;
-  flex-direction: column; /* faixa (topo) → corpo do formulário (abaixo) */
-  overflow: hidden;
-  border-radius: 28px;
-  border: 1px solid var(--login-border);
-  background:
-    radial-gradient(120% 80% at 80% 12%, rgba(49, 104, 255, 0.16), transparent 58%),
-    linear-gradient(165deg, #133258 0%, #0b1f39 100%);
-  box-shadow: 0 46px 100px -46px rgba(2, 6, 20, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  opacity: 0;
-  transform: translateY(14px) scale(0.99);
-  transition: opacity 520ms var(--s-ease-enter), transform 520ms var(--s-ease-enter);
-}
-.login-card.is-mounted { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .login-card { transition: none; opacity: 1; transform: none; }
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px clamp(12px, 4vw, 24px) 40px;
 }
 
-/* Corpo do card (formulário) — abaixo da faixa. Conteúdo centralizado no
-   card estreito. */
-.login-body {
+/* Card — superfície única. Abre por width/height/border-radius. */
+.lx-card {
+  position: relative;
+  width: var(--lx-w);
+  height: var(--lx-h);
+  border-radius: var(--lx-r);
+  overflow: hidden;
+  border: 1px solid var(--lx-border);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(49, 104, 255, 0.16), transparent 60%),
+    linear-gradient(168deg, #143257 0%, #0c2140 100%);
+  box-shadow:
+    0 30px 70px -30px rgba(2, 6, 20, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    width var(--lx-dur) var(--lx-ease),
+    height var(--lx-dur) var(--lx-ease),
+    border-radius var(--lx-dur) var(--lx-ease),
+    box-shadow var(--lx-dur) var(--lx-ease);
+}
+.lx-card[data-state="expanding"],
+.lx-card[data-state="expanded"] {
+  --lx-w: var(--lx-w-expanded);
+  --lx-h: var(--lx-h-expanded);
+  --lx-r: var(--lx-r-expanded);
+  box-shadow:
+    0 40px 90px -34px rgba(2, 6, 20, 0.9),
+    0 0 44px -8px rgba(49, 104, 255, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.lx-card[data-state="closing"] { --lx-dur: var(--lx-dur-close); }
+
+/* linha de luz na borda superior ao abrir */
+.lx-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 12%; right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(122, 178, 255, 0.7), transparent);
+  opacity: 0;
+  transition: opacity 180ms var(--lx-ease-std);
+}
+.lx-card[data-state="expanding"]::before,
+.lx-card[data-state="expanded"]::before { opacity: 1; }
+
+/* Inner — coluna. Fechado: centralizado. Aberto: do topo. */
+.lx-card__inner {
+  position: relative;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: clamp(26px, 5vw, 40px);
+  padding: clamp(24px, 4vw, 36px) clamp(22px, 4vw, 40px);
+  justify-content: center;
 }
+.lx-card[data-state="expanding"] .lx-card__inner,
+.lx-card[data-state="expanded"] .lx-card__inner { justify-content: flex-start; }
 
-/* Entrada em stagger dos blocos da coluna de auth (delay inline por bloco). */
-.login-enter {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity var(--s-dur-slow) var(--s-ease-enter), transform var(--s-dur-slow) var(--s-ease-enter);
+/* Estado fechado: conteúdo compacto para caber na altura curta sem clipar. */
+.lx-card[data-state="collapsed"] .lx-card__inner,
+.lx-card[data-state="closing"] .lx-card__inner { padding: 24px 24px 22px; }
+.lx-card[data-state="collapsed"] .lx-sign,
+.lx-card[data-state="closing"] .lx-sign { width: 46px; height: 46px; margin-bottom: 8px; }
+.lx-card[data-state="collapsed"] .lx-brand,
+.lx-card[data-state="closing"] .lx-brand { font-size: 18px; }
+.lx-card[data-state="collapsed"] .lx-headline,
+.lx-card[data-state="closing"] .lx-headline {
+  font-size: 1.16rem; line-height: 1.18; max-width: 20ch;
 }
-.login-card.is-mounted .login-enter { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .login-enter { transition: none; opacity: 1; transform: none; transition-delay: 0ms !important; }
+.lx-card[data-state="collapsed"] .lx-collapsed,
+.lx-card[data-state="closing"] .lx-collapsed { margin-top: 16px; }
+
+/* Assinatura Vintec */
+.lx-sign { width: 56px; height: 56px; margin-bottom: 14px; flex-shrink: 0; }
+.lx-sign__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lx-sign__spark { fill: #cfe4ff; }
+@media (prefers-reduced-motion: no-preference) {
+  .lx-sign { animation: lx-breathe 4.6s var(--lx-ease-std) infinite; }
+  .lx-sign[data-state="expanding"] { animation: lx-pulse 620ms var(--lx-ease) 1; }
+  .lx-card[data-hidden="true"] .lx-sign { animation-play-state: paused; }
 }
+@keyframes lx-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes lx-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.13); } 100% { transform: scale(1); } }
 
-/* Logo com presença ligeiramente maior dentro do card (§5). */
-.login-brand { margin-bottom: 20px; }
-.login-brand__mark { font-weight: 800; font-size: 26px; letter-spacing: -0.02em; color: var(--login-title); }
-
-.login-title {
+/* Marca + headline (compartilhadas fechado/aberto) */
+.lx-brand { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--lx-title); }
+.lx-headline {
+  margin-top: 8px;
   font-weight: 800;
-  font-size: clamp(1.6rem, 2.2vw, 2.05rem);
-  line-height: 1.14;
+  font-size: clamp(1.35rem, 2.1vw, 1.7rem);
+  line-height: 1.15;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
-  max-width: 340px;
-}
-.login-subtitle {
-  margin-top: 10px;
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--login-text-soft);
-  max-width: 340px;
+  color: #fff;
+  max-width: 16ch;
 }
 
-.login-form { margin-top: 22px; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 350px; }
+/* CTA do estado fechado */
+.lx-collapsed { margin-top: 22px; width: 100%; display: flex; justify-content: center; transition: opacity 160ms var(--lx-ease-std); }
+.lx-card[data-state="expanding"] .lx-collapsed,
+.lx-card[data-state="expanded"] .lx-collapsed {
+  position: absolute; left: 0; right: 0; bottom: 40px;
+  opacity: 0; pointer-events: none;
+}
+.lx-open {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 200px; height: 52px; padding: 0 26px;
+  border: 0; border-radius: 14px;
+  font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(180deg, var(--lx-blue-2), var(--lx-blue));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 12px 26px -12px rgba(49, 104, 255, 0.6);
+  cursor: pointer;
+  transition: transform 180ms var(--lx-ease), box-shadow 200ms var(--lx-ease);
+}
+.lx-open:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.26) inset, 0 16px 30px -12px rgba(49, 104, 255, 0.72); }
+.lx-open:active { transform: translateY(0) scale(0.99); }
+.lx-open:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 2px; }
+.lx-open:disabled { cursor: default; }
+.lx-open__arrow { font-size: 17px; line-height: 1; transition: transform 200ms var(--lx-ease); }
+.lx-open:hover .lx-open__arrow { transform: translateX(4px); }
+
+/* Conteúdo do estado aberto */
+.lx-expanded {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  opacity: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.lx-card[data-state="collapsed"] .lx-expanded { display: none; }
+.lx-card[data-state="expanding"] .lx-expanded,
+.lx-card[data-state="expanded"] .lx-expanded { opacity: 1; }
+
+/* revelação em stagger */
+.lx-expanded > * { opacity: 0; transform: translateY(10px); transition: opacity 280ms var(--lx-ease), transform 280ms var(--lx-ease); }
+.lx-card[data-state="expanding"] .lx-expanded > *,
+.lx-card[data-state="expanded"] .lx-expanded > * { opacity: 1; transform: none; }
+.lx-expanded > *:nth-child(1) { transition-delay: 200ms; }
+.lx-expanded > *:nth-child(2) { transition-delay: 250ms; }
+.lx-expanded > *:nth-child(3) { transition-delay: 300ms; }
+.lx-expanded > *:nth-child(4) { transition-delay: 350ms; }
+.lx-expanded > *:nth-child(5) { transition-delay: 400ms; }
+.lx-expanded > *:nth-child(n+6) { transition-delay: 450ms; }
+
+/* Botão discreto de recolher — canto superior direito do card (fora do fluxo
+   do conteúdo que rola). Só aparece aberto e quando `canClose`. */
+.lx-close {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 9px;
+  background: rgba(120, 170, 240, 0.06); border: 1px solid var(--lx-border);
+  color: var(--lx-text-soft); cursor: pointer;
+  transition: color 160ms var(--lx-ease), border-color 160ms var(--lx-ease);
+}
+.lx-close:hover { color: var(--lx-title); border-color: rgba(120, 170, 240, 0.3); }
+.lx-close:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 2px; }
+
+.lx-support { font-size: 14px; line-height: 1.55; color: var(--lx-text-soft); }
+.lx-exclusive { font-size: 12.5px; color: var(--lx-muted); text-align: center; margin-top: 2px; }
+.lx-legal { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; color: var(--lx-muted); }
+.lx-legal a:hover { color: var(--lx-text-soft); text-decoration: underline; }
+
+.lx-form { display: flex; flex-direction: column; gap: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .lx-form[data-error="true"] { animation: lx-shake 340ms var(--lx-ease-std) 1; }
+}
+@keyframes lx-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+/* =========================================================================
+   Campos reutilizados (LoginField / LoginCommercialAction / recuperação).
+   Herdados da versão anterior; usam os aliases --login-* acima.
+   ========================================================================= */
 .login-field__wrap { position: relative; }
 .login-field__icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  color: #6B84AD;
-  pointer-events: none;
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: #6B84AD; pointer-events: none;
   transition: color var(--s-dur-fast) var(--s-ease-hover), transform var(--s-dur-fast) var(--s-ease-hover);
 }
-/* Rótulo flutuante — sobe no foco/preenchido. Só transform+color (sem reflow). */
 .login-field__label {
-  position: absolute;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
-  transform-origin: left center;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--login-muted);
+  position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+  transform-origin: left center; font-size: 14px; font-weight: 500; color: var(--login-muted);
   pointer-events: none;
   transition: transform var(--s-dur-fast) var(--s-ease-hover), color var(--s-dur-fast) var(--s-ease-hover);
 }
@@ -2438,28 +2581,19 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   color: var(--login-blue-light);
 }
 .login-input {
-  width: 100%;
-  height: 54px;
-  border-radius: 12px;
-  padding: 8px 16px 0 40px;
-  font-size: 14px;
-  color: var(--login-title);
-  background: rgba(98, 183, 255, 0.06);
-  border: 1px solid var(--login-border);
-  outline: none;
+  width: 100%; height: 56px; border-radius: 14px; padding: 8px 16px 0 40px;
+  font-size: 14px; color: var(--login-title);
+  background: rgba(98, 183, 255, 0.06); border: 1px solid var(--login-border); outline: none;
   transition: border-color var(--s-dur-fast) var(--s-ease-hover), box-shadow var(--s-dur-fast) var(--s-ease-hover), background-color var(--s-dur-fast) var(--s-ease-hover);
 }
-/* placeholder é " " (para o rótulo flutuante funcionar) — mantê-lo invisível. */
 .login-input::placeholder { color: transparent; }
 .login-input:focus {
-  border-color: var(--login-blue);
-  background: rgba(49, 104, 255, 0.08);
+  border-color: var(--login-blue); background: rgba(49, 104, 255, 0.08);
   box-shadow: 0 0 0 4px rgba(49, 104, 255, 0.16);
 }
 .login-input:focus ~ .login-field__icon { color: var(--login-blue-light); transform: translateY(-50%) scale(1.06); }
 .login-input:disabled { opacity: 0.6; }
 .login-input--password { padding-right: 44px; }
-/* Autofill do navegador — mantém a superfície escura e o texto claro. */
 .login-input:-webkit-autofill,
 .login-input:-webkit-autofill:hover,
 .login-input:-webkit-autofill:focus {
@@ -2475,13 +2609,8 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .login-field__toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6B84AD; cursor: pointer; background: none; border: 0; padding: 4px; transition: color var(--s-dur-fast) var(--s-ease-hover); }
 .login-field__toggle:hover { color: var(--login-text-soft); }
 .login-field__toggle:focus-visible { outline: 2px solid var(--login-blue-light); outline-offset: 2px; border-radius: 6px; }
-
 .login-field__addon { margin-top: 6px; min-height: 14px; }
 .login-capslock { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--login-amber); }
-
-@media (prefers-reduced-motion: reduce) {
-  .login-field__label, .login-field__icon, .login-input, .login-field__toggle { transition: none; }
-}
 
 .login-links-row { display: flex; justify-content: flex-end; margin-top: -4px; }
 .login-link { background: none; border: 0; padding: 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--login-blue-light); }
@@ -2493,18 +2622,9 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .login-alert--success { color: #3DD68C; background: rgba(18, 185, 129, 0.1); border: 1px solid rgba(18, 185, 129, 0.28); }
 
 .login-submit {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: 52px;
-  border-radius: 12px;
-  border: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 54px; border-radius: 14px; border: 0;
+  font-size: 15px; font-weight: 700; color: #fff;
   background: linear-gradient(180deg, #4A82FF, var(--login-blue));
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 12px 26px -12px rgba(49, 104, 255, 0.6);
   cursor: pointer;
@@ -2516,135 +2636,125 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .login-submit:focus-visible { outline: 2px solid var(--login-blue-light); outline-offset: 2px; }
 .login-submit__icon { display: inline-flex; align-items: center; font-size: 17px; line-height: 1; transition: transform var(--s-dur-fast) var(--s-ease-hover); }
 .login-submit:hover:not(:disabled) .login-submit__icon { transform: translateX(3px); }
-@media (prefers-reduced-motion: reduce) {
-  .login-submit, .login-submit__icon { transition: none; }
-  .login-submit:hover:not(:disabled) .login-submit__icon { transform: none; }
-}
 
 .login-support {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 11px 16px;
-  border-radius: 12px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--login-text-soft);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--login-border);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 16px; border-radius: 12px;
+  font-size: 13.5px; font-weight: 600; color: var(--login-text-soft);
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--login-border);
   transition: border-color 160ms ease, color 160ms ease;
 }
-.login-support svg { color: #3DD68C; } /* ícone oficial do WhatsApp mantém verde — única exceção à paleta */
+.login-support svg { color: #3DD68C; }
 .login-support:hover { color: var(--login-title); border-color: rgba(98, 183, 255, 0.32); }
 
-.login-footnote { margin-top: 16px; text-align: center; font-size: 12px; line-height: 1.5; color: var(--login-text-soft); opacity: 0.9; }
-
 .login-commercial {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--login-border);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 12px;
+  padding-top: 14px; border-top: 1px solid var(--login-border);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px;
 }
 .login-commercial__text { font-size: 13px; color: var(--login-text-soft); }
 .login-commercial__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--login-blue-light);
+  display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--login-blue-light);
   transition: color var(--s-dur-fast) var(--s-ease-hover);
 }
 .login-commercial__cta:hover { color: #8fcbff; }
 .login-commercial__arrow { transition: transform var(--s-dur-fast) var(--s-ease-hover); }
 .login-commercial__cta:hover .login-commercial__arrow { transform: translateX(3px); }
-@media (prefers-reduced-motion: reduce) {
-  .login-commercial__cta, .login-commercial__arrow { transition: none; }
-  .login-commercial__cta:hover .login-commercial__arrow { transform: none; }
-}
 
-.login-back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; background: none; border: 0; padding: 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--login-text-soft); }
+.login-back-link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--login-text-soft); }
 .login-back-link:hover { color: var(--login-title); }
 
-.login-footer {
+/* =========================================================================
+   Responsividade
+   ========================================================================= */
+@media (min-width: 641px) and (max-width: 900px) {
+  .lx-page { --lx-w-expanded: 560px; }
+}
+@media (max-height: 760px) and (min-width: 641px) {
+  .lx-page { --lx-h-expanded: min(688px, calc(100dvh - 40px)); }
+}
+@media (max-width: 640px) {
+  .lx-page {
+    --lx-w-collapsed: calc(100vw - 32px);
+    --lx-h-collapsed: 240px;
+    --lx-r-collapsed: 26px;
+    --lx-w-expanded: calc(100vw - 24px);
+    --lx-h-expanded: min(720px, calc(100dvh - 36px));
+    --lx-r-expanded: 26px;
+  }
+  .lx-topbar { max-width: none; padding-top: 16px; }
+  .lx-stage { padding-top: 12px; }
+  .lx-expanded { max-width: 100%; }
+  .lx-headline { font-size: clamp(1.3rem, 6vw, 1.55rem); }
+}
+
+/* =========================================================================
+   Reduced motion — troca seca entre tamanhos, sem fases nem stagger.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .lx-card,
+  .lx-card::before,
+  .lx-collapsed,
+  .lx-open,
+  .lx-open__arrow,
+  .lx-expanded,
+  .lx-expanded > *,
+  .login-field__label, .login-field__icon, .login-input, .login-field__toggle,
+  .login-submit, .login-submit__icon,
+  .login-commercial__cta, .login-commercial__arrow {
+    transition: none !important;
+  }
+  .lx-expanded > * { transition-delay: 0ms !important; }
+  .lx-sign { animation: none !important; }
+  .lx-form[data-error="true"] { animation: none !important; }
+}
+
+/* ==========================================================================
+   Reset de senha (ResetPassword.tsx) — página própria, aberta pelo link do
+   e-mail de recuperação. Reaproveita os campos .login-* globais (input,
+   submit, alert, toggle). O LAYOUT fica escopado em .login-page para NÃO
+   colidir com o login "Expanding Access" (.lx-page).
+   ========================================================================== */
+.login-page {
+  --login-bg: #06162B;
+  --login-bg-2: #0A203C;
+  --login-blue: #3168FF;
+  --login-blue-light: #62B7FF;
+  --login-amber: #FFC15C;
+  --login-title: #F6F8FC;
+  --login-text-soft: #A9B8CC;
+  --login-muted: #5C6E8C;
+  --login-border: rgba(120, 170, 240, 0.16);
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px 20px;
-  width: 100%;
-  max-width: 1040px;
-  margin-inline: auto;
-  padding: 14px clamp(16px, 4vw, 40px) 22px;
-  font-size: 11.5px;
-  color: var(--login-muted);
-  flex-shrink: 0;
-}
-.login-footer a:hover { text-decoration: underline; color: var(--login-text-soft); }
-
-@media (max-width: 767px) {
-  .login-stage { padding-inline: 16px; }
-  .login-body { padding: 24px 22px 28px; }
-}
-
-/* ============================================================
-   Vintec Motion Card — faixa visual compacta do topo do card (login-motion/).
-   FASE 1: composição ESTÁTICA (sem animação/corrida). Lê da esquerda
-   (fragmentado) → centro (slot do corredor, reservado p/ a sprite da Fase 2)
-   → direita (organizado). Só fills/strokes; nenhum @keyframes nesta fase.
-   ============================================================ */
-.lm {
-  position: relative;
-  width: 100%;
-  height: clamp(150px, 30vw, 172px);
-  overflow: hidden;
-  border-bottom: 1px solid var(--login-border);
+  flex-direction: column;
+  color: var(--login-title);
   background:
-    radial-gradient(92% 120% at 50% 0%, rgba(77, 139, 255, 0.22), transparent 62%),
-    linear-gradient(160deg, #1a3c70 0%, #123058 52%, #0d244420 100%);
+    radial-gradient(52% 42% at 50% 40%, rgba(49, 104, 255, 0.12), transparent 72%),
+    linear-gradient(180deg, var(--login-bg) 0%, var(--login-bg-2) 100%);
 }
-.lm__svg { display: block; width: 100%; height: 100%; }
-
-/* Profundidade do fundo */
-.lm-bg__orb { fill: rgba(120, 175, 255, 0.10); }
-.lm-bg__floor { fill: rgba(5, 16, 34, 0.30); }
-
-/* Pista de orientação (V discreto) */
-.lm-track__line { fill: none; stroke: rgba(120, 180, 255, 0.28); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 2 9; }
-.lm-track__dot { fill: rgba(150, 200, 255, 0.55); }
-
-/* Fragmentado (esquerda) — itens dispersos/desalinhados */
-.lm-frag__panel { fill: #1b3660; stroke: rgba(98, 183, 255, 0.28); stroke-width: 1.2; }
-.lm-frag__line { stroke: rgba(170, 200, 250, 0.55); stroke-width: 2; stroke-linecap: round; }
-.lm-frag__box { fill: #163257; stroke: rgba(98, 183, 255, 0.32); stroke-width: 1.4; }
-.lm-frag__edge { stroke: rgba(98, 183, 255, 0.32); stroke-width: 1.2; }
-.lm-frag__coin { fill: var(--login-amber); }
-.lm-frag__bar { stroke: rgba(214, 226, 250, 0.7); stroke-width: 2.2; stroke-linecap: round; }
-
-/* Organizado (direita) — módulos alinhados + check */
-.lm-org__panel { fill: rgba(214, 226, 250, 0.14); stroke: rgba(120, 180, 255, 0.3); stroke-width: 1; }
-.lm-org__dot { fill: var(--login-blue-light); }
-.lm-org__line { stroke: rgba(190, 214, 250, 0.6); stroke-width: 2; stroke-linecap: round; }
-.lm-org__check-ring { fill: none; stroke: var(--login-amber); stroke-width: 2; }
-.lm-org__check { fill: none; stroke: var(--login-amber); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-/* Corredor — slot EXATO reservado para a sprite profissional (Fase 2).
-   Nesta fase: contorno tracejado discreto + marcador mínimo (não é a arte). */
-.lm-runner__shadow { fill: rgba(0, 0, 0, 0.28); }
-.lm-runner__slot { fill: rgba(98, 183, 255, 0.05); stroke: rgba(150, 190, 240, 0.20); stroke-width: 1.2; stroke-dasharray: 5 6; }
-.lm-runner__marker { fill: rgba(198, 213, 236, 0.42); }
-.lm-runner__tag { fill: rgba(180, 205, 240, 0.5); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.03em; }
-.lm-runner__package { fill: var(--login-blue-light); }
-.lm-runner__package-spark { stroke: #fff; stroke-width: 2; stroke-linecap: round; opacity: 0.85; }
-
-/* Mobile: reduz de três fragmentos para dois (oculta o 3º). */
-@media (max-width: 480px) {
-  .lm-frag__item[data-frag="2"] { display: none; }
+.login-page .login-header {
+  display: flex; align-items: center; height: 64px; flex-shrink: 0;
+  width: 100%; max-width: 460px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 24px);
 }
+.login-header__brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--login-title); }
+.login-page .login-layout { flex: 1; display: grid; place-items: center; padding: 12px clamp(16px, 4vw, 24px) 40px; }
+.login-page .login-card-wrap { width: 100%; max-width: 460px; }
+.login-page .login-card {
+  width: 100%;
+  border-radius: 24px;
+  border: 1px solid var(--login-border);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(49, 104, 255, 0.14), transparent 60%),
+    linear-gradient(168deg, #143257 0%, #0c2140 100%);
+  box-shadow: 0 30px 70px -30px rgba(2, 6, 20, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: clamp(26px, 4vw, 36px);
+  display: flex;
+  flex-direction: column;
+}
+.login-card__label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: var(--login-blue-light); }
+.login-card__title { margin-top: 8px; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; color: #fff; }
+.login-card__desc { margin-top: 8px; font-size: 14px; line-height: 1.55; color: var(--login-text-soft); }
+.login-page .login-form { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.login-page .login-field { display: flex; flex-direction: column; gap: 6px; }
+.login-page .login-field > label { font-size: 13px; font-weight: 600; color: var(--login-text-soft); }

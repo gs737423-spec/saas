@@ -122,6 +122,59 @@ Skills citadas no master prompt (Impeccable, UI/UX Pro Max, Taste, Astryx) **nã
 
 ### Pendências
 - Login válido ponta a ponta com Supabase + `VITE_WHATSAPP_*` em ambiente configurado.
-- **Fase 2**: fornecer a sprite profissional do corredor + animação (encaixa no
-  `RUNNER_SLOT` de `login-motion/motionConfig.ts`). Não iniciada.
 - Aprovação visual do dono nas capturas antes de push/deploy.
+
+---
+
+## Sessão — Login "Vintec Expanding Access" (2026-07-28, tarde)
+
+Nova direção do dono **substitui** a faixa Motion (Fase 1) e todas as tentativas
+anteriores. Conceito: **card central compacto → interação → expansão fluida →
+revelação do formulário**, tudo na mesma superfície.
+
+### Feito
+- **Removido**: `src/site/components/login-motion/` (6 arquivos) + CSS `.lm-*` e
+  bloco morto `.scene-*` e o layout `.login-page/.login-card/...` antigo do login.
+- **Criado**: `src/site/components/login-expanding/`
+  - `ExpandingLoginCard.tsx` — máquina de estados visual + foco + reduced-motion +
+    pausa da assinatura com aba oculta; renderiza o botão de recolher (canto).
+  - `VintecSignature.tsx` — assinatura SVG própria (duas lâminas convergentes = V),
+    respira/pulsa; sem lógica de auth.
+  - `CollapsedLoginIntro.tsx` — botão "Entrar" (controle de abertura, aria-expanded/controls).
+  - `ExpandedLoginContent.tsx` — texto de apoio + formulário (login/recuperação) +
+    ação comercial + links legais; reusa `login/LoginField` e `login/LoginCommercialAction`.
+  - `expanding-login.types.ts` — `LoginCardState` + `LoginBridge`.
+- `Login.tsx` **reescrito** mantendo TODA a auth; passa um `bridge` ao card. Auth
+  não foi movida nem alterada.
+- CSS novo `.lx-*` em `site.css` com tokens (dimensões fechado/aberto, durações,
+  easing, superfície, borda, glow). Campos `.login-*` mantidos (reaproveitados).
+- **ResetPassword.tsx preservada**: as classes de layout que ela usava foram
+  reescritas **escopadas em `.login-page`** (não colidem com `.lx-page`). Página
+  não foi alterada; só o CSS que dava suporte a ela.
+
+### Máquina de estados
+`collapsed → expanding → (timer ~580ms) → expanded`; `expanded → closing →
+(~540ms) → collapsed`. Abre por click/Enter/Space; **Escape recolhe só quando
+`canClose`** (sem envio, sem erro, campos vazios, view=login). Foco: e-mail ao
+abrir, botão "Entrar" ao fechar. Em `prefers-reduced-motion`, troca seca.
+
+### Como expande sem layout instável
+Card é o único item de um `grid place-items:center` num palco de altura fixa →
+transicionar `width/height/border-radius` recentraliza sozinho **sem reflow de
+vizinhos**. `overflow:hidden` clipa; o conteúdo aberto revela por `opacity/transform`
+em stagger (delays CSS). Nenhuma lib de animação.
+
+### Validação (real)
+- `npm run build` (tsc+vite): **limpo**. (Projeto **sem** script de lint/test.)
+- Playwright (chromium): estados fechado/abrindo/aberto (desktop 1440 + mobile 390),
+  **9 breakpoints** (1536,1440,1366,1280,1024,768,430,390,360) **sem overflow**;
+  **credencial inválida → erro real do Supabase** ("Não foi possível entrar com as
+  credenciais informadas."); recuperação de senha, mostrar-senha, abertura por
+  teclado (Enter→foco no e-mail) e reduced-motion OK; 0 erros/warnings de console.
+  Capturas no scratchpad da sessão.
+- **Sem commit. Sem push. Sem deploy.** Aguarda aprovação visual do dono.
+
+### Pendências / observações
+- Micro-refino possível após revisão: whitespace inferior do card no mobile (altura
+  fixa aberta); tamanho/curvas da assinatura V; timing fino do stagger.
+- Login válido ponta a ponta ainda depende de ambiente Supabase com credencial real.
