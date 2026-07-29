@@ -13,7 +13,8 @@ const metricIcons: LucideIcon[] = [Users, CircleDollarSign, ShoppingCart, Activi
 // Números NÃO validados — ver src/site/data/siteMetrics.ts (verified:false).
 export default function NumbersSection() {
   return (
-    <section id="sobre" className="vt-light scroll-mt-24">
+    <section id="consultoria" className="vt-light numbers-section scroll-mt-24">
+      <span id="sobre" aria-hidden="true" className="numbers-compat-anchor" />
       <div className="site-container site-container--tight grid gap-14 py-14 md:py-[92px] lg:grid-cols-[40fr_56fr] lg:gap-24">
         <Reveal>
           <span className="mb-3 inline-block text-[13px] font-bold uppercase" style={{ color: 'var(--vintec-blue-700)', letterSpacing: '0.12em' }}>

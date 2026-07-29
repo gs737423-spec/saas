@@ -5,11 +5,11 @@ const NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined)?.rep
 
 const ACCESS_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_ACCESS_MESSAGE as string | undefined) ||
-  'Olá! Sou cliente da Vintec e preciso de ajuda para acessar a plataforma.'
+  'Olá! Sou cliente da MKTOnline e preciso de ajuda para acessar a plataforma.'
 
 const DEMO_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_DEMO_MESSAGE as string | undefined) ||
-  'Olá! Gostaria de conhecer a Vintec e entender como ela pode ajudar na minha operação de marketplaces.'
+  'Olá! Gostaria de conhecer a MKTOnline e entender como ela pode ajudar na minha operação de marketplaces.'
 
 export const whatsappConfigured = !!NUMBER
 

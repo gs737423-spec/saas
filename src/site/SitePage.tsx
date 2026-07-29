@@ -3,17 +3,32 @@ import './site.css'
 import SiteHeader from '@/site/sections/SiteHeader'
 import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
-import ServicesSection from '@/site/sections/ServicesSection'
+import ServicosSection from '@/site/sections/ServicosSection'
 import MarketplacesSection from '@/site/sections/MarketplacesSection'
-import HowItWorks from '@/site/sections/HowItWorks'
+import ComoTrabalhamosSection from '@/site/sections/ComoTrabalhamosSection'
 import ConversionSection from '@/site/sections/ConversionSection'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 
-// Home institucional Vintec — 8 seções. "Por que Vintec" deixou de ser
-// seção independente (repetia argumentos de benefícios/como funciona) e foi
-// incorporada como faixa final compacta dentro de HowItWorks. Demais seções
-// antigas (ProblemSection, PlatformShowcase, DiagnosticSection,
+// Home institucional MKTOnline — reposicionamento "consultoria de e-commerce
+// como produto principal" (2026-07). A MKTOnline é consultoria; a plataforma é
+// um dos serviços, não a seção-argumento central — por isso a antiga
+// ExperienceSection (fundida com "como atuamos") foi aposentada e virou
+// ServicosSection (id="servicos", 4 serviços nomeados, um deles a própria
+// plataforma). ComoTrabalhamosSection (id="como-trabalhamos") é nova e bem
+// compacta — só entendimento→diagnóstico→acompanhamento, sem CTA próprio
+// (evita CTA duplicado com o Contato). MarketplacesSection (id="plataforma"
+// no bloco de seletores/screenshot, não no topo da seção) comunica a
+// tecnologia como apoio da consultoria. FAQ continua fora da renderização —
+// `#faq` é âncora de compatibilidade dentro de ConversionSection (Footer
+// ainda linka pra lá). `#como-funciona` (2 links do Footer) agora é âncora
+// de compatibilidade dentro de ComoTrabalhamosSection. `#sobre` (Footer
+// "Quem somos") é âncora de compatibilidade dentro de NumbersSection, que
+// passou a ter `id="consultoria"` de verdade. NumbersSection permanece —
+// regra explícita do usuário: não pode sair do ar nem ter números alterados,
+// só a copy do lado esquerdo foi reescrita (ver content.tsx `about`).
+// Componentes antigos (ServicesSection, HowItWorks, ProcessStep,
+// processSteps, Faq, ProblemSection, PlatformShowcase, DiagnosticSection,
 // IntegrationsSecurity, WhatWeDo, PreviewSection, CommercialBanner, Demo,
 // InstitutionalPlatformSection, InstitutionalSolutionSection,
 // DifferentialsSection) continuam no repo fora da renderização pública.
@@ -24,45 +39,21 @@ export default function SitePage() {
     return () => document.documentElement.classList.remove('site-active')
   }, [])
 
-  // Reveal on scroll — primitivo único e reutilizável: qualquer elemento com
-  // [data-reveal] entra (fade + translateY) quando cruza a viewport, uma vez.
-  // Sob prefers-reduced-motion o CSS já mostra tudo; aqui só evitamos o custo
-  // do observer. Um único observer para o site inteiro.
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('is-revealed'))
-      return
-    }
-    const obs = new IntersectionObserver(
-      (entries, observer) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-revealed')
-            observer.unobserve(e.target)
-          }
-        })
-      },
-      { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
-    )
-    document.querySelectorAll('[data-reveal]').forEach((el) => obs.observe(el))
-    return () => obs.disconnect()
-  }, [])
-
   return (
     <div className="site-root site-root--dark">
       <SiteHeader />
       <main>
         {/* 1. Hero — escuro, gradiente */}
         <Hero />
-        {/* 2. Quem Somos + métricas — claro */}
+        {/* 2. Credibilidade + números — claro (mantida, números intocados) */}
         <NumbersSection />
-        {/* 3. Benefícios — escuro */}
-        <ServicesSection />
-        {/* 4. Marketplaces — claro */}
+        {/* 3. Serviços da consultoria (plataforma é um deles) — escuro */}
+        <ServicosSection />
+        {/* 4. Plataforma (screenshots/tabs/logos) — escuro */}
         <MarketplacesSection />
-        {/* 5. Como funciona (+ faixa final) — claro */}
-        <HowItWorks />
-        {/* 6. Conversão — escuro, gradiente */}
+        {/* 5. Como trabalhamos — claro */}
+        <ComoTrabalhamosSection />
+        {/* 6. Contato / CTA final — escuro, gradiente */}
         <ConversionSection />
       </main>
       <Footer />

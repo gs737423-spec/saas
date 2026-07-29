@@ -1,7 +1,7 @@
 import type { LoginCardState } from './expanding-login.types'
 
 /**
- * Assinatura visual da Vintec — duas lâminas arredondadas convergentes que
+ * Assinatura visual da MKTOnline — duas lâminas arredondadas convergentes que
  * sugerem discretamente um "V", em azul vivo + azul claro. NÃO é esfera,
  * mascote, globo ou objeto decorativo genérico: é a marca gráfica da tela.
  *

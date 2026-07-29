@@ -1,7 +1,7 @@
 import type { FormEvent, KeyboardEvent, RefObject } from 'react'
 
 /**
- * Estados visuais do card de login (Vintec Expanding Access). São só de
+ * Estados visuais do card de login (MKTOnline Expanding Access). São só de
  * apresentação — a lógica de autenticação vive em Login.tsx e não depende
  * destes estados.
  *

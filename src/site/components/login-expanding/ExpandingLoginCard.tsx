@@ -18,7 +18,7 @@ interface Props {
 }
 
 /**
- * Card "Vintec Expanding Access" — superfície única que abre do estado compacto
+ * Card "MKTOnline Expanding Access" — superfície única que abre do estado compacto
  * para o formulário. Orquestra apenas o VISUAL e o FOCO; a autenticação vem
  * pronta em `bridge`.
  *
@@ -99,7 +99,7 @@ export default function ExpandingLoginCard({ bridge, canClose }: Props) {
           )}
 
           <VintecSignature state={state} />
-          <p className="lx-brand">Vintec</p>
+          <p className="lx-brand">MKTOnline</p>
           <h1 className="lx-headline">Clareza para conduzir sua operação.</h1>
 
           <CollapsedLoginIntro onOpen={open} expanded={revealing} buttonRef={openBtnRef} />

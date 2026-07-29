@@ -18,7 +18,7 @@ const SOFT_COOLDOWN_MS = 30_000
 type View = 'login' | 'forgot'
 
 /**
- * Página /login — "Vintec Expanding Access". A lógica de autenticação
+ * Página /login — "MKTOnline Expanding Access". A lógica de autenticação
  * (Supabase Auth, recuperação de senha, cooldown local, soft-limit, proteção
  * contra enumeração, loading, erro, redirecionamento) vive AQUI e é passada,
  * via `bridge`, para o card visual `ExpandingLoginCard`. O visual não

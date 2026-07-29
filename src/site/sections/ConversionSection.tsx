@@ -2,10 +2,18 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Loader2, AlertCircle, MessageCircle } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
-import { contact, specialistHref } from '@/site/content'
+import { contact, ctaLabels, specialistHref } from '@/site/content'
 
 const CHANNELS = ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Outros']
-const ORDER_RANGES = ['Até 100 pedidos', '100 a 500', '500 a 2.000', '2.000 a 10.000', 'Mais de 10.000']
+const DIFFICULTIES = [
+  'Falta de visão consolidada',
+  'Dificuldade para comparar canais',
+  'Problemas de estoque',
+  'Baixa margem',
+  'Excesso de trabalho manual',
+  'Dificuldade para crescer com controle',
+  'Outro',
+]
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'unconfigured'
 
@@ -15,7 +23,6 @@ type FormState = {
   whatsapp: string
   company: string
   marketplaces: string[]
-  monthlyOrders: string
   mainDifficulty: string
   consent: boolean
 }
@@ -35,9 +42,9 @@ const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export default function ConversionSection() {
   const [status, setStatus] = useState<Status>('idle')
   const [showOptional, setShowOptional] = useState(false)
-  const [form, setForm] = useState<FormState>({ name: '', email: '', whatsapp: '', company: '', marketplaces: [], monthlyOrders: '', mainDifficulty: '', consent: false })
+  const [form, setForm] = useState<FormState>({ name: '', email: '', whatsapp: '', company: '', marketplaces: [], mainDifficulty: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da Vintec.')
+  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -101,19 +108,13 @@ export default function ConversionSection() {
 
   return (
     <section id="conversao" className="sec-conversion scroll-mt-24">
+      <span id="faq" aria-hidden="true" className="conversion-compat-anchor" />
       <div className="site-container py-16 md:py-24">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
-            <span className="site-label mb-3" style={{ color: '#78CAFF' }}>Próximo passo</span>
-            <h2 className="site-h2 vt-ink">Vamos entender como sua equipe acompanha os marketplaces hoje.</h2>
-            <p className="site-lead mt-4 vt-muted">Conte brevemente como sua empresa trabalha. A equipe da Vintec analisa o cenário e explica de que forma pode ajudar.</p>
-            <ul className="mt-6 space-y-2.5">
-              {['Entendemos os controles utilizados', 'Verificamos os marketplaces', 'Identificamos tarefas repetidas', 'Explicamos os próximos passos'].map((t) => (
-                <li key={t} className="flex items-center gap-2.5 text-[14.5px] vt-muted">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: '#78CAFF' }} /> {t}
-                </li>
-              ))}
-            </ul>
+            <span className="site-label mb-3" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
+            <h2 className="site-h2 vt-ink">Vamos entender os desafios e as oportunidades do seu e‑commerce.</h2>
+            <p className="site-lead mt-4 vt-muted">Converse com a equipe MKTOnline sobre seus canais, resultados e objetivos. A partir desse primeiro contato, avaliamos como nossos serviços podem contribuir com a operação.</p>
             <p className="mt-5 text-[13px] vt-muted">Conversa inicial, sem compromisso.</p>
 
             {waHref.startsWith('http') && (
@@ -124,10 +125,8 @@ export default function ConversionSection() {
           </div>
 
           <Reveal className="vt-card p-7 md:p-8 lg:col-span-7">
-            <h3 className="text-[17px] font-bold vt-ink">Receba uma avaliação inicial</h3>
-            <p className="mt-1.5 text-[13.5px] vt-muted" style={{ lineHeight: 1.5 }}>
-              Conte brevemente sobre sua operação. Nossa equipe retorna para entender o cenário.
-            </p>
+            <h3 className="text-[17px] font-bold vt-ink">Fale com um especialista</h3>
+            <p className="mt-1 text-[13.5px] vt-muted">Compartilhe um pouco sobre o seu cenário atual.</p>
             <form onSubmit={onSubmit} noValidate className="mt-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nome completo" error={errors.name} htmlFor="f-name">
@@ -168,15 +167,11 @@ export default function ConversionSection() {
                     </div>
                   </fieldset>
 
-                  <Field label="Quantos pedidos recebe aproximadamente?" htmlFor="f-orders">
-                    <select id="f-orders" className="vt-input" value={form.monthlyOrders} onChange={(e) => set('monthlyOrders', e.target.value)}>
+                  <Field label="Qual é o maior desafio da sua operação hoje?" htmlFor="f-difficulty">
+                    <select id="f-difficulty" className="vt-input" value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)}>
                       <option value="">Selecione (opcional)</option>
-                      {ORDER_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                      {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
-                  </Field>
-
-                  <Field label="Conte um pouco sobre sua rotina" htmlFor="f-difficulty">
-                    <textarea id="f-difficulty" className="vt-input vt-textarea" rows={3} maxLength={400} value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)} placeholder="Opcional — ex.: hoje controlamos tudo em planilha e perdemos tempo comparando os canais" />
                   </Field>
                 </div>
               )}
@@ -200,9 +195,9 @@ export default function ConversionSection() {
               )}
 
               <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-6 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
-                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : 'Fale com um especialista'}
+                {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : ctaLabels.principal}
               </button>
-              <p className="mt-3 text-center text-[12px] vt-muted">Retorno da equipe Vintec • Conversa inicial sem compromisso</p>
+              <p className="mt-3 text-center text-[12px] vt-muted">Retorno da equipe MKTOnline • Conversa inicial sem compromisso</p>
             </form>
           </Reveal>
         </div>

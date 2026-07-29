@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X, ArrowRight, Lock } from 'lucide-react'
-import { nav, specialistHref } from '@/site/content'
+import { Menu, X, Lock } from 'lucide-react'
+import { ctaLabels, nav, specialistHref } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
 
 // Header dark glass — transparente sobre o hero petróleo no topo, vira barra
@@ -10,30 +10,9 @@ import { useScrolled } from '@/site/hooks'
 export default function SiteHeader() {
   const scrolled = useScrolled(8)
   const [open, setOpen] = useState(false)
-  const [activeId, setActiveId] = useState('')
   const panelRef = useRef<HTMLDivElement>(null)
   const firstLinkRef = useRef<HTMLAnchorElement>(null)
   const specialist = specialistHref()
-
-  // Destaque da seção atual — observa as sections referenciadas no menu e marca
-  // o link cuja seção está cruzando a faixa central da viewport. Só leitura de
-  // posição (IntersectionObserver), sem listener de scroll por frame.
-  useEffect(() => {
-    const ids = nav.map((n) => n.href.slice(1))
-    const els = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el)
-    if (!els.length) return
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]) setActiveId(visible[0].target.id)
-      },
-      { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
-    )
-    els.forEach((el) => obs.observe(el))
-    return () => obs.disconnect()
-  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -56,19 +35,14 @@ export default function SiteHeader() {
         style={{ height: scrolled ? 70 : 82 }}
       >
         {/* Marca tipográfica temporária — só o nome, sem símbolo. */}
-        <a href="#topo" className="flex shrink-0 items-center" aria-label="Vintec — início">
-          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>Vintec</span>
+        <a href="#topo" className="flex shrink-0 items-center" aria-label="MKTOnline — início">
+          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>MKTOnline</span>
         </a>
 
         {/* Nav desktop — breakpoint 1100px (nav:) */}
         <nav className="hidden items-center gap-2 nav:flex" aria-label="Navegação principal">
           {nav.map((n) => (
-            <a
-              key={n.href}
-              href={n.href}
-              className={`vt-nav-link${activeId === n.href.slice(1) ? ' is-active' : ''}`}
-              aria-current={activeId === n.href.slice(1) ? 'true' : undefined}
-            >
+            <a key={n.href} href={n.href} className="vt-nav-link">
               {n.label}
             </a>
           ))}
@@ -80,7 +54,7 @@ export default function SiteHeader() {
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
           <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
-            Fale com um especialista
+            {ctaLabels.principal}
           </a>
         </div>
 
@@ -153,7 +127,7 @@ export default function SiteHeader() {
                   onClick={() => setOpen(false)}
                   className="btn btn-primary w-full"
                 >
-                  Fale com um especialista <ArrowRight className="h-4 w-4" />
+                  {ctaLabels.principal}
                 </a>
               </div>
             </div>

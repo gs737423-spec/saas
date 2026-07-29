@@ -6,7 +6,7 @@ import { faqItems, specialistHref } from '@/site/content'
 // FAQ — família clara (light-100), título à esquerda, accordion à direita.
 export default function Faq() {
   const [open, setOpen] = useState<number | null>(0)
-  const waHref = specialistHref('Olá! Não encontrei minha dúvida no site e gostaria de falar com a equipe Vintec.')
+  const waHref = specialistHref('Olá! Não encontrei minha dúvida no site e gostaria de falar com a equipe MKTOnline.')
 
   return (
     <section id="faq" className="sec-cool scroll-mt-24">
@@ -14,11 +14,8 @@ export default function Faq() {
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <Reveal>
             <h2 className="text-[22px] font-extrabold tracking-tight md:text-[26px]" style={{ color: 'var(--vintec-text)' }}>
-              Ainda com dúvidas?
+              Dúvidas antes de começar?
             </h2>
-            <p className="mt-2 max-w-xs text-[14px]" style={{ color: 'var(--vintec-text-soft)', lineHeight: 1.5 }}>
-              Respostas rápidas sobre conexões, implantação e funcionamento da Vintec.
-            </p>
           </Reveal>
 
           <Reveal delay={60} className="max-w-xl">
@@ -59,7 +56,7 @@ export default function Faq() {
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-5" style={{ borderColor: 'var(--vintec-border)' }}>
               <div>
                 <p className="text-[13.5px] font-bold" style={{ color: 'var(--vintec-text)' }}>Não encontrou sua dúvida?</p>
-                <p className="text-[13px]" style={{ color: 'var(--vintec-text-soft)' }}>Fale diretamente com a equipe Vintec.</p>
+                <p className="text-[13px]" style={{ color: 'var(--vintec-text-soft)' }}>Fale diretamente com a equipe MKTOnline.</p>
               </div>
               <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.6rem 1.1rem', fontSize: '13.5px' }}>
                 Falar com um especialista

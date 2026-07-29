@@ -38,7 +38,7 @@ export const complementaryServices: ServiceItem[] = [
   {
     id: 'comece-acompanhado',
     title: 'Comece com acompanhamento',
-    description: 'A equipe da Vintec apoia a configuração, a conexão dos marketplaces e a adaptação da rotina.',
+    description: 'A equipe da MKTOnline apoia a configuração, a conexão dos marketplaces e a adaptação da rotina.',
     benefits: [],
     featured: false,
   },

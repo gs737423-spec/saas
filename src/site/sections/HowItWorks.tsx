@@ -36,7 +36,7 @@ export default function HowItWorks() {
               ))}
             </ul>
 
-            <a href={specialistHref('Olá! Quero entender como funciona a implantação da Vintec.')} target="_blank" rel="noopener noreferrer" className="impl-cta">
+            <a href={specialistHref('Olá! Quero entender como funciona a implantação da MKTOnline.')} target="_blank" rel="noopener noreferrer" className="impl-cta">
               Converse sobre sua operação <ArrowRight className="h-4 w-4" />
             </a>
           </Reveal>

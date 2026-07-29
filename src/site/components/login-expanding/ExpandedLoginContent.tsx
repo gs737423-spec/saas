@@ -33,7 +33,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
       {b.view === 'login' ? (
         <>
           <p className="lx-support">
-            Acesse a Vintec e acompanhe marketplaces, pedidos, estoque e desempenho em uma única visão.
+            Acesse a MKTOnline e acompanhe marketplaces, pedidos, estoque e desempenho em uma única visão.
           </p>
 
           <form onSubmit={b.onSubmit} noValidate className="lx-form" data-error={b.error && !b.inCooldown ? 'true' : undefined}>

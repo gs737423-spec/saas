@@ -13,10 +13,10 @@ export default function Footer() {
       <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 72, paddingBottom: 32 }}>
         <div className="grid gap-12 lg:grid-cols-[30%_1fr]">
           <div className="max-w-[320px]">
-            <span className="footer-word">Vintec</span>
+            <span className="footer-word">MKTOnline</span>
             <h2 className="footer-tagline">Menos telas. Mais controle sobre a operação.</h2>
             <p className="footer-desc">
-              A Vintec reúne pedidos, estoque, vendas e resultados dos marketplaces para que gestores e equipes acompanhem a operação com menos controles paralelos.
+              A MKTOnline reúne pedidos, estoque, vendas e resultados dos marketplaces para que gestores e equipes acompanhem a operação com menos controles paralelos.
             </p>
             <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-cta">
               Fale com um especialista <ArrowRight className="h-3.5 w-3.5" />
@@ -30,7 +30,7 @@ export default function Footer() {
                 <li><a href="#servicos" className="footer-link">Soluções</a></li>
                 <li><a href="#marketplaces" className="footer-link">Marketplaces</a></li>
                 <li><a href="#como-funciona" className="footer-link">Como funciona</a></li>
-                <li><a href="#como-funciona" className="footer-link">Por que Vintec</a></li>
+                <li><a href="#como-funciona" className="footer-link">Por que MKTOnline</a></li>
               </ul>
             </nav>
 
@@ -67,7 +67,7 @@ export default function Footer() {
             <Link to="/privacidade" className="footer-link">Política de Privacidade</Link>
             <Link to="/termos" className="footer-link">Termos de Uso</Link>
           </div>
-          <p className="footer-legal__copy">&copy; {year} Vintec. Todos os direitos reservados.</p>
+          <p className="footer-legal__copy">&copy; {year} MKTOnline. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

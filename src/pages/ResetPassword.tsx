@@ -63,7 +63,7 @@ export default function ResetPassword() {
   return (
     <div className="login-page">
       <header className="login-header">
-        <Link to="/" className="login-header__brand">Vintec</Link>
+        <Link to="/" className="login-header__brand">MKTOnline</Link>
       </header>
 
       <div className="login-layout" style={{ gridTemplateColumns: '1fr' }}>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
-import { specialistHref } from '@/site/content'
+import { ctaLabels, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 import HeroPersonStage from '@/site/components/HeroPersonStage'
 import MarketplaceRail from '@/site/components/MarketplaceRail'
@@ -28,32 +28,32 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#como-funciona',
     microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
-    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
+    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a MKTOnline',
+    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a MKTOnline.',
   },
   {
     eyebrow: 'ANÁLISE E ACOMPANHAMENTO',
     title: <>Crescer bem exige mais do que esforço. Exige experiência ao lado das suas decisões.</>,
     sub: 'Unimos experiência, análise e acompanhamento para apoiar decisões importantes sobre margem, estoque, canais e desempenho.',
-    ctaPrimary: 'Agendar conversa estratégica',
+    ctaPrimary: ctaLabels.principal,
     ctaSecondary: 'Conhecer nossos serviços',
     ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
+    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na MKTOnline',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
   },
   {
     eyebrow: 'ANÁLISE ESTRATÉGICA DA OPERAÇÃO',
     title: <>Você já construiu uma operação real. Vamos entender o que ela precisa para o próximo passo.</>,
     sub: 'Antes de qualquer recomendação, ouvimos como sua empresa opera hoje. A partir disso, ajudamos a organizar prioridades e apoiar decisões mais seguras para os próximos passos.',
-    ctaPrimary: 'Agendar conversa estratégica',
+    ctaPrimary: ctaLabels.principal,
     ctaSecondary: 'Conhecer nossos serviços',
-    ctaSecondaryHref: '#como-funciona',
+    ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
-    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
+    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na MKTOnline',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
   },
 ]
 
@@ -124,7 +124,7 @@ export default function Hero() {
       className="hero-vt"
       role="region"
       aria-roledescription="carousel"
-      aria-label="Apresentação da Vintec"
+      aria-label="Apresentação da MKTOnline"
       tabIndex={0}
       onKeyDown={onKeyDown}
       onMouseEnter={() => setPaused(true)}
@@ -142,7 +142,7 @@ export default function Hero() {
               {slide.eyebrow}
             </span>
 
-            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.3rem, 3.8vw, 3.6rem)', lineHeight: 1.03, letterSpacing: '-0.025em', maxWidth: 560, textWrap: 'balance' }}>
+            <h1 className="font-extrabold" style={{ color: '#F7F9FF', fontSize: 'clamp(2.1rem, 3vw, 3.1rem)', lineHeight: 1.08, letterSpacing: '-0.02em', maxWidth: 600, textWrap: 'balance' }}>
               {slide.title}
             </h1>
 

@@ -1,6 +1,6 @@
 import { closingPoints } from '@/site/data/differentials'
 
-// Seção "Por que Vintec" — não faz mais parte da renderização pública
+// Seção "Por que MKTOnline" — não faz mais parte da renderização pública
 // (os 3 argumentos foram incorporados como faixa final de HowItWorks.tsx,
 // ver `closing-strip`). Arquivo preservado, fora do import tree de
 // SitePage.tsx.

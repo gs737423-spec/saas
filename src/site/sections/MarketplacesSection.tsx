@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Maximize2, X } from 'lucide-react'
-import { marketplaces, specialistHref } from '@/site/content'
+import { Maximize2, X } from 'lucide-react'
+import { ctaLabels, marketplaces, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 
 interface ShowcaseTab {
@@ -8,7 +8,6 @@ interface ShowcaseTab {
   navLabel: string
   title: string
   description: string
-  outcome: string
   image: string
   imageAlt: string
 }
@@ -16,40 +15,33 @@ interface ShowcaseTab {
 // 3 telas REAIS da plataforma (capturadas ao vivo em /app/*, mesma conta
 // demo), uma por seção pedida: Visão Geral, Marketplaces, Produtos. Nenhuma
 // é screenshot antiga do projeto nem mockup — ver public/site/platform-showcase.
+// `navLabel` bate com o nome real dentro do produto/screenshot — só `title`/
+// `description` usam a nomenclatura comercial da consultoria.
 const tabs: ShowcaseTab[] = [
   {
     id: 'overview',
     navLabel: 'Visão Geral',
-    title: 'Veja o resultado da operação em um só lugar.',
-    description: 'Faturamento bruto, pedidos, ticket médio, comissão e devoluções reunidos, com o desempenho de cada marketplace logo abaixo.',
-    outcome: 'Entenda como a operação está indo sem abrir relatório por relatório.',
+    title: 'Visão executiva da operação.',
+    description: 'Visualize faturamento, pedidos, ticket médio, comissões, devoluções e evolução da operação.',
     image: '/site/platform-showcase/platform-overview.webp',
-    imageAlt: 'Tela Visão Geral da plataforma Vintec, mostrando faturamento bruto, pedidos, ticket médio, comissão e faturamento por marketplace',
+    imageAlt: 'Tela Visão Geral da plataforma MKTOnline, mostrando faturamento bruto, pedidos, ticket médio, comissão e faturamento por marketplace',
   },
   {
     id: 'marketplaces',
     navLabel: 'Marketplaces',
-    title: 'Compare o desempenho de cada marketplace.',
-    description: 'Veja faturamento, pedidos, ticket médio e comissão de cada canal, com a evolução mês a mês lado a lado.',
-    outcome: 'Saiba qual marketplace cresce, qual perde espaço e onde vale a pena investir mais atenção.',
+    title: 'Análise dos canais.',
+    description: 'Compare o desempenho dos marketplaces e entenda quais canais exigem atenção ou apresentam oportunidades.',
     image: '/site/platform-showcase/platform-marketplaces.webp',
-    imageAlt: 'Tela Marketplaces da plataforma Vintec, comparando receita, ticket médio e comissão entre Mercado Livre, Shopee, Amazon e Loja Própria',
+    imageAlt: 'Tela Marketplaces da plataforma MKTOnline, comparando receita, ticket médio e comissão entre Mercado Livre, Shopee, Amazon e Loja Própria',
   },
   {
     id: 'products',
     navLabel: 'Produtos',
-    title: 'Encontre os produtos que merecem atenção.',
-    description: 'Compare vendas, estoque, margem e tendência de cada produto para identificar líderes, itens parados e riscos de ruptura.',
-    outcome: 'Priorize reposições e decisões comerciais usando a mesma rotina de acompanhamento.',
+    title: 'Gestão de produtos.',
+    description: 'Acompanhe estoque, vendas, margem, cobertura e comportamento dos produtos.',
     image: '/site/platform-showcase/platform-products.webp',
-    imageAlt: 'Tela Produtos da plataforma Vintec, com catálogo de SKUs, vendas, estoque, faturamento, margem e tendência',
+    imageAlt: 'Tela Produtos da plataforma MKTOnline, com catálogo de SKUs, vendas, estoque, faturamento, margem e tendência',
   },
-]
-
-const benefits = [
-  { title: 'MENOS BUSCAS MANUAIS', text: 'Pedidos, produtos, estoque e resultados deixam de ficar espalhados entre diferentes sistemas.' },
-  { title: 'PRIORIDADES MAIS VISÍVEIS', text: 'A equipe identifica rapidamente quedas, riscos de estoque e diferenças entre marketplaces.' },
-  { title: 'DECISÕES COM MAIS CONTEXTO', text: 'Gestores e colaboradores acompanham a mesma informação sem reconstruir relatórios.' },
 ]
 
 // As 3 imagens têm o mesmo enquadramento (mesmo viewport na captura), então
@@ -120,33 +112,39 @@ export default function MarketplacesSection() {
     return () => { document.removeEventListener('keydown', onKeyDown); document.body.style.overflow = overflow }
   }, [lightboxOpen])
 
-  const waHref = whatsappContactUrl('Olá! Quero ver a Vintec na minha operação.') ?? specialistHref('Olá! Quero ver a Vintec na minha operação.')
+  const waHref = whatsappContactUrl('Olá! Quero ver a plataforma da MKTOnline com um especialista.') ?? specialistHref('Olá! Quero ver a plataforma da MKTOnline com um especialista.')
   const tab = tabs[active]
 
   return (
     <section
-      id="marketplaces"
-      aria-label="A plataforma Vintec em uso"
-      className="marketplace-showcase scroll-mt-24"
+      aria-label="A plataforma MKTOnline em uso"
+      className="marketplace-showcase"
       onFocus={() => setFocused(true)}
       onBlur={onBlurSection}
     >
+      <span id="marketplaces" aria-hidden="true" className="marketplace-showcase__compat-anchor" />
       <div className="site-container site-container--tight marketplace-showcase__intro" style={{ maxWidth: 1220 }}>
-        <span className="marketplace-showcase__eyebrow">A OPERAÇÃO INTEIRA EM UMA ÚNICA VISÃO</span>
-        <h2 className="marketplace-showcase__title">Veja o que acontece em todos os seus marketplaces sem trocar de painel.</h2>
+        <span className="marketplace-showcase__eyebrow">TECNOLOGIA A SERVIÇO DA CONSULTORIA</span>
+        <h2 className="marketplace-showcase__title">Uma plataforma própria para acompanhar a operação junto com o cliente.</h2>
         <p className="marketplace-showcase__desc">
-          A Vintec reúne vendas, pedidos, estoque, produtos e resultados de Mercado Livre, Amazon, Shopee e outros canais para sua equipe identificar prioridades e tomar decisões com mais rapidez.
+          Como parte dos serviços da MKTOnline, a plataforma reúne os principais indicadores dos marketplaces e cria
+          uma visão compartilhada entre gestores e consultores.
+        </p>
+        <p className="marketplace-showcase__highlight">
+          Enquanto a tecnologia organiza o cenário, nossos especialistas ajudam a interpretar o que ele significa
+          para o negócio.
         </p>
       </div>
 
       <div
-        className="site-container site-container--tight marketplace-showcase__layout"
+        id="plataforma"
+        className="site-container site-container--tight marketplace-showcase__layout scroll-mt-24"
         style={{ maxWidth: 1220 }}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
         {/* Coluna esquerda — seletores */}
-        <div className="marketplace-showcase__tabs" role="tablist" aria-label="Telas da plataforma Vintec" aria-orientation="vertical" onKeyDown={onKeyDown}>
+        <div className="marketplace-showcase__tabs" role="tablist" aria-label="Telas da plataforma MKTOnline" aria-orientation="vertical" onKeyDown={onKeyDown}>
           {tabs.map((t, i) => (
             <button
               key={t.id}
@@ -164,10 +162,15 @@ export default function MarketplacesSection() {
               <span className="marketplace-showcase__tab-body">
                 <span className="marketplace-showcase__tab-title">{t.title}</span>
                 <span className="marketplace-showcase__tab-desc">{t.description}</span>
-                <span className="marketplace-showcase__tab-outcome">{t.outcome}</span>
               </span>
             </button>
           ))}
+          <div className="marketplace-showcase__cta">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              {ctaLabels.plataforma}
+            </a>
+            <p className="marketplace-showcase__cta-note">Conversa inicial para entender como sua equipe trabalha hoje.</p>
+          </div>
         </div>
 
         {/* Coluna direita — frame proprietário (sem bolinhas de navegador) */}
@@ -227,24 +230,6 @@ export default function MarketplacesSection() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Faixa de benefícios */}
-      <div className="site-container site-container--tight marketplace-showcase__benefits" style={{ maxWidth: 1220 }}>
-        {benefits.map((b) => (
-          <div key={b.title} className="marketplace-showcase__benefit">
-            <span className="marketplace-showcase__benefit-title">{b.title}</span>
-            <p className="marketplace-showcase__benefit-text">{b.text}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* CTA */}
-      <div className="site-container site-container--tight marketplace-showcase__cta" style={{ maxWidth: 1220 }}>
-        <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-          Quero ver a Vintec na minha operação <ArrowRight className="h-4 w-4" />
-        </a>
-        <p className="marketplace-showcase__cta-note">Conversa inicial para entender como sua equipe trabalha hoje.</p>
       </div>
 
       {lightboxOpen && (

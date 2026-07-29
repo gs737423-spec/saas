@@ -29,7 +29,7 @@ const results: PanelItem[] = [
 ]
 
 export default function ServicesSection() {
-  const waHref = specialistHref('Olá! Quero conhecer o gerenciamento da Vintec.')
+  const waHref = specialistHref('Olá! Quero conhecer o gerenciamento da MKTOnline.')
 
   return (
     <section id="servicos" className="sec-dark-flat scroll-mt-24">
@@ -40,7 +40,7 @@ export default function ServicesSection() {
           <h2 className="svc2-title">Tecnologia para enxergar a operação. Especialistas para ajudar sua empresa a decidir.</h2>
           <div className="svc2-header-side">
             <p className="svc2-sub">
-              A Vintec reúne as informações dos marketplaces e acompanha sua operação de perto. Nossa equipe participa da
+              A MKTOnline reúne as informações dos marketplaces e acompanha sua operação de perto. Nossa equipe participa da
               implantação, analisa os resultados e ajuda a definir as prioridades da gestão.
             </p>
             <p className="svc2-reinforce">
@@ -50,8 +50,8 @@ export default function ServicesSection() {
         </div>
 
         <div className="svc2-grid">
-          <div className="svc2-panel svc2-panel--platform reveal" data-reveal>
-            <span className="svc2-panel-label">PLATAFORMA VINTEC</span>
+          <div className="svc2-panel svc2-panel--platform">
+            <span className="svc2-panel-label">PLATAFORMA MKTONLINE</span>
             <h3 className="svc2-panel-title">Tudo o que sua equipe precisa acompanhar, reunido em uma mesma rotina.</h3>
             <p className="svc2-panel-text">Pedidos, estoque, vendas e resultados deixam de ficar espalhados entre painéis, planilhas e pessoas.</p>
             <div className="svc2-items">
@@ -68,10 +68,10 @@ export default function ServicesSection() {
             </div>
           </div>
 
-          <div className="svc2-panel svc2-panel--mgmt reveal" data-reveal>
-            <span className="svc2-panel-label">GESTÃO VINTEC</span>
+          <div className="svc2-panel svc2-panel--mgmt">
+            <span className="svc2-panel-label">GESTÃO MKTONLINE</span>
             <h3 className="svc2-panel-title">Nossa equipe acompanha a operação junto com você.</h3>
-            <p className="svc2-panel-text">A tecnologia organiza as informações. A equipe Vintec ajuda a transformar esses dados em prioridades e decisões.</p>
+            <p className="svc2-panel-text">A tecnologia organiza as informações. A equipe MKTOnline ajuda a transformar esses dados em prioridades e decisões.</p>
             <div className="svc2-items">
               {managementItems.map((item) => (
                 <div key={item.label} className="svc2-item">
@@ -82,7 +82,7 @@ export default function ServicesSection() {
             </div>
             <div className="svc2-highlight">
               <p className="svc2-highlight-text svc2-highlight-text--lead">Você não fica sozinho tentando interpretar mais um sistema.</p>
-              <p className="svc2-highlight-text">A Vintec participa da rotina para ajudar sua equipe a transformar informação em decisão.</p>
+              <p className="svc2-highlight-text">A MKTOnline participa da rotina para ajudar sua equipe a transformar informação em decisão.</p>
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function ServicesSection() {
               <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary svc2-cta-btn">
                 Quero conhecer o gerenciamento
               </a>
-              <p className="svc2-cta-note">Converse com a equipe Vintec.</p>
+              <p className="svc2-cta-note">Converse com a equipe MKTOnline.</p>
             </div>
           </div>
         </div>

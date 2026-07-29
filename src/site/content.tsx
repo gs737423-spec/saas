@@ -19,11 +19,20 @@ import { whatsappContactUrl } from '@/lib/whatsapp'
 // scroll-margin-top no CSS, garante que o título fique sempre visível
 // abaixo do header sticky.
 export const nav = [
-  { label: 'Soluções', href: '#servicos' },
-  { label: 'Marketplaces', href: '#marketplaces' },
-  { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Consultoria', href: '#consultoria' },
+  { label: 'Serviços', href: '#servicos' },
+  { label: 'Plataforma', href: '#plataforma' },
+  { label: 'Como trabalhamos', href: '#como-trabalhamos' },
 ]
+
+// Textos de CTA padronizados — usar só estes em toda a home (regra do
+// reposicionamento "consultoria de e-commerce como produto principal"),
+// nunca variações.
+export const ctaLabels = {
+  principal: 'Agendar conversa estratégica',
+  plataforma: 'Conhecer a plataforma da MKTOnline',
+  contexto: 'Conversar sobre minha operação',
+}
 
 export interface MarketplaceItem {
   name: string
@@ -51,40 +60,40 @@ export const trustStrip = [
   { label: 'Onboarding assistido', desc: 'Nossa equipe acompanha a implantação.' },
 ]
 
-// "Quem é a Vintec" + números — só indicadores estruturais verificáveis,
+// "Quem é a MKTOnline" + números — só indicadores estruturais verificáveis,
 // nunca métricas de clientes/faturamento/uso inventadas.
 // Bloco "Quem Somos" — 2 parágrafos institucionais (estrutura editorial Petina).
 export const about = {
-  label: 'Quem Somos',
-  title: 'Criada para substituir controles paralelos por uma rotina mais clara.',
+  label: 'EXPERIÊNCIA PARA ORIENTAR DECISÕES',
+  title: 'Mais de 20 anos de e‑commerce aplicados à realidade de cada operação.',
   paragraphs: [
-    'A Vintec ajuda empresas que vendem em diferentes marketplaces a reunir pedidos, estoque, vendas e resultados em uma rotina mais fácil de acompanhar.',
-    'Assim, gestores e equipes passam menos tempo procurando informações e ganham mais segurança para decidir o que precisa de atenção.',
+    'Nossa liderança conhece os desafios de vender, proteger margem, administrar estoque, desenvolver canais e conduzir equipes em um mercado que muda constantemente.',
+    'Esse conhecimento sustenta os diagnósticos, análises e recomendações realizados pela MKTOnline ao longo do relacionamento com cada cliente.',
   ],
 }
 
 // Seção institucional (3ª) — pessoa corporativa à ESQUERDA, conteúdo à direita.
 // Pessoa exclusiva desta seção (não aparece no hero). Linguagem simples.
 export const institutionalSection = {
-  label: 'SOBRE A VINTEC',
+  label: 'SOBRE A MKTONLINE',
   title: 'Feita para organizar operações que vendem em vários marketplaces.',
   paragraphs: [
-    'A Vintec reúne os principais canais da operação para sua equipe acompanhar vendas, pedidos, estoque e desempenho com mais clareza e menos controles paralelos.',
+    'A MKTOnline reúne os principais canais da operação para sua equipe acompanhar vendas, pedidos, estoque e desempenho com mais clareza e menos controles paralelos.',
     'Em vez de alternar entre diferentes telas, planilhas e rotinas separadas, gestores e equipes passam a acompanhar os canais em uma estrutura mais organizada.',
   ],
   ctaLabel: 'Conheça nossas soluções',
   ctaHref: '#servicos',
   photoSrc: '/site/people/vintec-institutional-consultant.png',
-  photoAlt: 'Especialista da Vintec segurando um tablet',
+  photoAlt: 'Especialista da MKTOnline segurando um tablet',
 }
 
 // Métricas institucionais: ver src/site/data/siteMetrics.ts (verified:false,
 // source:null — NÃO publicar como fatos reais sem validação comercial).
-export const institutionalMetricsTitle = 'Esse é o alcance da Vintec'
+export const institutionalMetricsTitle = 'Esse é o alcance da MKTOnline'
 
 // 4ª seção — "O que você recebe": UM único card vertical (estrutura da
 // referência Petina). Nada de dashboard aqui — o print vai na seção de prévia.
-export const platformSectionTitle = 'O que você recebe com a Vintec'
+export const platformSectionTitle = 'O que você recebe com a MKTOnline'
 export const platformSectionSubtitle = 'Uma plataforma feita para simplificar a rotina de quem vende em marketplaces.'
 export const platformCard = {
   pill: 'PLATAFORMA PARA MARKETPLACES',
@@ -98,7 +107,7 @@ export const platformCard = {
     'Produtos organizados por canal',
     'Informações mais claras para sua equipe',
   ],
-  ctaLabel: 'Conheça a plataforma Vintec',
+  ctaLabel: 'Conheça a plataforma MKTOnline',
 }
 // Lado complementar (não é outro card) — título institucional + frase curta.
 export const platformAside = {
@@ -111,10 +120,10 @@ export const previewSection = {
   title: 'Veja sua operação com mais clareza',
   text: 'Uma visão organizada dos seus marketplaces para acompanhar o que importa no dia a dia.',
   image: '/site/dashboard-overview.webp',
-  imageAlt: 'Prévia do painel da Vintec com a visão geral da operação multicanal',
+  imageAlt: 'Prévia do painel da MKTOnline com a visão geral da operação multicanal',
 }
 
-// "O que a Vintec faz" — 4 blocos, capacidades reais do produto.
+// "O que a MKTOnline faz" — 4 blocos, capacidades reais do produto.
 export const whatWeDo = [
   {
     title: 'Centraliza a operação multicanal',
@@ -202,7 +211,7 @@ export const commercialBanners: CommercialBannerContent[] = [
     title: 'Uma operação mais organizada para crescer em diferentes canais.',
     text: 'Centralize Mercado Livre, Amazon, Shopee e Leroy Merlin em uma estrutura só, conectada por API — sem depender de planilha ou de abrir painel por painel.',
     ctaLabel: 'Fale com um especialista',
-    waMessage: 'Olá! Quero entender melhor as soluções da Vintec para operações multicanal.',
+    waMessage: 'Olá! Quero entender melhor as soluções da MKTOnline para operações multicanal.',
     photoSlot: 'banner-organizacao-notebook',
     photoSrc: '/site/people/processed/vintec-banner-laptop.webp',
     photoAlt: 'Pessoa segurando um notebook, ilustrando a organização da operação multicanal',
@@ -212,12 +221,12 @@ export const commercialBanners: CommercialBannerContent[] = [
     id: 'banner-crescimento',
     eyebrow: 'Proximidade',
     title: 'Fale com quem entende de operações multicanal.',
-    text: 'Conforme a operação cresce, a Vintec foi projetada para acompanhar — mais canais, mais clareza, sem perder controle sobre o que importa.',
+    text: 'Conforme a operação cresce, a MKTOnline foi projetada para acompanhar — mais canais, mais clareza, sem perder controle sobre o que importa.',
     ctaLabel: 'Solicitar contato',
-    waMessage: 'Olá! Gostaria de saber mais sobre como a Vintec pode apoiar o crescimento da minha operação.',
+    waMessage: 'Olá! Gostaria de saber mais sobre como a MKTOnline pode apoiar o crescimento da minha operação.',
     photoSlot: 'banner-crescimento-mobile',
     photoSrc: '/site/people/processed/vintec-banner-smartphone.webp',
-    photoAlt: 'Pessoa segurando um smartphone, ilustrando o contato com a equipe Vintec',
+    photoAlt: 'Pessoa segurando um smartphone, ilustrando o contato com a equipe MKTOnline',
     imageSide: 'right',
   },
 ]
@@ -225,28 +234,28 @@ export const commercialBanners: CommercialBannerContent[] = [
 // FAQ — respostas honestas sobre posicionamento comercial e forma de uso.
 export const faqItems = [
   {
-    q: 'O que a Vintec faz na prática?',
-    a: 'A Vintec reúne informações importantes dos marketplaces em uma rotina mais organizada, ajudando equipes e gestores a acompanhar pedidos, estoque, vendas e resultados com menos controles paralelos.',
+    q: 'A MKTOnline é uma plataforma ou uma consultoria?',
+    a: 'A experiência e o acompanhamento são o centro da entrega. A plataforma organiza os dados dos marketplaces e dá suporte às análises e decisões realizadas junto com o cliente.',
   },
   {
-    q: 'Quais marketplaces podem ser conectados?',
+    q: 'Como os mais de 20 anos de experiência são aplicados na minha empresa?',
+    a: 'Esse conhecimento é utilizado para interpretar o cenário, reconhecer padrões, identificar gargalos e ajudar a empresa a definir onde concentrar esforços.',
+  },
+  {
+    q: 'A MKTOnline garante aumento de faturamento?',
+    a: 'Nenhuma empresa pode garantir crescimento. A MKTOnline ajuda sua operação a identificar oportunidades, corrigir gargalos e tomar decisões com mais informação e experiência.',
+  },
+  {
+    q: 'O acompanhamento termina depois da implantação?',
+    a: 'Não. A implantação é apenas o começo. A proposta inclui acompanhamento da evolução da operação e revisão das prioridades ao longo do relacionamento.',
+  },
+  {
+    q: 'Preciso abandonar todos os controles atuais?',
+    a: 'Não necessariamente. Primeiro entendemos a estrutura atual e organizamos a transição de acordo com as necessidades e conexões disponíveis.',
+  },
+  {
+    q: 'Quais marketplaces podem ser acompanhados?',
     a: 'Os marketplaces prioritários são Mercado Livre, Amazon, Shopee e Leroy Merlin, com estrutura projetada para evoluir para novos canais.',
-  },
-  {
-    q: 'Vou precisar continuar alimentando planilhas?',
-    a: 'A proposta é reduzir a dependência de planilhas e atualizações manuais usando conexões diretas com os marketplaces disponíveis.',
-  },
-  {
-    q: 'Como os marketplaces são conectados?',
-    a: 'A conexão utiliza as integrações oficiais disponíveis para cada marketplace. Durante a implantação, a equipe da Vintec orienta as etapas necessárias.',
-  },
-  {
-    q: 'A equipe da Vintec ajuda na implantação?',
-    a: 'Sim. A equipe acompanha a configuração, a conexão dos marketplaces e a entrada da sua equipe na nova rotina.',
-  },
-  {
-    q: 'Como funciona a conversa inicial?',
-    a: 'É uma conversa sem compromisso para entender como sua equipe vende e acompanha os marketplaces hoje, antes de qualquer proposta.',
   },
 ]
 
@@ -258,7 +267,7 @@ export const contact = {
    LEGADO — mantido só para as seções antigas (ProblemSection,
    PlatformShowcase, DiagnosticSection, IntegrationsSecurity) continuarem
    compilando. Elas saíram da renderização de `SitePage` na reformulação
-   Vintec (screenshot de dashboard não faz mais parte da home pública), mas
+   MKTOnline (screenshot de dashboard não faz mais parte da home pública), mas
    o código foi preservado no repo em vez de apagado. Se algum dia essas
    seções voltarem a ser usadas, revisar o conteúdo abaixo antes — os status
    de integração aqui não foram atualizados desde a reformulação.
@@ -320,7 +329,7 @@ export const platformTabs: PlatformTab[] = [
 ]
 
 export function specialistHref(message?: string): string {
-  const wa = whatsappContactUrl(message ?? 'Olá! Gostaria de falar com um especialista da Vintec.')
+  const wa = whatsappContactUrl(message ?? 'Olá! Gostaria de falar com um especialista da MKTOnline.')
   if (wa) return wa
   if (contact.email) return `mailto:${contact.email}`
   return '#demonstracao'
