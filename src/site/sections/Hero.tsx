@@ -20,16 +20,16 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    eyebrow: 'CONSULTORIA COM EXPERIÊNCIA',
-    title: <>Decisões à altura do negócio que você construiu.</>,
-    sub: 'A Vintec une experiência em operações de e‑commerce, análise e visão consultiva para entender o momento da sua empresa e apoiar decisões mais claras, rentáveis e sustentáveis.',
-    ctaPrimary: ctaLabels.principal,
-    ctaSecondary: 'Conhecer nossos serviços',
-    ctaSecondaryHref: '#servicos',
-    microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
+    eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
+    title: <>Decisões à altura do negócio que você está construindo.</>,
+    sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
+    ctaPrimary: 'Quero organizar minha operação',
+    ctaSecondary: 'Ver como funciona',
+    ctaSecondaryHref: '#como-funciona',
+    microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica sobre minha operação.',
+    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
   },
   {
     eyebrow: 'ANÁLISE E ACOMPANHAMENTO',
