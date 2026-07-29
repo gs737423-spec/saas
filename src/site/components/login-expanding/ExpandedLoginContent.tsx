@@ -44,6 +44,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               disabled={b.inCooldown}
               inputRef={emailRef}
               required
+              invalid={!!b.error && !b.inCooldown}
             />
 
             <LoginField
@@ -61,6 +62,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               onKeyUp={b.onPasswordKey}
               onKeyDown={b.onPasswordKey}
               describedById={b.error ? 'login-error' : undefined}
+              invalid={!!b.error && !b.inCooldown}
               addon={
                 b.capsLock ? (
                   <span className="login-capslock">

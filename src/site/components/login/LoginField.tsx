@@ -21,6 +21,8 @@ interface Props {
   revealable?: boolean
   /** Conteúdo extra ao lado do rótulo (ex.: aviso de Caps Lock). */
   addon?: ReactNode
+  /** Marca o campo como inválido (borda/ícone vermelhos) após erro de login. */
+  invalid?: boolean
 }
 
 /**
@@ -47,6 +49,7 @@ export default function LoginField({
   onKeyDown,
   revealable,
   addon,
+  invalid,
 }: Props) {
   const [reveal, setReveal] = useState(false)
   const effectiveType = revealable ? (reveal ? 'text' : 'password') : type
@@ -69,6 +72,7 @@ export default function LoginField({
           inputMode={inputMode}
           disabled={disabled}
           aria-describedby={describedById}
+          aria-invalid={invalid || undefined}
           className={`login-input${revealable ? ' login-input--password' : ''}`}
         />
         <label htmlFor={id} className="login-field__label">

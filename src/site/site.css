@@ -2564,11 +2564,31 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 .login-input::placeholder { color: var(--login-muted); }
-.login-input:focus { border-color: var(--login-blue); background: rgba(49, 104, 255, 0.08); box-shadow: 0 0 0 4px rgba(49, 104, 255, 0.18); }
+.login-input:focus { border-color: var(--login-blue); background: rgba(49, 104, 255, 0.1); box-shadow: 0 0 0 4px rgba(49, 104, 255, 0.22), 0 0 18px -4px rgba(49, 104, 255, 0.5); }
 .login-input:disabled { opacity: 0.6; }
 .login-input--password { padding-right: 44px; }
 .login-field__toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6B84AD; cursor: pointer; background: none; border: 0; padding: 4px; }
 .login-field__toggle:hover { color: var(--login-text-soft); }
+
+/* Ícone acompanha o campo: azul no foco E quando já preenchido (não só focado). */
+.login-input:focus ~ .login-field__icon,
+.login-input:not(:placeholder-shown) ~ .login-field__icon {
+  color: var(--login-blue-light);
+  transform: translateY(-50%) scale(1.08);
+}
+.login-field__icon { transition: color 160ms ease, transform 160ms ease; }
+
+/* Erro de credenciais — borda/ícone vermelhos nos dois campos, junto do
+   shake do formulário (.lx-form[data-error]) e do alerta abaixo. */
+.login-input[aria-invalid="true"] {
+  border-color: #FF5F7A;
+  background: rgba(255, 95, 122, 0.06);
+}
+.login-input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 4px rgba(255, 95, 122, 0.22), 0 0 18px -4px rgba(255, 95, 122, 0.5);
+}
+.login-input[aria-invalid="true"] ~ .login-field__icon { color: #FF5F7A; }
+.login-input[aria-invalid="true"] ~ .login-field__label { color: #FF9AAA; }
 
 /* Label flutuante — LoginField.tsx usa placeholder=" " + :not(:placeholder-shown)
    pra "subir" o rótulo. Faltava esta regra (main não tinha esse padrão de campo). */
@@ -3140,9 +3160,9 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 
 .lx-form { display: flex; flex-direction: column; gap: 14px; }
 @media (prefers-reduced-motion: no-preference) {
-  .lx-form[data-error="true"] { animation: lx-shake 340ms var(--lx-ease-std) 1; }
+  .lx-form[data-error="true"] { animation: lx-shake 460ms var(--lx-ease-std) 1; }
 }
-@keyframes lx-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@keyframes lx-shake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-9px); } 30% { transform: translateX(8px); } 45% { transform: translateX(-6px); } 60% { transform: translateX(5px); } 75% { transform: translateX(-3px); } 90% { transform: translateX(2px); } }
 
 /* =========================================================================
    Responsividade
