@@ -21,8 +21,7 @@ export default function ExpandingLoginCard({ bridge }: Props) {
       <LoginAtmosphereBackground />
       <div className="lx-card lx-card--static" data-state="expanded">
         <div className="lx-card__inner">
-          <p className="lx-brand">MKTOnline</p>
-          <h1 className="lx-headline">Clareza para conduzir sua operação.</h1>
+          <p className="lx-brand lx-brand--centered">MKTOnline</p>
 
           <ExpandedLoginContent bridge={bridge} emailRef={emailRef} revealing />
         </div>

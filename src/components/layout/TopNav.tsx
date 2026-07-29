@@ -6,8 +6,6 @@ import {
   Package,
   Boxes,
   Wallet,
-  Megaphone,
-  Star,
   Link2,
   FileBarChart2,
   Settings,
@@ -29,8 +27,6 @@ const navItems: Item[] = [
   { icon: Package, label: 'Produtos', to: '/app/produtos' },
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
 ]

@@ -2780,11 +2780,11 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   background: radial-gradient(circle, rgba(99, 179, 255, 0.12) 0%, rgba(47, 107, 255, 0.05) 45%, transparent 72%);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .lx-atmo-depth-move { animation: lx-atmo-depth-drift 34s ease-in-out infinite; }
+  .lx-atmo-depth-move { animation: lx-atmo-depth-drift 18s ease-in-out infinite; }
 }
 @keyframes lx-atmo-depth-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.9; }
-  50% { transform: translate(-56px, 40px) scale(1.08); opacity: 1; }
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
+  50% { transform: translate(-90px, 64px) scale(1.18); opacity: 1; }
 }
 
 .lx-atmo-lines { position: absolute; width: 46%; height: 46%; opacity: 0.8; }
@@ -2801,16 +2801,16 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .lx-atmo-glow--tl {
   top: -6%;
   left: -4%;
-  width: 240px;
-  height: 240px;
-  background: radial-gradient(circle, rgba(99, 179, 255, 0.16) 0%, transparent 70%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(99, 179, 255, 0.22) 0%, transparent 70%);
 }
 .lx-atmo-glow--br {
   bottom: -8%;
   right: -6%;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(43, 214, 160, 0.1) 0%, rgba(99, 179, 255, 0.08) 45%, transparent 72%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(43, 214, 160, 0.15) 0%, rgba(99, 179, 255, 0.12) 45%, transparent 72%);
 }
 
 /* Vidro escuro translúcido em diagonal — canto superior direito. Só uma
@@ -2837,26 +2837,33 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .lx-atmo-glow--tl { animation: lx-atmo-drift-a 22s ease-in-out infinite; }
-  .lx-atmo-glow--br { animation: lx-atmo-drift-b 26s ease-in-out infinite; }
-  .lx-atmo-panel { animation: lx-atmo-panel-shift 30s ease-in-out infinite; }
-  .lx-atmo-dust i { animation: lx-atmo-twinkle 4s ease-in-out infinite; }
+  .lx-atmo-glow--tl { animation: lx-atmo-drift-a 12s ease-in-out infinite; }
+  .lx-atmo-glow--br { animation: lx-atmo-drift-b 15s ease-in-out infinite; }
+  .lx-atmo-panel { animation: lx-atmo-panel-shift 16s ease-in-out infinite; }
+  .lx-atmo-dust i { animation: lx-atmo-twinkle 3s ease-in-out infinite; }
+  .lx-atmo-lines--tl { animation: lx-atmo-lines-sway 13s ease-in-out infinite; }
+  .lx-atmo-lines--bl { animation: lx-atmo-lines-sway 17s ease-in-out infinite reverse; }
+  .lx-atmo-lines--br { animation: lx-atmo-lines-sway 15s ease-in-out infinite; }
 }
 @keyframes lx-atmo-drift-a {
   0%, 100% { transform: translate(0, 0); opacity: 1; }
-  50% { transform: translate(14px, 10px); opacity: 0.75; }
+  50% { transform: translate(28px, 20px); opacity: 0.6; }
 }
 @keyframes lx-atmo-drift-b {
   0%, 100% { transform: translate(0, 0); opacity: 1; }
-  50% { transform: translate(-12px, -8px); opacity: 0.7; }
+  50% { transform: translate(-26px, -18px); opacity: 0.55; }
 }
 @keyframes lx-atmo-panel-shift {
   0%, 100% { transform: rotate(-14deg) translateY(0); }
-  50% { transform: rotate(-12deg) translateY(8px); }
+  50% { transform: rotate(-10deg) translateY(16px); }
 }
 @keyframes lx-atmo-twinkle {
   0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.75; }
+}
+@keyframes lx-atmo-lines-sway {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(6px, -5px) rotate(0.6deg); }
 }
 
 /* Tablet — reduz poeira, afasta brilhos do formulário central. */
@@ -2938,11 +2945,12 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   width: min(340px, 100%);
   height: auto;
   /* Mesma linguagem dos cards da plataforma (/app): gradiente overview-hero-card
-     + borda azul translúcida + vidro fosco (backdrop-filter), não a superfície
-     opaca original do login. */
+     + borda azul translúcida + vidro fosco (backdrop-filter). Alpha alto (0.94)
+     pra manter o azul vívido — em 0.72 ficava lavado sobre o fundo escuro. */
   background:
-    linear-gradient(135deg, rgba(11, 27, 48, 0.72) 0%, rgba(16, 41, 74, 0.72) 58%, rgba(23, 58, 102, 0.72) 100%);
-  border-color: rgba(99, 179, 255, 0.28);
+    radial-gradient(120% 90% at 50% 0%, rgba(49, 104, 255, 0.22), transparent 60%),
+    linear-gradient(135deg, rgba(15, 35, 62, 0.94) 0%, rgba(20, 50, 87, 0.94) 55%, rgba(28, 68, 116, 0.94) 100%);
+  border-color: rgba(99, 179, 255, 0.32);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
@@ -2956,6 +2964,25 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 }
 .lx-card--static .lx-brand { font-size: 14px; margin-bottom: 2px; }
 .lx-card--static .lx-headline { font-size: 1.1rem; margin-top: 4px; }
+
+/* Entrada suave (uma vez, o card já nasce "expanded" então não há troca de
+   estado pra disparar transição) + respiro contínuo no brilho da borda —
+   sensação de superfície viva, sem distrair do formulário. */
+@media (prefers-reduced-motion: no-preference) {
+  .lx-card--static {
+    animation:
+      lx-card-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both,
+      lx-card-glow 6s ease-in-out 620ms infinite;
+  }
+}
+@keyframes lx-card-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lx-card-glow {
+  0%, 100% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 60px -12px rgba(76, 130, 247, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+  50% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 76px -10px rgba(76, 130, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+}
 
 /* linha de luz na borda superior ao abrir */
 .lx-card::before {
@@ -3012,6 +3039,7 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 
 /* Marca + headline (compartilhadas fechado/aberto) */
 .lx-brand { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--lx-title); }
+.lx-brand--centered { font-size: 19px; margin-bottom: 18px; }
 .lx-headline {
   margin-top: 8px;
   font-weight: 800;

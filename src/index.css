@@ -491,7 +491,36 @@ body {
   }
 
   /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
-     acima, que já cobre o sublinhado com transição de entrada/saída. */
+     acima, que já cobre o sublinhado com transição de entrada/saída. Aqui só
+     acrescenta um respiro de brilho contínuo (barra estava "sem vida"). */
+  .topnav-item-active::after {
+    animation: topnav-underline-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes topnav-underline-pulse {
+    0%, 100% { box-shadow: 0 0 10px 0 rgba(47, 107, 255, 0.8); }
+    50% { box-shadow: 0 0 16px 2px rgba(99, 179, 255, 0.95); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .topnav-item-active::after { animation: none; }
+  }
+
+  /* Ícone reage no hover — leve "vida" no item, sem mexer no layout. */
+  .rail-item:hover :is(svg) { transform: scale(1.1); }
+
+  /* Entrada em stagger dos itens de navegação ao montar a barra. */
+  .topnav-surface nav .rail-item {
+    animation: motion-block-in var(--motion-duration-normal, 200ms) var(--motion-ease-enter, ease-out) both;
+  }
+  .topnav-surface nav .rail-item:nth-child(1) { animation-delay: 0ms; }
+  .topnav-surface nav .rail-item:nth-child(2) { animation-delay: 30ms; }
+  .topnav-surface nav .rail-item:nth-child(3) { animation-delay: 60ms; }
+  .topnav-surface nav .rail-item:nth-child(4) { animation-delay: 90ms; }
+  .topnav-surface nav .rail-item:nth-child(5) { animation-delay: 120ms; }
+  .topnav-surface nav .rail-item:nth-child(6) { animation-delay: 150ms; }
+  .topnav-surface nav .rail-item:nth-child(7) { animation-delay: 180ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .topnav-surface nav .rail-item { animation: none; }
+  }
 
   /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
   .hide-scrollbar {

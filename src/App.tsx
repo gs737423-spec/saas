@@ -48,8 +48,6 @@ export default function App() {
               <Route path="estoque" element={<Estoque />} />
               <Route path="importacoes" element={<Importacoes />} />
               <Route path="financeiro" element={<Financeiro />} />
-              <Route path="marketing" element={<Placeholder title="Marketing" description="Desempenho de campanhas, ROI de anúncios patrocinados e recomendações de investimento por produto e canal." />} />
-              <Route path="avaliacoes" element={<Placeholder title="Avaliações" description="Monitoramento de reviews e reputação em todos os marketplaces, com alertas de avaliações negativas em tempo real." />} />
               <Route path="relatorios" element={<Placeholder title="Relatórios" description="Relatórios customizáveis de vendas, produtos e performance, com exportação e agendamento automático." />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
