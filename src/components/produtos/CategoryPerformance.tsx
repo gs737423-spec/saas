@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 import { categoryPerformance } from '@/data/mockData'
 
 const maxRevenue = Math.max(...categoryPerformance.map((c) => c.revenue))
-const palette = ['#2F6BFF', '#5AB7FF', '#2BD6A0', '#194B9B', '#FFC857', '#FF5F7A']
+const palette = ['#3A5FDB', '#5AB7FF', '#2BD6A0', '#194B9B', '#FFC857', '#FF5F7A']
 
 export default function CategoryPerformance() {
   return (

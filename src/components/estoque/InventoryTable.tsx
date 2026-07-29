@@ -15,7 +15,7 @@ interface Props {
 
 const abcStyle: Record<'A' | 'B' | 'C', { color: string; bg: string }> = {
   A: { color: '#2BD6A0', bg: 'rgba(43,214,160,0.14)' },
-  B: { color: '#2F6BFF', bg: 'rgba(47,107,255,0.14)' },
+  B: { color: '#3A5FDB', bg: 'rgba(47,107,255,0.14)' },
   C: { color: '#6F829B', bg: 'rgba(111,130,155,0.16)' },
 }
 

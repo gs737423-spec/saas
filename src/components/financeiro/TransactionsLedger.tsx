@@ -76,7 +76,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                 className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
-                    ? { background: '#2F6BFF18', color: '#2F6BFF' }
+                    ? { background: '#3A5FDB18', color: '#3A5FDB' }
                     : { background: 'transparent', color: 'var(--text-muted)' }
                 }
               >

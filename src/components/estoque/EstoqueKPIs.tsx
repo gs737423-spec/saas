@@ -8,10 +8,10 @@ const stalled = stockItems.filter((i) => i.status === 'stalled').length
 const rupture = stockItems.filter((i) => i.coverageDays <= 7).length
 
 const cards = [
-  { label: 'Itens em Estoque', value: totalStock.toLocaleString('pt-BR'), sub: `${stockItems.length} SKUs ativos`, icon: Boxes, primary: '#2F6BFF', secondary: '#5AB7FF' },
+  { label: 'Itens em Estoque', value: totalStock.toLocaleString('pt-BR'), sub: `${stockItems.length} SKUs ativos`, icon: Boxes, primary: '#3A5FDB', secondary: '#5AB7FF' },
   { label: 'Estoque Crítico', value: String(critical), sub: 'produtos em estado crítico', icon: AlertTriangle, primary: '#FF5F7A', secondary: '#FF5F7A' },
   { label: 'Cobertura Média', value: `${avgCoverage} dias`, sub: 'estimativa de duração', icon: Clock, primary: '#FFC857', secondary: '#FFC857' },
-  { label: 'Produtos Parados', value: String(stalled), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', secondary: '#2F6BFF' },
+  { label: 'Produtos Parados', value: String(stalled), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', secondary: '#3A5FDB' },
   { label: 'Ruptura Estimada', value: String(rupture), sub: 'ruptura em ≤ 7 dias', icon: PackageX, primary: '#FF5F7A', secondary: '#FF5F7A' },
 ]
 

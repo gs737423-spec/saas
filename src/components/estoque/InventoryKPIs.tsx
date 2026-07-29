@@ -39,7 +39,7 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       sub: 'estoque × custo unitário',
       icon: Wallet,
       primary: '#5AB7FF',
-      secondary: '#2F6BFF',
+      secondary: '#3A5FDB',
     },
     {
       key: 'total',
@@ -48,7 +48,7 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => String(Math.round(v)),
       sub: 'produtos ativos · clique para limpar filtros',
       icon: Boxes,
-      primary: '#2F6BFF',
+      primary: '#3A5FDB',
       secondary: '#5AB7FF',
       apply: () => ({ ...defaultInventoryFilters, abc: new Set() }),
       isActive: (f) => f.abc.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch,

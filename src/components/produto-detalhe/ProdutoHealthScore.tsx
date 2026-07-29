@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function ProdutoHealthScore({ health, stock }: Props) {
-  const color = statusColor[health.status] ?? '#2F6BFF'
+  const color = statusColor[health.status] ?? '#3A5FDB'
   const ruptureRisk = stock ? (stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo') : null
   const riskColor = ruptureRisk === 'Alto' ? '#FF5F7A' : ruptureRisk === 'Médio' ? '#FFC857' : '#2BD6A0'
 

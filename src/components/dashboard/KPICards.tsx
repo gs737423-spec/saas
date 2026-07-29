@@ -31,7 +31,7 @@ const iconByKey: Record<string, typeof DollarSign> = {
 }
 
 const toneColor: Record<KpiTone, string> = {
-  blue: '#2F6BFF',
+  blue: '#3A5FDB',
   emerald: '#2BD6A0',
   cyan: '#5AB7FF',
   amber: '#FFC857',

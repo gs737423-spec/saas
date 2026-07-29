@@ -46,7 +46,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byOrders[0].marketplace,
       sub: `ticket R$ ${brl2(sorted.byOrders[0].avgTicket)}`,
       icon: ShoppingCart,
-      tone: '#2F6BFF',
+      tone: '#3A5FDB',
     },
     {
       label: 'Maior Crescimento',

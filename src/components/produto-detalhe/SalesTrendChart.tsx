@@ -109,8 +109,8 @@ export default function SalesTrendChart({ sku }: { sku: string }) {
                   className="w-full rounded-t-md transition-all duration-300"
                   style={{
                     height: `${(d.units / maxUnits) * 100}%`,
-                    background: hoverIdx === i ? 'linear-gradient(180deg, #63B3FF, #2F6BFF60)' : 'linear-gradient(180deg, #2F6BFF, #2F6BFF30)',
-                    boxShadow: hoverIdx === i ? '0 0 16px -2px #2F6BFFcc' : '0 0 10px -4px #2F6BFF99',
+                    background: hoverIdx === i ? 'linear-gradient(180deg, #5FC2E8, #3A5FDB60)' : 'linear-gradient(180deg, #3A5FDB, #3A5FDB30)',
+                    boxShadow: hoverIdx === i ? '0 0 16px -2px #3A5FDBcc' : '0 0 10px -4px #3A5FDB99',
                   }}
                 />
               </div>

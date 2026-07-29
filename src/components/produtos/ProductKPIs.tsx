@@ -23,7 +23,7 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
   const avgTicket = products.reduce((s, p) => s + p.revenue, 0) / products.reduce((s, p) => s + p.units, 0)
 
   const cards: Card[] = [
-    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#2F6BFF' },
+    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3A5FDB' },
     { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#2BD6A0' },
     { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5F7A' },
     { label: 'Margem Média', value: avgMargin, format: (v) => `${Math.round(v)}%`, sub: 'todos os produtos', icon: Percent, primary: '#194B9B' },
