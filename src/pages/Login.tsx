@@ -140,11 +140,6 @@ export default function Login() {
     accessHelpUrl,
   }
 
-  // Só permite recolher o card quando não há nada em risco de perda: sem envio
-  // em curso, sem erro ativo, campos vazios e na visão de login.
-  const canClose =
-    view === 'login' && !loading && !inCooldown && !error && email === '' && password === ''
-
   return (
     <div className="lx-page">
       <div className="lx-topbar">
@@ -158,7 +153,7 @@ export default function Login() {
         )}
       </div>
 
-      <ExpandingLoginCard bridge={bridge} canClose={canClose} />
+      <ExpandingLoginCard bridge={bridge} />
     </div>
   )
 }

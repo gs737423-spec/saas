@@ -2570,6 +2570,25 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .login-field__toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6B84AD; cursor: pointer; background: none; border: 0; padding: 4px; }
 .login-field__toggle:hover { color: var(--login-text-soft); }
 
+/* Label flutuante — LoginField.tsx usa placeholder=" " + :not(:placeholder-shown)
+   pra "subir" o rótulo. Faltava esta regra (main não tinha esse padrão de campo). */
+.login-field__label {
+  position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+  transform-origin: left center; font-size: 14px; font-weight: 500; color: var(--login-muted);
+  pointer-events: none;
+  transition: transform 160ms ease, color 160ms ease;
+}
+.login-input:focus ~ .login-field__label,
+.login-input:not(:placeholder-shown) ~ .login-field__label {
+  transform: translateY(calc(-50% - 15px)) scale(0.8);
+  color: var(--login-blue-light);
+}
+.login-input:-webkit-autofill ~ .login-field__label {
+  transform: translateY(calc(-50% - 15px)) scale(0.8);
+  color: var(--login-blue-light);
+}
+.login-input::placeholder { color: transparent; }
+
 .login-capslock { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--login-amber); }
 
 .login-links-row { display: flex; justify-content: flex-end; margin-top: -4px; }
@@ -2655,4 +2674,489 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 @media (max-width: 767px) {
   .login-card { padding: 22px 20px; border-radius: 18px; }
   .login-layout { padding-inline: 20px; }
+}
+
+/* ==========================================================================
+   Login (/login) — "MKTOnline Expanding Access". Card central único que abre do
+   estado compacto (marca + headline + botão) para o formulário completo, na
+   mesma superfície. Paleta local (não acopla aos tokens do site). Classes
+   .lx-* isoladas; os campos reutilizam .login-* (LoginField / LoginCommercial).
+   ========================================================================== */
+.lx-page {
+  /* paleta */
+  --lx-bg: #06162B;
+  --lx-bg-2: #0A203C;
+  --lx-blue: #3168FF;
+  --lx-blue-2: #4A82FF;
+  --lx-blue-light: #62B7FF;
+  --lx-amber: #FFC15C;
+  --lx-title: #F6F8FC;
+  --lx-text-soft: #A9B8CC;
+  --lx-muted: #5C6E8C;
+  --lx-border: rgba(120, 170, 240, 0.16);
+
+  /* aliases p/ os campos reaproveitados (.login-*) */
+  --login-blue: var(--lx-blue);
+  --login-blue-light: var(--lx-blue-light);
+  --login-amber: var(--lx-amber);
+  --login-title: var(--lx-title);
+  --login-text-soft: var(--lx-text-soft);
+  --login-muted: var(--lx-muted);
+  --login-border: var(--lx-border);
+
+  /* dimensões dos estados (desktop) */
+  --lx-w-collapsed: 352px;
+  --lx-h-collapsed: 268px;
+  --lx-r-collapsed: 30px;
+  --lx-w-expanded: 576px;
+  --lx-h-expanded: 688px;
+  --lx-r-expanded: 34px;
+
+  /* animação */
+  --lx-dur-open: 580ms;
+  --lx-dur-close: 540ms;
+  --lx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lx-ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* estado ativo (default = fechado) */
+  --lx-w: var(--lx-w-collapsed);
+  --lx-h: var(--lx-h-collapsed);
+  --lx-r: var(--lx-r-collapsed);
+  --lx-dur: var(--lx-dur-open);
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  color: var(--lx-title);
+  background:
+    radial-gradient(52% 42% at 50% 42%, rgba(49, 104, 255, 0.16), transparent 72%),
+    linear-gradient(180deg, var(--lx-bg) 0%, var(--lx-bg-2) 100%);
+}
+/* vinheta discreta nas bordas */
+.lx-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 180px 40px rgba(2, 8, 22, 0.55);
+}
+
+/* ==========================================================================
+   LoginAtmosphereBackground — fundo abstrato atrás do card. Isolado em
+   z-index:0 (topbar/stage ficam em z-index:1, ver acima). Regra fixa: centro
+   sempre limpo — todo elemento vive dentro de um quadrante de canto
+   (25% x 25% da tela), nunca centralizado. Cantos assimétricos de propósito.
+   ========================================================================== */
+.lx-atmo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lx-atmo-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 55% at 50% 48%, rgba(3, 10, 22, 0.35) 0%, transparent 70%);
+}
+/* Profundidade — mesma dupla de glows do fundo ambiente da plataforma
+   (.app-bg-subtle em index.css), reescalada pro login. Sutil, atrás de tudo. */
+.lx-atmo-depth {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1100px 680px at 12% -10%, rgba(47, 107, 255, 0.14), transparent 62%),
+    radial-gradient(900px 620px at 100% 8%, rgba(99, 179, 255, 0.08), transparent 60%);
+}
+.lx-atmo-depth-move {
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  bottom: -18%;
+  right: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 179, 255, 0.12) 0%, rgba(47, 107, 255, 0.05) 45%, transparent 72%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lx-atmo-depth-move { animation: lx-atmo-depth-drift 34s ease-in-out infinite; }
+}
+@keyframes lx-atmo-depth-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+  50% { transform: translate(-56px, 40px) scale(1.08); opacity: 1; }
+}
+
+.lx-atmo-lines { position: absolute; width: 46%; height: 46%; opacity: 0.8; }
+.lx-atmo-lines--tl { top: -4%; left: -6%; }
+.lx-atmo-lines--bl { bottom: -8%; left: -8%; width: 52%; height: 40%; }
+.lx-atmo-lines--br { bottom: -10%; right: -8%; width: 48%; height: 42%; }
+
+.lx-atmo-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(38px);
+  pointer-events: none;
+}
+.lx-atmo-glow--tl {
+  top: -6%;
+  left: -4%;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(99, 179, 255, 0.16) 0%, transparent 70%);
+}
+.lx-atmo-glow--br {
+  bottom: -8%;
+  right: -6%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(43, 214, 160, 0.1) 0%, rgba(99, 179, 255, 0.08) 45%, transparent 72%);
+}
+
+/* Vidro escuro translúcido em diagonal — canto superior direito. Só uma
+   camada abstrata em profundidade, não lê como card/painel. */
+.lx-atmo-panel {
+  position: absolute;
+  top: -12%;
+  right: -14%;
+  width: 42%;
+  height: 60%;
+  background: linear-gradient(155deg, rgba(20, 50, 87, 0.4) 0%, rgba(10, 32, 60, 0.12) 55%, transparent 85%);
+  border-left: 1px solid rgba(99, 179, 255, 0.1);
+  transform: rotate(-14deg);
+  filter: blur(1px);
+}
+
+.lx-atmo-dust { position: absolute; inset: 0; }
+.lx-atmo-dust i {
+  position: absolute;
+  border-radius: 50%;
+  background: #9FE1F5;
+  box-shadow: 0 0 5px 1px rgba(150, 220, 255, 0.55);
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lx-atmo-glow--tl { animation: lx-atmo-drift-a 22s ease-in-out infinite; }
+  .lx-atmo-glow--br { animation: lx-atmo-drift-b 26s ease-in-out infinite; }
+  .lx-atmo-panel { animation: lx-atmo-panel-shift 30s ease-in-out infinite; }
+  .lx-atmo-dust i { animation: lx-atmo-twinkle 4s ease-in-out infinite; }
+}
+@keyframes lx-atmo-drift-a {
+  0%, 100% { transform: translate(0, 0); opacity: 1; }
+  50% { transform: translate(14px, 10px); opacity: 0.75; }
+}
+@keyframes lx-atmo-drift-b {
+  0%, 100% { transform: translate(0, 0); opacity: 1; }
+  50% { transform: translate(-12px, -8px); opacity: 0.7; }
+}
+@keyframes lx-atmo-panel-shift {
+  0%, 100% { transform: rotate(-14deg) translateY(0); }
+  50% { transform: rotate(-12deg) translateY(8px); }
+}
+@keyframes lx-atmo-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+
+/* Tablet — reduz poeira, afasta brilhos do formulário central. */
+@media (max-width: 900px) {
+  .lx-atmo-dust i:nth-child(n+4) { display: none; }
+  .lx-atmo-glow--tl, .lx-atmo-glow--br { width: 180px; height: 180px; filter: blur(30px); }
+}
+/* Mobile — só 2-3 pontos de luz, sem sobrecarregar, sem overflow horizontal. */
+@media (max-width: 640px) {
+  .lx-atmo-lines--bl, .lx-atmo-lines--br { opacity: 0.4; }
+  .lx-atmo-panel { width: 60%; opacity: 0.6; }
+  .lx-atmo-dust i:nth-child(n+3) { display: none; }
+}
+
+/* Barra superior — alinhada à largura do card aberto */
+.lx-topbar {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--lx-w-expanded);
+  margin: 0 auto;
+  padding: 22px clamp(16px, 4vw, 24px) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lx-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--lx-text-soft); transition: color 200ms var(--lx-ease); }
+.lx-back:hover { color: var(--lx-title); }
+.lx-back:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 3px; border-radius: 6px; }
+.lx-help { font-size: 13px; font-weight: 600; color: var(--lx-blue-light); }
+.lx-help:hover { text-decoration: underline; }
+
+/* Palco: centra o card. Grid de item único → crescer o card recentraliza
+   sozinho, sem reflow de vizinhos. */
+.lx-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px clamp(12px, 4vw, 24px) 40px;
+}
+
+/* Card — superfície única. Abre por width/height/border-radius. */
+.lx-card {
+  position: relative;
+  width: var(--lx-w);
+  height: var(--lx-h);
+  border-radius: var(--lx-r);
+  overflow: hidden;
+  border: 1px solid var(--lx-border);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(49, 104, 255, 0.16), transparent 60%),
+    linear-gradient(168deg, #143257 0%, #0c2140 100%);
+  box-shadow:
+    0 30px 70px -30px rgba(2, 6, 20, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    width var(--lx-dur) var(--lx-ease),
+    height var(--lx-dur) var(--lx-ease),
+    border-radius var(--lx-dur) var(--lx-ease),
+    box-shadow var(--lx-dur) var(--lx-ease);
+}
+.lx-card[data-state="expanding"],
+.lx-card[data-state="expanded"] {
+  --lx-w: var(--lx-w-expanded);
+  --lx-h: var(--lx-h-expanded);
+  --lx-r: var(--lx-r-expanded);
+  box-shadow:
+    0 40px 90px -34px rgba(2, 6, 20, 0.9),
+    0 0 44px -8px rgba(49, 104, 255, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.lx-card[data-state="closing"] { --lx-dur: var(--lx-dur-close); }
+
+/* Card estático — abolido o collapsed/expanding, formulário sempre visível.
+   Altura por conteúdo (não o --lx-h-expanded fixo, que sobrava vazio). */
+.lx-card--static {
+  width: min(340px, 100%);
+  height: auto;
+  /* Mesma linguagem dos cards da plataforma (/app): gradiente overview-hero-card
+     + borda azul translúcida + vidro fosco (backdrop-filter), não a superfície
+     opaca original do login. */
+  background:
+    linear-gradient(135deg, rgba(11, 27, 48, 0.72) 0%, rgba(16, 41, 74, 0.72) 58%, rgba(23, 58, 102, 0.72) 100%);
+  border-color: rgba(99, 179, 255, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.55),
+    0 0 60px -12px rgba(76, 130, 247, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.lx-card--static .lx-card__inner {
+  height: auto;
+  padding: 22px 22px 24px;
+}
+.lx-card--static .lx-brand { font-size: 14px; margin-bottom: 2px; }
+.lx-card--static .lx-headline { font-size: 1.1rem; margin-top: 4px; }
+
+/* linha de luz na borda superior ao abrir */
+.lx-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 12%; right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(122, 178, 255, 0.7), transparent);
+  opacity: 0;
+  transition: opacity 180ms var(--lx-ease-std);
+}
+.lx-card[data-state="expanding"]::before,
+.lx-card[data-state="expanded"]::before { opacity: 1; }
+
+/* Inner — coluna. Fechado: centralizado. Aberto: do topo. */
+.lx-card__inner {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(24px, 4vw, 36px) clamp(22px, 4vw, 40px);
+  justify-content: center;
+}
+.lx-card[data-state="expanding"] .lx-card__inner,
+.lx-card[data-state="expanded"] .lx-card__inner { justify-content: flex-start; }
+
+/* Estado fechado: conteúdo compacto para caber na altura curta sem clipar. */
+.lx-card[data-state="collapsed"] .lx-card__inner,
+.lx-card[data-state="closing"] .lx-card__inner { padding: 24px 24px 22px; }
+.lx-card[data-state="collapsed"] .lx-sign,
+.lx-card[data-state="closing"] .lx-sign { width: 46px; height: 46px; margin-bottom: 8px; }
+.lx-card[data-state="collapsed"] .lx-brand,
+.lx-card[data-state="closing"] .lx-brand { font-size: 18px; }
+.lx-card[data-state="collapsed"] .lx-headline,
+.lx-card[data-state="closing"] .lx-headline {
+  font-size: 1.16rem; line-height: 1.18; max-width: 20ch;
+}
+.lx-card[data-state="collapsed"] .lx-collapsed,
+.lx-card[data-state="closing"] .lx-collapsed { margin-top: 16px; }
+
+/* Assinatura MKTOnline */
+.lx-sign { width: 56px; height: 56px; margin-bottom: 14px; flex-shrink: 0; }
+.lx-sign__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lx-sign__spark { fill: #cfe4ff; }
+@media (prefers-reduced-motion: no-preference) {
+  .lx-sign { animation: lx-breathe 4.6s var(--lx-ease-std) infinite; }
+  .lx-sign[data-state="expanding"] { animation: lx-pulse 620ms var(--lx-ease) 1; }
+  .lx-card[data-hidden="true"] .lx-sign { animation-play-state: paused; }
+}
+@keyframes lx-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes lx-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.13); } 100% { transform: scale(1); } }
+
+/* Marca + headline (compartilhadas fechado/aberto) */
+.lx-brand { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--lx-title); }
+.lx-headline {
+  margin-top: 8px;
+  font-weight: 800;
+  font-size: clamp(1.35rem, 2.1vw, 1.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+  max-width: 16ch;
+}
+
+/* CTA do estado fechado */
+.lx-collapsed { margin-top: 22px; width: 100%; display: flex; justify-content: center; transition: opacity 160ms var(--lx-ease-std); }
+.lx-card[data-state="expanding"] .lx-collapsed,
+.lx-card[data-state="expanded"] .lx-collapsed {
+  position: absolute; left: 0; right: 0; bottom: 40px;
+  opacity: 0; pointer-events: none;
+}
+.lx-open {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 200px; height: 52px; padding: 0 26px;
+  border: 0; border-radius: 14px;
+  font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(180deg, var(--lx-blue-2), var(--lx-blue));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 12px 26px -12px rgba(49, 104, 255, 0.6);
+  cursor: pointer;
+  transition: transform 180ms var(--lx-ease), box-shadow 200ms var(--lx-ease);
+}
+.lx-open:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.26) inset, 0 16px 30px -12px rgba(49, 104, 255, 0.72); }
+.lx-open:active { transform: translateY(0) scale(0.99); }
+.lx-open:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 2px; }
+.lx-open:disabled { cursor: default; }
+.lx-open__arrow { font-size: 17px; line-height: 1; transition: transform 200ms var(--lx-ease); }
+.lx-open:hover .lx-open__arrow { transform: translateX(4px); }
+
+/* Conteúdo do estado aberto */
+.lx-expanded {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  opacity: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.lx-card[data-state="collapsed"] .lx-expanded { display: none; }
+.lx-card[data-state="expanding"] .lx-expanded,
+.lx-card[data-state="expanded"] .lx-expanded { opacity: 1; }
+
+/* revelação em stagger */
+.lx-expanded > * { opacity: 0; transform: translateY(10px); transition: opacity 280ms var(--lx-ease), transform 280ms var(--lx-ease); }
+.lx-card[data-state="expanding"] .lx-expanded > *,
+.lx-card[data-state="expanded"] .lx-expanded > * { opacity: 1; transform: none; }
+.lx-expanded > *:nth-child(1) { transition-delay: 200ms; }
+.lx-expanded > *:nth-child(2) { transition-delay: 250ms; }
+.lx-expanded > *:nth-child(3) { transition-delay: 300ms; }
+.lx-expanded > *:nth-child(4) { transition-delay: 350ms; }
+.lx-expanded > *:nth-child(5) { transition-delay: 400ms; }
+.lx-expanded > *:nth-child(n+6) { transition-delay: 450ms; }
+
+/* Botão discreto de recolher — canto superior direito do card (fora do fluxo
+   do conteúdo que rola). Só aparece aberto e quando `canClose`. */
+.lx-close {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 9px;
+  background: rgba(120, 170, 240, 0.06); border: 1px solid var(--lx-border);
+  color: var(--lx-text-soft); cursor: pointer;
+  transition: color 160ms var(--lx-ease), border-color 160ms var(--lx-ease);
+}
+.lx-close:hover { color: var(--lx-title); border-color: rgba(120, 170, 240, 0.3); }
+.lx-close:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 2px; }
+
+.lx-support { font-size: 14px; line-height: 1.55; color: var(--lx-text-soft); }
+
+.lx-google {
+  width: 100%; height: 42px; margin-top: 4px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  border-radius: 11px; border: 1px solid rgba(120, 170, 240, 0.2);
+  background: rgba(120, 170, 240, 0.05);
+  color: var(--lx-text-soft); font-size: 13.5px; font-weight: 600;
+  cursor: not-allowed;
+}
+.lx-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 2px 0;
+  font-size: 11px; color: var(--lx-muted); text-transform: uppercase; letter-spacing: 0.08em;
+}
+.lx-divider::before, .lx-divider::after { content: ''; flex: 1; height: 1px; background: var(--lx-border); }
+.lx-exclusive { font-size: 12.5px; color: var(--lx-muted); text-align: center; margin-top: 2px; }
+.lx-legal { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; color: var(--lx-muted); }
+.lx-legal a:hover { color: var(--lx-text-soft); text-decoration: underline; }
+
+.lx-form { display: flex; flex-direction: column; gap: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .lx-form[data-error="true"] { animation: lx-shake 340ms var(--lx-ease-std) 1; }
+}
+@keyframes lx-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+/* =========================================================================
+   Responsividade
+   ========================================================================= */
+@media (min-width: 641px) and (max-width: 900px) {
+  .lx-page { --lx-w-expanded: 560px; }
+}
+@media (max-height: 760px) and (min-width: 641px) {
+  .lx-page { --lx-h-expanded: min(688px, calc(100dvh - 40px)); }
+}
+@media (max-width: 640px) {
+  .lx-page {
+    --lx-w-collapsed: calc(100vw - 32px);
+    --lx-h-collapsed: 240px;
+    --lx-r-collapsed: 26px;
+    --lx-w-expanded: calc(100vw - 24px);
+    --lx-h-expanded: min(720px, calc(100dvh - 36px));
+    --lx-r-expanded: 26px;
+  }
+  .lx-topbar { max-width: none; padding-top: 16px; }
+  .lx-stage { padding-top: 12px; }
+  .lx-expanded { max-width: 100%; }
+  .lx-headline { font-size: clamp(1.3rem, 6vw, 1.55rem); }
+}
+
+/* =========================================================================
+   Reduced motion — troca seca entre tamanhos, sem fases nem stagger.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .lx-card,
+  .lx-card::before,
+  .lx-collapsed,
+  .lx-open,
+  .lx-open__arrow,
+  .lx-expanded,
+  .lx-expanded > *,
+  .login-field__label, .login-field__icon, .login-input, .login-field__toggle,
+  .login-submit, .login-submit__icon,
+  .login-commercial__cta, .login-commercial__arrow {
+    transition: none !important;
+  }
+  .lx-expanded > * { transition-delay: 0ms !important; }
+  .lx-sign { animation: none !important; }
+  .lx-form[data-error="true"] { animation: none !important; }
 }
