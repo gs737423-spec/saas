@@ -7,7 +7,6 @@ import ServicesSection from '@/site/sections/ServicesSection'
 import MarketplacesSection from '@/site/sections/MarketplacesSection'
 import HowItWorks from '@/site/sections/HowItWorks'
 import ConversionSection from '@/site/sections/ConversionSection'
-import Faq from '@/site/sections/Faq'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 
@@ -65,8 +64,6 @@ export default function SitePage() {
         <HowItWorks />
         {/* 6. Conversão — escuro, gradiente */}
         <ConversionSection />
-        {/* 7. FAQ — claro */}
-        <Faq />
       </main>
       <Footer />
       <WhatsAppFloatButton />
