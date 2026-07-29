@@ -2703,17 +2703,17 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
    .lx-* isoladas; os campos reutilizam .login-* (LoginField / LoginCommercial).
    ========================================================================== */
 .lx-page {
-  /* paleta */
-  --lx-bg: #06162B;
-  --lx-bg-2: #0A203C;
-  --lx-blue: #3168FF;
-  --lx-blue-2: #4A82FF;
-  --lx-blue-light: #62B7FF;
-  --lx-amber: #FFC15C;
-  --lx-title: #F6F8FC;
-  --lx-text-soft: #A9B8CC;
-  --lx-muted: #5C6E8C;
-  --lx-border: rgba(120, 170, 240, 0.16);
+  /* paleta oficial da plataforma app */
+  --lx-bg: #071426;
+  --lx-bg-2: #050F1D;
+  --lx-blue: #2F6BFF;
+  --lx-blue-2: #4C82FF;
+  --lx-blue-light: #63B3FF;
+  --lx-amber: #FFBE63;
+  --lx-title: #F5F8FC;
+  --lx-text-soft: #A8B7C9;
+  --lx-muted: #788AA1;
+  --lx-border: rgba(99, 179, 255, 0.28);
 
   /* aliases p/ os campos reaproveitados (.login-*) */
   --login-blue: var(--lx-blue);
@@ -2750,9 +2750,13 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   display: flex;
   flex-direction: column;
   color: var(--lx-title);
-  background:
-    radial-gradient(52% 42% at 50% 42%, rgba(49, 104, 255, 0.16), transparent 72%),
-    linear-gradient(180deg, var(--lx-bg) 0%, var(--lx-bg-2) 100%);
+  /* Fórmula exata do fundo do /app (ver body em index.css) — mesmos 2 glows
+     + o mesmo diagonal 135deg secondary->primary->elevated. */
+  background-color: var(--lx-bg-2);
+  background-image:
+    radial-gradient(circle at 82% -8%, rgba(47, 107, 255, 0.14), transparent 32%),
+    radial-gradient(circle at 12% 105%, rgba(99, 179, 255, 0.07), transparent 34%),
+    linear-gradient(135deg, var(--lx-bg) 0%, var(--lx-bg-2) 48%, #10233B 100%);
 }
 /* vinheta discreta nas bordas */
 .lx-page::after {
@@ -2964,15 +2968,11 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 .lx-card--static {
   width: min(340px, 100%);
   height: auto;
-  /* Mesma linguagem dos cards da plataforma (/app): gradiente overview-hero-card
-     + borda azul translúcida + vidro fosco (backdrop-filter). Alpha alto (0.94)
-     pra manter o azul vívido — em 0.72 ficava lavado sobre o fundo escuro. */
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(49, 104, 255, 0.22), transparent 60%),
-    linear-gradient(135deg, rgba(15, 35, 62, 0.94) 0%, rgba(20, 50, 87, 0.94) 55%, rgba(28, 68, 116, 0.94) 100%);
-  border-color: rgba(99, 179, 255, 0.32);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* Gradiente EXATO de .overview-hero-card (index.css) — não uma aproximação
+     translúcida. Sólido, como todo card real da plataforma; blur/glass tinha
+     lavado o azul contra o fundo escuro. */
+  background: linear-gradient(135deg, #0B1B30 0%, #10294A 58%, #173A66 100%);
+  border-color: rgba(99, 179, 255, 0.28);
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.55),
     0 0 60px -12px rgba(76, 130, 247, 0.35),
