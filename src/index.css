@@ -15,9 +15,18 @@
   --breakpoint-nav: 1100px;
 
   /* Manrope — mais arredondada e autoral que Inter (que segue no site
-     institucional, ver site.css), sem perder legibilidade em dashboard. */
+     institucional, ver site.css), sem perder legibilidade em dashboard.
+     Sora fica reservada só pra marca e títulos (--font-brand), nunca pra
+     texto de corpo, número ou navegação — ver .font-mono abaixo. */
   --font-sans: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-brand: 'Sora', var(--font-sans);
+  --font-interface: var(--font-sans);
+  /* --font-mono reaproveita a classe Tailwind `font-mono` já usada em ~34
+     componentes pra alinhar números — em vez de tocar cada arquivo, o token
+     vira Manrope (não JetBrains Mono) e o tabular-nums entra via .font-mono
+     abaixo. Isso remove a fonte monoespaçada dos valores financeiros sem
+     precisar editar cada card individualmente. */
+  --font-mono: 'Manrope', var(--font-sans);
 
   /* Escuro, profundidade por níveis de superfície (plataforma /app) — sem
      preto puro, sem roxo/ciano neon. Nomes de token preservados (dezenas de
@@ -64,6 +73,19 @@
 
 html {
   background: var(--color-bg-primary);
+}
+
+/* Sobrescreve a utilidade Tailwind .font-mono (usada em ~34 componentes pra
+   alinhar valores financeiros/percentuais): mantém alinhamento numérico via
+   tabular-nums, mas sem cara de terminal — a fonte já é Manrope pelo token
+   --font-mono acima, isto só adiciona o feature-setting. */
+.font-mono {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.font-brand {
+  font-family: var(--font-brand);
 }
 
 body {

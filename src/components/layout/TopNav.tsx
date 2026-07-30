@@ -70,8 +70,8 @@ export default function TopNav() {
     .slice(0, 2) || 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12.5px] font-medium transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active text-accent-cyan' : 'text-text-muted hover:text-text-primary'
+    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12px] tracking-[-0.01em] transition-colors lg:gap-1.5 lg:px-2 ${
+      isActive ? 'topnav-item-active font-semibold text-accent-cyan' : 'font-medium text-text-muted hover:text-text-primary'
     }`
 
   return (
