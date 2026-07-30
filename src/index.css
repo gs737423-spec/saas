@@ -28,6 +28,12 @@
      precisar editar cada card individualmente. */
   --font-mono: 'Manrope', var(--font-sans);
 
+  /* Pesos do dashboard (/app): usa a escala padrão do Tailwind (font-medium
+     500 / font-semibold 600 / font-bold 700 / font-extrabold 800) — Manrope
+     só tem degraus estáticos em 400/500/600/700/800 mesmo, e sobrescrever
+     --font-weight-bold aqui colidiria com a utility font-bold do próprio
+     Tailwind (é o mesmo namespace de token, gera as classes font-*). */
+
   /* Escuro, profundidade por níveis de superfície (plataforma /app) — sem
      preto puro, sem roxo/ciano neon. Nomes de token preservados (dezenas de
      componentes já referenciam essas classes Tailwind geradas).
@@ -153,7 +159,11 @@ body {
 }
 
 @layer utilities {
-  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; }
+  /* Piso de peso pro dashboard inteiro — Manrope 400 (padrão do browser)
+     lia fina/frágil demais no fundo escuro. Qualquer classe Tailwind de peso
+     explícita (font-medium, font-bold etc.) continua vencendo em cima disto,
+     isto só cobre texto sem peso declarado. */
+  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; font-weight: var(--font-weight-medium); }
   .app-main { width: 100%; min-width: 0; }
   .app-page-container {
     width: min(100%, 1600px);
