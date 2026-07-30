@@ -2106,11 +2106,11 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 }
 .footer-tagline {
   margin-top: 14px;
-  font-size: 21px;
+  font-size: 23px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
   color: #F6F8FC;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 .footer-desc {
   margin-top: 12px;
@@ -2118,33 +2118,47 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   line-height: 1.62;
   color: #9FB0C4;
 }
+/* CTA vira botão discreto (fundo suave), não link solto — pedido explícito:
+   "destacar melhor o CTA" / "card ou bloco suave". */
 .footer-cta {
-  margin-top: 20px;
+  margin-top: 22px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 11px;
+  background: rgba(104, 200, 255, 0.1);
+  border: 1px solid rgba(104, 200, 255, 0.24);
   font-size: 13.5px;
-  font-weight: 600;
-  color: #68C8FF;
-  transition: gap 180ms ease, color 180ms ease;
+  font-weight: 700;
+  color: #8FDBFF;
+  transition: gap 180ms ease, color 180ms ease, background-color 180ms ease, border-color 180ms ease;
 }
-.footer-cta:hover { color: #FFBE63; gap: 10px; }
+.footer-cta:hover { color: #FFFFFF; gap: 11px; background: rgba(104, 200, 255, 0.16); border-color: rgba(104, 200, 255, 0.4); }
+.footer-cta-note { margin-top: 10px; font-size: 12px; line-height: 1.5; color: rgba(159, 176, 196, 0.85); }
+
+/* Coluna principal — mais presença: linha vertical sutil separando das
+   colunas secundárias em telas largas, onde sobra vazio no centro. */
+@media (min-width: 1024px) {
+  .footer-cols { padding-left: 44px; border-left: 1px solid rgba(104, 200, 255, 0.12); }
+}
 
 .footer-col-title {
   font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #68C8FF;
+  letter-spacing: 0.07em;
+  color: #8FDBFF;
 }
-.footer-col-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; list-style: none; padding: 0; }
+.footer-col-list { margin-top: 16px; display: flex; flex-direction: column; gap: 11px; list-style: none; padding: 0; }
 .footer-link {
   display: inline-block;
   font-size: 13.5px;
-  color: #D7E0EA;
+  line-height: 1.4;
+  color: #E4EAF1;
   transition: color 180ms ease, transform 180ms ease;
 }
-.footer-link--static { color: rgba(215, 224, 234, 0.68); }
+.footer-link--static { color: rgba(228, 234, 241, 0.78); }
 a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 
 .footer-legal {
