@@ -106,7 +106,7 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
   const criticalActive = filters.onlyCritical
   const excessActive = filters.onlyExcess
   return (
-    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5">
+    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5">
       <span className="mb-1.5 block min-h-[28px] text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">Crítico / Excesso</span>
       <div className="mt-auto grid grid-cols-2 divide-x divide-border-subtle">
         <button
@@ -149,7 +149,7 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
   return (
     <button
       onClick={clickable ? () => onChange(c.apply!(filters)) : undefined}
-      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
       style={active ? { boxShadow: `inset 0 0 0 1.5px ${c.primary}99, 0 0 20px -6px ${c.primary}66` } : undefined}
     >
       <div
@@ -157,7 +157,7 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
         style={{ background: `radial-gradient(circle, ${c.primary}33, transparent 68%)` }}
       />
       <div className="relative mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
-        <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
+        <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
           <Icon className="h-3.5 w-3.5" style={{ color: c.primary }} />
         </div>
@@ -182,7 +182,7 @@ export default function InventoryKPIs({ filters, onChange }: Props) {
   const cards = buildCards(stalled, curveARisk)
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
       {cards.slice(0, 2).map((c) => (
         <Card key={c.key} c={c} filters={filters} onChange={onChange} />
       ))}
