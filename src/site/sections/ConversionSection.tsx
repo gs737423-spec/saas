@@ -17,6 +17,8 @@ const DIFFICULTIES = [
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'unconfigured'
 
+const MESSAGE_MAX = 1500
+
 type FormState = {
   name: string
   email: string
@@ -24,6 +26,7 @@ type FormState = {
   company: string
   marketplaces: string[]
   mainDifficulty: string
+  message: string
   consent: boolean
 }
 
@@ -41,8 +44,7 @@ const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // uma só seção, sem pessoa (protagonismo pro formulário). Gradiente oficial.
 export default function ConversionSection() {
   const [status, setStatus] = useState<Status>('idle')
-  const [showOptional, setShowOptional] = useState(false)
-  const [form, setForm] = useState<FormState>({ name: '', email: '', whatsapp: '', company: '', marketplaces: [], mainDifficulty: '', consent: false })
+  const [form, setForm] = useState<FormState>({ name: '', email: '', whatsapp: '', company: '', marketplaces: [], mainDifficulty: '', message: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
@@ -57,6 +59,7 @@ export default function ConversionSection() {
     if (!emailRe.test(form.email.trim())) e.email = 'Informe um e-mail válido.'
     if (form.whatsapp.replace(/\D/g, '').length < 10) e.whatsapp = 'Informe um WhatsApp com DDD.'
     if (!form.company.trim()) e.company = 'Informe o nome da empresa.'
+    if (!form.message.trim()) e.message = 'Conte um pouco sobre sua rotina.'
     if (!form.consent) e.consent = 'É necessário concordar para continuar.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -143,38 +146,52 @@ export default function ConversionSection() {
                 </Field>
               </div>
 
-              <button type="button" onClick={() => setShowOptional((v) => !v)} aria-expanded={showOptional}
-                className="mt-4 text-[12.5px] font-semibold hover:underline vt-muted">
-                {showOptional ? 'Ocultar detalhes da rotina' : '+ Conte um pouco sobre sua rotina'}
-              </button>
-
-              {showOptional && (
-                <div className="mt-3 space-y-4 rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <fieldset>
-                    <legend className="mb-2 text-[12px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
-                    <div className="flex flex-wrap gap-2">
-                      {CHANNELS.map((c) => {
-                        const on = form.marketplaces.includes(c)
-                        return (
-                          <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
-                            aria-pressed={on}
-                            className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
-                            style={on ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
-                            {c}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </fieldset>
-
-                  <Field label="Qual é o maior desafio da sua operação hoje?" htmlFor="f-difficulty">
-                    <select id="f-difficulty" className="vt-input" value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)}>
-                      <option value="">Selecione (opcional)</option>
-                      {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </Field>
+              <div className="mt-4">
+                <label htmlFor="f-message" className="mb-1.5 block text-[13px] font-semibold vt-muted">Conte um pouco sobre sua rotina</label>
+                <textarea
+                  id="f-message"
+                  className="vt-input vt-textarea"
+                  rows={4}
+                  maxLength={MESSAGE_MAX}
+                  autoComplete="off"
+                  value={form.message}
+                  onChange={(e) => set('message', e.target.value)}
+                  aria-invalid={!!errors.message}
+                  aria-describedby={errors.message ? 'f-message-error' : 'f-message-count'}
+                />
+                <div className="mt-1 flex items-start justify-between gap-3">
+                  {errors.message ? (
+                    <p id="f-message-error" className="text-[12px]" style={{ color: '#FF8FA6' }} role="alert">{errors.message}</p>
+                  ) : <span />}
+                  <span id="f-message-count" className="shrink-0 text-[11px] vt-muted">{form.message.length}/{MESSAGE_MAX}</span>
                 </div>
-              )}
+              </div>
+
+              <div className="mt-4 space-y-4 rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <fieldset>
+                  <legend className="mb-2 text-[12px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {CHANNELS.map((c) => {
+                      const on = form.marketplaces.includes(c)
+                      return (
+                        <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
+                          aria-pressed={on}
+                          className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
+                          style={on ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                          {c}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+
+                <Field label="Qual é o maior desafio da sua operação hoje?" htmlFor="f-difficulty">
+                  <select id="f-difficulty" className="vt-input" value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)}>
+                    <option value="">Selecione (opcional)</option>
+                    {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </Field>
+              </div>
 
               <label className="mt-5 flex items-start gap-2.5 text-[13px] vt-muted">
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />

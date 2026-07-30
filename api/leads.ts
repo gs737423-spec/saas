@@ -22,11 +22,13 @@ interface LeadPayload {
   company?: unknown
   marketplaces?: unknown
   monthlyOrders?: unknown
+  message?: unknown
   consent?: unknown
 }
 
 const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MESSAGE_MAX = 1500
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -43,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isNonEmptyString(body.email) || !emailRe.test(String(body.email))) errors.push('email')
   if (!isNonEmptyString(body.whatsapp)) errors.push('whatsapp')
   if (!isNonEmptyString(body.company)) errors.push('company')
+  if (!isNonEmptyString(body.message) || String(body.message).trim().length > MESSAGE_MAX) errors.push('message')
   if (body.consent !== true) errors.push('consent')
 
   if (errors.length > 0) {
@@ -68,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     company: String(body.company).trim(),
     marketplaces: isNonEmptyString(body.marketplaces) ? String(body.marketplaces).trim() : null,
     monthlyOrders: isNonEmptyString(body.monthlyOrders) ? String(body.monthlyOrders).trim() : null,
+    message: String(body.message).trim(),
     source: 'site-institucional',
     receivedAt: new Date().toISOString(),
   }
