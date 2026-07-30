@@ -22,7 +22,7 @@ const slides: Slide[] = [
   {
     eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
     title: <>Decisões à altura do negócio que você está construindo.</>,
-    sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
+    sub: 'Nossa equipe atua dentro do ambiente do e-commerce para o sucesso da sua operação.',
     ctaPrimary: 'Quero organizar minha operação',
     ctaSecondary: 'Ver como funciona',
     ctaSecondaryHref: '#como-funciona',
