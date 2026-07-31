@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import mark from '@/assets/acelera-mark.png'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 import PrivacyPolicyPage from '@/site/PrivacyPolicyPage'
 import './site.css'
@@ -32,7 +32,7 @@ export default function LegalPage({ variant }: { variant: Variant }) {
       <header className="site-header" data-scrolled="true">
         <div className="site-container flex h-[68px] items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5" aria-label="MKTOnline — início">
-            <img src={mark} alt="" width={34} height={34} className="h-8 w-8 object-contain" />
+            <MKTOnlineLogo mode="symbol" size="md" />
             <span className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--s-ink)' }}>MKTOnline</span>
           </Link>
           <Link to="/" className="btn btn-ghost" style={{ padding: '0.5rem 0.9rem' }}>

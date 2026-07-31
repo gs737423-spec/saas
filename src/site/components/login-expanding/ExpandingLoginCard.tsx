@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import LoginAtmosphereBackground from './LoginAtmosphereBackground'
 import ExpandedLoginContent from './ExpandedLoginContent'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 import type { LoginBridge } from './expanding-login.types'
 
 interface Props {
@@ -21,7 +22,10 @@ export default function ExpandingLoginCard({ bridge }: Props) {
       <LoginAtmosphereBackground />
       <div className="lx-card lx-card--static" data-state="expanded">
         <div className="lx-card__inner">
-          <p className="lx-brand lx-brand--centered">MKTOnline</p>
+          <div className="flex flex-col items-center gap-2">
+            <MKTOnlineLogo mode="symbol" size="lg" />
+            <p className="lx-brand lx-brand--centered">MKTOnline</p>
+          </div>
 
           <ExpandedLoginContent bridge={bridge} emailRef={emailRef} revealing />
         </div>

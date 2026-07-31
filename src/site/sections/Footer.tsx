@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { marketplaces, specialistHref } from '@/site/content'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
 // Footer editorial — wordmark textual (sem símbolo), bloco institucional +
 // 4 colunas de navegação, barra legal inferior. Fundo azul-marinho.
@@ -13,7 +14,10 @@ export default function Footer() {
       <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 72, paddingBottom: 32 }}>
         <div className="grid gap-12 lg:grid-cols-[30%_1fr]">
           <div className="footer-main max-w-[320px]">
-            <span className="footer-word">MKTOnline</span>
+            <div className="flex items-center gap-2 mb-2">
+              <MKTOnlineLogo mode="symbol" size="sm" />
+              <span className="footer-word">MKTOnline</span>
+            </div>
             <h2 className="footer-tagline">Menos controles paralelos. Mais clareza para decidir e crescer.</h2>
             <p className="footer-desc">
               A MKTOnline combina consultoria e tecnologia para acompanhar a operação de empresas que vendem em
