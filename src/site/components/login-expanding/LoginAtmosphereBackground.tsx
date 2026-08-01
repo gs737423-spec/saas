@@ -68,9 +68,9 @@ export default function LoginAtmosphereBackground() {
       <svg className="lx-atmo-lines lx-atmo-lines--br" viewBox="0 0 420 320" preserveAspectRatio="none">
         <defs>
           <linearGradient id="lxAtmoBR" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#2BD6A0" stopOpacity="0" />
+            <stop offset="0%" stopColor="#3BE38E" stopOpacity="0" />
             <stop offset="50%" stopColor="#63B3FF" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#2BD6A0" stopOpacity="0" />
+            <stop offset="100%" stopColor="#3BE38E" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d="M460,260 C360,300 320,240 240,270 C160,298 120,250 -20,280" fill="none" stroke="url(#lxAtmoBR)" strokeWidth="0.8" />

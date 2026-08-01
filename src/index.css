@@ -21,12 +21,13 @@
   --font-sans: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-brand: 'Sora', var(--font-sans);
   --font-interface: var(--font-sans);
-  /* --font-mono reaproveita a classe Tailwind `font-mono` já usada em ~34
-     componentes pra alinhar números — em vez de tocar cada arquivo, o token
-     vira Manrope (não JetBrains Mono) e o tabular-nums entra via .font-mono
-     abaixo. Isso remove a fonte monoespaçada dos valores financeiros sem
-     precisar editar cada card individualmente. */
-  --font-mono: 'Manrope', var(--font-sans);
+  /* Inter Tight — tipografia oficial de toda numeração da plataforma
+     (31/07, pedido explícito, ver docs/04-Audits). --font-mono continua
+     sendo o ponto único que ~37 componentes já consomem via `.font-mono`
+     — retargetá-lo aqui troca a fonte de TODOS os números sem editar cada
+     arquivo. */
+  --font-numeric: 'Inter Tight', sans-serif;
+  --font-mono: var(--font-numeric);
 
   /* Pesos do dashboard (/app): usa a escala padrão do Tailwind (font-medium
      500 / font-semibold 600 / font-bold 700 / font-extrabold 800) — Manrope
@@ -34,42 +35,55 @@
      --font-weight-bold aqui colidiria com a utility font-bold do próprio
      Tailwind (é o mesmo namespace de token, gera as classes font-*). */
 
-  /* Escuro, profundidade por níveis de superfície (plataforma /app) — sem
-     preto puro, sem roxo/ciano neon. Nomes de token preservados (dezenas de
-     componentes já referenciam essas classes Tailwind geradas).
-     accent-violet reaproveita o sky (sem roxo). Namespace isolado do site
-     institucional (site.css usa --vintec-*, não consome nada daqui). */
-  --color-bg-primary: #050F1D;
-  --color-bg-secondary: #071426;
-  --color-bg-card: #0B1B30;
-  --color-bg-card-hover: #183452;
-  --color-bg-elevated: #10233B;
-  --color-bg-highlight: #142B48;
-  --color-bg-header: #061326;
-  --color-border-subtle: rgba(94, 124, 163, 0.2);
-  --color-border-default: rgba(95, 194, 232, 0.24);
-  --color-border-active: rgba(95, 194, 232, 0.62);
+  /* Identidade visual definitiva (31/07, versão consolidada final — ver
+     docs/04-Audits). Tokens alimentam Tailwind `bg-*`/`text-*`
+     (background-color só aceita sólido — por isso ficam aqui como sólidos
+     distintos; os GRADIENTES obrigatórios ficam nas classes de superfície:
+     .overview-hero-card, .overview-glass*, .glass-panel, .topnav-surface).
+     Namespace isolado do site institucional (--vintec-*). */
+  --color-bg-primary: #081423;
+  --color-bg-secondary: #0B1D30;
+  --color-bg-card: #112944;
+  --color-bg-card-hover: #163556;
+  --color-bg-elevated: #163556;
+  --color-bg-highlight: #1A3D63;
+  --color-bg-header: #0D2036;
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(110, 170, 255, 0.12);
+  --color-border-active: rgba(70, 229, 255, 0.4);
 
-  --color-text-primary: #F5F8FC;
-  --color-text-secondary: #A8B7C9;
-  --color-text-muted: #788AA1;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #DCE7F5;
+  --color-text-muted: #9EB3C9;
 
-  /* Azul menos "royal blue" de UI-kit, mais indigo-petróleo autoral. */
-  --color-accent-cyan: #5FC2E8;
-  --color-accent-blue: #3A5FDB;
-  --color-accent-blue-hover: #5273E6;
-  --color-accent-blue-deep: #1C3B85;
-  --color-accent-emerald: #2BD6A0;
-  --color-accent-amber: #FFBE63;
-  --color-accent-warning: #FFC857;
-  --color-accent-rose: #FF5F7A;
-  --color-accent-info: #5AB7FF;
-  --color-accent-violet: #5FC2E8;
+  /* Ciano = só acento (hover/focus/links/ícones ativos/seleção/status) —
+     nunca preenche área grande. Azul = gradiente #59B7FF→#3A8DFF→#256EF7,
+     nunca chapado. */
+  --color-accent-cyan: #46E5FF;
+  --color-accent-cyan-hover: #6FEBFF;
+  --color-accent-blue: #3A8DFF;
+  --color-accent-blue-hover: #59B7FF;
+  --color-accent-blue-deep: #256EF7;
+  --color-accent-emerald: #3BE38E;
+  --color-accent-amber: #FFC95A;
+  --color-accent-warning: #FFC95A;
+  --color-accent-rose: #FF5E7D;
+  --color-accent-info: #46E5FF;
+  --color-accent-violet: #46E5FF;
 
   --color-ml-orange: #FFE600;
   --color-shopee-orange: #EE4D2D;
   --color-amazon-orange: #FF9900;
   --color-loja-blue: #4C82F7;
+
+  /* Border radius — só estes 5 valores na plataforma inteira (sobrescreve
+     a escala padrão do Tailwind, então rounded-lg/xl/2xl etc já herdam sem
+     precisar tocar em cada componente). */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
 }
 
 * {
@@ -88,6 +102,33 @@ html {
 .font-mono {
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Classes utilitárias oficiais da spec de numeração (31/07) — .font-mono
+   acima já cobre os ~37 componentes existentes; estas ficam disponíveis
+   para KPIs novos que queiram tamanho/peso já resolvidos. */
+.numeric-value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  line-height: 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.numeric-value--hero { font-size: 44px; font-weight: 800; letter-spacing: -0.045em; }
+.numeric-value--kpi { font-size: 32px; font-weight: 700; letter-spacing: -0.04em; }
+.numeric-value--table { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; }
+.numeric-value--compact { font-size: 14px; font-weight: 600; letter-spacing: -0.015em; }
+
+@media (max-width: 640px) {
+  .numeric-value--hero { font-size: 38px; }
+  .numeric-value--kpi { font-size: 28px; }
+  .numeric-value--table { font-size: 17px; }
 }
 
 .font-brand {
@@ -178,15 +219,15 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-active); }
 
 @layer utilities {
-  /* Painel padrão (nível 2) — superfície sólida, sem gradiente (gradiente
-     fica reservado a .overview-hero-card). Sombra padronizada única. */
+  /* Painel padrão (nível 2) — reconstrução 31/07: toda superfície principal
+     usa gradiente, nunca cor sólida (ver docs/04-Audits). */
   .glass-panel {
     position: relative;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border-subtle);
+    background: linear-gradient(180deg, #163556 0%, #112944 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   /* Baseline untouched — shared by pages outside Stage 2's validated scope
@@ -312,37 +353,36 @@ body {
      Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
      definida, sombra de contato + longa mais forte → mais "flutuando". */
 
-  /* Nível 2 — painel estrutural, superfície sólida (sem gradiente) */
+  /* Nível 2 — painel estrutural. Gradiente oficial do card. */
   .overview-glass {
     position: relative;
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, #163556 0%, #112944 100%);
     border: 1px solid var(--color-border-subtle);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
-  /* Nível 3 — card elevado, superfície sólida (sem gradiente: usado em 6+
-     componentes distintos, não é um elemento "principal/selecionado" único
-     — gradiente fica reservado só para .overview-hero-card abaixo). */
+  /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
   .overview-glass-elevated {
     position: relative;
-    background: var(--color-bg-elevated);
+    background: linear-gradient(160deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
 
-  /* Único card com gradiente aprovado — hero (Faturamento Líquido). Destaque
-     vem da superfície/contraste, não de borda colorida — sem rim verde. */
+  /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
+     não de borda colorida. */
   .overview-hero-card {
     position: relative;
-    background: linear-gradient(135deg, #0B1B30 0%, #10294A 58%, #173A66 100%);
+    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 16px 40px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -24px 40px -24px rgba(0, 0, 0, 0.4);
   }
 
   /* Hover tátil — elevação + borda aquece + glow (todos os níveis).
@@ -353,36 +393,36 @@ body {
   /* Linha de marketplace — card executivo sobre o painel pai */
   .overview-marketplace-row {
     position: relative;
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, #112944 0%, #0B1D30 100%);
     border: 1px solid var(--color-border-subtle);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    background-color: var(--color-bg-card-hover);
+    background-color: #163556;
     border-color: var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      0 12px 32px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Canal Nº1 — dominante, mais corpo e luz */
+  /* Canal Nº1 — dominante, mais corpo e luz, gradiente mais rico */
   .overview-marketplace-row-lead {
     position: relative;
-    background: var(--color-bg-elevated);
+    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
 
-  /* Trilho das barras de participação */
+  /* Trilho das barras de participação — o mais escuro da hierarquia */
   .overview-track {
-    background: linear-gradient(180deg, #050912 0%, #0A1120 100%);
+    background: linear-gradient(180deg, #081423 0%, #0B1D30 100%);
     box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   }
 
@@ -508,21 +548,21 @@ body {
   /* ---- Top nav (substitui a sidebar) --------------------------------------
      Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
      horizontal e fixa no topo. */
-  /* Header — presença azul maior que o workspace, mesma família. */
+  /* Header — peça própria, apoiada sobre o ambiente, nunca a mesma cor do
+     conteúdo (fundo #081423/#0B1D30 vs header #0D2036). */
   .topnav-surface {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
-      var(--color-bg-header);
+    background: linear-gradient(180deg, #11294A 0%, #0D2036 100%);
     box-shadow:
-      inset 0 -1px 0 0 rgba(95, 194, 232, 0.06),
-      0 12px 28px -16px rgba(0, 6, 18, 0.5);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0 0 rgba(110, 170, 255, 0.14),
+      0 12px 28px -16px rgba(0, 6, 18, 0.6);
   }
   .topnav-surface::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(60% 160% at 8% 50%, rgba(58, 95, 219, 0.1), transparent 70%);
+    background: radial-gradient(60% 160% at 8% 50%, rgba(70, 229, 255, 0.06), transparent 70%);
   }
 
   /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
@@ -812,4 +852,36 @@ body {
     background: var(--color-bg-elevated);
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
+}
+
+/* ---- Relatórios (Relatorios.tsx) — visualizador tipo slide + impressão --
+   Na tela: só o slide atual aparece (navegação por botão/seta). Na
+   impressão: todos os slides ficam visíveis, um por página, .report-onscreen
+   some (não faz sentido em papel), toolbar some, cores viram alto-contraste
+   pra não gastar tinta escura de fundo. */
+.report-print { display: none; }
+
+@media print {
+  .app-shell > *:not(main),
+  .report-toolbar {
+    display: none !important;
+  }
+  .app-main { padding-top: 0 !important; }
+  .app-page-container { width: 100% !important; padding: 0 !important; }
+  .report-onscreen { display: none; }
+  .report-print { display: block; }
+  .report-print .report-slide {
+    page-break-after: always;
+    break-after: page;
+    border: none;
+    box-shadow: none;
+    background: #fff !important;
+    color: #0A1828;
+    min-height: 100vh;
+  }
+  .report-print .report-slide * {
+    color: #0A1828 !important;
+    -webkit-text-fill-color: #0A1828 !important;
+  }
+  .report-slide__page { color: #6b7280 !important; }
 }

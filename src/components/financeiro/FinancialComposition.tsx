@@ -26,10 +26,10 @@ function buildFlow(overview: FinanceOverview): FlowStep[] {
   const { grossRevenue, fees, refunds, netValue } = overview
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
-    { key: 'gross', label: 'Faturamento bruto', value: grossRevenue, sharePct: 100, color: '#5AB7FF', isDeduction: false },
-    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC857', isDeduction: true },
-    { key: 'refunds', label: 'Estornos e devoluções', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5F7A', isDeduction: true },
-    { key: 'net', label: 'Valor líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#2BD6A0', isDeduction: false },
+    { key: 'gross', label: 'Faturamento bruto', value: grossRevenue, sharePct: 100, color: '#46E5FF', isDeduction: false },
+    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC95A', isDeduction: true },
+    { key: 'refunds', label: 'Estornos e devoluções', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5E7D', isDeduction: true },
+    { key: 'net', label: 'Valor líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#3BE38E', isDeduction: false },
   ]
 }
 
@@ -45,9 +45,9 @@ function buildSegments(overview: FinanceOverview): BarSegment[] {
   const { grossRevenue, fees, refunds, netValue } = overview
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
-    { key: 'net', label: 'Líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#2BD6A0' },
-    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC857' },
-    { key: 'refunds', label: 'Estornos', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5F7A' },
+    { key: 'net', label: 'Líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#3BE38E' },
+    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC95A' },
+    { key: 'refunds', label: 'Estornos', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5E7D' },
   ]
 }
 

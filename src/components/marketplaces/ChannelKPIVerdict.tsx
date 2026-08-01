@@ -28,7 +28,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byNet[0].marketplace,
       sub: `${pct(sorted.byNet[0].netSharePct)}% do líquido total`,
       icon: Crown,
-      tone: '#2BD6A0',
+      tone: '#3BE38E',
     },
     {
       label: 'Melhor Ticket',
@@ -46,7 +46,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byOrders[0].marketplace,
       sub: `ticket R$ ${brl2(sorted.byOrders[0].avgTicket)}`,
       icon: ShoppingCart,
-      tone: '#3A5FDB',
+      tone: '#3A8DFF',
     },
     {
       label: 'Maior Crescimento',
@@ -55,7 +55,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byGrowth[0].marketplace,
       sub: `líquido R$ ${brl(sorted.byGrowth[0].netRevenue)}`,
       icon: TrendingUp,
-      tone: '#5AB7FF',
+      tone: '#46E5FF',
     },
     {
       label: 'Maior Impacto de Comissão',
@@ -64,7 +64,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byFees[0].marketplace,
       sub: `R$ ${brl(sorted.byFees[0].fees)} retidos`,
       icon: Shield,
-      tone: '#FFC857',
+      tone: '#FFC95A',
     },
     {
       label: 'Canal em Atenção',
@@ -73,7 +73,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.attention.marketplace,
       sub: `${sorted.attention.status} · ${pct(sorted.attention.trend)}%`,
       icon: AlertTriangle,
-      tone: '#FF5F7A',
+      tone: '#FF5E7D',
     },
   ]
 

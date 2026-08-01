@@ -10,9 +10,9 @@ const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
 }
 
 const severityColor: Record<ExecutiveAlertSeverity, string> = {
-  danger: '#FF5F7A',
-  warning: '#FFC857',
-  info: '#5AB7FF',
+  danger: '#FF5E7D',
+  warning: '#FFC95A',
+  info: '#46E5FF',
 }
 
 export default function NotificationsMenu() {
@@ -64,8 +64,9 @@ export default function NotificationsMenu() {
                   </div>
                 </div>
               )
-              return a.sku ? (
-                <Link key={a.id} to={`/app/produto/${a.sku}`} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
+              const href = a.sku ? `/app/produto/${a.sku}` : a.marketplace ? '/app/marketplaces' : null
+              return href ? (
+                <Link key={a.id} to={href} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
                   {content}
                 </Link>
               ) : (

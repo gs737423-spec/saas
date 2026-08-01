@@ -23,7 +23,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Total vendido no período',
       icon: DollarSign,
-      tone: '#5AB7FF',
+      tone: '#46E5FF',
     },
     {
       key: 'fees',
@@ -32,7 +32,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Retido pelos canais de venda',
       icon: Percent,
-      tone: '#FFC857',
+      tone: '#FFC95A',
     },
     {
       key: 'refunds',
@@ -41,7 +41,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Vendas canceladas ou devolvidas',
       icon: RotateCcw,
-      tone: '#FF5F7A',
+      tone: '#FF5E7D',
     },
     {
       key: 'net',
@@ -50,7 +50,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Bruto menos comissão e estornos',
       icon: Wallet,
-      tone: '#2BD6A0',
+      tone: '#3BE38E',
     },
   ]
 

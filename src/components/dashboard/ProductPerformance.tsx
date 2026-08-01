@@ -8,9 +8,9 @@ const GOAL_LINE = (100 / SCALE) * 100 // horizontal position of the meta line
 
 // Above goal → cyan, medium → yellow, low → red
 function perf(goalPct: number) {
-  if (goalPct >= 100) return { color: '#5AB7FF', label: 'Acima da meta' }
-  if (goalPct >= 85) return { color: '#FFC857', label: 'Na meta' }
-  return { color: '#FF5F7A', label: 'Abaixo da meta' }
+  if (goalPct >= 100) return { color: '#46E5FF', label: 'Acima da meta' }
+  if (goalPct >= 85) return { color: '#FFC95A', label: 'Na meta' }
+  return { color: '#FF5E7D', label: 'Abaixo da meta' }
 }
 
 export default function ProductPerformance() {
@@ -23,9 +23,9 @@ export default function ProductPerformance() {
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden items-center gap-3.5 text-[11px] text-text-secondary sm:flex">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#5AB7FF]" />Acima</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FFC857]" />Na meta</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FF5F7A]" />Abaixo</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#46E5FF]" />Acima</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FFC95A]" />Na meta</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#FF5E7D]" />Abaixo</span>
           </div>
           <button className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary transition-colors hover:border-border-default hover:text-text-primary">
             Relatório

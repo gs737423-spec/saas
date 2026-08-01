@@ -8,11 +8,11 @@ const bestGrowth = [...marketplaceMetrics].sort((a, b) => b.trend - a.trend)[0]
 const attention = marketplaceMetrics.find((m) => m.status !== 'Saudável') ?? marketplaceMetrics[marketplaceMetrics.length - 1]
 
 const cards = [
-  { label: 'Faturamento Total', value: `R$ ${totalRevenue.toLocaleString('pt-BR')}`, sub: `${marketplaceMetrics.length} canais ativos`, icon: Wallet, primary: '#3A5FDB', secondary: '#5AB7FF' },
-  { label: 'Canal Líder', value: leader.marketplace, sub: `R$ ${leader.revenue.toLocaleString('pt-BR')} · ${leader.sharePct}% do total`, icon: Crown, primary: '#FFC857', secondary: '#FFC857' },
-  { label: 'Melhor Ticket Médio', value: `R$ ${bestTicket.avgTicket.toFixed(0)}`, sub: bestTicket.marketplace, icon: Tag, primary: '#194B9B', secondary: '#3A5FDB' },
-  { label: 'Maior Crescimento', value: `+${bestGrowth.trend}%`, sub: bestGrowth.marketplace, icon: Rocket, primary: '#2BD6A0', secondary: '#5AB7FF' },
-  { label: 'Canal com Atenção', value: attention.marketplace, sub: `Margem ${attention.margin}% · ${attention.status}`, icon: AlertTriangle, primary: '#FF5F7A', secondary: '#FF5F7A' },
+  { label: 'Faturamento Total', value: `R$ ${totalRevenue.toLocaleString('pt-BR')}`, sub: `${marketplaceMetrics.length} canais ativos`, icon: Wallet, primary: '#3A8DFF', secondary: '#46E5FF' },
+  { label: 'Canal Líder', value: leader.marketplace, sub: `R$ ${leader.revenue.toLocaleString('pt-BR')} · ${leader.sharePct}% do total`, icon: Crown, primary: '#FFC95A', secondary: '#FFC95A' },
+  { label: 'Melhor Ticket Médio', value: `R$ ${bestTicket.avgTicket.toFixed(0)}`, sub: bestTicket.marketplace, icon: Tag, primary: '#194B9B', secondary: '#3A8DFF' },
+  { label: 'Maior Crescimento', value: `+${bestGrowth.trend}%`, sub: bestGrowth.marketplace, icon: Rocket, primary: '#3BE38E', secondary: '#46E5FF' },
+  { label: 'Canal com Atenção', value: attention.marketplace, sub: `Margem ${attention.margin}% · ${attention.status}`, icon: AlertTriangle, primary: '#FF5E7D', secondary: '#FF5E7D' },
 ]
 
 export default function CanalKPIs() {

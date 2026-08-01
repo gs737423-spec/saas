@@ -9,7 +9,7 @@ export default function ImportacaoIA() {
       />
       <div
         className="pointer-events-none absolute -bottom-20 -left-16 h-40 w-40 rounded-full opacity-30 blur-2xl"
-        style={{ background: 'radial-gradient(circle, #5AB7FF22, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, #46E5FF22, transparent 70%)' }}
       />
 
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start">

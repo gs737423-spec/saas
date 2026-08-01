@@ -7,14 +7,14 @@ export default function ProdutoKPIs({ product, stock }: { product: Product; stoc
   const marketingSpend = Math.round(product.revenue * 0.08)
 
   const cards = [
-    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'vs período anterior', icon: Receipt, primary: '#3A5FDB', secondary: '#5AB7FF' },
-    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#2BD6A0', secondary: '#5AB7FF' },
-    { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#194B9B', secondary: '#3A5FDB' },
-    { label: 'Margem', value: `${product.margin}%`, context: 'sobre o faturamento', icon: Percent, primary: '#FFC857', secondary: '#FFC857' },
-    { label: 'Estoque Atual', value: stock ? String(stock.stock) : '—', context: 'unidades disponíveis', icon: Boxes, primary: '#5AB7FF', secondary: '#3A5FDB' },
-    { label: 'Cobertura', value: stock ? `${stock.coverageDays} dias` : '—', context: 'cobertura estimada', icon: Clock, primary: '#FF5F7A', secondary: '#FF5F7A' },
-    { label: 'Tendência', value: `${positive ? '+' : ''}${product.trend}%`, context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#2BD6A0' : '#FF5F7A', secondary: '#FFC857' },
-    { label: 'Gasto em Marketing', value: `R$ ${marketingSpend.toLocaleString('pt-BR')}`, context: 'investimento atribuído', icon: Megaphone, primary: '#194B9B', secondary: '#5AB7FF' },
+    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'vs período anterior', icon: Receipt, primary: '#3A8DFF', secondary: '#46E5FF' },
+    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#46E5FF' },
+    { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#194B9B', secondary: '#3A8DFF' },
+    { label: 'Margem', value: `${product.margin}%`, context: 'sobre o faturamento', icon: Percent, primary: '#FFC95A', secondary: '#FFC95A' },
+    { label: 'Estoque Atual', value: stock ? String(stock.stock) : '—', context: 'unidades disponíveis', icon: Boxes, primary: '#46E5FF', secondary: '#3A8DFF' },
+    { label: 'Cobertura', value: stock ? `${stock.coverageDays} dias` : '—', context: 'cobertura estimada', icon: Clock, primary: '#FF5E7D', secondary: '#FF5E7D' },
+    { label: 'Tendência', value: `${positive ? '+' : ''}${product.trend}%`, context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#3BE38E' : '#FF5E7D', secondary: '#FFC95A' },
+    { label: 'Gasto em Marketing', value: `R$ ${marketingSpend.toLocaleString('pt-BR')}`, context: 'investimento atribuído', icon: Megaphone, primary: '#194B9B', secondary: '#46E5FF' },
   ]
 
   return (

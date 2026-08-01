@@ -498,10 +498,10 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
 
   const breakdown: HealthScoreBreakdown[] = [
     { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
-    { label: 'Margem', score: Math.round(margem), color: '#FFC857' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#5AB7FF' },
+    { label: 'Margem', score: Math.round(margem), color: '#FFC95A' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#46E5FF' },
     { label: 'Marketing', score: Math.round(marketing), color: '#194B9B' },
-    { label: 'Reputação', score: Math.round(reputacao), color: '#2BD6A0' },
+    { label: 'Reputação', score: Math.round(reputacao), color: '#3BE38E' },
   ]
 
   const score = Math.round(breakdown.reduce((s, b) => s + b.score, 0) / breakdown.length)
@@ -1018,16 +1018,16 @@ export interface CoverageStatus {
 
 /** Cobertura tem cor funcional própria — cobertura alta nem sempre é boa (capital parado). */
 export function getCoverageStatus(days: number): CoverageStatus {
-  if (days <= 7) return { label: 'Crítico', color: '#FF5F7A' }
-  if (days <= 20) return { label: 'Atenção', color: '#FFC857' }
-  if (days <= 45) return { label: 'Saudável', color: '#2BD6A0' }
-  return { label: 'Excesso', color: '#5AB7FF' }
+  if (days <= 7) return { label: 'Crítico', color: '#FF5E7D' }
+  if (days <= 20) return { label: 'Atenção', color: '#FFC95A' }
+  if (days <= 45) return { label: 'Saudável', color: '#3BE38E' }
+  return { label: 'Excesso', color: '#46E5FF' }
 }
 
 /** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */
 export const turnoverStatusStyle: Record<TurnoverStatus, { color: string; bg: string }> = {
-  'Normal': { color: '#2BD6A0', bg: 'rgba(43,214,160,0.12)' },
-  'Lento': { color: '#FFC857', bg: 'rgba(255,200,87,0.12)' },
+  'Normal': { color: '#3BE38E', bg: 'rgba(43,214,160,0.12)' },
+  'Lento': { color: '#FFC95A', bg: 'rgba(255,200,87,0.12)' },
   'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.12)' },
   'Parado crítico': { color: '#8B2942', bg: 'rgba(139,41,66,0.18)' },
 }

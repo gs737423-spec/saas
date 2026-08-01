@@ -10,7 +10,7 @@ import Estoque from '@/pages/Estoque'
 import Importacoes from '@/pages/Importacoes'
 import Marketplaces from '@/pages/Marketplaces'
 import Financeiro from '@/pages/Financeiro'
-import Placeholder from '@/pages/Placeholder'
+import Relatorios from '@/pages/Relatorios'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 
@@ -48,7 +48,7 @@ export default function App() {
               <Route path="estoque" element={<Estoque />} />
               <Route path="importacoes" element={<Importacoes />} />
               <Route path="financeiro" element={<Financeiro />} />
-              <Route path="relatorios" element={<Placeholder title="Relatórios" description="Relatórios customizáveis de vendas, produtos e performance, com exportação e agendamento automático." />} />
+              <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>

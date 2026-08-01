@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { productOpportunities, getMarketplaceColor } from '@/data/mockData'
 
 const typeConfig = {
-  scale_investment: { icon: TrendingUp, color: '#5AB7FF' },
-  price_adjust: { icon: Tag, color: '#FFC857' },
+  scale_investment: { icon: TrendingUp, color: '#46E5FF' },
+  price_adjust: { icon: Tag, color: '#FFC95A' },
   expand_channel: { icon: Share2, color: '#194B9B' },
 }
 
