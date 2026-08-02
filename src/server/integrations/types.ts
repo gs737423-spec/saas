@@ -1,12 +1,12 @@
 export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria'
 
 /**
- * No real auth/multi-tenant system exists yet. Every row is scoped to this
- * fixed id so the schema/queries never mix tenants once real workspaces
- * exist — swapping this constant for a real `workspace_id` from an auth
- * session is the only change needed later.
+ * Removido (01/08) — company_id agora vem sempre de `requireCompany()`
+ * (src/server/auth/requireCompany.ts), resolvido a partir da sessão
+ * autenticada via `company_members`. Nenhuma query deve mais usar um valor
+ * fixo — se este import quebrar em algum arquivo, é sinal de que aquele
+ * ponto ainda precisa da migração.
  */
-export const DEFAULT_COMPANY_ID = 'default-company'
 
 export type ConnectionStatus = 'disconnected' | 'pending' | 'connected' | 'error' | 'expired'
 

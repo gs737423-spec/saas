@@ -36,7 +36,7 @@ const statusConfig: Record<IntegrationStatus, { label: string; color: string; bg
 }
 
 function MercadoLivreCard() {
-  const { mercadoLivre, loading, syncing, backendUnreachable, connectMercadoLivre, syncMercadoLivre } = useConnections()
+  const { mercadoLivre, loading, syncing, backendUnreachable, connectError, connectMercadoLivre, syncMercadoLivre } = useConnections()
   const color = getMarketplaceColor('Mercado Livre')
 
   if (loading) {
@@ -117,6 +117,13 @@ function MercadoLivreCard() {
               <span className="text-text-muted">Estoque atualizado</span>
               <p className="text-sm font-semibold text-text-primary">{mercadoLivre.inventoryCount.toLocaleString('pt-BR')}</p>
             </div>
+          </div>
+        )}
+
+        {connectError && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-rose/25 bg-accent-rose/10 p-2.5 text-[11px] text-accent-rose">
+            <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="break-words">{connectError}</span>
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '../supabaseAdmin.js'
 import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
-import { DEFAULT_COMPANY_ID, type SyncSummary } from '../types.js'
+import type { SyncSummary } from '../types.js'
 import { getItemDetail, searchUserItemIds, MercadoLivreApiError } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
@@ -17,13 +17,13 @@ interface ConnectionRow {
   token_expires_at: string | null
 }
 
-async function loadConnection(): Promise<ConnectionRow> {
+async function loadConnection(companyId: string): Promise<ConnectionRow> {
   const supabase = await getSupabaseAdmin()
   const { data, error } = await supabase
     .from('marketplace_connections')
     .select('id, status, seller_id, access_token_encrypted, refresh_token_encrypted, token_expires_at')
     .eq('provider', 'mercadolivre')
-    .eq('company_id', DEFAULT_COMPANY_ID)
+    .eq('company_id', companyId)
     .maybeSingle()
 
   if (error) throw new Error(`Failed to load Mercado Livre connection: ${error.message}`)
@@ -35,7 +35,7 @@ async function loadConnection(): Promise<ConnectionRow> {
 
 /** Ensures we have a live access token, refreshing it first if the stored one has expired.
  *  Returns the plaintext access token — caller must never persist or log it. */
-async function ensureValidAccessToken(connection: ConnectionRow): Promise<string> {
+async function ensureValidAccessToken(connection: ConnectionRow, companyId: string): Promise<string> {
   const isExpired = connection.token_expires_at ? new Date(connection.token_expires_at) <= new Date() : false
 
   if (!isExpired) {
@@ -58,6 +58,7 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
     .eq('id', connection.id)
 
   await logSyncEvent({
+    companyId,
     connectionId: connection.id,
     provider: 'mercadolivre',
     eventType: 'token_refreshed',
@@ -72,12 +73,13 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
  * Runs a full products + inventory sync for the connected Mercado Livre account.
  * Orders/revenue are explicitly out of scope — see docs/integrations/mercadolivre-sync.md.
  */
-export async function runMercadoLivreSync(): Promise<SyncSummary> {
+export async function runMercadoLivreSync(companyId: string): Promise<SyncSummary> {
   const startedAt = new Date()
   const supabase = await getSupabaseAdmin()
-  const connection = await loadConnection()
+  const connection = await loadConnection(companyId)
 
   await logSyncEvent({
+    companyId,
     connectionId: connection.id,
     provider: 'mercadolivre',
     eventType: 'sync_started',
@@ -90,7 +92,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
   let inventoryUpdated = 0
 
   try {
-    const accessToken = await ensureValidAccessToken(connection)
+    const accessToken = await ensureValidAccessToken(connection, companyId)
     const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
 
     for (const itemId of itemIds) {
@@ -101,7 +103,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
 
         const { error: productError } = await supabase.from('marketplace_products').upsert(
           {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: companyId,
             connection_id: connection.id,
             provider: 'mercadolivre',
             ...productRow,
@@ -113,7 +115,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
 
         const { error: inventoryError } = await supabase.from('marketplace_inventory').upsert(
           {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: companyId,
             connection_id: connection.id,
             provider: 'mercadolivre',
             last_sync_at: new Date().toISOString(),
@@ -141,6 +143,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
       .eq('id', connection.id)
 
     await logSyncEvent({
+      companyId,
       connectionId: connection.id,
       provider: 'mercadolivre',
       eventType: errors.length === 0 ? 'sync_success' : hadPartialFailures ? 'sync_partial' : 'sync_error',
@@ -159,6 +162,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
     await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id)
 
     await logSyncEvent({
+      companyId,
       connectionId: connection.id,
       provider: 'mercadolivre',
       eventType: 'sync_error',

@@ -15,10 +15,15 @@ export interface MLTokenErrorResponse {
   message?: string
 }
 
-/** Signed OAuth `state` payload — see docs/integrations/mercadolivre-oauth.md */
+/** Signed OAuth `state` payload — see docs/integrations/mercadolivre-oauth.md.
+ *  companyId viaja assinado aqui porque o callback (chamado pelo Mercado
+ *  Livre, não pelo nosso app) não tem acesso à sessão/Authorization header
+ *  de quem iniciou o fluxo — o state assinado é o único jeito de saber de
+ *  qual empresa era a tentativa quando o redirect volta. */
 export interface OAuthStatePayload {
   nonce: string
   issuedAt: number
+  companyId: string
 }
 
 /** GET /users/{user_id}/items/search response (subset used). */

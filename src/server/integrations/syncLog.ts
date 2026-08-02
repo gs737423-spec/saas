@@ -1,7 +1,11 @@
 import { getSupabaseAdmin } from './supabaseAdmin.js'
-import { DEFAULT_COMPANY_ID, type Provider, type SyncLogEventType, type SyncLogStatus } from './types.js'
+import type { Provider, SyncLogEventType, SyncLogStatus } from './types.js'
 
 export interface LogSyncEventParams {
+  /** Omitido só nos poucos caminhos de erro pré-autenticação (state OAuth inválido,
+   *  env var faltando) onde ainda não é possível saber de qual empresa é a tentativa —
+   *  nesses casos a coluna cai no default do schema, nunca num valor de código. */
+  companyId?: string
   connectionId: string | null
   provider: Provider
   eventType: SyncLogEventType
@@ -18,8 +22,7 @@ export interface LogSyncEventParams {
 export async function logSyncEvent(params: LogSyncEventParams): Promise<void> {
   try {
     const supabase = await getSupabaseAdmin()
-    const { error } = await supabase.from('sync_logs').insert({
-      company_id: DEFAULT_COMPANY_ID,
+    const row: Record<string, unknown> = {
       connection_id: params.connectionId,
       provider: params.provider,
       event_type: params.eventType,
@@ -28,7 +31,9 @@ export async function logSyncEvent(params: LogSyncEventParams): Promise<void> {
       payload: params.payload ?? null,
       started_at: params.startedAt?.toISOString() ?? null,
       finished_at: params.finishedAt?.toISOString() ?? null,
-    })
+    }
+    if (params.companyId) row.company_id = params.companyId
+    const { error } = await supabase.from('sync_logs').insert(row)
     if (error) {
       console.error('[sync_logs] insert failed:', error.message)
     }

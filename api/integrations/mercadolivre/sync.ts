@@ -3,6 +3,7 @@ import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/in
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
+import { requireCompany } from '../../../src/server/auth/requireCompany.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -33,7 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const summary = await runMercadoLivreSync()
+    const auth = await requireCompany(req, res)
+    if (!auth) return
+
+    const summary = await runMercadoLivreSync(auth.companyId)
     res.status(200).json({ ok: true, ...summary })
   } catch (err) {
     if (err instanceof ConnectionMissingError) {
