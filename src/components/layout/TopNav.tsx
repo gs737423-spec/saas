@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
-import { apiFetchJson } from '@/lib/apiFetch'
+import { apiFetch } from '@/lib/apiFetch'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
@@ -60,7 +60,10 @@ export default function TopNav() {
   const isAdminArea = location.pathname.startsWith('/app/admin')
 
   useEffect(() => {
-    apiFetchJson<{ ok: boolean; isAdmin: boolean }>('/api/admin/me').then((r) => setIsAdmin(!!r?.isAdmin))
+    // Reaproveita /api/admin/companies em vez de um endpoint /api/admin/me
+    // dedicado — Vercel Hobby tem teto de 12 serverless functions por
+    // deploy, cada arquivo em api/** conta como uma. 200 = é admin.
+    apiFetch('/api/admin/companies').then((res) => setIsAdmin(res.ok)).catch(() => setIsAdmin(false))
   }, [])
 
   useEffect(() => {
