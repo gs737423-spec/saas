@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff, Users2, ShieldCheck, Settings } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff, Users2, ShieldCheck, Settings } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 
 interface Company {
   id: string
@@ -11,8 +12,19 @@ interface Company {
   contactEmail: string | null
   contactPhone: string | null
   notes: string | null
+  cnpj: string | null
+  whatsapp: string | null
+  website: string | null
+  status: string
   memberCount: number
 }
+
+const STATUS_OPTIONS = [
+  { value: 'onboarding', label: 'Onboarding' },
+  { value: 'ativo', label: 'Ativa' },
+  { value: 'em_risco', label: 'Em risco' },
+  { value: 'suspenso', label: 'Suspensa' },
+]
 
 interface Member {
   userId: string
@@ -45,6 +57,10 @@ export default function AdminCompany() {
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [notes, setNotes] = useState('')
+  const [cnpj, setCnpj] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [website, setWebsite] = useState('')
+  const [status, setStatus] = useState('ativo')
   const [saving, setSaving] = useState(false)
   const [saveFeedback, setSaveFeedback] = useState<Feedback>(null)
 
@@ -76,6 +92,10 @@ export default function AdminCompany() {
           setContactEmail(found.contactEmail ?? '')
           setContactPhone(found.contactPhone ?? '')
           setNotes(found.notes ?? '')
+          setCnpj(found.cnpj ?? '')
+          setWhatsapp(found.whatsapp ?? '')
+          setWebsite(found.website ?? '')
+          setStatus(found.status ?? 'ativo')
         }
         setUnauthorized(false)
         setConfigMissing(false)
@@ -121,7 +141,7 @@ export default function AdminCompany() {
       const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes }),
+        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status }),
       })
       if (res?.ok) {
         setSaveFeedback({ type: 'success', text: 'Salvo.' })
@@ -232,7 +252,10 @@ export default function AdminCompany() {
   const isConnected = integration?.status === 'connected'
 
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <div className="flex flex-col gap-5 pb-10 lg:flex-row lg:gap-6">
+      <AdminSidebar />
+
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
       <Link to="/app/admin" className="flex w-fit items-center gap-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary">
         <ArrowLeft className="h-3.5 w-3.5" /> Todas as empresas
       </Link>
@@ -255,11 +278,29 @@ export default function AdminCompany() {
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
         <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-2xl p-5">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-cyan/50 focus:outline-none"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] text-text-muted">Nome</label>
               <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-text-muted">CNPJ</label>
+              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] text-text-muted">E-mail de contato</label>
@@ -273,6 +314,25 @@ export default function AdminCompany() {
               <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
                 <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                 <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-text-muted">WhatsApp</label>
+              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+              </div>
+              {whatsapp && (
+                <a href={`https://wa.me/55${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 w-fit text-[10px] text-accent-emerald hover:underline">
+                  abrir conversa
+                </a>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-text-muted">Site</label>
+              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                <Globe className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="cliente.com.br" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
               </div>
             </div>
             <div className="flex flex-col gap-1 sm:col-span-2">
@@ -397,6 +457,7 @@ export default function AdminCompany() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

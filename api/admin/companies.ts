@@ -4,6 +4,8 @@ import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 
 const DELETE_LIMIT = { max: 10, windowSeconds: 1800 }
+const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status'
+const STATUSES = ['onboarding', 'ativo', 'em_risco', 'suspenso'] as const
 
 function mapCompany(c: {
   id: string
@@ -12,6 +14,10 @@ function mapCompany(c: {
   contact_email: string | null
   contact_phone: string | null
   notes: string | null
+  cnpj: string | null
+  whatsapp: string | null
+  website: string | null
+  status: string
   company_members?: { count: number }[]
 }) {
   return {
@@ -21,6 +27,10 @@ function mapCompany(c: {
     contactEmail: c.contact_email,
     contactPhone: c.contact_phone,
     notes: c.notes,
+    cnpj: c.cnpj,
+    whatsapp: c.whatsapp,
+    website: c.website,
+    status: c.status,
     memberCount: Array.isArray(c.company_members) ? (c.company_members[0]?.count ?? 0) : 0,
   }
 }
@@ -35,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const { data, error } = await supabase
         .from('companies')
-        .select('id, name, created_at, contact_email, contact_phone, notes, company_members(count)')
+        .select(`${COMPANY_COLUMNS}, company_members(count)`)
         .order('created_at', { ascending: false })
       if (error) throw new Error(error.message)
 
@@ -57,6 +67,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const contactEmail = typeof req.body?.contactEmail === 'string' ? req.body.contactEmail.trim() || null : null
       const contactPhone = typeof req.body?.contactPhone === 'string' ? req.body.contactPhone.trim() || null : null
       const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() || null : null
+      const cnpj = typeof req.body?.cnpj === 'string' ? req.body.cnpj.trim() || null : null
+      const whatsapp = typeof req.body?.whatsapp === 'string' ? req.body.whatsapp.trim() || null : null
+      const website = typeof req.body?.website === 'string' ? req.body.website.trim() || null : null
       if (!name) {
         res.status(400).json({ ok: false, message: 'Nome da empresa é obrigatório.' })
         return
@@ -64,8 +77,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data, error } = await supabase
         .from('companies')
-        .insert({ name, contact_email: contactEmail, contact_phone: contactPhone, notes })
-        .select('id, name, created_at, contact_email, contact_phone, notes')
+        .insert({ name, contact_email: contactEmail, contact_phone: contactPhone, notes, cnpj, whatsapp, website })
+        .select(COMPANY_COLUMNS)
         .single()
       if (error) throw new Error(error.message)
 
@@ -85,11 +98,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return
       }
 
+      const body = req.body ?? {}
       const update: Record<string, string | null> = {}
-      if (typeof req.body?.name === 'string' && req.body.name.trim()) update.name = req.body.name.trim()
-      if ('contactEmail' in (req.body ?? {})) update.contact_email = typeof req.body.contactEmail === 'string' ? req.body.contactEmail.trim() || null : null
-      if ('contactPhone' in (req.body ?? {})) update.contact_phone = typeof req.body.contactPhone === 'string' ? req.body.contactPhone.trim() || null : null
-      if ('notes' in (req.body ?? {})) update.notes = typeof req.body.notes === 'string' ? req.body.notes.trim() || null : null
+      if (typeof body.name === 'string' && body.name.trim()) update.name = body.name.trim()
+      if ('contactEmail' in body) update.contact_email = typeof body.contactEmail === 'string' ? body.contactEmail.trim() || null : null
+      if ('contactPhone' in body) update.contact_phone = typeof body.contactPhone === 'string' ? body.contactPhone.trim() || null : null
+      if ('notes' in body) update.notes = typeof body.notes === 'string' ? body.notes.trim() || null : null
+      if ('cnpj' in body) update.cnpj = typeof body.cnpj === 'string' ? body.cnpj.trim() || null : null
+      if ('whatsapp' in body) update.whatsapp = typeof body.whatsapp === 'string' ? body.whatsapp.trim() || null : null
+      if ('website' in body) update.website = typeof body.website === 'string' ? body.website.trim() || null : null
+      if ('status' in body && STATUSES.includes(body.status)) update.status = body.status
 
       if (Object.keys(update).length === 0) {
         res.status(400).json({ ok: false, message: 'Nenhum campo pra atualizar.' })
@@ -100,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('companies')
         .update(update)
         .eq('id', id)
-        .select('id, name, created_at, contact_email, contact_phone, notes, company_members(count)')
+        .select(`${COMPANY_COLUMNS}, company_members(count)`)
         .single()
       if (error) throw new Error(error.message)
 
