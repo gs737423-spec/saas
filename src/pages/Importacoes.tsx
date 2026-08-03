@@ -13,6 +13,7 @@ import {
 import { useConnections, getMarketplaceColor, type IntegrationStatus } from '@/contexts/ConnectionContext'
 import type { Marketplace } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import PageHeader from '@/components/layout/PageHeader'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Shopee', 'Amazon', 'Loja Própria']
 
@@ -201,6 +202,7 @@ export default function Importacoes() {
 
   return (
     <div className="space-y-2.5">
+      <PageHeader />
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-accent-cyan" />

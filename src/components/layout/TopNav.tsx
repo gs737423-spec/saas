@@ -166,15 +166,17 @@ export default function TopNav() {
                 <p className="truncate text-sm font-medium text-text-primary">{displayName}</p>
                 <p className="truncate text-[11px] text-text-muted">{user?.email}</p>
               </div>
-              <NavLink
-                to="/app/configuracoes"
-                onClick={() => setShowUserMenu(false)}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
-              >
-                <User className="h-4 w-4" />
-                Minha Conta
-              </NavLink>
-              {isAdmin && (
+              {!isAdminArea && (
+                <NavLink
+                  to="/app/configuracoes"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                >
+                  <User className="h-4 w-4" />
+                  Minha Conta
+                </NavLink>
+              )}
+              {isAdmin && !isAdminArea && (
                 <NavLink
                   to="/app/admin"
                   onClick={() => setShowUserMenu(false)}
@@ -182,6 +184,16 @@ export default function TopNav() {
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Administração
+                </NavLink>
+              )}
+              {isAdminArea && (
+                <NavLink
+                  to="/app"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar à plataforma
                 </NavLink>
               )}
               <button
