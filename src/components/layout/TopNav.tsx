@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Store,
@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
@@ -51,10 +52,12 @@ function displayNameFromEmail(email: string | undefined): string {
 export default function TopNav() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const isAdminArea = location.pathname.startsWith('/app/admin')
 
   useEffect(() => {
     apiFetchJson<{ ok: boolean; isAdmin: boolean }>('/api/admin/me').then((r) => setIsAdmin(!!r?.isAdmin))
@@ -90,24 +93,50 @@ export default function TopNav() {
 
       <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
 
-      {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
-      <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
-        {navItems.map((item) => (
-          <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
-            <item.icon className="h-4 w-4 shrink-0" />
-            <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+      {/* Área admin — nunca mostra a navegação de cliente (Marketplaces,
+          Produtos etc. levam a dados ilustrativos, sem sentido aqui dentro).
+          Só um indicador + volta pra plataforma. */}
+      {isAdminArea ? (
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <NavLink
+            to="/app"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar à plataforma
           </NavLink>
-        ))}
-      </nav>
+          <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border-subtle sm:block" />
+          <span className="hidden items-center gap-1.5 text-[13px] font-bold text-accent-cyan sm:flex">
+            <ShieldCheck className="h-4 w-4" />
+            Painel Administrativo
+          </span>
+        </div>
+      ) : (
+        <>
+          {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
+          <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
+            {navItems.map((item) => (
+              <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
 
-      {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
-      <div className="min-w-0 flex-1 md:hidden" />
+          {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
+          <div className="min-w-0 flex-1 md:hidden" />
+        </>
+      )}
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
-        <SearchMenu />
-        <NotificationsMenu />
+        {!isAdminArea && (
+          <>
+            <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
+            <SearchMenu />
+            <NotificationsMenu />
+          </>
+        )}
 
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
 

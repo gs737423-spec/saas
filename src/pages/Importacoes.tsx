@@ -117,6 +117,10 @@ function MercadoLivreCard() {
               <span className="text-text-muted">Estoque atualizado</span>
               <p className="text-sm font-semibold text-text-primary">{mercadoLivre.inventoryCount.toLocaleString('pt-BR')}</p>
             </div>
+            <div>
+              <span className="text-text-muted">Pedidos importados</span>
+              <p className="text-sm font-semibold text-text-primary">{mercadoLivre.ordersCount.toLocaleString('pt-BR')}</p>
+            </div>
           </div>
         )}
 

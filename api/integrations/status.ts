@@ -18,6 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         externalAccountId: null,
         productsCount: 0,
         inventoryCount: 0,
+        ordersCount: 0,
         lastError: null,
         message: 'Configuração do Supabase pendente.',
       }
@@ -36,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         externalAccountId: null,
         productsCount: 0,
         inventoryCount: 0,
+        ordersCount: 0,
         lastError: null,
         message: 'Credenciais do Mercado Livre ainda não configuradas.',
       }
@@ -66,6 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         externalAccountId: null,
         productsCount: 0,
         inventoryCount: 0,
+        ordersCount: 0,
         lastError: null,
       }
       res.status(200).json(response)
@@ -74,9 +77,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const isExpired = connection.status === 'connected' && connection.token_expires_at && new Date(connection.token_expires_at) < new Date()
 
-    const [{ count: productsCount }, { count: inventoryCount }] = await Promise.all([
+    const [{ count: productsCount }, { count: inventoryCount }, { count: ordersCount }] = await Promise.all([
       supabase.from('marketplace_products').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
       supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
     ])
 
     const finalStatus = isExpired ? 'expired' : connection.status
@@ -89,6 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       externalAccountId: connection.external_account_id,
       productsCount: productsCount ?? 0,
       inventoryCount: inventoryCount ?? 0,
+      ordersCount: ordersCount ?? 0,
       lastError: connection.last_error,
     }
     res.status(200).json(response)
@@ -103,6 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       externalAccountId: null,
       productsCount: 0,
       inventoryCount: 0,
+        ordersCount: 0,
       lastError: null,
       message: 'Erro controlado ao consultar status da integração.',
     }

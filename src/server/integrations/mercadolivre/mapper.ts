@@ -1,4 +1,4 @@
-import type { MLItemDetail } from './types.js'
+import type { MLItemDetail, MLOrder } from './types.js'
 
 function extractSku(item: MLItemDetail): string | null {
   if (item.seller_custom_field) return item.seller_custom_field
@@ -56,4 +56,46 @@ export function mapItemToInventoryRow(item: MLItemDetail): NormalizedInventoryRo
     sold_quantity_30d: null,
     raw_payload: item,
   }
+}
+
+export interface NormalizedOrderRow {
+  external_order_id: string
+  status: string
+  total_amount: number
+  currency: string
+  buyer_external_id: string | null
+  ordered_at: string
+  raw_payload: MLOrder
+}
+
+export interface NormalizedOrderItemRow {
+  external_product_id: string
+  sku: string | null
+  title: string
+  quantity: number
+  unit_price: number
+}
+
+/** O dashboard nunca deve ler o shape cru de `MLOrder` — só este mapper traduz
+ *  pra o modelo interno (mesma regra do mapItemTo* acima). */
+export function mapOrderToRow(order: MLOrder): NormalizedOrderRow {
+  return {
+    external_order_id: String(order.id),
+    status: order.status,
+    total_amount: order.total_amount,
+    currency: order.currency_id,
+    buyer_external_id: order.buyer ? String(order.buyer.id) : null,
+    ordered_at: order.date_closed ?? order.date_created,
+    raw_payload: order,
+  }
+}
+
+export function mapOrderItems(order: MLOrder): NormalizedOrderItemRow[] {
+  return order.order_items.map((oi) => ({
+    external_product_id: oi.item.id,
+    sku: oi.item.seller_sku ?? null,
+    title: oi.item.title,
+    quantity: oi.quantity,
+    unit_price: oi.unit_price,
+  }))
 }

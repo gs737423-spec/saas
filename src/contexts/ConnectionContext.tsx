@@ -11,6 +11,7 @@ export interface MercadoLivreStatus {
   externalAccountId: string | null
   productsCount: number
   inventoryCount: number
+  ordersCount: number
   lastError: string | null
 }
 
@@ -26,6 +27,7 @@ export interface SyncLogEntry {
 interface SyncSummary {
   productsImported: number
   inventoryUpdated: number
+  ordersImported: number
   errors: string[]
   durationMs: number
   source: 'real' | 'demo' | 'config_missing'

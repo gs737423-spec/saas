@@ -44,3 +44,31 @@ export interface MLItemDetail {
   seller_custom_field?: string | null
   attributes?: { id: string; value_name: string | null }[]
 }
+
+/** GET /orders/search response (subset used) — see
+ *  https://developers.mercadolivre.com.br/pt_br/gerenciamento-de-vendas */
+export interface MLOrderSearchResponse {
+  results: MLOrder[]
+  paging: { total: number; offset: number; limit: number }
+}
+
+export interface MLOrderItem {
+  item: {
+    id: string
+    title: string
+    seller_sku?: string | null
+  }
+  quantity: number
+  unit_price: number
+}
+
+export interface MLOrder {
+  id: number
+  status: string
+  date_created: string
+  date_closed: string | null
+  total_amount: number
+  currency_id: string
+  buyer: { id: number } | null
+  order_items: MLOrderItem[]
+}

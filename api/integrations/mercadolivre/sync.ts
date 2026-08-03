@@ -25,6 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const summary: SyncSummary & { ok: boolean; message?: string } = {
         productsImported: 0,
         inventoryUpdated: 0,
+        ordersImported: 0,
         errors: [`config_missing: ${missing.join(', ')}`],
         durationMs: 0,
         source: 'config_missing',

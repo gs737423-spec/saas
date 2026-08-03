@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
+import { getSupabaseAdmin, getMissingEnvVars, CORE_ENV_VARS } from '../integrations/supabaseAdmin.js'
 
 /**
  * Valida o Bearer token (access_token do Supabase Auth) enviado pelo client
@@ -8,6 +8,15 @@ import { getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
  * decodificar localmente, então um token expirado/forjado é rejeitado.
  */
 export async function requireUser(req: VercelRequest, res: VercelResponse) {
+  // Sem isso, toda rota que chama requireUser derruba a função inteira
+  // (FUNCTION_INVOCATION_FAILED) em vez de responder — mesma checagem que
+  // status.ts/logs.ts/inventory.ts já fazem antes de tocar no Supabase.
+  const missing = getMissingEnvVars(CORE_ENV_VARS)
+  if (missing.length > 0) {
+    res.status(503).json({ ok: false, error: 'config_missing', message: 'Configuração do Supabase pendente no servidor.' })
+    return null
+  }
+
   const header = req.headers.authorization
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null
 

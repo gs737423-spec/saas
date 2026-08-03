@@ -2,8 +2,8 @@ import { getSupabaseAdmin } from '../supabaseAdmin.js'
 import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
 import type { SyncSummary } from '../types.js'
-import { getItemDetail, searchUserItemIds, MercadoLivreApiError } from './client.js'
-import { mapItemToInventoryRow, mapItemToProductRow } from './mapper.js'
+import { getItemDetail, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
+import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 
 export class ConnectionMissingError extends Error {}
@@ -70,8 +70,9 @@ async function ensureValidAccessToken(connection: ConnectionRow, companyId: stri
 }
 
 /**
- * Runs a full products + inventory sync for the connected Mercado Livre account.
- * Orders/revenue are explicitly out of scope — see docs/integrations/mercadolivre-sync.md.
+ * Runs a full products + inventory + orders sync for the connected Mercado
+ * Livre account. Orders power revenue/ticket/product-history aggregation —
+ * see docs/integrations/mercadolivre-sync.md.
  */
 export async function runMercadoLivreSync(companyId: string): Promise<SyncSummary> {
   const startedAt = new Date()
@@ -90,6 +91,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   const errors: string[] = []
   let productsImported = 0
   let inventoryUpdated = 0
+  let ordersImported = 0
 
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
@@ -133,6 +135,42 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       }
     }
 
+    try {
+      const orders = await searchOrders(connection.seller_id!, accessToken)
+      for (const order of orders) {
+        const orderRow = mapOrderToRow(order)
+        const { data: upsertedOrder, error: orderError } = await supabase
+          .from('orders')
+          .upsert(
+            { company_id: companyId, connection_id: connection.id, provider: 'mercadolivre', ...orderRow },
+            { onConflict: 'company_id,connection_id,external_order_id' }
+          )
+          .select('id')
+          .single()
+        if (orderError) throw new Error(`Failed to upsert order ${order.id}: ${orderError.message}`)
+        ordersImported += 1
+
+        // Substitui os itens do pedido a cada sync (nunca acumula duplicado se
+        // o pedido já existia) — pedido não muda item depois de fechado, mas
+        // reprocessar é seguro e mais simples que diffar item a item.
+        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id)
+        const itemRows = mapOrderItems(order).map((item) => ({
+          company_id: companyId,
+          order_id: upsertedOrder.id,
+          ...item,
+        }))
+        if (itemRows.length > 0) {
+          const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
+          if (itemsError) throw new Error(`Failed to insert items for order ${order.id}: ${itemsError.message}`)
+        }
+      }
+    } catch (orderErr) {
+      const message = orderErr instanceof MercadoLivreApiError
+        ? orderErr.message
+        : orderErr instanceof Error ? orderErr.message : 'Unknown error processing orders'
+      errors.push(message)
+    }
+
     const finishedAt = new Date()
     const durationMs = finishedAt.getTime() - startedAt.getTime()
     const hadPartialFailures = errors.length > 0 && productsImported > 0
@@ -148,13 +186,13 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       provider: 'mercadolivre',
       eventType: errors.length === 0 ? 'sync_success' : hadPartialFailures ? 'sync_partial' : 'sync_error',
       status: errors.length === 0 ? 'success' : hadPartialFailures ? 'success' : 'error',
-      message: errors.length === 0 ? `Synced ${productsImported} products` : `${errors.length} item(s) failed during sync`,
-      payload: { productsImported, inventoryUpdated, errorCount: errors.length },
+      message: errors.length === 0 ? `Synced ${productsImported} products, ${ordersImported} orders` : `${errors.length} item(s) failed during sync`,
+      payload: { productsImported, inventoryUpdated, ordersImported, errorCount: errors.length },
       startedAt,
       finishedAt,
     })
 
-    return { productsImported, inventoryUpdated, errors, durationMs, source: 'real' }
+    return { productsImported, inventoryUpdated, ordersImported, errors, durationMs, source: 'real' }
   } catch (err) {
     const finishedAt = new Date()
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
@@ -172,6 +210,6 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       finishedAt,
     })
 
-    return { productsImported, inventoryUpdated, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
+    return { productsImported, inventoryUpdated, ordersImported, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
   }
 }
