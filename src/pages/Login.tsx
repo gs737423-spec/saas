@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { whatsappAccessHelpUrl } from '@/lib/whatsapp'
@@ -27,6 +27,11 @@ type View = 'login' | 'forgot'
 export default function Login() {
   const { signIn, resetPassword, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  // ProtectedRoute manda pra cá com state.from = a rota que o usuário
+  // tentava acessar (ex: /app/admin) — sem isso, login sempre jogava todo
+  // mundo em /app fixo, mesmo quem tinha digitado /app/admin direto.
+  const redirectTo = (location.state as { from?: string } | null)?.from || '/app'
 
   const [view, setView] = useState<View>('login')
   const [email, setEmail] = useState('')
@@ -67,7 +72,7 @@ export default function Login() {
   if (authLoading) return null
 
   if (isAuthenticated) {
-    return <Navigate to="/app" replace />
+    return <Navigate to={redirectTo} replace />
   }
 
   const inCooldown = cooldownUntil !== null && cooldownLeft > 0
@@ -82,7 +87,7 @@ export default function Login() {
       const { error: signInError } = await signIn(email, password)
       if (!signInError) {
         attemptsRef.current = 0
-        navigate('/app', { replace: true })
+        navigate(redirectTo, { replace: true })
         return
       }
 
