@@ -176,7 +176,7 @@ export default function Admin() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar empresa..."
-              className="min-w-0 flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-muted focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-muted/45 focus:outline-none"
             />
           </div>
 
@@ -185,7 +185,7 @@ export default function Admin() {
               value={newCompanyName}
               onChange={(e) => setNewCompanyName(e.target.value)}
               placeholder="Nova empresa"
-              className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:border-accent-cyan/50 focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
             />
             <button
               type="submit"
@@ -216,7 +216,7 @@ export default function Admin() {
               >
                 <span
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
-                  style={{ background: `${hueFor(c.id)}22`, color: hueFor(c.id) }}
+                  style={{ background: hueFor(c.id), color: '#081423' }}
                 >
                   {initialsFor(c.name)}
                 </span>
@@ -372,7 +372,7 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
       <div className="flex items-center gap-3">
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold"
-          style={{ background: `${hueFor(company.id)}22`, color: hueFor(company.id) }}
+          style={{ background: hueFor(company.id), color: '#081423' }}
         >
           {initialsFor(company.name)}
         </span>
@@ -388,7 +388,7 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
         {/* Dados de contato */}
         <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-2xl p-5">
           <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
@@ -401,19 +401,19 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
               <label className="text-[11px] text-text-muted">E-mail de contato</label>
               <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contato@cliente.com" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none" />
+                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contato@cliente.com" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
               </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] text-text-muted">Telefone</label>
               <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
                 <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none" />
+                <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
               </div>
             </div>
             <div className="flex flex-col gap-1 sm:col-span-2">
               <label className="text-[11px] text-text-muted">Observações (plano, valor, data do contrato...)</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-cyan/50 focus:outline-none" />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none" />
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -447,7 +447,9 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
                   <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
                 </div>
               </div>
-              {integration.lastSyncAt && <p className="text-[11px] text-text-muted">Última sync {timeAgo(integration.lastSyncAt)}</p>}
+              <p className="text-[11px] text-text-muted">
+                {integration.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'Cliente ainda não conectou nenhum marketplace.'}
+              </p>
             </div>
           ) : (
             <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
@@ -473,7 +475,7 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
               <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-white/5">
                 <span
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                  style={{ background: `${hueFor(m.userId)}22`, color: hueFor(m.userId) }}
+                  style={{ background: hueFor(m.userId), color: '#081423' }}
                 >
                   {initialsFor(m.email ?? m.userId)}
                 </span>
@@ -497,7 +499,7 @@ function CompanyDetail({ company, onChanged, onDeleted }: { company: Company; on
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="email@cliente.com"
-            className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted focus:border-accent-cyan/50 focus:outline-none"
+            className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
           />
           <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan/15 px-3 text-xs font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/25 disabled:opacity-40">
             {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
