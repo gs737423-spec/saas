@@ -11,9 +11,11 @@ import {
   Settings,
   LogOut,
   User,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
+import { apiFetchJson } from '@/lib/apiFetch'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
@@ -51,7 +53,12 @@ export default function TopNav() {
   const navigate = useNavigate()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    apiFetchJson<{ ok: boolean; isAdmin: boolean }>('/api/admin/me').then((r) => setIsAdmin(!!r?.isAdmin))
+  }, [])
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -138,6 +145,16 @@ export default function TopNav() {
                 <User className="h-4 w-4" />
                 Minha Conta
               </NavLink>
+              {isAdmin && (
+                <NavLink
+                  to="/app/admin"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-accent-cyan transition-colors hover:bg-white/5"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administração
+                </NavLink>
+              )}
               <button
                 onClick={() => { setShowUserMenu(false); void signOut().then(() => navigate('/')) }}
                 className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"

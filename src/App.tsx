@@ -13,6 +13,7 @@ import Financeiro from '@/pages/Financeiro'
 import Relatorios from '@/pages/Relatorios'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
+import Admin from '@/pages/Admin'
 
 // Shell autenticado da plataforma. Montado em `/app/*` sob <ProtectedRoute>
 // (ver main.tsx) — a guarda de sessão real já aconteceu lá, este componente
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="admin" element={<Admin />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>
           </div>
