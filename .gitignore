@@ -29,5 +29,6 @@ pnpm-debug.log*
 
 .vercel
 
-# Configurações locais do Obsidian
+# Configuraï¿½ï¿½es locais do Obsidian
 .obsidian/
+.env*

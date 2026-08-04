@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff, Users2, ShieldCheck, Settings } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff, Users2, ShieldCheck, Settings, Headset, CreditCard, Plug } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
-import AdminSidebar from '@/components/admin/AdminSidebar'
+import AdminSidebar, { type AdminCompanyTab } from '@/components/admin/AdminSidebar'
+
+const TAB_LABEL: Record<AdminCompanyTab, string> = {
+  'visao-geral': 'Visão Geral',
+  acessos: 'Acessos',
+  integracoes: 'Integrações',
+  cobranca: 'Cobrança',
+  suporte: 'Suporte',
+  configuracoes: 'Configurações',
+}
 
 interface Company {
   id: string
@@ -77,6 +86,8 @@ export default function AdminCompany() {
 
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const [tab, setTab] = useState<AdminCompanyTab>('visao-geral')
 
   const loadCompany = useCallback(async () => {
     try {
@@ -253,211 +264,272 @@ export default function AdminCompany() {
 
   return (
     <div className="flex flex-col gap-5 pb-10 lg:flex-row lg:gap-6">
-      <AdminSidebar />
+      <AdminSidebar activeTab={tab} onTabChange={setTab} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">
-      <Link to="/app/admin" className="flex w-fit items-center gap-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary">
-        <ArrowLeft className="h-3.5 w-3.5" /> Todas as empresas
-      </Link>
-
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
-          {initialsFor(company.name)}
-        </span>
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold tracking-tight text-text-primary">{company.name}</h1>
-          <p className="text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)}</p>
+        <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+          <Link to="/app/admin" className="flex items-center gap-1.5 transition-colors hover:text-text-primary">
+            <ArrowLeft className="h-3.5 w-3.5" /> Empresas
+          </Link>
+          <span>/</span>
+          <span className="truncate text-text-secondary">{company.name}</span>
+          <span>/</span>
+          <span className="truncate text-text-primary">{TAB_LABEL[tab]}</span>
         </div>
-        <span className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-          isConnected ? 'border-accent-emerald/30 bg-accent-emerald/10 text-accent-emerald' : 'border-border-subtle bg-bg-primary/40 text-text-muted'
-        }`}>
-          {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-          {isConnected ? 'Integração ativa' : 'Sem integração'}
-        </span>
-      </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.3fr_1fr]">
-        <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-2xl p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-cyan/50 focus:outline-none"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
+            {initialsFor(company.name)}
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold tracking-tight text-text-primary">{company.name}</h1>
+            <p className="text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)}</p>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">Nome</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
+          <span className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+            isConnected ? 'border-accent-emerald/30 bg-accent-emerald/10 text-accent-emerald' : 'border-border-subtle bg-bg-primary/40 text-text-muted'
+          }`}>
+            {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+            {isConnected ? 'Integração ativa' : 'Sem integração'}
+          </span>
+        </div>
+
+        {tab === 'visao-geral' && (
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                <Users2 className="h-4 w-4 text-text-muted" />
+                <p className="text-2xl font-bold tabular-nums text-text-primary">{members.length}</p>
+                <p className="text-[11px] text-text-muted">{members.length === 1 ? 'acesso vinculado' : 'acessos vinculados'}</p>
+              </button>
+              <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                <Plug className="h-4 w-4 text-text-muted" />
+                <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
+                <p className="text-[11px] text-text-muted">produtos sincronizados</p>
+              </button>
+              <button type="button" onClick={() => setTab('configuracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                <Settings className="h-4 w-4 text-text-muted" />
+                <p className="truncate text-sm font-semibold text-text-primary">{STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}</p>
+                <p className="text-[11px] text-text-muted">status da conta</p>
+              </button>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">CNPJ</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+
+            <div className="glass-panel rounded-2xl p-5">
+              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Contato</h3>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm text-text-secondary sm:grid-cols-2">
+                <p><span className="text-text-muted">E-mail: </span>{company.contactEmail ?? 'não cadastrado'}</p>
+                <p><span className="text-text-muted">Telefone: </span>{company.contactPhone ?? 'não cadastrado'}</p>
+                <p><span className="text-text-muted">CNPJ: </span>{company.cnpj ?? 'não cadastrado'}</p>
+                <p><span className="text-text-muted">Site: </span>{company.website ?? 'não cadastrado'}</p>
               </div>
+              {company.notes && <p className="mt-3 border-t border-border-subtle pt-3 text-sm text-text-secondary">{company.notes}</p>}
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">E-mail de contato</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contato@cliente.com" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+          </>
+        )}
+
+        {tab === 'acessos' && (
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+              <Users2 className="h-3.5 w-3.5" />
+              Acessos ({members.length})
+            </h3>
+
+            {loadingMembers ? (
+              <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+            ) : (
+              <div className="flex flex-col gap-1 border-b border-border-subtle pb-3">
+                {members.length === 0 && <p className="py-1.5 text-xs text-text-muted">Nenhum acesso vinculado ainda.</p>}
+                {members.map((m) => (
+                  <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-white/5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: hueFor(m.userId), color: '#081423' }}>
+                      {initialsFor(m.email ?? m.userId)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{m.email ?? m.userId}</span>
+                    <span className="shrink-0 text-[10px] text-text-muted">desde {timeAgo(m.addedAt)}</span>
+                    <button
+                      onClick={() => handleRemoveMember(m.userId)}
+                      disabled={removingUserId === m.userId}
+                      className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
+                    >
+                      {removingUserId === m.userId ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">Telefone</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">WhatsApp</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
-              </div>
-              {whatsapp && (
-                <a href={`https://wa.me/55${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 w-fit text-[10px] text-accent-emerald hover:underline">
-                  abrir conversa
-                </a>
-              )}
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-text-muted">Site</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                <Globe className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="cliente.com.br" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className="text-[11px] text-text-muted">Observações (plano, valor, data do contrato...)</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none" />
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button type="submit" disabled={saving} className="flex items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-2 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:opacity-40">
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Salvar
-            </button>
-            {saveFeedback && (
-              <span className={`flex items-center gap-1.5 text-xs ${saveFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-                {saveFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                {saveFeedback.text}
-              </span>
+            )}
+
+            <form onSubmit={handleInvite} className="mt-3 flex gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@cliente.com"
+                className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
+              />
+              <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan/15 px-3 text-xs font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/25 disabled:opacity-40">
+                {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                Convidar
+              </button>
+            </form>
+            {inviteFeedback && (
+              <p className={`mt-2 flex items-center gap-1.5 text-xs ${inviteFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                {inviteFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                {inviteFeedback.text}
+              </p>
             )}
           </div>
-        </form>
+        )}
 
-        <div className="glass-panel rounded-2xl p-5">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Integração Mercado Livre</h3>
-          {loadingIntegration ? (
-            <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
-          ) : integration ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-baseline gap-4">
-                <div>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.productsCount}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+        {tab === 'integracoes' && (
+          <div className="glass-panel rounded-2xl p-5">
+            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Integração Mercado Livre</h3>
+            {loadingIntegration ? (
+              <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+            ) : integration ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-baseline gap-4">
+                  <div>
+                    <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.productsCount}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.ordersCount}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.ordersCount}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
-                </div>
+                <p className="text-[11px] text-text-muted">
+                  {integration.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'Cliente ainda não conectou nenhum marketplace.'}
+                </p>
               </div>
-              <p className="text-[11px] text-text-muted">
-                {integration.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'Cliente ainda não conectou nenhum marketplace.'}
-              </p>
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
-          )}
-        </div>
-      </div>
+            ) : (
+              <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+            )}
+          </div>
+        )}
 
-      <div className="glass-panel rounded-2xl p-5">
-        <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-          <Users2 className="h-3.5 w-3.5" />
-          Acessos ({members.length})
-        </h3>
+        {tab === 'cobranca' && (
+          <div className="glass-panel flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
+            <CreditCard className="h-6 w-6 text-text-muted" />
+            <p className="text-sm font-medium text-text-primary">Cobrança ainda não está conectada</p>
+            <p className="max-w-sm text-xs text-text-muted">Plano e valor ficam em "Observações" na aba Configurações por enquanto. Histórico de faturas depende de integrar um provedor de cobrança.</p>
+          </div>
+        )}
 
-        {loadingMembers ? (
-          <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
-        ) : (
-          <div className="flex flex-col gap-1 border-b border-border-subtle pb-3">
-            {members.length === 0 && <p className="py-1.5 text-xs text-text-muted">Nenhum acesso vinculado ainda.</p>}
-            {members.map((m) => (
-              <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-white/5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: hueFor(m.userId), color: '#081423' }}>
-                  {initialsFor(m.email ?? m.userId)}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{m.email ?? m.userId}</span>
-                <span className="shrink-0 text-[10px] text-text-muted">desde {timeAgo(m.addedAt)}</span>
-                <button
-                  onClick={() => handleRemoveMember(m.userId)}
-                  disabled={removingUserId === m.userId}
-                  className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
+        {tab === 'suporte' && (
+          <div className="glass-panel flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
+            <Headset className="h-6 w-6 text-text-muted" />
+            <p className="text-sm font-medium text-text-primary">Suporte ainda não está conectado</p>
+            <p className="max-w-sm text-xs text-text-muted">Histórico de atendimento, chamados e notas internas dependem de uma tabela própria no banco — ainda não existe.</p>
+          </div>
+        )}
+
+        {tab === 'configuracoes' && (
+          <>
+            <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-2xl p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-cyan/50 focus:outline-none"
                 >
-                  {removingUserId === m.userId ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
-                </button>
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Nome</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">CNPJ</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">E-mail de contato</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contato@cliente.com" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Telefone</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">WhatsApp</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                  {whatsapp && (
+                    <a href={`https://wa.me/55${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 w-fit text-[10px] text-accent-emerald hover:underline">
+                      abrir conversa
+                    </a>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Site</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Globe className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="cliente.com.br" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[11px] text-text-muted">Observações (plano, valor, data do contrato...)</label>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none" />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="submit" disabled={saving} className="flex items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-2 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:opacity-40">
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Salvar
+                </button>
+                {saveFeedback && (
+                  <span className={`flex items-center gap-1.5 text-xs ${saveFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                    {saveFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {saveFeedback.text}
+                  </span>
+                )}
+              </div>
+            </form>
 
-        <form onSubmit={handleInvite} className="mt-3 flex gap-2">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="email@cliente.com"
-            className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
-          />
-          <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan/15 px-3 text-xs font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/25 disabled:opacity-40">
-            {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-            Convidar
-          </button>
-        </form>
-        {inviteFeedback && (
-          <p className={`mt-2 flex items-center gap-1.5 text-xs ${inviteFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-            {inviteFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-            {inviteFeedback.text}
-          </p>
-        )}
-      </div>
-
-      <div className="rounded-2xl border border-accent-rose/20 p-5">
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-accent-rose">Zona de risco</h3>
-        {!confirmingDelete ? (
-          <button
-            onClick={() => setConfirmingDelete(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-accent-rose/25 bg-accent-rose/10 px-3 py-2 text-xs font-semibold text-accent-rose transition-colors hover:bg-accent-rose/20"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Excluir empresa
-          </button>
-        ) : (
-          <div className="flex flex-col gap-2 rounded-lg border border-accent-rose/30 bg-accent-rose/5 p-3">
-            <p className="text-xs text-text-secondary">
-              Confirma excluir <strong className="text-text-primary">{company.name}</strong>? Remove os acessos vinculados. Não pode ser desfeito.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={handleDelete} disabled={deleting} className="flex items-center gap-1.5 rounded-lg bg-accent-rose px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-rose/90 disabled:opacity-40">
-                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                Sim, excluir
-              </button>
-              <button onClick={() => setConfirmingDelete(false)} disabled={deleting} className="rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-white/5">
-                Cancelar
-              </button>
+            <div className="rounded-2xl border border-accent-rose/20 p-5">
+              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-accent-rose">Zona de risco</h3>
+              {!confirmingDelete ? (
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-accent-rose/25 bg-accent-rose/10 px-3 py-2 text-xs font-semibold text-accent-rose transition-colors hover:bg-accent-rose/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir empresa
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 rounded-lg border border-accent-rose/30 bg-accent-rose/5 p-3">
+                  <p className="text-xs text-text-secondary">
+                    Confirma excluir <strong className="text-text-primary">{company.name}</strong>? Remove os acessos vinculados. Não pode ser desfeito.
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={handleDelete} disabled={deleting} className="flex items-center gap-1.5 rounded-lg bg-accent-rose px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-rose/90 disabled:opacity-40">
+                      {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      Sim, excluir
+                    </button>
+                    <button onClick={() => setConfirmingDelete(false)} disabled={deleting} className="rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-white/5">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          </>
         )}
-      </div>
       </div>
     </div>
   )
