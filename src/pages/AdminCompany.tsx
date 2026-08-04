@@ -4,6 +4,7 @@ import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
   UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
+  CheckCircle, AlertCircle, Link as LinkIcon,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
@@ -357,7 +358,7 @@ export default function AdminCompany() {
         </div>
 
         {/* Header — identidade, badges reais, ações que existem de verdade */}
-        <div className="glass-panel admin-card flex flex-col gap-4 rounded-xl p-5">
+        <div className="glass-panel admin-card flex flex-col gap-4 rounded-xl p-6">
           <div className="flex flex-wrap items-start gap-3">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-base font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
               {initialsFor(company.name)}
@@ -426,7 +427,7 @@ export default function AdminCompany() {
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><TrendingUp className="h-4 w-4" /></span>
                   <div>
                     <p className="flex items-center gap-1.5 text-[11px] text-text-muted">Receita (últimos 30 dias) <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span></p>
-                    <p className="text-2xl font-bold tabular-nums text-text-primary">R$ 1.870,45</p>
+                    <p className="text-3xl font-bold tabular-nums text-text-primary">R$ 1.870,45</p>
                     <p className="text-[11px] font-medium text-accent-emerald">↑ 12% vs mês anterior</p>
                   </div>
                 </div>
@@ -436,30 +437,30 @@ export default function AdminCompany() {
               </div>
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <button type="button" onClick={() => setTab('acessos')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-5 text-left">
+                <button type="button" onClick={() => setTab('acessos')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{members.length}</p>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{members.length}</p>
                   <p className="text-[11px] text-text-muted">acessos vinculados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-5 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Plug className="h-4 w-4" /></span>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">produtos sincronizados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-5 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-blue/10 text-accent-blue"><Ticket className="h-4 w-4" /></span>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">pedidos importados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-5 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><Wifi className="h-4 w-4" /></span>
-                  <p className="text-2xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
                   <p className="text-[11px] text-text-muted">integrações ativas</p>
                 </button>
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div className="glass-panel admin-card rounded-xl p-5 lg:col-span-2">
+                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-2">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
                     <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
@@ -469,7 +470,7 @@ export default function AdminCompany() {
                   <div className="flex flex-col divide-y divide-border-subtle">
                     <div className="flex items-center justify-between py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="[&>svg]:h-10 [&>svg]:w-10 shrink-0"><LogoMercadoLivre /></div>
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                         <div>
                           <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
                           <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
@@ -486,7 +487,7 @@ export default function AdminCompany() {
                     {OTHER_MARKETPLACES.map((mp) => (
                       <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
                         <div className="flex items-center gap-2.5">
-                          <div className="[&>svg]:h-10 [&>svg]:w-10 shrink-0"><mp.Logo /></div>
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                           <p className="text-sm font-medium text-text-primary">{mp.name}</p>
                         </div>
                         <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
@@ -495,7 +496,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card rounded-xl p-5 lg:col-span-1">
+                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-1">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Activity className="h-3.5 w-3.5" /> Atividade recente
                   </h3>
@@ -507,12 +508,16 @@ export default function AdminCompany() {
                     <div className="flex flex-col gap-1">
                       {activity.slice(0, 8).map((a) => (
                         <div key={a.id} className="flex items-start gap-2.5 rounded-lg px-1 py-1.5 text-xs">
-                          <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
-                            a.status === 'success' ? 'bg-accent-emerald' : a.status === 'error' ? 'bg-accent-rose' : 'bg-accent-cyan'
-                          }`} />
+                          {a.status === 'success' ? (
+                            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-emerald" />
+                          ) : a.status === 'error' ? (
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-rose" />
+                          ) : (
+                            <LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-cyan" />
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-text-secondary">{a.message ?? a.eventType}</p>
-                            <p className="text-[10px] text-text-muted">{timeAgo(a.createdAt)}</p>
+                            <p className="text-xs text-text-muted">{timeAgo(a.createdAt)}</p>
                           </div>
                         </div>
                       ))}
@@ -523,7 +528,7 @@ export default function AdminCompany() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="glass-panel admin-card flex items-center gap-4 rounded-xl p-5">
+              <div className="glass-panel admin-card flex items-center gap-4 rounded-xl p-6">
                 <HealthScoreRing score={healthScore} />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
@@ -542,7 +547,7 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              <div className="glass-panel admin-card rounded-xl p-5">
+              <div className="glass-panel admin-card rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
                 </h3>
@@ -569,7 +574,7 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              <div className="glass-panel admin-card rounded-xl p-5">
+              <div className="glass-panel admin-card rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <UserCog className="h-3.5 w-3.5" /> Contato
                 </h3>
@@ -584,7 +589,7 @@ export default function AdminCompany() {
         )}
 
         {tab === 'acessos' && (
-          <div className="glass-panel admin-card rounded-xl p-5">
+          <div className="glass-panel admin-card rounded-xl p-6">
             <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
               <Users2 className="h-3.5 w-3.5" />
               Acessos ({members.length})
@@ -638,9 +643,9 @@ export default function AdminCompany() {
 
         {tab === 'integracoes' && (
           <div className="flex flex-col gap-4">
-            <div className="glass-panel admin-card rounded-xl p-5">
+            <div className="glass-panel admin-card rounded-xl p-6">
               <div className="mb-3 flex items-center gap-2.5">
-                <div className="[&>svg]:h-10 [&>svg]:w-10 shrink-0"><LogoMercadoLivre /></div>
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary">Mercado Livre</h3>
                   <span className={`text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isConnected ? 'Operacional' : 'Não conectado'}</span>
@@ -652,15 +657,15 @@ export default function AdminCompany() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-baseline gap-6">
                     <div>
-                      <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.productsCount}</p>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.productsCount}</p>
                       <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.inventoryCount}</p>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.inventoryCount}</p>
                       <p className="text-[10px] uppercase tracking-wide text-text-muted">estoque</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold tabular-nums text-text-primary">{integration.ordersCount}</p>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.ordersCount}</p>
                       <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
                     </div>
                   </div>
@@ -674,9 +679,9 @@ export default function AdminCompany() {
             </div>
 
             {OTHER_MARKETPLACES.map((mp) => (
-              <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-5 opacity-60">
+              <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-6 opacity-60">
                 <div className="flex items-center gap-2.5">
-                  <div className="[&>svg]:h-10 [&>svg]:w-10 shrink-0"><mp.Logo /></div>
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">{mp.name}</h3>
                     <p className="text-[11px] text-text-muted">Integração ainda não existe nesta plataforma</p>
@@ -705,7 +710,7 @@ export default function AdminCompany() {
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-5">
+                <div className="glass-panel admin-card rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Clock3 className="h-3.5 w-3.5" /> Histórico de atendimento
                   </h3>
@@ -726,7 +731,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card rounded-xl p-5">
+                <div className="glass-panel admin-card rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Ticket className="h-3.5 w-3.5" /> Chamados
                   </h3>
@@ -745,7 +750,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card grid grid-cols-2 gap-4 rounded-xl p-5 sm:grid-cols-3">
+                <div className="glass-panel admin-card grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
                   {[
                     { icon: Clock3, label: 'tempo médio resposta', value: '—' },
                     { icon: Star, label: 'satisfação média', value: '—' },
@@ -761,11 +766,11 @@ export default function AdminCompany() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-5">
+                <div className="glass-panel admin-card rounded-xl p-6">
                   <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Observações internas</h3>
                   <p className="text-xs text-text-secondary">Cliente prefere atendimento via WhatsApp. Nenhuma observação real registrada ainda.</p>
                 </div>
-                <div className="glass-panel admin-card rounded-xl p-5">
+                <div className="glass-panel admin-card rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <PhoneCall className="h-3.5 w-3.5" /> Atalhos rápidos
                   </h3>
@@ -792,7 +797,7 @@ export default function AdminCompany() {
 
         {tab === 'configuracoes' && (
           <>
-            <form onSubmit={handleSave} className="glass-panel admin-card flex flex-col gap-3 rounded-xl p-5">
+            <form onSubmit={handleSave} className="glass-panel admin-card flex flex-col gap-3 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
                 <select
