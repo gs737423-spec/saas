@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Menu, X, Lock } from 'lucide-react'
 import { ctaLabels, nav, specialistHref } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
 // Header dark glass — transparente sobre o hero petróleo no topo, vira barra
 // glass sólida ao rolar. Modificador `site-header--dark` restringe o tema
@@ -34,9 +35,9 @@ export default function SiteHeader() {
         className="site-container flex items-center justify-between gap-4 transition-[height] duration-300"
         style={{ height: scrolled ? 70 : 82 }}
       >
-        {/* Marca tipográfica temporária — só o nome, sem símbolo. */}
-        <a href="#topo" className="flex shrink-0 items-center" aria-label="Vintec — início">
-          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>Vintec</span>
+        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="MKTOnline — início">
+          <MKTOnlineLogo mode="symbol" size="md" />
+          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>MKTOnline</span>
         </a>
 
         {/* Nav desktop — breakpoint 1100px (nav:) */}

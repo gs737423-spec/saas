@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, Package } from 'lucide-react'
 import { products } from '@/data/mockData'
-import { LayoutDashboard, Store, Boxes, Wallet, Megaphone, Star, Link2, FileBarChart2, Settings } from 'lucide-react'
+import { LayoutDashboard, Store, Boxes, Wallet, Link2, FileBarChart2, Settings } from 'lucide-react'
 
 const pages = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
@@ -10,8 +10,6 @@ const pages = [
   { icon: Package, label: 'Produtos', to: '/app/produtos' },
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
   { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },

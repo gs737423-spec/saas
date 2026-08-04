@@ -31,12 +31,12 @@ const iconByKey: Record<string, typeof DollarSign> = {
 }
 
 const toneColor: Record<KpiTone, string> = {
-  blue: '#2F6BFF',
-  emerald: '#2BD6A0',
-  cyan: '#5AB7FF',
-  amber: '#FFC857',
-  violet: '#194B9B',
-  neutral: '#6F829B',
+  blue: '#3A8DFF',
+  emerald: '#3BE38E',
+  cyan: '#46E5FF',
+  amber: '#FFC95A',
+  violet: '#256EF7',
+  neutral: '#9EB3C9',
 }
 
 function Delta({ change }: { change: number }) {
@@ -56,17 +56,17 @@ function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
     <div className="overview-hero-card overview-card-hover relative flex flex-col justify-between overflow-hidden rounded-2xl p-3.5">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c}66, transparent)` }} />
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{kpi.label}</span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-secondary">{kpi.label}</span>
         <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c}16`, boxShadow: `inset 0 0 0 1px ${c}33` }}>
           <Icon className="icon-halo h-4 w-4" style={{ color: c }} />
         </div>
       </div>
       <div>
         <div className="mt-2.5 flex items-center gap-2">
-          <div className="num-glow font-mono text-[28px] font-bold leading-none tracking-tight text-text-primary">
-            {kpi.prefix && <span className="text-base font-semibold text-text-secondary">{kpi.prefix} </span>}
+          <div className="num-glow font-mono text-[28px] font-extrabold leading-none text-text-primary" style={{ letterSpacing: '-0.035em' }}>
+            {kpi.prefix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.prefix} </span>}
             <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
-            {kpi.suffix && <span className="text-base font-semibold text-text-secondary">{kpi.suffix}</span>}
+            {kpi.suffix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.suffix}</span>}
           </div>
           {kpi.tag && (
             <span className="rounded border border-border-default/70 bg-bg-primary/50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-text-muted">
@@ -92,11 +92,11 @@ function StatCard({ kpi }: { kpi: ResolvedKpi }) {
       {/* thin left accent only for the attention (fees) card */}
       {attention && <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: c }} />}
       <div className="mb-1.5 flex h-3.5 items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">{kpi.label}</span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-muted">{kpi.label}</span>
         <Icon className="h-3.5 w-3.5" style={{ color: c }} />
       </div>
       <div className="flex h-5 items-baseline gap-1.5">
-        <div className="font-mono text-[18px] font-bold leading-none tracking-tight text-text-primary">
+        <div className="font-mono text-[22px] font-extrabold leading-[1.1] text-text-primary" style={{ letterSpacing: '-0.035em' }}>
           {kpi.prefix && <span className="text-xs font-semibold text-text-secondary">{kpi.prefix} </span>}
           <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
           {kpi.suffix && <span className="text-xs font-semibold text-text-secondary">{kpi.suffix}</span>}

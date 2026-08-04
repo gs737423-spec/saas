@@ -1,4 +1,4 @@
-// Faixa final compacta (ex "Por que Vintec", incorporada ao fim de "Como
+// Faixa final compacta (ex "Por que MKTOnline", incorporada ao fim de "Como
 // funciona" — não é mais seção independente).
 export interface ClosingPointItem {
   title: string

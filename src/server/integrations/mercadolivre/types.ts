@@ -15,10 +15,15 @@ export interface MLTokenErrorResponse {
   message?: string
 }
 
-/** Signed OAuth `state` payload — see docs/integrations/mercadolivre-oauth.md */
+/** Signed OAuth `state` payload — see docs/integrations/mercadolivre-oauth.md.
+ *  companyId viaja assinado aqui porque o callback (chamado pelo Mercado
+ *  Livre, não pelo nosso app) não tem acesso à sessão/Authorization header
+ *  de quem iniciou o fluxo — o state assinado é o único jeito de saber de
+ *  qual empresa era a tentativa quando o redirect volta. */
 export interface OAuthStatePayload {
   nonce: string
   issuedAt: number
+  companyId: string
 }
 
 /** GET /users/{user_id}/items/search response (subset used). */
@@ -38,4 +43,32 @@ export interface MLItemDetail {
   permalink: string
   seller_custom_field?: string | null
   attributes?: { id: string; value_name: string | null }[]
+}
+
+/** GET /orders/search response (subset used) — see
+ *  https://developers.mercadolivre.com.br/pt_br/gerenciamento-de-vendas */
+export interface MLOrderSearchResponse {
+  results: MLOrder[]
+  paging: { total: number; offset: number; limit: number }
+}
+
+export interface MLOrderItem {
+  item: {
+    id: string
+    title: string
+    seller_sku?: string | null
+  }
+  quantity: number
+  unit_price: number
+}
+
+export interface MLOrder {
+  id: number
+  status: string
+  date_created: string
+  date_closed: string | null
+  total_amount: number
+  currency_id: string
+  buyer: { id: number } | null
+  order_items: MLOrderItem[]
 }

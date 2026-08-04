@@ -3,6 +3,8 @@ import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/in
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
+import { requireCompany } from '../../../src/server/auth/requireCompany.js'
+import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -23,6 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const summary: SyncSummary & { ok: boolean; message?: string } = {
         productsImported: 0,
         inventoryUpdated: 0,
+        ordersImported: 0,
         errors: [`config_missing: ${missing.join(', ')}`],
         durationMs: 0,
         source: 'config_missing',
@@ -33,7 +36,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const summary = await runMercadoLivreSync()
+    const auth = await requireCompany(req, res)
+    if (!auth) return
+
+    // 5 syncs por 30min por empresa — cada sync bate na API do Mercado
+    // Livre em loop (todo o catálogo), não é operação pra rodar em loop.
+    if (!(await checkRateLimit(res, `ml-sync:${auth.companyId}`, 5, 1800))) return
+
+    const summary = await runMercadoLivreSync(auth.companyId)
     res.status(200).json({ ok: true, ...summary })
   } catch (err) {
     if (err instanceof ConnectionMissingError) {

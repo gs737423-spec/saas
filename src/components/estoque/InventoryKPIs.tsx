@@ -38,8 +38,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}`,
       sub: 'estoque × custo unitário',
       icon: Wallet,
-      primary: '#5AB7FF',
-      secondary: '#2F6BFF',
+      primary: '#46E5FF',
+      secondary: '#3A8DFF',
     },
     {
       key: 'total',
@@ -48,8 +48,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => String(Math.round(v)),
       sub: 'produtos ativos · clique para limpar filtros',
       icon: Boxes,
-      primary: '#2F6BFF',
-      secondary: '#5AB7FF',
+      primary: '#3A8DFF',
+      secondary: '#46E5FF',
       apply: () => ({ ...defaultInventoryFilters, abc: new Set() }),
       isActive: (f) => f.abc.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch,
     },
@@ -72,8 +72,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}x`,
       sub: 'vendas ÷ estoque médio',
       icon: RefreshCw,
-      primary: '#FFC857',
-      secondary: '#FFC857',
+      primary: '#FFC95A',
+      secondary: '#FFC95A',
     },
     {
       key: 'curveA',
@@ -82,8 +82,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => String(Math.round(v)),
       sub: 'maior share de faturamento',
       icon: Crown,
-      primary: '#2BD6A0',
-      secondary: '#5AB7FF',
+      primary: '#3BE38E',
+      secondary: '#46E5FF',
       apply: (f) => ({ ...defaultInventoryFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set(['A' as const]) }),
       isActive: (f) => f.abc.has('A') && f.abc.size === 1 && !f.onlyLowCoverage,
     },
@@ -94,8 +94,8 @@ function buildCards(stalled: number, curveARisk: number): CardDef[] {
       format: (v) => String(Math.round(v)),
       sub: 'top faturamento, cobertura baixa',
       icon: ShieldAlert,
-      primary: '#FF5F7A',
-      secondary: '#FFC857',
+      primary: '#FF5E7D',
+      secondary: '#FFC95A',
       apply: (f) => (f.abc.has('A') && f.onlyLowCoverage ? { ...defaultInventoryFilters } : { ...defaultInventoryFilters, abc: new Set(['A' as const]), onlyLowCoverage: true }),
       isActive: (f) => f.abc.has('A') && f.abc.size === 1 && f.onlyLowCoverage,
     },
@@ -106,17 +106,17 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
   const criticalActive = filters.onlyCritical
   const excessActive = filters.onlyExcess
   return (
-    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5">
+    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5">
       <span className="mb-1.5 block min-h-[28px] text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">Crítico / Excesso</span>
       <div className="mt-auto grid grid-cols-2 divide-x divide-border-subtle">
         <button
           type="button"
           onClick={() => onChange({ ...defaultInventoryFilters, onlyCritical: !filters.onlyCritical })}
           className="cursor-pointer pr-2 text-left"
-          style={criticalActive ? { boxShadow: `inset 0 0 0 1.5px #FF5F7A99` } : undefined}
+          style={criticalActive ? { boxShadow: `inset 0 0 0 1.5px #FF5E7D99` } : undefined}
         >
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5" style={{ color: '#FF5F7A' }} />
+            <AlertTriangle className="h-3.5 w-3.5" style={{ color: '#FF5E7D' }} />
             <span className="font-mono text-[16px] font-bold leading-none text-text-primary">
               <AnimatedNumber value={critical} format={(v) => String(Math.round(v))} />
             </span>
@@ -127,10 +127,10 @@ function RiskExtremesCard({ filters, onChange, critical, excess, excessDays }: P
           type="button"
           onClick={() => onChange({ ...defaultInventoryFilters, onlyExcess: !filters.onlyExcess })}
           className="cursor-pointer pl-2 text-left"
-          style={excessActive ? { boxShadow: `inset 0 0 0 1.5px #5AB7FF99` } : undefined}
+          style={excessActive ? { boxShadow: `inset 0 0 0 1.5px #46E5FF99` } : undefined}
         >
           <div className="flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5" style={{ color: '#5AB7FF' }} />
+            <Layers className="h-3.5 w-3.5" style={{ color: '#46E5FF' }} />
             <span className="font-mono text-[16px] font-bold leading-none text-text-primary">
               <AnimatedNumber value={excess} format={(v) => String(Math.round(v))} />
             </span>
@@ -149,7 +149,7 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
   return (
     <button
       onClick={clickable ? () => onChange(c.apply!(filters)) : undefined}
-      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
       style={active ? { boxShadow: `inset 0 0 0 1.5px ${c.primary}99, 0 0 20px -6px ${c.primary}66` } : undefined}
     >
       <div
@@ -157,7 +157,7 @@ function Card({ c, filters, onChange }: { c: CardDef } & Props) {
         style={{ background: `radial-gradient(circle, ${c.primary}33, transparent 68%)` }}
       />
       <div className="relative mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
-        <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
+        <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
           <Icon className="h-3.5 w-3.5" style={{ color: c.primary }} />
         </div>
@@ -182,7 +182,7 @@ export default function InventoryKPIs({ filters, onChange }: Props) {
   const cards = buildCards(stalled, curveARisk)
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
       {cards.slice(0, 2).map((c) => (
         <Card key={c.key} c={c} filters={filters} onChange={onChange} />
       ))}

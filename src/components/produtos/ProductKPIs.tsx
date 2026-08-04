@@ -23,11 +23,11 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
   const avgTicket = products.reduce((s, p) => s + p.revenue, 0) / products.reduce((s, p) => s + p.units, 0)
 
   const cards: Card[] = [
-    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#2F6BFF' },
-    { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#2BD6A0' },
-    { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5F7A' },
+    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3A8DFF' },
+    { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku}`, change: bestSeller.trend, icon: Flame, primary: '#3BE38E' },
+    { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5E7D' },
     { label: 'Margem Média', value: avgMargin, format: (v) => `${Math.round(v)}%`, sub: 'todos os produtos', icon: Percent, primary: '#194B9B' },
-    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#5AB7FF' },
+    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#46E5FF' },
   ]
 
   return (
@@ -36,9 +36,9 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
         const Icon = c.icon
         const positive = (c.change ?? 0) >= 0
         return (
-          <div key={c.label} className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-2xl p-2.5">
+          <div key={c.label} className="overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5">
             <div className="mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
-              <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
+              <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
                 <Icon className="h-3.5 w-3.5" style={{ color: c.primary }} />
               </div>

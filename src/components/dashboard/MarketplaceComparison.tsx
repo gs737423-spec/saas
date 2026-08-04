@@ -12,9 +12,9 @@ const sortOptions: { key: SortKey; label: string }[] = [
 ]
 
 const statusStyle: Record<ChannelStatus, { color: string; bg: string }> = {
-  'Saudável': { color: '#2BD6A0', bg: 'rgba(43,214,160,0.12)' },
-  'Atenção': { color: '#FFC857', bg: 'rgba(255,200,87,0.12)' },
-  'Crítico': { color: '#FF5F7A', bg: 'rgba(255,95,122,0.12)' },
+  'Saudável': { color: '#3BE38E', bg: 'rgba(43,214,160,0.12)' },
+  'Atenção': { color: '#FFC95A', bg: 'rgba(255,200,87,0.12)' },
+  'Crítico': { color: '#FF5E7D', bg: 'rgba(255,95,122,0.12)' },
 }
 
 // Badge sempre rotulado "Crescimento" (é o que os percentuais D-1/D-7/D-30/

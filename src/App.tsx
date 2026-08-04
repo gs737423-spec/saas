@@ -10,9 +10,11 @@ import Estoque from '@/pages/Estoque'
 import Importacoes from '@/pages/Importacoes'
 import Marketplaces from '@/pages/Marketplaces'
 import Financeiro from '@/pages/Financeiro'
-import Placeholder from '@/pages/Placeholder'
+import Relatorios from '@/pages/Relatorios'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
+import Admin from '@/pages/Admin'
+import AdminCompany from '@/pages/AdminCompany'
 
 // Shell autenticado da plataforma. Montado em `/app/*` sob <ProtectedRoute>
 // (ver main.tsx) — a guarda de sessão real já aconteceu lá, este componente
@@ -48,10 +50,10 @@ export default function App() {
               <Route path="estoque" element={<Estoque />} />
               <Route path="importacoes" element={<Importacoes />} />
               <Route path="financeiro" element={<Financeiro />} />
-              <Route path="marketing" element={<Placeholder title="Marketing" description="Desempenho de campanhas, ROI de anúncios patrocinados e recomendações de investimento por produto e canal." />} />
-              <Route path="avaliacoes" element={<Placeholder title="Avaliações" description="Monitoramento de reviews e reputação em todos os marketplaces, com alertas de avaliações negativas em tempo real." />} />
-              <Route path="relatorios" element={<Placeholder title="Relatórios" description="Relatórios customizáveis de vendas, produtos e performance, com exportação e agendamento automático." />} />
+              <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="admin" element={<Admin />} />
+              <Route path="admin/empresa/:id" element={<AdminCompany />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>
           </div>

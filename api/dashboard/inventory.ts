@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
-import { DEFAULT_COMPANY_ID, type DashboardInventoryItem, type DashboardInventoryResponse } from '../../src/server/integrations/types.js'
+import type { DashboardInventoryItem, DashboardInventoryResponse } from '../../src/server/integrations/types.js'
+import { requireCompany } from '../../src/server/auth/requireCompany.js'
 
 type InventoryApiResponse = DashboardInventoryResponse & { ok: boolean; message?: string }
 
@@ -13,13 +14,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
+    const auth = await requireCompany(req, res)
+    if (!auth) return
+
     const supabase = await getSupabaseAdmin()
 
     const { data: connection, error: connError } = await supabase
       .from('marketplace_connections')
       .select('id, status, last_sync_at')
       .eq('provider', 'mercadolivre')
-      .eq('company_id', DEFAULT_COMPANY_ID)
+      .eq('company_id', auth.companyId)
       .maybeSingle()
 
     if (connError) throw new Error(connError.message)
@@ -34,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_inventory')
       .select('external_product_id, sku, title, available_quantity, sold_quantity_30d, last_sync_at')
       .eq('connection_id', connection.id)
-      .eq('company_id', DEFAULT_COMPANY_ID)
+      .eq('company_id', auth.companyId)
 
     if (invError) throw new Error(invError.message)
 
@@ -50,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_products')
       .select('external_product_id, price, status')
       .eq('connection_id', connection.id)
-      .eq('company_id', DEFAULT_COMPANY_ID)
+      .eq('company_id', auth.companyId)
 
     const productByExternalId = new Map((productRows ?? []).map((p) => [p.external_product_id, p]))
 

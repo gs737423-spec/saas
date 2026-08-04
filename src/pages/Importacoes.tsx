@@ -13,6 +13,7 @@ import {
 import { useConnections, getMarketplaceColor, type IntegrationStatus } from '@/contexts/ConnectionContext'
 import type { Marketplace } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import PageHeader from '@/components/layout/PageHeader'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Shopee', 'Amazon', 'Loja Própria']
 
@@ -36,7 +37,7 @@ const statusConfig: Record<IntegrationStatus, { label: string; color: string; bg
 }
 
 function MercadoLivreCard() {
-  const { mercadoLivre, loading, syncing, backendUnreachable, connectMercadoLivre, syncMercadoLivre } = useConnections()
+  const { mercadoLivre, loading, syncing, backendUnreachable, connectError, connectMercadoLivre, syncMercadoLivre } = useConnections()
   const color = getMarketplaceColor('Mercado Livre')
 
   if (loading) {
@@ -117,6 +118,17 @@ function MercadoLivreCard() {
               <span className="text-text-muted">Estoque atualizado</span>
               <p className="text-sm font-semibold text-text-primary">{mercadoLivre.inventoryCount.toLocaleString('pt-BR')}</p>
             </div>
+            <div>
+              <span className="text-text-muted">Pedidos importados</span>
+              <p className="text-sm font-semibold text-text-primary">{mercadoLivre.ordersCount.toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+        )}
+
+        {connectError && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-rose/25 bg-accent-rose/10 p-2.5 text-[11px] text-accent-rose">
+            <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="break-words">{connectError}</span>
           </div>
         )}
 
@@ -190,6 +202,7 @@ export default function Importacoes() {
 
   return (
     <div className="space-y-2.5">
+      <PageHeader />
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-accent-cyan" />

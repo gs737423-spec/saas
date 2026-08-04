@@ -1,9 +1,9 @@
 import { getSupabaseAdmin } from '../supabaseAdmin.js'
 import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
-import { DEFAULT_COMPANY_ID, type SyncSummary } from '../types.js'
-import { getItemDetail, searchUserItemIds, MercadoLivreApiError } from './client.js'
-import { mapItemToInventoryRow, mapItemToProductRow } from './mapper.js'
+import type { SyncSummary } from '../types.js'
+import { getItemDetail, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
+import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 
 export class ConnectionMissingError extends Error {}
@@ -17,13 +17,13 @@ interface ConnectionRow {
   token_expires_at: string | null
 }
 
-async function loadConnection(): Promise<ConnectionRow> {
+async function loadConnection(companyId: string): Promise<ConnectionRow> {
   const supabase = await getSupabaseAdmin()
   const { data, error } = await supabase
     .from('marketplace_connections')
     .select('id, status, seller_id, access_token_encrypted, refresh_token_encrypted, token_expires_at')
     .eq('provider', 'mercadolivre')
-    .eq('company_id', DEFAULT_COMPANY_ID)
+    .eq('company_id', companyId)
     .maybeSingle()
 
   if (error) throw new Error(`Failed to load Mercado Livre connection: ${error.message}`)
@@ -35,7 +35,7 @@ async function loadConnection(): Promise<ConnectionRow> {
 
 /** Ensures we have a live access token, refreshing it first if the stored one has expired.
  *  Returns the plaintext access token — caller must never persist or log it. */
-async function ensureValidAccessToken(connection: ConnectionRow): Promise<string> {
+async function ensureValidAccessToken(connection: ConnectionRow, companyId: string): Promise<string> {
   const isExpired = connection.token_expires_at ? new Date(connection.token_expires_at) <= new Date() : false
 
   if (!isExpired) {
@@ -58,6 +58,7 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
     .eq('id', connection.id)
 
   await logSyncEvent({
+    companyId,
     connectionId: connection.id,
     provider: 'mercadolivre',
     eventType: 'token_refreshed',
@@ -69,15 +70,17 @@ async function ensureValidAccessToken(connection: ConnectionRow): Promise<string
 }
 
 /**
- * Runs a full products + inventory sync for the connected Mercado Livre account.
- * Orders/revenue are explicitly out of scope — see docs/integrations/mercadolivre-sync.md.
+ * Runs a full products + inventory + orders sync for the connected Mercado
+ * Livre account. Orders power revenue/ticket/product-history aggregation —
+ * see docs/integrations/mercadolivre-sync.md.
  */
-export async function runMercadoLivreSync(): Promise<SyncSummary> {
+export async function runMercadoLivreSync(companyId: string): Promise<SyncSummary> {
   const startedAt = new Date()
   const supabase = await getSupabaseAdmin()
-  const connection = await loadConnection()
+  const connection = await loadConnection(companyId)
 
   await logSyncEvent({
+    companyId,
     connectionId: connection.id,
     provider: 'mercadolivre',
     eventType: 'sync_started',
@@ -88,9 +91,10 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
   const errors: string[] = []
   let productsImported = 0
   let inventoryUpdated = 0
+  let ordersImported = 0
 
   try {
-    const accessToken = await ensureValidAccessToken(connection)
+    const accessToken = await ensureValidAccessToken(connection, companyId)
     const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
 
     for (const itemId of itemIds) {
@@ -101,7 +105,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
 
         const { error: productError } = await supabase.from('marketplace_products').upsert(
           {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: companyId,
             connection_id: connection.id,
             provider: 'mercadolivre',
             ...productRow,
@@ -113,7 +117,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
 
         const { error: inventoryError } = await supabase.from('marketplace_inventory').upsert(
           {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: companyId,
             connection_id: connection.id,
             provider: 'mercadolivre',
             last_sync_at: new Date().toISOString(),
@@ -131,6 +135,42 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
       }
     }
 
+    try {
+      const orders = await searchOrders(connection.seller_id!, accessToken)
+      for (const order of orders) {
+        const orderRow = mapOrderToRow(order)
+        const { data: upsertedOrder, error: orderError } = await supabase
+          .from('orders')
+          .upsert(
+            { company_id: companyId, connection_id: connection.id, provider: 'mercadolivre', ...orderRow },
+            { onConflict: 'company_id,connection_id,external_order_id' }
+          )
+          .select('id')
+          .single()
+        if (orderError) throw new Error(`Failed to upsert order ${order.id}: ${orderError.message}`)
+        ordersImported += 1
+
+        // Substitui os itens do pedido a cada sync (nunca acumula duplicado se
+        // o pedido já existia) — pedido não muda item depois de fechado, mas
+        // reprocessar é seguro e mais simples que diffar item a item.
+        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id)
+        const itemRows = mapOrderItems(order).map((item) => ({
+          company_id: companyId,
+          order_id: upsertedOrder.id,
+          ...item,
+        }))
+        if (itemRows.length > 0) {
+          const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
+          if (itemsError) throw new Error(`Failed to insert items for order ${order.id}: ${itemsError.message}`)
+        }
+      }
+    } catch (orderErr) {
+      const message = orderErr instanceof MercadoLivreApiError
+        ? orderErr.message
+        : orderErr instanceof Error ? orderErr.message : 'Unknown error processing orders'
+      errors.push(message)
+    }
+
     const finishedAt = new Date()
     const durationMs = finishedAt.getTime() - startedAt.getTime()
     const hadPartialFailures = errors.length > 0 && productsImported > 0
@@ -141,17 +181,18 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
       .eq('id', connection.id)
 
     await logSyncEvent({
+      companyId,
       connectionId: connection.id,
       provider: 'mercadolivre',
       eventType: errors.length === 0 ? 'sync_success' : hadPartialFailures ? 'sync_partial' : 'sync_error',
       status: errors.length === 0 ? 'success' : hadPartialFailures ? 'success' : 'error',
-      message: errors.length === 0 ? `Synced ${productsImported} products` : `${errors.length} item(s) failed during sync`,
-      payload: { productsImported, inventoryUpdated, errorCount: errors.length },
+      message: errors.length === 0 ? `Synced ${productsImported} products, ${ordersImported} orders` : `${errors.length} item(s) failed during sync`,
+      payload: { productsImported, inventoryUpdated, ordersImported, errorCount: errors.length },
       startedAt,
       finishedAt,
     })
 
-    return { productsImported, inventoryUpdated, errors, durationMs, source: 'real' }
+    return { productsImported, inventoryUpdated, ordersImported, errors, durationMs, source: 'real' }
   } catch (err) {
     const finishedAt = new Date()
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
@@ -159,6 +200,7 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
     await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id)
 
     await logSyncEvent({
+      companyId,
       connectionId: connection.id,
       provider: 'mercadolivre',
       eventType: 'sync_error',
@@ -168,6 +210,6 @@ export async function runMercadoLivreSync(): Promise<SyncSummary> {
       finishedAt,
     })
 
-    return { productsImported, inventoryUpdated, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
+    return { productsImported, inventoryUpdated, ordersImported, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
   }
 }

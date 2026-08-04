@@ -8,8 +8,6 @@ import {
   MoreHorizontal,
   Boxes,
   Wallet,
-  Megaphone,
-  Star,
   Link2,
   Settings,
   HelpCircle,
@@ -28,8 +26,6 @@ const primary: Primary[] = [
 const secondary = [
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },
   { icon: HelpCircle, label: 'Ajuda', to: '/app/configuracoes' },

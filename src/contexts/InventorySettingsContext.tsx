@@ -51,8 +51,8 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
   giro: {
     thresholds: { normalMaxDays: 20, lentoMaxDays: 45, paradoMaxDays: 90 },
     colors: {
-      Normal: '#2BD6A0',
-      Lento: '#FFC857',
+      Normal: '#3BE38E',
+      Lento: '#FFC95A',
       Parado: '#9061F9',
       'Parado crítico': '#8B2942',
     },
@@ -60,10 +60,10 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
   coverage: {
     thresholds: { criticoMaxDays: 7, atencaoMaxDays: 20, saudavelMaxDays: 45 },
     colors: {
-      'Crítico': '#FF5F7A',
-      'Atenção': '#FFC857',
-      'Saudável': '#2BD6A0',
-      'Excesso': '#5AB7FF',
+      'Crítico': '#FF5E7D',
+      'Atenção': '#FFC95A',
+      'Saudável': '#3BE38E',
+      'Excesso': '#46E5FF',
     },
   },
   stock: {

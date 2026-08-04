@@ -14,44 +14,76 @@
      só este arquivo (o que tem `@import "tailwindcss"`) registra tokens. */
   --breakpoint-nav: 1100px;
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Manrope — mais arredondada e autoral que Inter (que segue no site
+     institucional, ver site.css), sem perder legibilidade em dashboard.
+     Sora fica reservada só pra marca e títulos (--font-brand), nunca pra
+     texto de corpo, número ou navegação — ver .font-mono abaixo. */
+  --font-sans: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Sora', var(--font-sans);
+  --font-interface: var(--font-sans);
+  /* Inter Tight — tipografia oficial de toda numeração da plataforma
+     (31/07, pedido explícito, ver docs/04-Audits). --font-mono continua
+     sendo o ponto único que ~37 componentes já consomem via `.font-mono`
+     — retargetá-lo aqui troca a fonte de TODOS os números sem editar cada
+     arquivo. */
+  --font-numeric: 'Inter Tight', sans-serif;
+  --font-mono: var(--font-numeric);
 
-  /* Escuro, profundidade por níveis de superfície (plataforma /app) — sem
-     preto puro, sem roxo/ciano neon. Nomes de token preservados (dezenas de
-     componentes já referenciam essas classes Tailwind geradas).
-     accent-violet reaproveita o sky (sem roxo). Namespace isolado do site
-     institucional (site.css usa --vintec-*, não consome nada daqui). */
-  --color-bg-primary: #050F1D;
-  --color-bg-secondary: #071426;
-  --color-bg-card: #0B1B30;
-  --color-bg-card-hover: #183452;
-  --color-bg-elevated: #10233B;
-  --color-bg-highlight: #142B48;
-  --color-bg-header: #061326;
-  --color-border-subtle: rgba(87, 123, 163, 0.26);
-  --color-border-default: rgba(99, 179, 255, 0.28);
-  --color-border-active: rgba(99, 179, 255, 0.68);
+  /* Pesos do dashboard (/app): usa a escala padrão do Tailwind (font-medium
+     500 / font-semibold 600 / font-bold 700 / font-extrabold 800) — Manrope
+     só tem degraus estáticos em 400/500/600/700/800 mesmo, e sobrescrever
+     --font-weight-bold aqui colidiria com a utility font-bold do próprio
+     Tailwind (é o mesmo namespace de token, gera as classes font-*). */
 
-  --color-text-primary: #F5F8FC;
-  --color-text-secondary: #A8B7C9;
-  --color-text-muted: #788AA1;
+  /* Identidade visual definitiva (31/07, versão consolidada final — ver
+     docs/04-Audits). Tokens alimentam Tailwind `bg-*`/`text-*`
+     (background-color só aceita sólido — por isso ficam aqui como sólidos
+     distintos; os GRADIENTES obrigatórios ficam nas classes de superfície:
+     .overview-hero-card, .overview-glass*, .glass-panel, .topnav-surface).
+     Namespace isolado do site institucional (--vintec-*). */
+  --color-bg-primary: #081423;
+  --color-bg-secondary: #0B1D30;
+  --color-bg-card: #112944;
+  --color-bg-card-hover: #163556;
+  --color-bg-elevated: #163556;
+  --color-bg-highlight: #1A3D63;
+  --color-bg-header: #0D2036;
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(110, 170, 255, 0.12);
+  --color-border-active: rgba(70, 229, 255, 0.4);
 
-  --color-accent-cyan: #63B3FF;
-  --color-accent-blue: #2F6BFF;
-  --color-accent-blue-hover: #4C82FF;
-  --color-accent-blue-deep: #194B9B;
-  --color-accent-emerald: #2BD6A0;
-  --color-accent-amber: #FFBE63;
-  --color-accent-warning: #FFC857;
-  --color-accent-rose: #FF5F7A;
-  --color-accent-info: #5AB7FF;
-  --color-accent-violet: #63B3FF;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #DCE7F5;
+  --color-text-muted: #9EB3C9;
+
+  /* Ciano = só acento (hover/focus/links/ícones ativos/seleção/status) —
+     nunca preenche área grande. Azul = gradiente #59B7FF→#3A8DFF→#256EF7,
+     nunca chapado. */
+  --color-accent-cyan: #46E5FF;
+  --color-accent-cyan-hover: #6FEBFF;
+  --color-accent-blue: #3A8DFF;
+  --color-accent-blue-hover: #59B7FF;
+  --color-accent-blue-deep: #256EF7;
+  --color-accent-emerald: #3BE38E;
+  --color-accent-amber: #FFC95A;
+  --color-accent-warning: #FFC95A;
+  --color-accent-rose: #FF5E7D;
+  --color-accent-info: #46E5FF;
+  --color-accent-violet: #46E5FF;
 
   --color-ml-orange: #FFE600;
   --color-shopee-orange: #EE4D2D;
   --color-amazon-orange: #FF9900;
   --color-loja-blue: #4C82F7;
+
+  /* Border radius — só estes 5 valores na plataforma inteira (sobrescreve
+     a escala padrão do Tailwind, então rounded-lg/xl/2xl etc já herdam sem
+     precisar tocar em cada componente). */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
 }
 
 * {
@@ -63,6 +95,46 @@ html {
   background: var(--color-bg-primary);
 }
 
+/* Sobrescreve a utilidade Tailwind .font-mono (usada em ~34 componentes pra
+   alinhar valores financeiros/percentuais): mantém alinhamento numérico via
+   tabular-nums, mas sem cara de terminal — a fonte já é Manrope pelo token
+   --font-mono acima, isto só adiciona o feature-setting. */
+.font-mono {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Classes utilitárias oficiais da spec de numeração (31/07) — .font-mono
+   acima já cobre os ~37 componentes existentes; estas ficam disponíveis
+   para KPIs novos que queiram tamanho/peso já resolvidos. */
+.numeric-value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  line-height: 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.numeric-value--hero { font-size: 44px; font-weight: 800; letter-spacing: -0.045em; }
+.numeric-value--kpi { font-size: 32px; font-weight: 700; letter-spacing: -0.04em; }
+.numeric-value--table { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; }
+.numeric-value--compact { font-size: 14px; font-weight: 600; letter-spacing: -0.015em; }
+
+@media (max-width: 640px) {
+  .numeric-value--hero { font-size: 38px; }
+  .numeric-value--kpi { font-size: 28px; }
+  .numeric-value--table { font-size: 17px; }
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
 body {
   margin: 0;
   color: var(--color-text-primary);
@@ -72,8 +144,8 @@ body {
   letter-spacing: -0.011em;
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(circle at 82% -8%, rgba(47, 107, 255, 0.14), transparent 32%),
-    radial-gradient(circle at 12% 105%, rgba(99, 179, 255, 0.07), transparent 34%),
+    radial-gradient(circle at 82% -8%, rgba(58, 95, 219, 0.14), transparent 32%),
+    radial-gradient(circle at 12% 105%, rgba(95, 194, 232, 0.07), transparent 34%),
     linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 48%, var(--color-bg-elevated) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -128,7 +200,11 @@ body {
 }
 
 @layer utilities {
-  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; }
+  /* Piso de peso pro dashboard inteiro — Manrope 400 (padrão do browser)
+     lia fina/frágil demais no fundo escuro. Qualquer classe Tailwind de peso
+     explícita (font-medium, font-bold etc.) continua vencendo em cima disto,
+     isto só cobre texto sem peso declarado. */
+  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; font-weight: var(--font-weight-medium); }
   .app-main { width: 100%; min-width: 0; }
   .app-page-container {
     width: min(100%, 1600px);
@@ -143,15 +219,15 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-active); }
 
 @layer utilities {
-  /* Painel padrão (nível 2) — superfície sólida, sem gradiente (gradiente
-     fica reservado a .overview-hero-card). Sombra padronizada única. */
+  /* Painel padrão (nível 2) — reconstrução 31/07: toda superfície principal
+     usa gradiente, nunca cor sólida (ver docs/04-Audits). */
   .glass-panel {
     position: relative;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border-subtle);
+    background: linear-gradient(180deg, #163556 0%, #112944 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   /* Baseline untouched — shared by pages outside Stage 2's validated scope
@@ -175,7 +251,7 @@ body {
   }
 
   .glow-blue {
-    box-shadow: 0 0 0 1px rgba(76, 130, 247, 0.25), 0 12px 40px -12px rgba(76, 130, 247, 0.45);
+    box-shadow: 0 0 0 1px rgba(82, 115, 230, 0.25), 0 12px 40px -12px rgba(82, 115, 230, 0.45);
   }
 
   .text-gradient {
@@ -218,16 +294,16 @@ body {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(1300px 780px at 8% -8%, rgba(47, 107, 255, 0.16), transparent 62%),
-      radial-gradient(1100px 700px at 100% 0%, rgba(99, 179, 255, 0.1), transparent 60%);
+      radial-gradient(1300px 780px at 8% -8%, rgba(58, 95, 219, 0.16), transparent 62%),
+      radial-gradient(1100px 700px at 100% 0%, rgba(95, 194, 232, 0.1), transparent 60%);
   }
   .app-bg-subtle::after {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(99, 179, 255, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(99, 179, 255, 0.04) 1px, transparent 1px);
+      linear-gradient(rgba(95, 194, 232, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(95, 194, 232, 0.04) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
     -webkit-mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
     mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
@@ -242,21 +318,21 @@ body {
     height: 820px;
     top: -14%;
     left: -10%;
-    background: radial-gradient(circle, rgba(47, 107, 255, 0.2) 0%, rgba(47, 107, 255, 0.06) 45%, transparent 72%);
+    background: radial-gradient(circle, rgba(58, 95, 219, 0.2) 0%, rgba(58, 95, 219, 0.06) 45%, transparent 72%);
   }
   .bg-glow-accent {
     width: 620px;
     height: 620px;
     bottom: -16%;
     left: 8%;
-    background: radial-gradient(circle, rgba(99, 179, 255, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(95, 194, 232, 0.1) 0%, transparent 70%);
   }
   .bg-glow-moving {
     width: 780px;
     height: 780px;
     bottom: -18%;
     right: -10%;
-    background: radial-gradient(circle, rgba(99, 179, 255, 0.14) 0%, rgba(47, 107, 255, 0.06) 45%, transparent 72%);
+    background: radial-gradient(circle, rgba(95, 194, 232, 0.14) 0%, rgba(58, 95, 219, 0.06) 45%, transparent 72%);
     animation: bg-glow-drift 40s ease-in-out infinite;
   }
   @keyframes bg-glow-drift {
@@ -277,37 +353,36 @@ body {
      Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
      definida, sombra de contato + longa mais forte → mais "flutuando". */
 
-  /* Nível 2 — painel estrutural, superfície sólida (sem gradiente) */
+  /* Nível 2 — painel estrutural. Gradiente oficial do card. */
   .overview-glass {
     position: relative;
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, #163556 0%, #112944 100%);
     border: 1px solid var(--color-border-subtle);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
-  /* Nível 3 — card elevado, superfície sólida (sem gradiente: usado em 6+
-     componentes distintos, não é um elemento "principal/selecionado" único
-     — gradiente fica reservado só para .overview-hero-card abaixo). */
+  /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
   .overview-glass-elevated {
     position: relative;
-    background: var(--color-bg-elevated);
+    background: linear-gradient(160deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
 
-  /* Único card com gradiente aprovado — hero (Faturamento Líquido). Destaque
-     vem da superfície/contraste, não de borda colorida — sem rim verde. */
+  /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
+     não de borda colorida. */
   .overview-hero-card {
     position: relative;
-    background: linear-gradient(135deg, #0B1B30 0%, #10294A 58%, #173A66 100%);
+    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 16px 40px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -24px 40px -24px rgba(0, 0, 0, 0.4);
   }
 
   /* Hover tátil — elevação + borda aquece + glow (todos os níveis).
@@ -318,36 +393,36 @@ body {
   /* Linha de marketplace — card executivo sobre o painel pai */
   .overview-marketplace-row {
     position: relative;
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, #112944 0%, #0B1D30 100%);
     border: 1px solid var(--color-border-subtle);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    background-color: var(--color-bg-card-hover);
+    background-color: #163556;
     border-color: var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      0 12px 32px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Canal Nº1 — dominante, mais corpo e luz */
+  /* Canal Nº1 — dominante, mais corpo e luz, gradiente mais rico */
   .overview-marketplace-row-lead {
     position: relative;
-    background: var(--color-bg-elevated);
+    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
-      0 12px 32px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
 
-  /* Trilho das barras de participação */
+  /* Trilho das barras de participação — o mais escuro da hierarquia */
   .overview-track {
-    background: linear-gradient(180deg, #050912 0%, #0A1120 100%);
+    background: linear-gradient(180deg, #081423 0%, #0B1D30 100%);
     box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   }
 
@@ -364,7 +439,7 @@ body {
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:hover {
-    background: rgba(47, 107, 255, 0.08);
+    background: rgba(58, 95, 219, 0.08);
   }
   .rail-item:active {
     transform: scale(0.985);
@@ -376,7 +451,7 @@ body {
     box-shadow: 0 0 0 2px var(--color-border-active);
   }
   .rail-item.topnav-item-active {
-    background: rgba(47, 107, 255, 0.06);
+    background: rgba(58, 95, 219, 0.06);
   }
   /* Base do sublinhado ativo — sempre presente, opacity/scale animam a
      entrada/saída ao trocar de página em vez de aparecer/sumir abrupto. */
@@ -389,7 +464,7 @@ body {
     height: 2px;
     border-radius: 9999px;
     background: linear-gradient(90deg, var(--color-accent-cyan), var(--color-accent-blue));
-    box-shadow: 0 0 10px 0 rgba(47, 107, 255, 0.8);
+    box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8);
     opacity: 0;
     transform: scaleX(0.6);
     transition: opacity var(--motion-duration-normal) var(--motion-ease-standard),
@@ -402,11 +477,11 @@ body {
   .rail-item-active {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 60%),
-      linear-gradient(180deg, rgba(76, 130, 247, 0.14), rgba(76, 130, 247, 0.04));
+      linear-gradient(180deg, rgba(82, 115, 230, 0.14), rgba(82, 115, 230, 0.04));
     box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-      inset 0 0 0 1px rgba(76, 130, 247, 0.22),
-      0 4px 14px -6px rgba(76, 130, 247, 0.4);
+      inset 0 0 0 1px rgba(82, 115, 230, 0.22),
+      0 4px 14px -6px rgba(82, 115, 230, 0.4);
   }
   /* Barra de acento do item ativo — interna, com glow (sem sobrar pra fora) */
   .rail-item-active::before {
@@ -419,7 +494,7 @@ body {
     transform: translateY(-50%);
     border-radius: 9999px;
     background: linear-gradient(180deg, var(--color-accent-cyan), var(--color-accent-blue));
-    box-shadow: 0 0 10px 0 rgba(47, 107, 255, 0.8);
+    box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8);
   }
 
   /* Superfície da própria sidebar — camada com profundidade + glow ambiental.
@@ -441,7 +516,7 @@ body {
     inset: 0 0 auto 0;
     height: 220px;
     pointer-events: none;
-    background: radial-gradient(130% 100% at 50% -10%, rgba(76, 130, 247, 0.12), transparent 72%);
+    background: radial-gradient(130% 100% at 50% -10%, rgba(82, 115, 230, 0.12), transparent 72%);
   }
   .rail-surface::after {
     content: '';
@@ -456,7 +531,7 @@ body {
      as an integrated part of the topbar instead of a pasted square. */
   .brand-mark {
     filter:
-      drop-shadow(0 0 10px rgba(76, 130, 247, 0.4))
+      drop-shadow(0 0 10px rgba(82, 115, 230, 0.4))
       drop-shadow(0 0 22px rgba(96, 111, 249, 0.18))
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
   }
@@ -465,7 +540,7 @@ body {
   }
   .group:hover .brand-mark {
     filter:
-      drop-shadow(0 0 14px rgba(76, 130, 247, 0.55))
+      drop-shadow(0 0 14px rgba(82, 115, 230, 0.55))
       drop-shadow(0 0 28px rgba(96, 111, 249, 0.28))
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
   }
@@ -473,25 +548,54 @@ body {
   /* ---- Top nav (substitui a sidebar) --------------------------------------
      Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
      horizontal e fixa no topo. */
-  /* Header — presença azul maior que o workspace, mesma família. */
+  /* Header — peça própria, apoiada sobre o ambiente, nunca a mesma cor do
+     conteúdo (fundo #081423/#0B1D30 vs header #0D2036). */
   .topnav-surface {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
-      var(--color-bg-header);
+    background: linear-gradient(180deg, #11294A 0%, #0D2036 100%);
     box-shadow:
-      inset 0 -1px 0 0 rgba(99, 179, 255, 0.06),
-      0 12px 28px -16px rgba(0, 6, 18, 0.5);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0 0 rgba(110, 170, 255, 0.14),
+      0 12px 28px -16px rgba(0, 6, 18, 0.6);
   }
   .topnav-surface::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(60% 160% at 8% 50%, rgba(47, 107, 255, 0.1), transparent 70%);
+    background: radial-gradient(60% 160% at 8% 50%, rgba(70, 229, 255, 0.06), transparent 70%);
   }
 
   /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
-     acima, que já cobre o sublinhado com transição de entrada/saída. */
+     acima, que já cobre o sublinhado com transição de entrada/saída. Aqui só
+     acrescenta um respiro de brilho contínuo (barra estava "sem vida"). */
+  .topnav-item-active::after {
+    animation: topnav-underline-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes topnav-underline-pulse {
+    0%, 100% { box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8); }
+    50% { box-shadow: 0 0 16px 2px rgba(95, 194, 232, 0.95); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .topnav-item-active::after { animation: none; }
+  }
+
+  /* Ícone reage no hover — leve "vida" no item, sem mexer no layout. */
+  .rail-item:hover :is(svg) { transform: scale(1.1); }
+
+  /* Entrada em stagger dos itens de navegação ao montar a barra. */
+  .topnav-surface nav .rail-item {
+    animation: motion-block-in var(--motion-duration-normal, 200ms) var(--motion-ease-enter, ease-out) both;
+  }
+  .topnav-surface nav .rail-item:nth-child(1) { animation-delay: 0ms; }
+  .topnav-surface nav .rail-item:nth-child(2) { animation-delay: 30ms; }
+  .topnav-surface nav .rail-item:nth-child(3) { animation-delay: 60ms; }
+  .topnav-surface nav .rail-item:nth-child(4) { animation-delay: 90ms; }
+  .topnav-surface nav .rail-item:nth-child(5) { animation-delay: 120ms; }
+  .topnav-surface nav .rail-item:nth-child(6) { animation-delay: 150ms; }
+  .topnav-surface nav .rail-item:nth-child(7) { animation-delay: 180ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .topnav-surface nav .rail-item { animation: none; }
+  }
 
   /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
   .hide-scrollbar {
@@ -553,7 +657,7 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99, 179, 255, 0.24), transparent);
+    background: linear-gradient(90deg, transparent, rgba(95, 194, 232, 0.24), transparent);
     opacity: 0.5;
     pointer-events: none;
     transition: opacity var(--motion-duration-fast) var(--motion-ease-hover);
@@ -748,4 +852,36 @@ body {
     background: var(--color-bg-elevated);
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
+}
+
+/* ---- Relatórios (Relatorios.tsx) — visualizador tipo slide + impressão --
+   Na tela: só o slide atual aparece (navegação por botão/seta). Na
+   impressão: todos os slides ficam visíveis, um por página, .report-onscreen
+   some (não faz sentido em papel), toolbar some, cores viram alto-contraste
+   pra não gastar tinta escura de fundo. */
+.report-print { display: none; }
+
+@media print {
+  .app-shell > *:not(main),
+  .report-toolbar {
+    display: none !important;
+  }
+  .app-main { padding-top: 0 !important; }
+  .app-page-container { width: 100% !important; padding: 0 !important; }
+  .report-onscreen { display: none; }
+  .report-print { display: block; }
+  .report-print .report-slide {
+    page-break-after: always;
+    break-after: page;
+    border: none;
+    box-shadow: none;
+    background: #fff !important;
+    color: #0A1828;
+    min-height: 100vh;
+  }
+  .report-print .report-slide * {
+    color: #0A1828 !important;
+    -webkit-text-fill-color: #0A1828 !important;
+  }
+  .report-slide__page { color: #6b7280 !important; }
 }

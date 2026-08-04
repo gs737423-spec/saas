@@ -2,9 +2,9 @@ import { Gauge } from 'lucide-react'
 import type { ProductHealthScore, StockItem } from '@/data/mockData'
 
 const statusColor: Record<string, string> = {
-  'Saudável': '#2BD6A0',
-  'Atenção': '#FFC857',
-  'Crítico': '#FF5F7A',
+  'Saudável': '#3BE38E',
+  'Atenção': '#FFC95A',
+  'Crítico': '#FF5E7D',
   'Parado': '#9061F9',
 }
 
@@ -14,9 +14,9 @@ interface Props {
 }
 
 export default function ProdutoHealthScore({ health, stock }: Props) {
-  const color = statusColor[health.status] ?? '#2F6BFF'
+  const color = statusColor[health.status] ?? '#3A8DFF'
   const ruptureRisk = stock ? (stock.coverageDays <= 7 ? 'Alto' : stock.coverageDays <= 20 ? 'Médio' : 'Baixo') : null
-  const riskColor = ruptureRisk === 'Alto' ? '#FF5F7A' : ruptureRisk === 'Médio' ? '#FFC857' : '#2BD6A0'
+  const riskColor = ruptureRisk === 'Alto' ? '#FF5E7D' : ruptureRisk === 'Médio' ? '#FFC95A' : '#3BE38E'
 
   return (
     <div className="glass-panel rounded-2xl p-4 sm:p-5">

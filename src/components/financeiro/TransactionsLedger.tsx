@@ -7,11 +7,11 @@ import DataTableViewport from '@/components/common/DataTableViewport'
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 const typeTone: Record<FinanceTransactionType, string> = {
-  Venda: '#2BD6A0',
-  Comissão: '#FFC857',
-  Tarifa: '#FFC857',
-  Estorno: '#FF5F7A',
-  Devolução: '#FF5F7A',
+  Venda: '#3BE38E',
+  Comissão: '#FFC95A',
+  Tarifa: '#FFC95A',
+  Estorno: '#FF5E7D',
+  Devolução: '#FF5E7D',
   Ajuste: '#6F829B',
 }
 
@@ -76,7 +76,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                 className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
-                    ? { background: '#2F6BFF18', color: '#2F6BFF' }
+                    ? { background: '#3A8DFF18', color: '#3A8DFF' }
                     : { background: 'transparent', color: 'var(--text-muted)' }
                 }
               >

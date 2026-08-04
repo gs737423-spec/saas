@@ -1,4 +1,4 @@
-import type { MLItemDetail, MLItemSearchResponse } from './types.js'
+import type { MLItemDetail, MLItemSearchResponse, MLOrder, MLOrderSearchResponse } from './types.js'
 
 const BASE_URL = 'https://api.mercadolibre.com'
 
@@ -7,6 +7,10 @@ const BASE_URL = 'https://api.mercadolibre.com'
  *  pagination/backoff have been validated against a real account. */
 export const MAX_ITEMS_FIRST_SYNC = 200
 const ITEMS_PAGE_SIZE = 50
+/** Same reasoning as MAX_ITEMS_FIRST_SYNC — orders/search already returns the full
+ *  order object per result (no per-order detail fetch needed, unlike items). */
+export const MAX_ORDERS_FIRST_SYNC = 300
+const ORDERS_PAGE_SIZE = 50
 const MAX_429_RETRIES = 3
 
 export class MercadoLivreApiError extends Error {
@@ -63,4 +67,26 @@ export async function searchUserItemIds(userId: string, accessToken: string): Pr
 
 export async function getItemDetail(itemId: string, accessToken: string): Promise<MLItemDetail> {
   return mlFetch<MLItemDetail>(`/items/${itemId}`, accessToken)
+}
+
+/**
+ * Paginates GET /orders/search up to MAX_ORDERS_FIRST_SYNC, most recent first.
+ * Unlike items, the search response already contains the full order (items,
+ * amounts, buyer, status) — no per-order detail call needed.
+ */
+export async function searchOrders(sellerId: string, accessToken: string): Promise<MLOrder[]> {
+  const orders: MLOrder[] = []
+  let offset = 0
+
+  while (orders.length < MAX_ORDERS_FIRST_SYNC) {
+    const page = await mlFetch<MLOrderSearchResponse>(
+      `/orders/search?seller=${sellerId}&sort=date_desc&offset=${offset}&limit=${ORDERS_PAGE_SIZE}`,
+      accessToken
+    )
+    orders.push(...page.results)
+    offset += page.results.length
+    if (page.results.length === 0 || offset >= page.paging.total) break
+  }
+
+  return orders.slice(0, MAX_ORDERS_FIRST_SYNC)
 }

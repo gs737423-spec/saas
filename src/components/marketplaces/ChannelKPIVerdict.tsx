@@ -28,7 +28,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byNet[0].marketplace,
       sub: `${pct(sorted.byNet[0].netSharePct)}% do líquido total`,
       icon: Crown,
-      tone: '#2BD6A0',
+      tone: '#3BE38E',
     },
     {
       label: 'Melhor Ticket',
@@ -46,7 +46,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byOrders[0].marketplace,
       sub: `ticket R$ ${brl2(sorted.byOrders[0].avgTicket)}`,
       icon: ShoppingCart,
-      tone: '#2F6BFF',
+      tone: '#3A8DFF',
     },
     {
       label: 'Maior Crescimento',
@@ -55,7 +55,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byGrowth[0].marketplace,
       sub: `líquido R$ ${brl(sorted.byGrowth[0].netRevenue)}`,
       icon: TrendingUp,
-      tone: '#5AB7FF',
+      tone: '#46E5FF',
     },
     {
       label: 'Maior Impacto de Comissão',
@@ -64,7 +64,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.byFees[0].marketplace,
       sub: `R$ ${brl(sorted.byFees[0].fees)} retidos`,
       icon: Shield,
-      tone: '#FFC857',
+      tone: '#FFC95A',
     },
     {
       label: 'Canal em Atenção',
@@ -73,7 +73,7 @@ export default function ChannelKPIVerdict() {
       channel: sorted.attention.marketplace,
       sub: `${sorted.attention.status} · ${pct(sorted.attention.trend)}%`,
       icon: AlertTriangle,
-      tone: '#FF5F7A',
+      tone: '#FF5E7D',
     },
   ]
 
@@ -83,10 +83,10 @@ export default function ChannelKPIVerdict() {
         const Icon = v.icon
         const brand = getMarketplaceColor(v.channel as any)
         return (
-          <div key={v.label} className="overview-glass overview-card-hover relative flex h-full min-h-[98px] flex-col overflow-hidden rounded-[18px] p-2.5">
+          <div key={v.label} className="overview-glass overview-card-hover relative flex h-full min-h-[98px] min-w-0 flex-col overflow-hidden rounded-[18px] p-2.5">
             <div className="absolute inset-y-0 left-0 w-[3px]" style={{ background: brand }} />
             <div className="mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
-              <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{v.label}</span>
+              <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{v.label}</span>
               <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: v.tone }} />
             </div>
             <div className="font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">

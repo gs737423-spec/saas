@@ -3,7 +3,6 @@ import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../.
 import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/mercadolivre/auth.js'
 import { encryptSecret } from '../../../src/server/integrations/crypto.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
-import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const appBaseUrl = process.env.APP_BASE_URL
@@ -45,6 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
+    const companyId = statePayload.companyId
     const tokenResponse = await exchangeCodeForToken(code)
     const supabase = await getSupabaseAdmin()
 
@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .upsert(
         {
-          company_id: DEFAULT_COMPANY_ID,
+          company_id: companyId,
           provider: 'mercadolivre',
           status: 'connected',
           external_account_id: String(tokenResponse.user_id),
@@ -73,6 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await logSyncEvent({
+      companyId,
       connectionId: data.id,
       provider: 'mercadolivre',
       eventType: 'oauth_connected',

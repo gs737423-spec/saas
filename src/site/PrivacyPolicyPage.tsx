@@ -17,7 +17,7 @@ const sections: Section[] = [
     title: 'Visão geral',
     body: (
       <p>
-        Esta política descreve como a Vintec trata os dados pessoais coletados por meio do site institucional, de
+        Esta política descreve como a MKTOnline trata os dados pessoais coletados por meio do site institucional, de
         formulários de contato e solicitação de demonstração, de comunicações comerciais e de outras interações
         relacionadas à apresentação da plataforma. Ela se aplica a visitantes, potenciais clientes e demais pessoas que
         interagem com o site, e não substitui eventuais contratos ou termos específicos firmados com clientes da
@@ -31,7 +31,7 @@ const sections: Section[] = [
     body: (
       <>
         <p>
-          Para os fins desta política, a Vintec é a responsável pelo tratamento dos dados pessoais coletados no
+          Para os fins desta política, a MKTOnline é a responsável pelo tratamento dos dados pessoais coletados no
           contexto do site institucional e dos contatos comerciais realizados a partir dele.
         </p>
         <ul className="privpolicy-list">
@@ -69,7 +69,7 @@ const sections: Section[] = [
         <ul className="privpolicy-list">
           <li>responder solicitações e pedidos de contato;</li>
           <li>agendar e conduzir demonstrações da plataforma;</li>
-          <li>apresentar as soluções da Vintec de forma adequada ao contexto de cada empresa;</li>
+          <li>apresentar as soluções da MKTOnline de forma adequada ao contexto de cada empresa;</li>
           <li>entender o contexto operacional do potencial cliente;</li>
           <li>melhorar a experiência de navegação no site;</li>
           <li>enviar comunicações institucionais e comerciais, quando permitido;</li>
@@ -91,7 +91,7 @@ const sections: Section[] = [
         <ul className="privpolicy-list">
           <li>consentimento do titular;</li>
           <li>execução de procedimentos preliminares relacionados a um eventual contrato;</li>
-          <li>legítimo interesse da Vintec, respeitados os direitos e liberdades fundamentais do titular;</li>
+          <li>legítimo interesse da MKTOnline, respeitados os direitos e liberdades fundamentais do titular;</li>
           <li>cumprimento de obrigação legal ou regulatória;</li>
           <li>exercício regular de direitos em processo judicial, administrativo ou arbitral.</li>
         </ul>
@@ -105,12 +105,12 @@ const sections: Section[] = [
       <>
         <p>Os dados podem ser compartilhados, quando necessário para as finalidades descritas nesta política, com:</p>
         <ul className="privpolicy-list">
-          <li>fornecedores de tecnologia que dão suporte ao site e à operação da Vintec;</li>
+          <li>fornecedores de tecnologia que dão suporte ao site e à operação da MKTOnline;</li>
           <li>ferramentas de hospedagem, analytics, CRM, e-mail ou atendimento ao cliente;</li>
           <li>parceiros operacionais essenciais à prestação dos serviços;</li>
           <li>autoridades públicas, quando exigido por lei ou determinação judicial.</li>
         </ul>
-        <p>A Vintec busca compartilhar apenas os dados estritamente necessários para cada finalidade.</p>
+        <p>A MKTOnline busca compartilhar apenas os dados estritamente necessários para cada finalidade.</p>
       </>
     ),
   },
@@ -141,7 +141,7 @@ const sections: Section[] = [
     title: 'Armazenamento e segurança',
     body: (
       <p>
-        A Vintec adota medidas técnicas e organizacionais razoáveis para proteger os dados pessoais contra acesso não
+        A MKTOnline adota medidas técnicas e organizacionais razoáveis para proteger os dados pessoais contra acesso não
         autorizado, perda, alteração ou divulgação indevida. Embora sejam adotadas medidas de segurança compatíveis com
         a natureza das informações tratadas, nenhum sistema é completamente imune a riscos.
       </p>
@@ -190,7 +190,7 @@ const sections: Section[] = [
     title: 'Transferências internacionais',
     body: (
       <p>
-        Alguns fornecedores de tecnologia utilizados pela Vintec podem armazenar ou processar dados em servidores
+        Alguns fornecedores de tecnologia utilizados pela MKTOnline podem armazenar ou processar dados em servidores
         localizados fora do Brasil. Nesses casos, a empresa buscará adotar medidas apropriadas para resguardar os dados
         pessoais, conforme a legislação aplicável.
       </p>
@@ -201,7 +201,7 @@ const sections: Section[] = [
     title: 'Links de terceiros',
     body: (
       <p>
-        O site pode conter links para sites de terceiros. A Vintec não se responsabiliza pelas práticas ou políticas de
+        O site pode conter links para sites de terceiros. A MKTOnline não se responsabiliza pelas práticas ou políticas de
         privacidade desses sites externos, e recomenda a leitura dos respectivos termos antes de fornecer dados
         pessoais.
       </p>
@@ -212,7 +212,7 @@ const sections: Section[] = [
     title: 'Privacidade de menores',
     body: (
       <p>
-        A Vintec não direciona intencionalmente seus serviços, formulários ou comunicações a menores de idade sem a
+        A MKTOnline não direciona intencionalmente seus serviços, formulários ou comunicações a menores de idade sem a
         devida representação legal.
       </p>
     ),
@@ -223,7 +223,7 @@ const sections: Section[] = [
     body: (
       <p>
         Esta política pode ser atualizada a qualquer momento, para refletir mudanças legais, operacionais ou nas
-        práticas da Vintec. A data da última atualização é sempre indicada no topo desta página.
+        práticas da MKTOnline. A data da última atualização é sempre indicada no topo desta página.
       </p>
     ),
   },
@@ -255,10 +255,10 @@ export default function PrivacyPolicyPage() {
 
       <section className="privpolicy-hero">
         <div className="site-container privpolicy-hero__inner">
-          <span className="privpolicy-breadcrumb">Vintec / Política de Privacidade</span>
+          <span className="privpolicy-breadcrumb">MKTOnline / Política de Privacidade</span>
           <h1 className="privpolicy-title">Política de Privacidade</h1>
           <p className="privpolicy-subtitle">
-            Saiba como a Vintec coleta, utiliza, armazena e protege os dados informados por usuários, clientes e
+            Saiba como a MKTOnline coleta, utiliza, armazena e protege os dados informados por usuários, clientes e
             visitantes do site.
           </p>
           <div className="privpolicy-hero__meta">

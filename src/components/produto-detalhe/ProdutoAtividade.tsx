@@ -2,10 +2,10 @@ import { ShoppingCart, AlertTriangle, Star, DownloadCloud, Megaphone } from 'luc
 import { productActivity, type ProductActivity } from '@/data/mockData'
 
 const typeConfig: Record<ProductActivity['type'], { icon: typeof ShoppingCart; color: string; bg: string; dot: string }> = {
-  venda: { icon: ShoppingCart, color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', dot: '#2BD6A0' },
-  alerta: { icon: AlertTriangle, color: 'text-accent-rose', bg: 'bg-accent-rose/10', dot: '#FF5F7A' },
-  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#FFC857' },
-  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#2F6BFF' },
+  venda: { icon: ShoppingCart, color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', dot: '#3BE38E' },
+  alerta: { icon: AlertTriangle, color: 'text-accent-rose', bg: 'bg-accent-rose/10', dot: '#FF5E7D' },
+  avaliacao: { icon: Star, color: 'text-accent-amber', bg: 'bg-accent-amber/10', dot: '#FFC95A' },
+  importacao: { icon: DownloadCloud, color: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: '#3A8DFF' },
   campanha: { icon: Megaphone, color: 'text-accent-violet', bg: 'bg-accent-violet/10', dot: '#194B9B' },
 }
 

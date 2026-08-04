@@ -1,21 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Store,
   Package,
   Boxes,
   Wallet,
-  Megaphone,
-  Star,
   Link2,
   FileBarChart2,
   Settings,
   LogOut,
   User,
+  ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
+import { apiFetch } from '@/lib/apiFetch'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
@@ -29,8 +30,6 @@ const navItems: Item[] = [
   { icon: Package, label: 'Produtos', to: '/app/produtos' },
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
 ]
@@ -53,9 +52,19 @@ function displayNameFromEmail(email: string | undefined): string {
 export default function TopNav() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const isAdminArea = location.pathname.startsWith('/app/admin')
+
+  useEffect(() => {
+    // Reaproveita /api/admin/companies em vez de um endpoint /api/admin/me
+    // dedicado — Vercel Hobby tem teto de 12 serverless functions por
+    // deploy, cada arquivo em api/** conta como uma. 200 = é admin.
+    apiFetch('/api/admin/companies').then((res) => setIsAdmin(res.ok)).catch(() => setIsAdmin(false))
+  }, [])
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -74,8 +83,8 @@ export default function TopNav() {
     .slice(0, 2) || 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12.5px] font-medium transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active text-accent-cyan' : 'text-text-muted hover:text-text-primary'
+    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[13px] tracking-[-0.01em] transition-colors lg:gap-1.5 lg:px-2 ${
+      isActive ? 'topnav-item-active font-bold text-accent-cyan' : 'font-semibold text-text-muted hover:text-text-primary'
     }`
 
   return (
@@ -87,24 +96,50 @@ export default function TopNav() {
 
       <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
 
-      {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
-      <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
-        {navItems.map((item) => (
-          <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
-            <item.icon className="h-4 w-4 shrink-0" />
-            <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+      {/* Área admin — nunca mostra a navegação de cliente (Marketplaces,
+          Produtos etc. levam a dados ilustrativos, sem sentido aqui dentro).
+          Só um indicador + volta pra plataforma. */}
+      {isAdminArea ? (
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <NavLink
+            to="/app"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar à plataforma
           </NavLink>
-        ))}
-      </nav>
+          <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border-subtle sm:block" />
+          <span className="hidden items-center gap-1.5 text-[13px] font-bold text-accent-cyan sm:flex">
+            <ShieldCheck className="h-4 w-4" />
+            Painel Administrativo
+          </span>
+        </div>
+      ) : (
+        <>
+          {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
+          <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
+            {navItems.map((item) => (
+              <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
 
-      {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
-      <div className="min-w-0 flex-1 md:hidden" />
+          {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
+          <div className="min-w-0 flex-1 md:hidden" />
+        </>
+      )}
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
-        <SearchMenu />
-        <NotificationsMenu />
+        {!isAdminArea && (
+          <>
+            <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
+            <SearchMenu />
+            <NotificationsMenu />
+          </>
+        )}
 
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
 
@@ -134,14 +169,36 @@ export default function TopNav() {
                 <p className="truncate text-sm font-medium text-text-primary">{displayName}</p>
                 <p className="truncate text-[11px] text-text-muted">{user?.email}</p>
               </div>
-              <NavLink
-                to="/app/configuracoes"
-                onClick={() => setShowUserMenu(false)}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
-              >
-                <User className="h-4 w-4" />
-                Minha Conta
-              </NavLink>
+              {!isAdminArea && (
+                <NavLink
+                  to="/app/configuracoes"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                >
+                  <User className="h-4 w-4" />
+                  Minha Conta
+                </NavLink>
+              )}
+              {isAdmin && !isAdminArea && (
+                <NavLink
+                  to="/app/admin"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-accent-cyan transition-colors hover:bg-white/5"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administração
+                </NavLink>
+              )}
+              {isAdminArea && (
+                <NavLink
+                  to="/app"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar à plataforma
+                </NavLink>
+              )}
               <button
                 onClick={() => { setShowUserMenu(false); void signOut().then(() => navigate('/')) }}
                 className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border-subtle px-4 py-2.5 text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"

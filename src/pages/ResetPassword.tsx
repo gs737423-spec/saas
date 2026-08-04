@@ -4,6 +4,7 @@ import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
 import '@/site/site.css'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
 const MIN_LENGTH = 8
 
@@ -63,7 +64,10 @@ export default function ResetPassword() {
   return (
     <div className="login-page">
       <header className="login-header">
-        <Link to="/" className="login-header__brand">Vintec</Link>
+        <Link to="/" className="login-header__brand flex items-center gap-2">
+          <MKTOnlineLogo mode="symbol" size="sm" />
+          MKTOnline
+        </Link>
       </header>
 
       <div className="login-layout" style={{ gridTemplateColumns: '1fr' }}>

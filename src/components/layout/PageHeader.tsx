@@ -8,8 +8,6 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/estoque': { title: 'Estoque', subtitle: 'Cobertura, giro e Curva ABC por produto' },
   '/importacoes': { title: 'Importações', subtitle: 'Envie planilhas, valide dados e acompanhe o histórico' },
   '/financeiro': { title: 'Financeiro', subtitle: 'Fluxo de caixa e resultados consolidados' },
-  '/marketing': { title: 'Marketing', subtitle: 'Campanhas, ROI e investimento em anúncios' },
-  '/avaliacoes': { title: 'Avaliações', subtitle: 'Reputação e reviews por marketplace' },
   '/relatorios': { title: 'Relatórios', subtitle: 'Relatórios customizáveis de desempenho' },
   '/configuracoes': { title: 'Configurações', subtitle: 'Conta, integrações e preferências' },
 }
@@ -30,8 +28,13 @@ export default function PageHeader() {
     <div className="mb-3 flex items-center gap-2.5 sm:mb-4">
       <span className="hidden h-6 w-1 rounded-full bg-gradient-to-b from-accent-blue to-accent-violet sm:block" />
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-tight text-text-primary sm:text-xl">{meta.title}</h1>
-        <p className="hidden truncate text-xs text-text-muted sm:block">{meta.subtitle}</p>
+        <h1
+          className="truncate font-brand text-[21px] font-semibold leading-[1.2] text-text-primary sm:text-[24px]"
+          style={{ letterSpacing: '-0.035em' }}
+        >
+          {meta.title}
+        </h1>
+        <p className="hidden truncate text-xs leading-[1.45] text-text-muted sm:block">{meta.subtitle}</p>
       </div>
     </div>
   )
