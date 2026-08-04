@@ -6,7 +6,9 @@ export interface MLTokenResponse {
   expires_in: number
   scope: string
   user_id: number
-  refresh_token: string
+  // Ausente quando a conta autorizante não é vendedora — o Mercado Livre só
+  // emite refresh_token pra contas com permissão de venda.
+  refresh_token?: string
 }
 
 export interface MLTokenErrorResponse {

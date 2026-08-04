@@ -15,6 +15,7 @@ import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 import Admin from '@/pages/Admin'
 import AdminCompany from '@/pages/AdminCompany'
+import { useIdleLogout } from '@/hooks/useIdleLogout'
 
 // Shell autenticado da plataforma. Montado em `/app/*` sob <ProtectedRoute>
 // (ver main.tsx) — a guarda de sessão real já aconteceu lá, este componente
@@ -23,6 +24,7 @@ import AdminCompany from '@/pages/AdminCompany'
 // base `/app`.
 export default function App() {
   const location = useLocation()
+  useIdleLogout()
 
   return (
     <ConnectionProvider>

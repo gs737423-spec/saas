@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ctaLabels, specialistHref } from '@/site/content'
 import { whatsappContactUrl } from '@/lib/whatsapp'
 import HeroPersonStage from '@/site/components/HeroPersonStage'
@@ -22,14 +22,14 @@ const slides: Slide[] = [
   {
     eyebrow: 'MENOS TELAS. MAIS CONTROLE.',
     title: <>Decisões à altura do negócio que você está construindo.</>,
-    sub: 'Nossa equipe atua dentro do ambiente do e-commerce para o sucesso da sua operação.',
+    sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
     ctaPrimary: 'Quero organizar minha operação',
     ctaSecondary: 'Ver como funciona',
     ctaSecondaryHref: '#como-funciona',
     microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
-    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a MKTOnline',
-    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a MKTOnline.',
+    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
+    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
   },
   {
     eyebrow: 'ANÁLISE E ACOMPANHAMENTO',
@@ -40,8 +40,8 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na MKTOnline',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
+    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
   },
   {
     eyebrow: 'ANÁLISE ESTRATÉGICA DA OPERAÇÃO',
@@ -52,8 +52,8 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
-    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na MKTOnline',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
+    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
   },
 ]
 
@@ -124,7 +124,7 @@ export default function Hero() {
       className="hero-vt"
       role="region"
       aria-roledescription="carousel"
-      aria-label="Apresentação da MKTOnline"
+      aria-label="Apresentação da Vintec"
       tabIndex={0}
       onKeyDown={onKeyDown}
       onMouseEnter={() => setPaused(true)}
@@ -150,14 +150,11 @@ export default function Hero() {
               {slide.sub}
             </p>
 
-            {/* Os dois CTAs formam um conjunto: mesma altura, padding, radius,
-                tipografia e min-width (o texto curto alarga para casar com o
-                longo). Cor mantém a hierarquia — primary azul, glass secundário. */}
-            <div className="mt-7 flex flex-col items-stretch gap-3 hero-cta-group">
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary hero-cta">
-                {slide.ctaPrimary} <ArrowRight className="hero-cta__arrow h-[18px] w-[18px]" />
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
+                {slide.ctaPrimary}
               </a>
-              <a href={slide.ctaSecondaryHref} className="btn btn-glass hero-cta">
+              <a href={slide.ctaSecondaryHref} className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>
                 {slide.ctaSecondary}
               </a>
             </div>

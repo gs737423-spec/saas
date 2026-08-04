@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let userId: string | null = null
 
     const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: appBaseUrl ? `${appBaseUrl}/login` : undefined,
+      redirectTo: appBaseUrl ? `${appBaseUrl}/redefinir-senha` : undefined,
     })
 
     if (inviteError) {

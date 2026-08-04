@@ -1,4 +1,4 @@
-import { specialistHref } from '@/site/content'
+import { ctaLabels, specialistHref } from '@/site/content'
 
 interface Service {
   label: string
@@ -6,36 +6,32 @@ interface Service {
 }
 
 const services: Service[] = [
-  { label: 'ENTENDIMENTO CONTÍNUO E DIREÇÃO ESTRATÉGICA', text: 'Conhecemos profundamente a realidade da operação, definimos prioridades junto com a empresa e ajustamos o caminho conforme o negócio e o mercado evoluem.' },
-  { label: 'ACOMPANHAMENTO PRÓXIMO DA PERFORMANCE', text: 'Acompanhamos faturamento, margem, pedidos, estoque, produtos e canais de forma recorrente, apoiando decisões e antecipando pontos que exigem atenção.' },
-  { label: 'EVOLUÇÃO DOS MARKETPLACES', text: 'Desenvolvemos cada canal de forma progressiva, organizando processos, identificando oportunidades e realizando ajustes contínuos para crescer com mais controle.' },
-  { label: 'TECNOLOGIA QUE CONECTA A PARCERIA', text: 'A plataforma MKTOnline reúne os principais indicadores e cria uma visão compartilhada entre consultores, gestores e equipes durante toda a parceria.' },
+  { label: 'DIAGNÓSTICO E DIREÇÃO ESTRATÉGICA', text: 'Analisamos a operação, identificamos gargalos e ajudamos a definir quais problemas e oportunidades devem receber atenção primeiro.' },
+  { label: 'ACOMPANHAMENTO DE PERFORMANCE', text: 'Avaliamos faturamento, margem, pedidos, estoque, produtos e desempenho dos canais para apoiar decisões da gestão.' },
+  { label: 'DESENVOLVIMENTO DE MARKETPLACES', text: 'Ajudamos a empresa a entender o papel de cada canal, identificar oportunidades e organizar prioridades para crescer com mais controle.' },
+  { label: 'PLATAFORMA DE GESTÃO VINTEC', text: 'Disponibilizamos uma plataforma própria para consolidar os principais indicadores e apoiar o acompanhamento realizado entre consultores e gestores.' },
 ]
 
 // Serviços da consultoria — substitui de vez a antiga ExperienceSection.
-// A MKTOnline é consultoria; a plataforma é um dos 4 serviços (o último), não
+// A Vintec é consultoria; a plataforma é um dos 4 serviços (o último), não
 // uma seção-argumento própria. Painel único: título+texto à esquerda,
 // 4 serviços em grade 2×2 à direita, sem cards grandes/numeração/timeline.
 export default function ServicosSection() {
-  const waHref = specialistHref('Olá! Quero conversar sobre a minha operação com a MKTOnline.')
+  const waHref = specialistHref('Olá! Quero conversar sobre a minha operação com a Vintec.')
 
   return (
     <section id="servicos" className="sec-dark-flat servicos-section scroll-mt-24">
       <div className="site-container site-container--tight servicos-container" style={{ maxWidth: 1200 }}>
-        <span className="servicos-eyebrow">COMO A MKTONLINE CAMINHA COM A SUA EMPRESA</span>
+        <span className="servicos-eyebrow">COMO A VINTEC PODE AJUDAR</span>
 
         <div className="servicos-panel">
           <div className="servicos-panel__intro">
             <h2 className="servicos-panel__title">
-              Mais do que consultoria, uma parceria presente em cada fase da operação.
+              Consultoria que participa da operação, não apenas entrega recomendações.
             </h2>
             <p className="servicos-panel__text">
-              A MKTOnline constrói uma relação próxima e contínua com cada empresa. Conhecemos a operação,
-              acompanhamos seus desafios e participamos das decisões que orientam o crescimento do negócio.
-            </p>
-            <p className="servicos-panel__text">
-              À medida que a empresa evolui, os canais mudam e novas oportunidades aparecem, revisamos as estratégias
-              junto com a gestão para manter o crescimento organizado, rentável e sustentável.
+              Cada empresa possui desafios diferentes. Por isso, a Vintec começa entendendo o cenário atual e
+              estrutura o acompanhamento de acordo com os canais, objetivos e prioridades do negócio.
             </p>
           </div>
 
@@ -50,15 +46,14 @@ export default function ServicosSection() {
         </div>
 
         <p className="servicos-closing">
-          A tecnologia sustenta o acompanhamento. O verdadeiro diferencial está na proximidade, na continuidade e na
-          experiência aplicada ao negócio.
+          A tecnologia faz parte da entrega. O principal valor está na experiência aplicada às decisões da empresa.
         </p>
 
         <div className="servicos-cta">
           <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            Conversar sobre uma parceria estratégica
+            {ctaLabels.contexto}
           </a>
-          <span className="servicos-cta-note">Uma conversa inicial para entendermos o momento da sua empresa e construirmos juntos os próximos passos.</span>
+          <span className="servicos-cta-note">Conversa inicial, sem compromisso.</span>
         </div>
       </div>
     </section>

@@ -42,6 +42,10 @@ interface ConnectionContextValue {
    *  can show "backend indisponível" instead of spinning forever. This never
    *  happens for config_missing, which is a normal 200 response body. */
   backendUnreachable: boolean
+  /** Motivo real da última falha de /api/integrations/status quando não-200
+   *  (ex.: admin sem ?company_id=, usuário sem empresa vinculada) — para
+   *  distinguir de uma falha de rede genuína, cuja causa não temos como saber. */
+  statusErrorMessage: string | null
   logs: SyncLogEntry[]
   /** Mensagem da última tentativa de conectar que falhou (env var faltando,
    *  sessão sem empresa, etc) — null quando não há erro pendente. */
@@ -72,17 +76,33 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> 
   }
 }
 
+/** Como fetchJson, mas preserva a mensagem de erro de respostas não-200 (o
+ *  corpo de erro dos endpoints api/** sempre tem { message }) — para exibir
+ *  o motivo real em vez de tratar todo não-200 como "backend inatingível". */
+async function fetchJsonWithError<T>(url: string, init?: RequestInit): Promise<{ data: T | null; message: string | null }> {
+  try {
+    const headers = { ...(await authHeader()), ...(init?.headers ?? {}) }
+    const res = await fetch(url, { ...init, headers })
+    const body = await res.json().catch(() => null)
+    if (!res.ok) return { data: null, message: body?.message ?? null }
+    return { data: body as T, message: null }
+  } catch {
+    return { data: null, message: null }
+  }
+}
+
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [mercadoLivre, setMercadoLivre] = useState<MercadoLivreStatus | null>(null)
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [backendUnreachable, setBackendUnreachable] = useState(false)
+  const [statusErrorMessage, setStatusErrorMessage] = useState<string | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    const [status, logsResponse] = await Promise.all([
-      fetchJson<MercadoLivreStatus>('/api/integrations/status'),
+    const [{ data: status, message }, logsResponse] = await Promise.all([
+      fetchJsonWithError<MercadoLivreStatus>('/api/integrations/status'),
       fetchJson<{ logs: SyncLogEntry[] }>('/api/integrations/logs?limit=20'),
     ])
     if (status) setMercadoLivre(status)
@@ -90,6 +110,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     // status is only ever null here if the request itself failed — every real
     // response (including config_missing) is a 200 with a body.
     setBackendUnreachable(!status)
+    setStatusErrorMessage(status ? null : message)
     setLoading(false)
   }, [])
 
@@ -128,7 +149,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   return (
-    <ConnectionContext.Provider value={{ mercadoLivre, loading, syncing, backendUnreachable, logs, connectError, refresh, connectMercadoLivre, syncMercadoLivre }}>
+    <ConnectionContext.Provider value={{ mercadoLivre, loading, syncing, backendUnreachable, statusErrorMessage, logs, connectError, refresh, connectMercadoLivre, syncMercadoLivre }}>
       {children}
     </ConnectionContext.Provider>
   )

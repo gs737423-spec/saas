@@ -13,7 +13,6 @@ import {
 import { useConnections, getMarketplaceColor, type IntegrationStatus } from '@/contexts/ConnectionContext'
 import type { Marketplace } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
-import PageHeader from '@/components/layout/PageHeader'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Shopee', 'Amazon', 'Loja Própria']
 
@@ -37,7 +36,7 @@ const statusConfig: Record<IntegrationStatus, { label: string; color: string; bg
 }
 
 function MercadoLivreCard() {
-  const { mercadoLivre, loading, syncing, backendUnreachable, connectError, connectMercadoLivre, syncMercadoLivre } = useConnections()
+  const { mercadoLivre, loading, syncing, backendUnreachable, statusErrorMessage, connectError, connectMercadoLivre, syncMercadoLivre } = useConnections()
   const color = getMarketplaceColor('Mercado Livre')
 
   if (loading) {
@@ -56,11 +55,15 @@ function MercadoLivreCard() {
       <div className="glass-panel relative overflow-hidden rounded-2xl p-4 sm:p-5">
         <div className="flex items-start gap-2 text-xs text-accent-rose">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            Backend indisponível — não foi possível consultar o status da conexão. Isso é esperado ao rodar
-            apenas <code className="font-mono">vite dev</code> localmente; use <code className="font-mono">vercel dev</code> ou
-            acesse o deploy na Vercel.
-          </span>
+          {statusErrorMessage ? (
+            <span>{statusErrorMessage}</span>
+          ) : (
+            <span>
+              Backend indisponível — não foi possível consultar o status da conexão. Isso é esperado ao rodar
+              apenas <code className="font-mono">vite dev</code> localmente; use <code className="font-mono">vercel dev</code> ou
+              acesse o deploy na Vercel.
+            </span>
+          )}
         </div>
       </div>
     )
@@ -202,7 +205,6 @@ export default function Importacoes() {
 
   return (
     <div className="space-y-2.5">
-      <PageHeader />
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-accent-cyan" />
