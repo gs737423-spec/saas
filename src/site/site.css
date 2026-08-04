@@ -2742,8 +2742,8 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   --lx-w-collapsed: 352px;
   --lx-h-collapsed: 268px;
   --lx-r-collapsed: 30px;
-  --lx-w-expanded: 576px;
-  --lx-h-expanded: 688px;
+  --lx-w-expanded: 628px;
+  --lx-h-expanded: 736px;
   --lx-r-expanded: 34px;
 
   /* animação */
@@ -2928,9 +2928,21 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   align-items: center;
   justify-content: space-between;
 }
-.lx-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--lx-text-soft); transition: color 200ms var(--lx-ease); }
-.lx-back:hover { color: var(--lx-title); }
-.lx-back:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 3px; border-radius: 6px; }
+.lx-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--lx-border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lx-text-soft);
+  transition: color 200ms var(--lx-ease), background-color 200ms var(--lx-ease), border-color 200ms var(--lx-ease);
+}
+.lx-back:hover { color: var(--lx-title); background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.16); }
+.lx-back:focus-visible { outline: 2px solid var(--lx-blue-light); outline-offset: 3px; }
 .lx-help { font-size: 13px; font-weight: 600; color: var(--lx-blue-light); }
 .lx-help:hover { text-decoration: underline; }
 
