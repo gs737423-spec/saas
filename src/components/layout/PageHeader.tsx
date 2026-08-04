@@ -16,13 +16,16 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
 // on desktop — scrolls with content, minimal height, no action clutter.
 export default function PageHeader() {
   const { pathname } = useLocation()
-  const produtoMatch = pathname.match(/^\/produto\/(.+)$/)
+  // Rotas reais vivem sob /app (ex.: /app/produtos) — normaliza antes de
+  // comparar com pageMeta, que usa chaves sem esse prefixo.
+  const relativePath = pathname.replace(/^\/app/, '') || '/'
+  const produtoMatch = relativePath.match(/^\/produto\/(.+)$/)
   const meta = produtoMatch
     ? (() => {
         const product = products.find((p) => p.sku === produtoMatch[1])
         return { title: product ? product.name : 'Produto 360', subtitle: 'Produto 360 · Saúde e desempenho do produto' }
       })()
-    : pageMeta[pathname] ?? pageMeta['/']
+    : pageMeta[relativePath] ?? pageMeta['/']
 
   return (
     <div className="mb-3 flex items-center gap-2.5 sm:mb-4">
