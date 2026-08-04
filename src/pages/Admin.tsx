@@ -122,7 +122,7 @@ export default function Admin() {
 
   if (configMissing) {
     return (
-      <div className="glass-panel mx-auto mt-12 max-w-md rounded-2xl p-6 text-center">
+      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-2xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
         <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).</p>
@@ -132,7 +132,7 @@ export default function Admin() {
 
   if (unauthorized) {
     return (
-      <div className="glass-panel mx-auto mt-12 max-w-md rounded-2xl p-6 text-center">
+      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-2xl p-6 text-center">
         <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-accent-rose" />
         <h2 className="text-base font-semibold text-text-primary">Acesso restrito</h2>
         <p className="mt-1.5 text-sm text-text-muted">Esta área é só para a equipe interna.</p>
@@ -177,17 +177,17 @@ export default function Admin() {
 
         {/* Métricas — só dado real, nada calculado/fabricado */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+          <div className="glass-panel admin-card flex flex-col items-start gap-2 rounded-2xl p-4">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Building className="h-4 w-4" /></span>
             <p className="text-2xl font-bold tabular-nums text-text-primary">{companies.length}</p>
             <p className="text-[11px] text-text-muted">{companies.length === 1 ? 'empresa' : 'empresas'}</p>
           </div>
-          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+          <div className="glass-panel admin-card flex flex-col items-start gap-2 rounded-2xl p-4">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
             <p className="text-2xl font-bold tabular-nums text-text-primary">{companies.reduce((s, c) => s + c.memberCount, 0)}</p>
             <p className="text-[11px] text-text-muted">acessos ativos</p>
           </div>
-          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+          <div className="glass-panel admin-card flex flex-col items-start gap-2 rounded-2xl p-4">
             <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${withoutAccess.length > 0 ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-emerald/10 text-accent-emerald'}`}><AlertTriangle className="h-4 w-4" /></span>
             <p className={`text-2xl font-bold tabular-nums ${withoutAccess.length > 0 ? 'text-accent-amber' : 'text-text-primary'}`}>{withoutAccess.length}</p>
             <p className="text-[11px] text-text-muted">sem acesso vinculado</p>
@@ -197,7 +197,7 @@ export default function Admin() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {/* Empresas que precisam de atenção — calculado de verdade (sem acesso), não é lista mockada */}
           {withoutAccess.length > 0 && (
-            <div className="glass-panel rounded-2xl p-4">
+            <div className="glass-panel admin-card rounded-2xl p-4">
               <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-amber">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Precisam de atenção
@@ -214,7 +214,7 @@ export default function Admin() {
           )}
 
           {/* Atividade recente — dado real de sync_logs, não mockado */}
-          <div className="glass-panel rounded-2xl p-4">
+          <div className="glass-panel admin-card rounded-2xl p-4">
             <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
               <Activity className="h-3.5 w-3.5" />
               Atividade recente

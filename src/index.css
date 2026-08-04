@@ -230,6 +230,16 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
+  /* Painel admin — tom mais escuro/flat que o .glass-panel padrão (que é
+     azulado/gradiente), pra bater com a referência "dark navy premium" do
+     dono. Escopado só na área /app/admin — não mexe no resto da plataforma. */
+  .admin-panel-bg { background: #0B1121; }
+  .admin-card {
+    background: #151C2C;
+    border-color: #262F40;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  }
+
   /* Baseline untouched — shared by pages outside Stage 2's validated scope
      (Placeholder.tsx, ProdutoHeader/ProdutoKPIs). Do not tune this shared
      rule for Stage 2; use .motion-panel-card (Stage 2 section below) as an
