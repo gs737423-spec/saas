@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'error',
         message: `Mercado Livre returned error: ${mlError}`,
       })
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
       return
     }
 
@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'error',
         message: !code ? 'Missing authorization code in callback' : 'Invalid or expired OAuth state',
       })
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
       return
     }
 
@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       payload: { externalAccountId: String(tokenResponse.user_id), scopes: tokenResponse.scope },
     })
 
-    res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre`)
+    res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre`)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error during token exchange'
     console.error('[mercadolivre/callback]', message)
@@ -94,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message,
     })
     if (appBaseUrl) {
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
     } else {
       res.status(200).json({ ok: false, source: 'error', message: 'Erro controlado durante autenticação com o Mercado Livre.' })
     }
