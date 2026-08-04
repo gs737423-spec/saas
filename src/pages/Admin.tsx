@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, Wifi, WifiOff, ArrowUpRight, AlertTriangle, Activity } from 'lucide-react'
+import { Building2, Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, ArrowUpRight, AlertTriangle, Activity, Users2, Building } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 interface Company {
   id: string
@@ -175,18 +176,21 @@ export default function Admin() {
         )}
 
         {/* Métricas — só dado real, nada calculado/fabricado */}
-        <div className="flex flex-wrap gap-x-8 gap-y-3 border-b border-border-subtle pb-4">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Building className="h-4 w-4" /></span>
             <p className="text-2xl font-bold tabular-nums text-text-primary">{companies.length}</p>
-            <p className="text-[11px] uppercase tracking-wide text-text-muted">{companies.length === 1 ? 'empresa' : 'empresas'}</p>
+            <p className="text-[11px] text-text-muted">{companies.length === 1 ? 'empresa' : 'empresas'}</p>
           </div>
-          <div>
+          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
             <p className="text-2xl font-bold tabular-nums text-text-primary">{companies.reduce((s, c) => s + c.memberCount, 0)}</p>
-            <p className="text-[11px] uppercase tracking-wide text-text-muted">acessos ativos</p>
+            <p className="text-[11px] text-text-muted">acessos ativos</p>
           </div>
-          <div>
+          <div className="glass-panel flex flex-col items-start gap-2 rounded-2xl p-4">
+            <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${withoutAccess.length > 0 ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-emerald/10 text-accent-emerald'}`}><AlertTriangle className="h-4 w-4" /></span>
             <p className={`text-2xl font-bold tabular-nums ${withoutAccess.length > 0 ? 'text-accent-amber' : 'text-text-primary'}`}>{withoutAccess.length}</p>
-            <p className="text-[11px] uppercase tracking-wide text-text-muted">sem acesso vinculado</p>
+            <p className="text-[11px] text-text-muted">sem acesso vinculado</p>
           </div>
         </div>
 
@@ -299,13 +303,17 @@ function CompanyCard({ company }: { company: Company }) {
         <ArrowUpRight className="h-4 w-4 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
 
-      <div className="flex items-center justify-between border-t border-border-subtle pt-3">
-        <span className={`text-[11px] font-medium ${company.memberCount === 0 ? 'text-accent-amber' : 'text-text-secondary'}`}>
-          {company.memberCount === 0 ? 'sem acesso vinculado' : `${company.memberCount} ${company.memberCount === 1 ? 'acesso' : 'acessos'}`}
-        </span>
-        <span className={`flex items-center gap-1 text-[11px] font-medium ${connected ? 'text-accent-emerald' : 'text-text-muted'}`}>
-          {connected === null ? <Loader2 className="h-3 w-3 animate-spin" /> : connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-          {connected === null ? '' : connected ? 'conectado' : 'sem integração'}
+      <div className="flex items-center gap-1.5 border-t border-border-subtle pt-3">
+        <div className={connected ? '' : 'opacity-35 grayscale'}><LogoMercadoLivre /></div>
+        <div className="opacity-35 grayscale"><LogoShopee /></div>
+        <div className="opacity-35 grayscale"><LogoAmazon /></div>
+        <div className="opacity-35 grayscale"><LogoLojaPropria /></div>
+        <span className="ml-auto flex items-center gap-1 text-[11px] font-medium text-text-muted">
+          {company.memberCount === 0 ? (
+            <span className="text-accent-amber">sem acesso</span>
+          ) : (
+            `${company.memberCount} ${company.memberCount === 1 ? 'acesso' : 'acessos'}`
+          )}
         </span>
       </div>
     </Link>

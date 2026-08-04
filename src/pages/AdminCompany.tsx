@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
-  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, Store, PackageSearch,
-  Boxes, ChevronRight,
+  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
 import AdminSidebar, { type AdminCompanyTab } from '@/components/admin/AdminSidebar'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
+import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 const TAB_ORDER: AdminCompanyTab[] = ['visao-geral', 'acessos', 'integracoes', 'cobranca', 'suporte', 'configuracoes']
 
@@ -52,10 +52,11 @@ const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }>
 
 // Só Mercado Livre tem integração real hoje — os outros 3 aparecem como "não
 // existe ainda" (verdade, não é mock) até virarem integrações de verdade.
-const OTHER_MARKETPLACES: { name: string; color: string; bg: string; icon: typeof Store }[] = [
-  { name: 'Shopee', color: 'text-accent-rose', bg: 'bg-accent-rose/10', icon: Store },
-  { name: 'Amazon', color: 'text-accent-amber', bg: 'bg-accent-amber/10', icon: PackageSearch },
-  { name: 'Loja Própria', color: 'text-accent-blue', bg: 'bg-accent-blue/10', icon: Boxes },
+// Logos reais (src/site/logos.tsx), não ícone genérico.
+const OTHER_MARKETPLACES: { name: string; Logo: () => React.JSX.Element }[] = [
+  { name: 'Shopee', Logo: LogoShopee },
+  { name: 'Amazon', Logo: LogoAmazon },
+  { name: 'Loja Própria', Logo: LogoLojaPropria },
 ]
 
 interface ActivityEntry {
@@ -453,7 +454,7 @@ export default function AdminCompany() {
                 <div className="flex flex-col divide-y divide-border-subtle">
                   <div className="flex items-center justify-between py-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-amber/10 text-accent-amber"><Plug className="h-4 w-4" /></span>
+                      <LogoMercadoLivre />
                       <div>
                         <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
                         <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
@@ -468,9 +469,9 @@ export default function AdminCompany() {
                     </div>
                   </div>
                   {OTHER_MARKETPLACES.map((mp) => (
-                    <div key={mp.name} className="flex items-center justify-between py-2.5">
+                    <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
                       <div className="flex items-center gap-2.5">
-                        <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${mp.bg} ${mp.color}`}><mp.icon className="h-4 w-4" /></span>
+                        <mp.Logo />
                         <p className="text-sm font-medium text-text-primary">{mp.name}</p>
                       </div>
                       <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
@@ -623,7 +624,7 @@ export default function AdminCompany() {
           <div className="flex flex-col gap-4">
             <div className="glass-panel rounded-2xl p-5">
               <div className="mb-3 flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-amber/10 text-accent-amber"><Plug className="h-4 w-4" /></span>
+                <LogoMercadoLivre />
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary">Mercado Livre</h3>
                   <span className={`text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isConnected ? 'Operacional' : 'Não conectado'}</span>
@@ -657,9 +658,9 @@ export default function AdminCompany() {
             </div>
 
             {OTHER_MARKETPLACES.map((mp) => (
-              <div key={mp.name} className="glass-panel flex items-center justify-between rounded-2xl p-5">
+              <div key={mp.name} className="glass-panel flex items-center justify-between rounded-2xl p-5 opacity-60">
                 <div className="flex items-center gap-2.5">
-                  <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${mp.bg} ${mp.color}`}><mp.icon className="h-4 w-4" /></span>
+                  <mp.Logo />
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">{mp.name}</h3>
                     <p className="text-[11px] text-text-muted">Integração ainda não existe nesta plataforma</p>
