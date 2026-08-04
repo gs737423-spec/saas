@@ -6,7 +6,6 @@ import ProductTable from '@/components/produtos/ProductTable'
 import { products } from '@/data/mockData'
 import { BASELINE_DAYS } from '@/lib/periods'
 import { usePeriod } from '@/contexts/PeriodContext'
-import PageHeader from '@/components/layout/PageHeader'
 
 export default function Produtos() {
   const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
@@ -42,7 +41,6 @@ export default function Produtos() {
 
   return (
     <div className="space-y-2 sm:space-y-2.5">
-      <PageHeader />
       <div className="motion-block-in">
         <ProductKPIs products={periodProducts} />
       </div>

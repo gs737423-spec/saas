@@ -1,12 +1,10 @@
 import ChannelKPIVerdict from '@/components/marketplaces/ChannelKPIVerdict'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import ChannelMiniCharts from '@/components/marketplaces/ChannelMiniCharts'
-import PageHeader from '@/components/layout/PageHeader'
 
 export default function Marketplaces() {
   return (
     <div className="space-y-2">
-      <PageHeader />
       {/* KPIs/veredictos */}
       <div className="motion-block-in">
         <ChannelKPIVerdict />

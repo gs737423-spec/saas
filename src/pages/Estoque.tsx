@@ -4,7 +4,6 @@ import InventoryTable from '@/components/estoque/InventoryTable'
 import RealInventoryTable from '@/components/estoque/RealInventoryTable'
 import { defaultInventoryFilters, type InventoryFilterState } from '@/components/estoque/InventoryFilters'
 import type { DashboardInventoryResponse } from '@/server/integrations/types'
-import PageHeader from '@/components/layout/PageHeader'
 
 export default function Estoque() {
   const [filters, setFilters] = useState<InventoryFilterState>(defaultInventoryFilters)
@@ -30,7 +29,6 @@ export default function Estoque() {
 
   return (
     <div className="space-y-2 sm:space-y-2.5">
-      <PageHeader />
       {showRealTable ? (
         <RealInventoryTable items={inventory.items} />
       ) : (
