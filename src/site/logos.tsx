@@ -33,11 +33,19 @@ export function LogoMercadoLivre() {
 
 export function LogoShopee() {
   return (
-    <Wrap title="Shopee">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#EE4D2D" />
-      <path d="M8.5 12h11l-1 10.5a1.6 1.6 0 0 1-1.6 1.4h-5.8a1.6 1.6 0 0 1-1.6-1.4L8.5 12z" fill="none" stroke="#fff" strokeWidth="1.8" />
-      <path d="M11.5 12a2.5 2.5 0 0 1 5 0" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-    </Wrap>
+    <svg role="img" aria-label="Shopee" viewBox={`0 0 ${SIZE} ${SIZE}`} width={SIZE} height={SIZE} style={{ display: 'block' }}>
+      <title>Shopee</title>
+      <defs>
+        <linearGradient id="shopee-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FF7337" />
+          <stop offset="100%" stopColor="#EE4D2D" />
+        </linearGradient>
+      </defs>
+      <rect width={SIZE} height={SIZE} rx="8" fill="url(#shopee-grad)" />
+      <path d="M9 12.5h10l-0.9 9.2a1.5 1.5 0 0 1-1.5 1.3h-5.2a1.5 1.5 0 0 1-1.5-1.3L9 12.5z" fill="#fff" />
+      <path d="M11.6 12.5a2.4 2.4 0 0 1 4.8 0" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12.3 16.5c0.4 0.5 1 0.8 1.7 0.8s1.3-0.3 1.7-0.8" fill="none" stroke="#EE4D2D" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -45,9 +53,9 @@ export function LogoAmazon() {
   return (
     <Wrap title="Amazon">
       <rect width={SIZE} height={SIZE} rx="8" fill="#131921" />
-      <text x={SIZE / 2} y="17" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="700" fill="#fff">a</text>
-      <path d="M7 20c5 3 11 3 15 0.3" fill="none" stroke="#FF9900" strokeWidth="2" strokeLinecap="round" />
-      <path d="M19.5 20.3l-2.3-0.8 1 2.3" fill="#FF9900" />
+      <text x={SIZE / 2} y="16.5" textAnchor="middle" fontFamily="Georgia, serif" fontSize="13" fontWeight="700" fill="#fff">a</text>
+      <path d="M7.5 19.5c4.5 3 11 3 14.5-0.3" fill="none" stroke="#FF9900" strokeWidth="2" strokeLinecap="round" />
+      <path d="M20.5 19.7l1.6-0.6-0.5 1.7z" fill="#FF9900" />
     </Wrap>
   )
 }
@@ -107,10 +115,19 @@ export function LogoWooCommerce() {
 
 export function LogoLojaPropria() {
   return (
-    <Wrap title="Loja Própria">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#EAF0FF" />
-      <path d="M7 12l1.4-4h11.2l1.4 4v1a2.4 2.4 0 0 1-4.8 0 2.4 2.4 0 0 1-4.8 0 2.4 2.4 0 0 1-4.8 0v-1z" fill="none" stroke="#3D74F0" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M8.5 14.5v6.5h11v-6.5" fill="none" stroke="#3D74F0" strokeWidth="1.7" strokeLinejoin="round" />
-    </Wrap>
+    <svg role="img" aria-label="Loja Própria" viewBox={`0 0 ${SIZE} ${SIZE}`} width={SIZE} height={SIZE} style={{ display: 'block' }}>
+      <title>Loja Própria</title>
+      <defs>
+        <linearGradient id="lojapropria-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4A9DFF" />
+          <stop offset="100%" stopColor="#8A5CF6" />
+        </linearGradient>
+      </defs>
+      <rect width={SIZE} height={SIZE} rx="8" fill="url(#lojapropria-grad)" />
+      <path d="M8 11.5l1-3.5h10l1 3.5v0.6a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0v-0.6z" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M9 13.5v7.5h10v-7.5" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+      <circle cx="14" cy="17.5" r="1.6" fill="none" stroke="#fff" strokeWidth="1.2" />
+      <circle cx="14" cy="17.1" r="0.5" fill="#fff" />
+    </svg>
   )
 }

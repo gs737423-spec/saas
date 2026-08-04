@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
-  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
+  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
@@ -421,6 +421,20 @@ export default function AdminCompany() {
         {tab === 'visao-geral' && (
           <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
             <div className="flex flex-col gap-4">
+              <div className="glass-panel flex items-center justify-between gap-4 rounded-2xl p-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><TrendingUp className="h-4 w-4" /></span>
+                  <div>
+                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted">Receita (últimos 30 dias) <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span></p>
+                    <p className="text-2xl font-bold tabular-nums text-text-primary">R$ 1.870,45</p>
+                    <p className="text-[11px] font-medium text-accent-emerald">↑ 12% vs mês anterior</p>
+                  </div>
+                </div>
+                <svg width="96" height="32" viewBox="0 0 96 32" className="shrink-0 text-accent-emerald" aria-hidden="true">
+                  <polyline points="0,26 16,22 32,24 48,14 64,17 80,6 96,4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                </svg>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-2xl p-4 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
