@@ -17,8 +17,8 @@ const COMPANY_ITEMS: { icon: typeof LayoutDashboard; label: string; tab: AdminCo
 ]
 
 const itemClass = (active: boolean) =>
-  `flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
-    active ? 'bg-accent-cyan/15 text-accent-cyan' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+  `flex w-full items-center gap-2.5 rounded-lg border-l-2 px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+    active ? 'border-accent-cyan text-accent-cyan' : 'border-transparent text-text-muted hover:bg-white/5 hover:text-text-primary'
   }`
 
 // Sidebar da área /app/admin. Dois modos:

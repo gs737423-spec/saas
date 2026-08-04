@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff, Users2, ShieldCheck, Settings, Headset, CreditCard, Plug } from 'lucide-react'
+import {
+  ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
+  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, Calendar, AlertTriangle, Activity, PenLine,
+  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn,
+} from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
 import AdminSidebar, { type AdminCompanyTab } from '@/components/admin/AdminSidebar'
+import HealthScoreRing from '@/components/admin/HealthScoreRing'
 
 const TAB_LABEL: Record<AdminCompanyTab, string> = {
   'visao-geral': 'Visão Geral',
@@ -34,6 +39,35 @@ const STATUS_OPTIONS = [
   { value: 'em_risco', label: 'Em risco' },
   { value: 'suspenso', label: 'Suspensa' },
 ]
+
+const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
+  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
+  ativo: { label: 'Ativa', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
+  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
+  suspenso: { label: 'Suspensa', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
+}
+
+const OTHER_MARKETPLACES = ['Shopee', 'Amazon', 'Loja Própria']
+
+interface ActivityEntry {
+  id: string
+  companyId: string | null
+  provider: string
+  eventType: string
+  status: 'info' | 'success' | 'error'
+  message: string | null
+  createdAt: string
+}
+
+// Score derivado de sinais reais (integração conectada, tem acesso vinculado,
+// status da conta) — nunca um número solto. Ver HealthScoreRing.
+function computeHealthScore(company: Company, memberCount: number, connected: boolean): number {
+  let score = 35
+  if (connected) score += 35
+  if (memberCount > 0) score += 20
+  if (company.status === 'ativo') score += 10
+  return Math.min(100, score)
+}
 
 interface Member {
   userId: string
@@ -89,6 +123,10 @@ export default function AdminCompany() {
 
   const [tab, setTab] = useState<AdminCompanyTab>('visao-geral')
 
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [loadingActivity, setLoadingActivity] = useState(true)
+  const [togglingStatus, setTogglingStatus] = useState(false)
+
   const loadCompany = useCallback(async () => {
     try {
       const res = await apiFetch('/api/admin/companies')
@@ -137,11 +175,39 @@ export default function AdminCompany() {
     setLoadingIntegration(false)
   }, [id])
 
+  const loadActivity = useCallback(async () => {
+    if (!id) return
+    setLoadingActivity(true)
+    const res = await apiFetchJson<{ ok: boolean; activity: ActivityEntry[] }>('/api/admin/activity?limit=50')
+    setActivity((res?.activity ?? []).filter((a) => a.companyId === id))
+    setLoadingActivity(false)
+  }, [id])
+
   useEffect(() => {
     loadCompany()
     loadMembers()
     loadIntegration()
-  }, [loadCompany, loadMembers, loadIntegration])
+    loadActivity()
+  }, [loadCompany, loadMembers, loadIntegration, loadActivity])
+
+  async function handleToggleStatus() {
+    if (!id) return
+    const nextStatus = status === 'suspenso' ? 'ativo' : 'suspenso'
+    setTogglingStatus(true)
+    try {
+      const res = await apiFetchJson<{ ok: boolean }>('/api/admin/companies', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status: nextStatus }),
+      })
+      if (res?.ok) {
+        setStatus(nextStatus)
+        loadCompany()
+      }
+    } finally {
+      setTogglingStatus(false)
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -261,6 +327,9 @@ export default function AdminCompany() {
   }
 
   const isConnected = integration?.status === 'connected'
+  const connectedCount = isConnected ? 1 : 0
+  const healthScore = computeHealthScore(company, members.length, isConnected)
+  const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
 
   return (
     <div className="flex flex-col gap-5 pb-10 lg:flex-row lg:gap-6">
@@ -277,53 +346,174 @@ export default function AdminCompany() {
           <span className="truncate text-text-primary">{TAB_LABEL[tab]}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
+        <div className="flex flex-wrap items-start gap-3">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-base font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
             {initialsFor(company.name)}
           </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold tracking-tight text-text-primary">{company.name}</h1>
-            <p className="text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)}</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-xl font-bold tracking-tight text-text-primary">{company.name}</h1>
+              <button type="button" onClick={() => setTab('configuracoes')} title="Editar" className="text-text-muted transition-colors hover:text-text-primary">
+                <PenLine className="h-3.5 w-3.5" />
+              </button>
+              <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${st.color} ${st.bg}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" /> {st.label}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)} · ID #{company.id.slice(0, 8)}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-text-secondary">
+              <span className="rounded-full border border-border-subtle bg-bg-primary/40 px-2 py-1">{members.length} {members.length === 1 ? 'usuário' : 'usuários'}</span>
+              <span className="rounded-full border border-border-subtle bg-bg-primary/40 px-2 py-1">{connectedCount}/4 integrações</span>
+            </div>
           </div>
-          <span className={`ml-auto flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-            isConnected ? 'border-accent-emerald/30 bg-accent-emerald/10 text-accent-emerald' : 'border-border-subtle bg-bg-primary/40 text-text-muted'
-          }`}>
-            {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            {isConnected ? 'Integração ativa' : 'Sem integração'}
-          </span>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button type="button" title="Ainda não implementado — depende de fluxo de personificação" disabled className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-xs font-semibold text-text-muted opacity-50">
+              <LogIn className="h-3.5 w-3.5" /> Entrar como cliente
+            </button>
+            {company.whatsapp && (
+              <a href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20">
+                <MessageCircle className="h-3.5 w-3.5" /> Enviar WhatsApp
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={handleToggleStatus}
+              disabled={togglingStatus}
+              className="flex items-center gap-1.5 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-xs font-semibold text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:opacity-40"
+            >
+              {togglingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />}
+              {status === 'suspenso' ? 'Reativar empresa' : 'Suspender empresa'}
+            </button>
+          </div>
         </div>
 
         {tab === 'visao-geral' && (
-          <>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
-                <Users2 className="h-4 w-4 text-text-muted" />
-                <p className="text-2xl font-bold tabular-nums text-text-primary">{members.length}</p>
-                <p className="text-[11px] text-text-muted">{members.length === 1 ? 'acesso vinculado' : 'acessos vinculados'}</p>
-              </button>
-              <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
-                <Plug className="h-4 w-4 text-text-muted" />
-                <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
-                <p className="text-[11px] text-text-muted">produtos sincronizados</p>
-              </button>
-              <button type="button" onClick={() => setTab('configuracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
-                <Settings className="h-4 w-4 text-text-muted" />
-                <p className="truncate text-sm font-semibold text-text-primary">{STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}</p>
-                <p className="text-[11px] text-text-muted">status da conta</p>
-              </button>
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                  <Users2 className="h-4 w-4 text-text-muted" />
+                  <p className="text-2xl font-bold tabular-nums text-text-primary">{members.length}</p>
+                  <p className="text-[11px] text-text-muted">acessos</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                  <Plug className="h-4 w-4 text-text-muted" />
+                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
+                  <p className="text-[11px] text-text-muted">produtos sync.</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                  <Ticket className="h-4 w-4 text-text-muted" />
+                  <p className="text-2xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
+                  <p className="text-[11px] text-text-muted">pedidos importados</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-1 rounded-2xl p-4 text-left">
+                  <Wifi className="h-4 w-4 text-text-muted" />
+                  <p className="text-2xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
+                  <p className="text-[11px] text-text-muted">integrações ativas</p>
+                </button>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-5">
+                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
+                <div className="flex flex-col divide-y divide-border-subtle">
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-amber/10 text-accent-amber"><Plug className="h-4 w-4" /></span>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
+                        <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isConnected ? 'Operacional' : 'Não conectado'}</span>
+                  </div>
+                  {OTHER_MARKETPLACES.map((name) => (
+                    <div key={name} className="flex items-center justify-between py-2.5 opacity-50">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-bg-primary/40 text-text-muted"><Plug className="h-4 w-4" /></span>
+                        <p className="text-sm font-medium text-text-primary">{name}</p>
+                      </div>
+                      <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-5">
+                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <Activity className="h-3.5 w-3.5" /> Atividade recente
+                </h3>
+                {loadingActivity ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+                ) : activity.length === 0 ? (
+                  <p className="py-2 text-xs text-text-muted">Nenhuma atividade registrada ainda.</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {activity.slice(0, 8).map((a) => (
+                      <div key={a.id} className="flex items-start gap-2 rounded-lg px-1 py-1.5 text-xs">
+                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                          a.status === 'success' ? 'bg-accent-emerald' : a.status === 'error' ? 'bg-accent-rose' : 'bg-accent-cyan'
+                        }`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-text-secondary">{a.message ?? a.eventType}</p>
+                          <p className="text-[10px] text-text-muted">{timeAgo(a.createdAt)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="glass-panel rounded-2xl p-5">
-              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Contato</h3>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm text-text-secondary sm:grid-cols-2">
-                <p><span className="text-text-muted">E-mail: </span>{company.contactEmail ?? 'não cadastrado'}</p>
-                <p><span className="text-text-muted">Telefone: </span>{company.contactPhone ?? 'não cadastrado'}</p>
-                <p><span className="text-text-muted">CNPJ: </span>{company.cnpj ?? 'não cadastrado'}</p>
-                <p><span className="text-text-muted">Site: </span>{company.website ?? 'não cadastrado'}</p>
+            <div className="flex flex-col gap-4">
+              <div className="glass-panel flex items-center gap-4 rounded-2xl p-5">
+                <HealthScoreRing score={healthScore} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
+                    {isConnected ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
+                    {isConnected ? 'Integração ok' : 'Sem integração'}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
+                    {members.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
+                    {members.length > 0 ? 'Usuários ativos' : 'Sem acesso vinculado'}
+                  </p>
+                </div>
               </div>
-              {company.notes && <p className="mt-3 border-t border-border-subtle pt-3 text-sm text-text-secondary">{company.notes}</p>}
+
+              <div className="glass-panel rounded-2xl p-5">
+                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {!isConnected && (
+                    <button type="button" onClick={() => setTab('integracoes')} className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5 text-left">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
+                      <span className="text-[11px] text-text-secondary">Sem integração ativa — nenhum marketplace conectado.</span>
+                    </button>
+                  )}
+                  {members.length === 0 && (
+                    <button type="button" onClick={() => setTab('acessos')} className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5 text-left">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
+                      <span className="text-[11px] text-text-secondary">Nenhum acesso vinculado ainda.</span>
+                    </button>
+                  )}
+                  {isConnected && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-5">
+                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <UserCog className="h-3.5 w-3.5" /> Contato
+                </h3>
+                <div className="flex flex-col gap-1.5 text-xs text-text-secondary">
+                  <p><span className="text-text-muted">E-mail: </span>{company.contactEmail ?? 'não cadastrado'}</p>
+                  <p><span className="text-text-muted">Telefone: </span>{company.contactPhone ?? 'não cadastrado'}</p>
+                  <p><span className="text-text-muted">Site: </span>{company.website ?? 'não cadastrado'}</p>
+                </div>
+              </div>
             </div>
-          </>
+          </div>
         )}
 
         {tab === 'acessos' && (
@@ -415,10 +605,96 @@ export default function AdminCompany() {
         )}
 
         {tab === 'suporte' && (
-          <div className="glass-panel flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
-            <Headset className="h-6 w-6 text-text-muted" />
-            <p className="text-sm font-medium text-text-primary">Suporte ainda não está conectado</p>
-            <p className="max-w-sm text-xs text-text-muted">Histórico de atendimento, chamados e notas internas dependem de uma tabela própria no banco — ainda não existe.</p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-[11px] font-medium text-accent-amber">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              Prévia de layout — sem tabela de tickets/notas no banco ainda. Nada abaixo é dado real.
+            </div>
+
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
+              <div className="flex flex-col gap-4">
+                <div className="glass-panel rounded-2xl p-5 opacity-70">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <Clock3 className="h-3.5 w-3.5" /> Histórico de atendimento (exemplo)
+                  </h3>
+                  <div className="flex flex-col gap-2 text-xs">
+                    {[
+                      { title: 'Ligação realizada', by: 'Carlos Silva', desc: 'Dúvida sobre integração Amazon.' },
+                      { title: 'Token da Amazon expirou', by: 'Sistema', desc: 'O token de autenticação da Amazon expirou.' },
+                      { title: 'Enviado tutorial de integração', by: 'Gabriel Souza', desc: 'Tutorial enviado via WhatsApp sobre integração Shopee.' },
+                    ].map((ev) => (
+                      <div key={ev.title} className="flex items-start gap-2 border-b border-border-subtle/60 pb-2 last:border-0">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-cyan" />
+                        <div className="min-w-0">
+                          <p className="text-text-primary">{ev.title} <span className="text-text-muted">— {ev.by}</span></p>
+                          <p className="text-text-muted">{ev.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-panel rounded-2xl p-5 opacity-70">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <Ticket className="h-3.5 w-3.5" /> Chamados (exemplo)
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { id: '#418', title: 'Integração Shopee não sincroniza produtos', status: 'Resolvido' },
+                      { id: '#412', title: 'Erro ao publicar no Mercado Livre', status: 'Fechado' },
+                      { id: '#409', title: 'Solicitação de novo usuário', status: 'Aberto' },
+                    ].map((c) => (
+                      <div key={c.id} className="flex items-center justify-between rounded-lg px-1.5 py-1.5 text-xs">
+                        <span className="text-text-muted">{c.id}</span>
+                        <span className="min-w-0 flex-1 truncate px-2 text-text-primary">{c.title}</span>
+                        <span className="shrink-0 rounded-full border border-border-subtle px-2 py-0.5 text-[10px] text-text-muted">{c.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-panel grid grid-cols-2 gap-3 rounded-2xl p-5 opacity-70 sm:grid-cols-3">
+                  {[
+                    { icon: Clock3, label: 'tempo médio resposta', value: '—' },
+                    { icon: Star, label: 'satisfação média', value: '—' },
+                    { icon: ShieldAlert, label: 'risco de churn', value: '—' },
+                  ].map((m) => (
+                    <div key={m.label} className="flex flex-col gap-1">
+                      <m.icon className="h-4 w-4 text-text-muted" />
+                      <p className="text-lg font-bold text-text-primary">{m.value}</p>
+                      <p className="text-[10px] text-text-muted">{m.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="glass-panel rounded-2xl p-5 opacity-70">
+                  <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Observações internas (exemplo)</h3>
+                  <p className="text-xs text-text-muted">Cliente prefere atendimento via WhatsApp. Nenhuma observação real registrada ainda.</p>
+                </div>
+                <div className="glass-panel rounded-2xl p-5">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <PhoneCall className="h-3.5 w-3.5" /> Atalhos rápidos
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {company.whatsapp && (
+                      <a href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                        <MessageCircle className="h-3.5 w-3.5" /> Enviar WhatsApp
+                      </a>
+                    )}
+                    {company.contactEmail && (
+                      <a href={`mailto:${company.contactEmail}`} className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                        <Mail className="h-3.5 w-3.5" /> Enviar e-mail
+                      </a>
+                    )}
+                    <button type="button" onClick={() => { navigator.clipboard.writeText(company.id) }} className="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                      <Copy className="h-3.5 w-3.5" /> Copiar ID da empresa
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
