@@ -58,7 +58,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           external_account_id: String(tokenResponse.user_id),
           seller_id: String(tokenResponse.user_id),
           access_token_encrypted: encryptSecret(tokenResponse.access_token),
-          refresh_token_encrypted: encryptSecret(tokenResponse.refresh_token),
+          // Ausente quando a conta autorizante não é vendedora — armazena
+          // null em vez de quebrar; sync.ts/refreshAccessToken já tratam
+          // a ausência de refresh_token como "reconectar manualmente
+          // quando expirar" em vez de renovar sozinho.
+          refresh_token_encrypted: tokenResponse.refresh_token ? encryptSecret(tokenResponse.refresh_token) : null,
           token_expires_at: new Date(Date.now() + tokenResponse.expires_in * 1000).toISOString(),
           scopes: tokenResponse.scope,
           last_error: null,

@@ -50,7 +50,10 @@ async function ensureValidAccessToken(connection: ConnectionRow, companyId: stri
     .from('marketplace_connections')
     .update({
       access_token_encrypted: encryptSecret(refreshed.access_token),
-      refresh_token_encrypted: encryptSecret(refreshed.refresh_token),
+      // Mercado Livre nem sempre emite um refresh_token novo a cada
+      // refresh — quando omitido, mantém o que já estava salvo em vez de
+      // gravar undefined por cima.
+      refresh_token_encrypted: refreshed.refresh_token ? encryptSecret(refreshed.refresh_token) : connection.refresh_token_encrypted,
       token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
       status: 'connected',
       last_error: null,
