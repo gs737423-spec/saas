@@ -6,6 +6,11 @@ import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server
 import { requireCompany } from '../../../src/server/auth/requireCompany.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
+// Catálogo grande com concorrência 8 pode passar de 1-2min em conta real —
+// pede o teto máximo pra Fluid Compute em vez de confiar só no default da
+// plataforma.
+export const config = { maxDuration: 300 }
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method_not_allowed' })

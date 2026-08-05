@@ -9,6 +9,23 @@ import { refreshAccessToken } from './auth.js'
 
 export class ConnectionMissingError extends Error {}
 
+/** Roda `fn` pra cada item de `items` com no máximo `concurrency` em voo ao
+ *  mesmo tempo. Catálogo grande (até 2000 itens) sequencial de 1 em 1
+ *  estourava o timeout da serverless function (cada getItemDetail é 1
+ *  request HTTP); concorrência limitada mantém a folga de rate limit do
+ *  Mercado Livre (1500 req/min por vendedor) e corta o tempo total em ~8x. */
+async function runWithConcurrency<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>): Promise<void> {
+  let index = 0
+  async function worker() {
+    while (index < items.length) {
+      const current = items[index]
+      index += 1
+      await fn(current)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()))
+}
+
 interface ConnectionRow {
   id: string
   status: string
@@ -104,7 +121,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const accessToken = await ensureValidAccessToken(connection, companyId)
     const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
 
-    for (const itemId of itemIds) {
+    await runWithConcurrency(itemIds, 8, async (itemId) => {
       try {
         const detail = await getItemDetail(itemId, accessToken)
         const productRow = mapItemToProductRow(detail)
@@ -152,7 +169,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
           : itemErr instanceof Error ? itemErr.message : `Unknown error processing item ${itemId}`
         errors.push(message)
       }
-    }
+    })
 
     let orders: MLOrder[] = []
     try {
