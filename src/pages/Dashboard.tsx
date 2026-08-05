@@ -56,7 +56,7 @@ export default function Dashboard() {
   // Empresa nunca conectou/sincronizou nada ainda — nenhum número
   // ilustrativo aparece, só o caminho pra conectar. "Demonstração com
   // banner" foi trocado por vazio real (ver decisão 2026-08-05).
-  if (!summary || summary.source !== 'real') {
+  if (!summary || (summary.source !== 'real' && summary.source !== 'demo')) {
     return <ConnectMarketplacePrompt />
   }
 

@@ -25,33 +25,44 @@ export default function AdminLeads() {
           subtitle="Nenhuma nova solicitação de cadastro no momento."
         />
       ) : (
-        <div className="glass-panel overflow-hidden rounded-xl">
-          <div className="hidden grid-cols-[2fr_1.4fr_1fr_1fr_auto] gap-3 border-b border-border-subtle px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted sm:grid">
-            <span>Nome Fantasia</span>
-            <span>CNPJ</span>
-            <span>Solicitado em</span>
-            <span>Status</span>
-            <span />
-          </div>
-          <div className="flex flex-col divide-y divide-border-subtle">
-            {MOCK_LEADS.map((lead) => (
-              <div key={lead.id} className="grid grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[2fr_1.4fr_1fr_1fr_auto] sm:items-center sm:gap-3">
-                <span className="truncate text-sm font-medium text-text-primary">{lead.nomeFantasia}</span>
-                <span className="truncate text-[13px] text-text-muted">{lead.cnpj}</span>
-                <span className="text-[13px] text-text-muted">{lead.dataSolicitacao}</span>
-                <span className="flex w-fit items-center gap-1.5 rounded-full bg-accent-amber/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-amber">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" /> Pendente
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setAnalyzing(lead)}
-                  className="flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1.5 text-[12px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/20"
-                >
-                  <ClipboardCheck className="h-3.5 w-3.5" /> Analisar Cadastro
-                </button>
-              </div>
-            ))}
-          </div>
+        // <table> nativa em vez de grid manual — colunas de cabeçalho e linha
+        // alinham por construção, sem depender de fr/gap ficarem sincronizados
+        // entre dois elementos separados (era a causa do desalinhamento).
+        <div className="glass-panel overflow-x-auto rounded-xl">
+          <table className="w-full min-w-[720px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                <th className="px-4 py-3 font-semibold">Nome Fantasia</th>
+                <th className="px-4 py-3 font-semibold">CNPJ</th>
+                <th className="px-4 py-3 font-semibold">Solicitado em</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-subtle">
+              {MOCK_LEADS.map((lead) => (
+                <tr key={lead.id} className="transition-colors hover:bg-white/[0.03]">
+                  <td className="px-4 py-3 text-sm font-medium text-text-primary">{lead.nomeFantasia}</td>
+                  <td className="px-4 py-3 text-[13px] text-text-muted">{lead.cnpj}</td>
+                  <td className="px-4 py-3 text-[13px] text-text-muted">{lead.dataSolicitacao}</td>
+                  <td className="px-4 py-3">
+                    <span className="flex w-fit items-center gap-1.5 rounded-full bg-accent-amber/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-amber">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" /> Pendente
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setAnalyzing(lead)}
+                      className="ml-auto flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1.5 text-[12px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/20"
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" /> Analisar Cadastro
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { ConnectionProvider } from '@/contexts/ConnectionContext'
 import { PeriodProvider } from '@/contexts/PeriodContext'
 import { InventorySettingsProvider } from '@/contexts/InventorySettingsContext'
+import { DemoModeProvider } from '@/contexts/DemoModeContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
 import Dashboard from '@/pages/Dashboard'
@@ -29,6 +30,7 @@ export default function App() {
   useIdleLogout()
 
   return (
+    <DemoModeProvider>
     <ConnectionProvider>
     <PeriodProvider>
     <InventorySettingsProvider>
@@ -70,5 +72,6 @@ export default function App() {
     </InventorySettingsProvider>
     </PeriodProvider>
     </ConnectionProvider>
+    </DemoModeProvider>
   )
 }

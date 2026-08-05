@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, X, Search, AlertTriangle, Mail, Phone,
-  MoreVertical, Eye, ShieldAlert, Users2,
+  MoreVertical, Eye, ShieldAlert, Users2, AlertCircle,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, maskCnpj } from '@/lib/adminUi'
@@ -24,6 +24,15 @@ interface Company {
 }
 
 type Feedback = { type: 'success' | 'error'; text: string } | null
+
+// Espelha CnpjInfo de api/cnpj-lookup.ts (só os campos usados aqui) —
+// duplicado de propósito, mesmo padrão de ConversionSection.tsx: front não
+// importa tipos do lado serverless (build target diferente).
+interface CnpjInfo {
+  razaoSocial: string | null
+  nomeFantasia: string | null
+  situacaoCadastral: string | null
+}
 
 const statusLabel: Record<string, { label: string; color: string; bg: string; border: string }> = {
   onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
@@ -74,11 +83,16 @@ export default function AdminClients() {
 
   useEffect(() => { loadCompanies() }, [loadCompanies])
 
-  async function handleCreateCompany(form: NewClientForm) {
+  async function handleCreateCompany(form: NewClientForm, cnpjInfo: CnpjInfo | null) {
     setCreatingCompany(true)
     setFeedback(null)
     try {
-      const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
+      const notesParts = [
+        form.razaoSocial ? `Razão Social: ${form.razaoSocial}` : null,
+        cnpjInfo?.situacaoCadastral ? `Situação na Receita: ${cnpjInfo.situacaoCadastral}` : null,
+      ].filter(Boolean)
+
+      const res = await apiFetchJson<{ ok: boolean; message?: string; company?: { id: string } }>('/api/admin/companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,15 +100,38 @@ export default function AdminClients() {
           cnpj: form.cnpj || null,
           contactEmail: form.email || null,
           whatsapp: form.whatsapp || null,
-          notes: form.razaoSocial ? `Razão Social: ${form.razaoSocial}` : null,
+          notes: notesParts.length > 0 ? notesParts.join(' · ') : null,
         }),
       })
-      if (res?.ok) {
-        setShowCreate(false)
-        await loadCompanies()
-      } else {
+
+      if (!res?.ok || !res.company) {
         setFeedback({ type: 'error', text: res?.message ?? 'Erro ao criar empresa.' })
+        return
       }
+
+      // Cliente criado — se tem e-mail, dispara o convite real (Supabase Auth
+      // manda o link pra ele definir a própria senha; ninguém da equipe vê
+      // ou cria senha de cliente). Falha no convite não desfaz a empresa —
+      // dá pra convidar depois pela tela da empresa.
+      if (form.email.trim()) {
+        const inviteRes = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email.trim(), companyId: res.company.id }),
+        })
+        if (!inviteRes?.ok) {
+          setFeedback({ type: 'error', text: `Cliente criado, mas o convite por e-mail falhou: ${inviteRes?.message ?? 'erro desconhecido'}. Convide de novo pela tela da empresa.` })
+          setShowCreate(false)
+          await loadCompanies()
+          return
+        }
+        setFeedback({ type: 'success', text: `Cliente criado e convite enviado para ${form.email.trim()}.` })
+      } else {
+        setFeedback({ type: 'success', text: 'Cliente criado. Nenhum e-mail informado — convide um acesso depois pela tela da empresa.' })
+      }
+
+      setShowCreate(false)
+      await loadCompanies()
     } finally {
       setCreatingCompany(false)
     }
@@ -239,21 +276,82 @@ interface NewClientForm {
   whatsapp: string
 }
 
-function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => void; onSubmit: (form: NewClientForm) => void; submitting: boolean }) {
+type CnpjLookupStatus = 'idle' | 'checking' | 'found' | 'notfound' | 'error'
+
+function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => void; onSubmit: (form: NewClientForm, cnpjInfo: CnpjInfo | null) => void; submitting: boolean }) {
   const [form, setForm] = useState<NewClientForm>({ razaoSocial: '', nomeFantasia: '', cnpj: '', email: '', whatsapp: '' })
+  const [touchedRazao, setTouchedRazao] = useState(false)
+  const [touchedFantasia, setTouchedFantasia] = useState(false)
+  const [cnpjStatus, setCnpjStatus] = useState<CnpjLookupStatus>('idle')
+  const [cnpjInfo, setCnpjInfo] = useState<CnpjInfo | null>(null)
+  const [triedSubmit, setTriedSubmit] = useState(false)
 
   function set<K extends keyof NewClientForm>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  // Mesma lógica do formulário do site: consulta a Receita Federal (BrasilAPI)
+  // assim que o CNPJ tem 14 dígitos, autopreenche Razão Social/Nome Fantasia
+  // se o admin ainda não digitou nada, mas nunca bloqueia o cadastro por causa
+  // disso — só avisa.
+  useEffect(() => {
+    const digits = form.cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) {
+      setCnpjStatus('idle')
+      setCnpjInfo(null)
+      return
+    }
+    let cancelled = false
+    setCnpjStatus('checking')
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await apiFetchJson<{ ok: boolean; found: boolean | null } & Partial<CnpjInfo>>(`/api/cnpj-lookup?cnpj=${digits}`)
+        if (cancelled) return
+        if (res?.ok && res.found) {
+          const info: CnpjInfo = {
+            razaoSocial: res.razaoSocial ?? null,
+            nomeFantasia: res.nomeFantasia ?? null,
+            situacaoCadastral: res.situacaoCadastral ?? null,
+          }
+          setCnpjInfo(info)
+          setCnpjStatus('found')
+          setForm((f) => ({
+            ...f,
+            razaoSocial: !touchedRazao && info.razaoSocial ? info.razaoSocial : f.razaoSocial,
+            nomeFantasia: !touchedFantasia && (info.nomeFantasia || info.razaoSocial) ? (info.nomeFantasia || info.razaoSocial || '') : f.nomeFantasia,
+          }))
+        } else if (res?.found === false) {
+          setCnpjStatus('notfound')
+          setCnpjInfo(null)
+        } else {
+          setCnpjStatus('error')
+          setCnpjInfo(null)
+        }
+      } catch {
+        if (!cancelled) { setCnpjStatus('error'); setCnpjInfo(null) }
+      }
+    }, 500)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [form.cnpj, touchedRazao, touchedFantasia])
+
+  const cnpjDigitsValid = form.cnpj.replace(/\D/g, '').length === 0 || form.cnpj.replace(/\D/g, '').length === 14
+  const canSubmit = form.nomeFantasia.trim().length > 0 && cnpjDigitsValid
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.nomeFantasia.trim()) return
-    onSubmit(form)
+    setTriedSubmit(true)
+    if (!canSubmit) return
+    onSubmit(form, cnpjInfo)
   }
 
-  const inputClass = 'w-full rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none'
+  const inputClass = (invalid?: boolean) =>
+    `w-full rounded-lg border bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none ${
+      invalid ? 'border-accent-rose/50' : 'border-border-subtle'
+    }`
   const labelClass = 'mb-1.5 block text-[11px] font-medium text-text-muted'
+
+  const nomeFantasiaInvalid = triedSubmit && !form.nomeFantasia.trim()
+  const cnpjInvalid = triedSubmit && !cnpjDigitsValid
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" onClick={onClose}>
@@ -269,29 +367,58 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className={labelClass}>Razão Social</label>
-            <input value={form.razaoSocial} onChange={(e) => set('razaoSocial', e.target.value)} placeholder="Nome Fantasia Comercio Ltda" className={inputClass} />
+            <input
+              value={form.razaoSocial}
+              onChange={(e) => { setTouchedRazao(true); set('razaoSocial', e.target.value) }}
+              placeholder="Nome Fantasia Comercio Ltda"
+              className={inputClass()}
+            />
           </div>
           <div>
             <label className={labelClass}>Nome Fantasia *</label>
-            <input required autoFocus value={form.nomeFantasia} onChange={(e) => set('nomeFantasia', e.target.value)} placeholder="Nome Fantasia" className={inputClass} />
+            <input
+              required
+              autoFocus
+              value={form.nomeFantasia}
+              onChange={(e) => { setTouchedFantasia(true); set('nomeFantasia', e.target.value) }}
+              placeholder="Nome Fantasia"
+              className={inputClass(nomeFantasiaInvalid)}
+            />
+            {nomeFantasiaInvalid && <p className="mt-1 text-[11px] text-accent-rose">Nome Fantasia é obrigatório.</p>}
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className={labelClass}>CNPJ</label>
             <input
               value={form.cnpj}
               onChange={(e) => set('cnpj', maskCnpjInput(e.target.value))}
               placeholder="00.000.000/0001-00"
               maxLength={18}
-              className={inputClass}
+              className={inputClass(cnpjInvalid)}
             />
+            {cnpjInvalid && <p className="mt-1 text-[11px] text-accent-rose">CNPJ incompleto — precisa ter 14 dígitos, ou deixe vazio.</p>}
+            {!cnpjInvalid && cnpjStatus === 'checking' && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-text-muted"><Loader2 className="h-3 w-3 animate-spin" /> Consultando Receita Federal...</p>
+            )}
+            {!cnpjInvalid && cnpjStatus === 'found' && cnpjInfo && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-emerald">
+                <CheckCircle2 className="h-3 w-3" /> {cnpjInfo.razaoSocial} {cnpjInfo.situacaoCadastral ? `— ${cnpjInfo.situacaoCadastral}` : ''}
+              </p>
+            )}
+            {!cnpjInvalid && cnpjStatus === 'notfound' && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-amber"><AlertCircle className="h-3 w-3" /> CNPJ não encontrado na Receita Federal. Confira o número — você ainda pode continuar.</p>
+            )}
+            {!cnpjInvalid && cnpjStatus === 'error' && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-text-muted"><AlertCircle className="h-3 w-3" /> Não foi possível confirmar agora. Você pode continuar mesmo assim.</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>E-mail de Acesso</label>
-            <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="contato@cliente.com" className={inputClass} />
+            <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="contato@cliente.com" className={inputClass()} />
+            <p className="mt-1 text-[11px] text-text-muted">Se preenchido, o cliente recebe um e-mail para criar a própria senha.</p>
           </div>
-          <div className="md:col-span-2">
+          <div>
             <label className={labelClass}>WhatsApp</label>
-            <input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(11) 90000-0000" className={inputClass} />
+            <input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(11) 90000-0000" className={inputClass()} />
           </div>
         </div>
 
@@ -301,7 +428,7 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
           </button>
           <button
             type="submit"
-            disabled={submitting || !form.nomeFantasia.trim()}
+            disabled={submitting}
             className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}

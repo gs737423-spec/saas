@@ -18,9 +18,11 @@ import {
   Headset,
   Eye,
   Inbox,
+  X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
+import { useDemoMode } from '@/contexts/DemoModeContext'
 import { apiFetch } from '@/lib/apiFetch'
 import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
 import Brand from '@/components/layout/Brand'
@@ -73,11 +75,21 @@ export default function TopNav() {
   const navigate = useNavigate()
   const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
+  const { demoMode, enterDemoMode, exitDemoMode } = useDemoMode()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [demoMode, setDemoMode] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdminArea = location.pathname.startsWith('/app/admin')
+
+  function handleToggleDemo() {
+    if (demoMode) {
+      exitDemoMode()
+      navigate('/app/admin')
+    } else {
+      enterDemoMode()
+      navigate('/app')
+    }
+  }
 
   useEffect(() => {
     // Reaproveita /api/admin/companies em vez de um endpoint /api/admin/me
@@ -137,7 +149,7 @@ export default function TopNav() {
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
                   {Boolean(item.badge) && (
-                    <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-accent-rose px-1 text-[9px] font-bold text-white">
+                    <span className="ml-1 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-accent-rose px-1 text-[9px] font-bold text-white">
                       {item.badge}
                     </span>
                   )}
@@ -176,8 +188,8 @@ export default function TopNav() {
         {isAdminArea && (
           <button
             type="button"
-            onClick={() => setDemoMode((v) => !v)}
-            title="Alterna só o indicador visual — não troca nenhum dado"
+            onClick={handleToggleDemo}
+            title="Abre a plataforma do cliente com dados ilustrativos, pra demonstração"
             className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-2 py-1.5"
             aria-pressed={demoMode}
           >
@@ -190,6 +202,20 @@ export default function TopNav() {
               />
             </span>
             <span className="hidden text-[11.5px] font-medium text-text-secondary lg:inline">Demonstração</span>
+          </button>
+        )}
+
+        {!isAdminArea && demoMode && (
+          <button
+            type="button"
+            onClick={handleToggleDemo}
+            title="Sair do modo demonstração e voltar pro painel admin"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-amber"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Demonstração — dados ilustrativos</span>
+            <span className="sm:hidden">Demo</span>
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
 

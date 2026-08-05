@@ -67,7 +67,7 @@ export default function Produtos() {
   }
 
   // Sem conexão/sync ainda — nenhum produto ilustrativo aparece.
-  if (!real || real.source !== 'real' || real.items.length === 0) {
+  if (!real || (real.source !== 'real' && real.source !== 'demo') || real.items.length === 0) {
     return <ConnectMarketplacePrompt title="Conecte um marketplace pra ver seu catálogo" description="Assim que sincronizar o Mercado Livre, seus produtos reais aparecem aqui — com estoque, vendas e tendência." />
   }
 

@@ -68,7 +68,7 @@ export default function Relatorios() {
     }
   }, [period.days])
 
-  const isReal = summary?.source === 'real'
+  const isReal = summary?.source === 'real' || summary?.source === 'demo'
   const kpis = isReal ? buildRealKpis(summary!) : undefined
 
   const executiveLines: ExecutiveSummaryLine[] = useMemo(() => {

@@ -57,7 +57,7 @@ export default function Financeiro() {
     )
   }
 
-  if (!real || !real.ok || real.overview.source !== 'real') {
+  if (!real || !real.ok || (real.overview.source !== 'real' && real.overview.source !== 'demo')) {
     return <ConnectMarketplacePrompt icon={Wallet} title="Conecte um marketplace pra ver o financeiro" description="Faturamento, comissão, estornos e extrato reais aparecem aqui assim que houver pedido pago sincronizado." />
   }
 
