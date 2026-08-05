@@ -15,6 +15,7 @@ export interface NormalizedProductRow {
   available_quantity: number
   sold_quantity: number
   permalink: string
+  category_id: string
   raw_payload: MLItemDetail
 }
 
@@ -30,6 +31,7 @@ export function mapItemToProductRow(item: MLItemDetail): NormalizedProductRow {
     available_quantity: item.available_quantity,
     sold_quantity: item.sold_quantity,
     permalink: item.permalink,
+    category_id: item.category_id,
     raw_payload: item,
   }
 }

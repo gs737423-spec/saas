@@ -43,8 +43,15 @@ export interface MLItemDetail {
   available_quantity: number
   sold_quantity: number
   permalink: string
+  category_id: string
   seller_custom_field?: string | null
   attributes?: { id: string; value_name: string | null }[]
+}
+
+/** GET /categories/{id} response (subset used). */
+export interface MLCategoryDetail {
+  id: string
+  name: string
 }
 
 /** GET /orders/search response (subset used) — see

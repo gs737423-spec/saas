@@ -2,32 +2,43 @@ import { useState } from 'react'
 import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getMarketplaceColor } from '@/data/mockData'
-import type { Product } from '@/data/mockData'
+import type { DashboardProduct as Product } from '@/server/dashboardProducts'
 import ProductFilters, { type ProductFilterState } from './ProductFilters'
 import DataTableViewport from '@/components/common/DataTableViewport'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
 
-// Deterministic per-bucket growth derived from each product's single trend
-// figure — gives D-1/D-7/D-30/D-365 distinct but consistent values.
-function bucketGrowth(baseTrend: number): { d1: number; d7: number; d30: number; d365: number } {
-  return {
-    d1: Math.round(baseTrend * 0.4 * 10) / 10,
-    d7: Math.round(baseTrend * 0.7 * 10) / 10,
-    d30: Math.round(baseTrend * 10) / 10,
-    d365: Math.round(baseTrend * 2.6 * 10) / 10,
-  }
+/** null vira "sem dado" — nunca menor nem maior que os demais na ordenação,
+ *  sempre vai pro fim independente da direção. */
+function compareNullable(a: number | null, b: number | null): number {
+  if (a === null && b === null) return 0
+  if (a === null) return -1
+  if (b === null) return 1
+  return a - b
 }
 
-function GrowthCell({ label, value }: { label: string; value: number }) {
-  const positive = value >= 0
+function TrendBadge({ trend }: { trend: number | null }) {
+  if (trend === null) return <span className="font-mono text-[11px] text-text-muted">—</span>
+  const positive = trend >= 0
   return (
-    <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
-      <span className={`font-mono text-[11px] font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-        {positive ? '+' : ''}{value}%
-      </span>
-      <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
+      {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {positive ? '+' : ''}{trend.toFixed(1)}%
+    </span>
+  )
+}
+
+function MarginCell({ margin }: { margin: number | null }) {
+  if (margin === null) {
+    return <span className="text-[11px] text-text-muted" title="Cliente ainda não informou o custo deste produto">definir custo</span>
+  }
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border-subtle">
+        <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${Math.max(0, Math.min(100, margin))}%` }} />
+      </div>
+      <span className="font-mono text-text-secondary">{margin.toFixed(0)}%</span>
     </div>
   )
 }
@@ -42,14 +53,14 @@ function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[
   const sorted = [...products].sort((a, b) => {
     let cmp = 0
     switch (key) {
-      case 'sku': cmp = a.sku.localeCompare(b.sku); break
+      case 'sku': cmp = (a.sku ?? '').localeCompare(b.sku ?? ''); break
       case 'name': cmp = a.name.localeCompare(b.name); break
       case 'marketplace': cmp = a.marketplace.localeCompare(b.marketplace); break
       case 'units': cmp = a.units - b.units; break
       case 'stock': cmp = a.stock - b.stock; break
       case 'revenue': cmp = a.revenue - b.revenue; break
-      case 'margin': cmp = a.margin - b.margin; break
-      case 'trend': cmp = a.trend - b.trend; break
+      case 'margin': cmp = compareNullable(a.margin, b.margin); break
+      case 'trend': cmp = compareNullable(a.trend, b.trend); break
     }
     return dir === 'asc' ? cmp : -cmp
   })
@@ -120,7 +131,6 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
         {sorted.map((p) => {
-          const positive = p.trend >= 0
           const mp = getMarketplaceColor(p.marketplace)
           return (
             <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
@@ -133,10 +143,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                     <span className="text-[10px] font-medium" style={{ color: mp }}>{p.marketplace}</span>
                   </div>
                 </div>
-                <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
-                  {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {positive ? '+' : ''}{p.trend}%
-                </span>
+                <TrendBadge trend={p.trend} />
               </div>
 
               <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-border-subtle/50 pt-2.5">
@@ -146,12 +153,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Margem</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border-subtle">
-                      <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${p.margin}%` }} />
-                    </div>
-                    <span className="font-mono text-[11px] text-text-secondary">{p.margin}%</span>
-                  </div>
+                  <div className="mt-1"><MarginCell margin={p.margin} /></div>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Vendas</p>
@@ -190,13 +192,12 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
           <tbody>
             {sorted.map((p) => {
               const mp = getMarketplaceColor(p.marketplace)
-              const growth = bucketGrowth(p.trend)
               return (
                 <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
                   <td className="py-3 pr-4">
                     <Link to={`/app/produto/${p.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
-                    <span className="mt-0.5 block text-[11px] text-text-muted">{p.category}</span>
+                    <span className="mt-0.5 block text-[11px] text-text-muted">{p.category ?? 'Sem categoria'}</span>
                   </td>
                   <td className="py-3 pr-4">
                     <span
@@ -210,22 +211,8 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                   <td className="py-3 pr-4 text-center font-mono text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
                   <td className={`py-3 pr-4 text-center font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
                   <td className="py-3 pr-4 text-center font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
-                  <td className="py-3 pr-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border-subtle">
-                        <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${p.margin}%` }} />
-                      </div>
-                      <span className="font-mono text-text-secondary">{p.margin}%</span>
-                    </div>
-                  </td>
-                  <td className="py-3 text-center">
-                    <div className="flex items-center justify-center gap-2.5">
-                      <GrowthCell label="D-1" value={growth.d1} />
-                      <GrowthCell label="D-7" value={growth.d7} />
-                      <GrowthCell label="D-30" value={growth.d30} />
-                      <GrowthCell label="D-365" value={growth.d365} />
-                    </div>
-                  </td>
+                  <td className="py-3 pr-4 text-center"><MarginCell margin={p.margin} /></td>
+                  <td className="py-3 text-center"><TrendBadge trend={p.trend} /></td>
                 </tr>
               )
             })}

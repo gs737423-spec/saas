@@ -3,7 +3,7 @@ import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
 import type { SyncSummary } from '../types.js'
 import type { MLOrder } from './types.js'
-import { getItemDetail, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
+import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 
@@ -96,6 +96,9 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   let productsImported = 0
   let inventoryUpdated = 0
   let ordersImported = 0
+  // Nome de categoria é a mesma dúzia de valores repetida em todo o
+  // catálogo — cacheia por sync em vez de 1 chamada de API por produto.
+  const categoryNameCache = new Map<string, string | null>()
 
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
@@ -107,12 +110,24 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         const productRow = mapItemToProductRow(detail)
         const inventoryRow = mapItemToInventoryRow(detail)
 
+        let categoryName = categoryNameCache.get(productRow.category_id)
+        if (categoryName === undefined) {
+          categoryName = await getCategory(productRow.category_id, accessToken)
+            .then((c) => c.name)
+            .catch(() => null) // categoria não é crítica — segue sem nome se a chamada falhar
+          categoryNameCache.set(productRow.category_id, categoryName)
+        }
+
+        // cost_price nunca entra aqui de propósito — é sempre o cliente quem
+        // informa (nenhum marketplace expõe o custo do vendedor), e o
+        // upsert só sobrescreve as colunas presentes no payload.
         const { error: productError } = await supabase.from('marketplace_products').upsert(
           {
             company_id: companyId,
             connection_id: connection.id,
             provider: 'mercadolivre',
             ...productRow,
+            category_name: categoryName,
           },
           { onConflict: 'company_id,connection_id,external_product_id' }
         )

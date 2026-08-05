@@ -1,4 +1,4 @@
-import type { MLItemDetail, MLItemSearchResponse, MLOrder, MLOrderSearchResponse } from './types.js'
+import type { MLCategoryDetail, MLItemDetail, MLItemSearchResponse, MLOrder, MLOrderSearchResponse } from './types.js'
 
 const BASE_URL = 'https://api.mercadolibre.com'
 
@@ -67,6 +67,14 @@ export async function searchUserItemIds(userId: string, accessToken: string): Pr
 
 export async function getItemDetail(itemId: string, accessToken: string): Promise<MLItemDetail> {
   return mlFetch<MLItemDetail>(`/items/${itemId}`, accessToken)
+}
+
+/** Nome legível da categoria — /items/{id} só devolve o category_id (ex.
+ *  "MLB1055"), o nome vem de um endpoint público separado. Chamador deve
+ *  cachear por categoria dentro do sync (poucas dezenas de categorias
+ *  distintas por catálogo, não um lookup por produto). */
+export async function getCategory(categoryId: string, accessToken: string): Promise<MLCategoryDetail> {
+  return mlFetch<MLCategoryDetail>(`/categories/${categoryId}`, accessToken)
 }
 
 /**
