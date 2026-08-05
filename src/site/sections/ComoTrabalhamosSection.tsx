@@ -1,4 +1,4 @@
-import { ctaLabels, specialistHref } from '@/site/content'
+import { ctaLabels } from '@/site/content'
 
 interface Step {
   label: string
@@ -8,7 +8,7 @@ interface Step {
 const steps: Step[] = [
   { label: 'CONVERSA ESTRATÉGICA', text: 'Conhecemos sua empresa, seus canais, objetivos e o momento atual da operação.' },
   { label: 'LEITURA DO CENÁRIO', text: 'Identificamos gargalos, riscos e oportunidades que podem estar passando despercebidos.' },
-  { label: 'PRÓXIMOS PASSOS', text: 'Definimos prioridades claras e avaliamos como a Vintec pode apoiar a evolução do negócio.' },
+  { label: 'PRÓXIMOS PASSOS', text: 'Definimos prioridades claras e avaliamos como a MKTOnline pode apoiar a evolução do negócio.' },
 ]
 
 // Como trabalhamos — convite comercial pra agendar uma conversa estratégica,
@@ -18,8 +18,6 @@ const steps: Step[] = [
 // `id="como-funciona"` é âncora de compatibilidade sem caixa própria — o
 // Footer ainda tem 2 links pra ela.
 export default function ComoTrabalhamosSection() {
-  const waHref = specialistHref('Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.')
-
   return (
     <section id="como-trabalhamos" className="sec-cool trabalhamos-section scroll-mt-24">
       <span id="como-funciona" aria-hidden="true" className="trabalhamos-compat-anchor" />
@@ -50,7 +48,7 @@ export default function ComoTrabalhamosSection() {
         </div>
 
         <div className="trabalhamos-cta">
-          <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary trabalhamos-cta__btn">
+          <a href="#conversao" className="btn btn-primary trabalhamos-cta__btn">
             {ctaLabels.principal}
           </a>
           <span className="trabalhamos-cta-note">Cerca de 30 minutos, sem compromisso.</span>

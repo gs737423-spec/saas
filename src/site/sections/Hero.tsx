@@ -28,8 +28,8 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#como-funciona',
     microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
-    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a Vintec',
-    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a Vintec.',
+    personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a MKTOnline',
+    waMessage: 'Olá! Quero organizar a gestão dos meus marketplaces com a MKTOnline.',
   },
   {
     eyebrow: 'ANÁLISE E ACOMPANHAMENTO',
@@ -40,8 +40,8 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-laptop.webp',
-    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na Vintec',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
+    personAlt: 'Profissional com um notebook, acompanhando a operação com mais clareza na MKTOnline',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
   },
   {
     eyebrow: 'ANÁLISE ESTRATÉGICA DA OPERAÇÃO',
@@ -52,8 +52,8 @@ const slides: Slide[] = [
     ctaSecondaryHref: '#servicos',
     microcopy: 'Uma conversa sobre sua operação, sem compromisso.',
     person: '/site/people/processed/vintec-banner-smartphone.webp',
-    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na Vintec',
-    waMessage: 'Olá! Quero agendar uma conversa estratégica com a Vintec sobre minha operação.',
+    personAlt: 'Profissional com um smartphone, acompanhando o crescimento da operação com controle na MKTOnline',
+    waMessage: 'Olá! Quero agendar uma conversa estratégica com a MKTOnline sobre minha operação.',
   },
 ]
 
@@ -117,6 +117,9 @@ export default function Hero() {
 
   const slide = slides[active]
   const waHref = whatsappContactUrl(slide.waMessage) ?? specialistHref(slide.waMessage)
+  // CTA "Falar com a equipe" leva direto pro formulário (não pro WhatsApp) —
+  // é o mesmo texto usado no header/CTA principal em todo o site.
+  const ctaPrimaryHref = slide.ctaPrimary === ctaLabels.principal ? '#conversao' : waHref
 
   return (
     <section
@@ -124,7 +127,7 @@ export default function Hero() {
       className="hero-vt"
       role="region"
       aria-roledescription="carousel"
-      aria-label="Apresentação da Vintec"
+      aria-label="Apresentação da MKTOnline"
       tabIndex={0}
       onKeyDown={onKeyDown}
       onMouseEnter={() => setPaused(true)}
@@ -151,7 +154,12 @@ export default function Hero() {
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}>
+              <a
+                href={ctaPrimaryHref}
+                {...(ctaPrimaryHref === waHref ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className="btn btn-primary"
+                style={{ padding: '0.9rem 1.7rem', fontSize: '1rem' }}
+              >
                 {slide.ctaPrimary}
               </a>
               <a href={slide.ctaSecondaryHref} className="btn btn-glass" style={{ padding: '0.9rem 1.5rem', fontSize: '0.96rem' }}>

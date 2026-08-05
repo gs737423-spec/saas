@@ -10,8 +10,8 @@ import ConversionSection from '@/site/sections/ConversionSection'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 
-// Home institucional Vintec — reposicionamento "consultoria de e-commerce
-// como produto principal" (2026-07). A Vintec é consultoria; a plataforma é
+// Home institucional MKTOnline — reposicionamento "consultoria de e-commerce
+// como produto principal" (2026-07). A MKTOnline é consultoria; a plataforma é
 // um dos serviços, não a seção-argumento central — por isso a antiga
 // ExperienceSection (fundida com "como atuamos") foi aposentada e virou
 // ServicosSection (id="servicos", 4 serviços nomeados, um deles a própria

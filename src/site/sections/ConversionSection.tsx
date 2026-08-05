@@ -16,12 +16,17 @@ interface CnpjInfo {
   dataSituacaoCadastral: string | null
   dataInicioAtividade: string | null
   atividadePrincipal: string | null
+  cnaeCodigo: string | null
+  cnaesSecundarios: string[]
   naturezaJuridica: string | null
   porte: string | null
   capitalSocial: number | null
   telefone: string | null
   email: string | null
   endereco: string | null
+  matrizFilial: string | null
+  simplesNacional: string | null
+  socios: string[]
 }
 
 interface CnpjCheckState {
@@ -145,12 +150,17 @@ export default function ConversionSection() {
             dataSituacaoCadastral: data.dataSituacaoCadastral ?? null,
             dataInicioAtividade: data.dataInicioAtividade ?? null,
             atividadePrincipal: data.atividadePrincipal ?? null,
+            cnaeCodigo: data.cnaeCodigo ?? null,
+            cnaesSecundarios: Array.isArray(data.cnaesSecundarios) ? data.cnaesSecundarios : [],
             naturezaJuridica: data.naturezaJuridica ?? null,
             porte: data.porte ?? null,
             capitalSocial: data.capitalSocial ?? null,
             telefone: data.telefone ?? null,
             email: data.email ?? null,
             endereco: data.endereco ?? null,
+            matrizFilial: data.matrizFilial ?? null,
+            simplesNacional: data.simplesNacional ?? null,
+            socios: Array.isArray(data.socios) ? data.socios : [],
           }
           const matched = namesMatch(form.company, info.razaoSocial, info.nomeFantasia)
           setCnpjCheck({ status: matched ? 'matched' : 'mismatch', info })

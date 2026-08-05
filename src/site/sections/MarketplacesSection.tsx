@@ -24,7 +24,7 @@ const tabs: ShowcaseTab[] = [
     title: 'Visão executiva da operação.',
     description: 'Visualize faturamento, pedidos, ticket médio, comissões, devoluções e evolução da operação.',
     image: '/site/platform-showcase/platform-overview.webp',
-    imageAlt: 'Tela Visão Geral da plataforma Vintec, mostrando faturamento bruto, pedidos, ticket médio, comissão e faturamento por marketplace',
+    imageAlt: 'Tela Visão Geral da plataforma MKTOnline, mostrando faturamento bruto, pedidos, ticket médio, comissão e faturamento por marketplace',
   },
   {
     id: 'marketplaces',
@@ -32,7 +32,7 @@ const tabs: ShowcaseTab[] = [
     title: 'Análise dos canais.',
     description: 'Compare o desempenho dos marketplaces e entenda quais canais exigem atenção ou apresentam oportunidades.',
     image: '/site/platform-showcase/platform-marketplaces.webp',
-    imageAlt: 'Tela Marketplaces da plataforma Vintec, comparando receita, ticket médio e comissão entre Mercado Livre, Shopee, Amazon e Loja Própria',
+    imageAlt: 'Tela Marketplaces da plataforma MKTOnline, comparando receita, ticket médio e comissão entre Mercado Livre, Shopee, Amazon e Loja Própria',
   },
   {
     id: 'products',
@@ -40,7 +40,7 @@ const tabs: ShowcaseTab[] = [
     title: 'Gestão de produtos.',
     description: 'Acompanhe estoque, vendas, margem, cobertura e comportamento dos produtos.',
     image: '/site/platform-showcase/platform-products.webp',
-    imageAlt: 'Tela Produtos da plataforma Vintec, com catálogo de SKUs, vendas, estoque, faturamento, margem e tendência',
+    imageAlt: 'Tela Produtos da plataforma MKTOnline, com catálogo de SKUs, vendas, estoque, faturamento, margem e tendência',
   },
 ]
 
@@ -112,12 +112,12 @@ export default function MarketplacesSection() {
     return () => { document.removeEventListener('keydown', onKeyDown); document.body.style.overflow = overflow }
   }, [lightboxOpen])
 
-  const waHref = whatsappContactUrl('Olá! Quero ver a plataforma da Vintec com um especialista.') ?? specialistHref('Olá! Quero ver a plataforma da Vintec com um especialista.')
+  const waHref = whatsappContactUrl('Olá! Quero ver a plataforma da MKTOnline com um especialista.') ?? specialistHref('Olá! Quero ver a plataforma da MKTOnline com um especialista.')
   const tab = tabs[active]
 
   return (
     <section
-      aria-label="A plataforma Vintec em uso"
+      aria-label="A plataforma MKTOnline em uso"
       className="marketplace-showcase"
       onFocus={() => setFocused(true)}
       onBlur={onBlurSection}
@@ -127,7 +127,7 @@ export default function MarketplacesSection() {
         <span className="marketplace-showcase__eyebrow">TECNOLOGIA A SERVIÇO DA CONSULTORIA</span>
         <h2 className="marketplace-showcase__title">Uma plataforma própria para acompanhar a operação junto com o cliente.</h2>
         <p className="marketplace-showcase__desc">
-          Como parte dos serviços da Vintec, a plataforma reúne os principais indicadores dos marketplaces e cria
+          Como parte dos serviços da MKTOnline, a plataforma reúne os principais indicadores dos marketplaces e cria
           uma visão compartilhada entre gestores e consultores.
         </p>
         <p className="marketplace-showcase__highlight">
@@ -144,7 +144,7 @@ export default function MarketplacesSection() {
         onMouseLeave={() => setHovering(false)}
       >
         {/* Coluna esquerda — seletores */}
-        <div className="marketplace-showcase__tabs" role="tablist" aria-label="Telas da plataforma Vintec" aria-orientation="vertical" onKeyDown={onKeyDown}>
+        <div className="marketplace-showcase__tabs" role="tablist" aria-label="Telas da plataforma MKTOnline" aria-orientation="vertical" onKeyDown={onKeyDown}>
           {tabs.map((t, i) => (
             <button
               key={t.id}

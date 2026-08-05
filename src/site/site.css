@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Vintec — Site institucional
+   MKTOnline — Site institucional
    Camada de estilos ISOLADA sob `.site-root`. Nunca altera os tokens do app
    (dashboard permanece intocado). Animações em CSS puro: transform/opacity,
    sem layout shift, respeitando prefers-reduced-motion. Conteúdo é visível
@@ -34,7 +34,7 @@
   --s-petrol: #0B2E3C;
   --s-petrol-deep: #061E28;
 
-  /* Tokens de marca Vintec V4 — paleta definitiva (ink/azul/sky/âmbar).
+  /* Tokens de marca MKTOnline V4 — paleta definitiva (ink/azul/sky/âmbar).
      Substitui o petróleo/teal/mint das versões anteriores. Nomes --vt-*
      mantidos por compatibilidade (dezenas de componentes já referenciam),
      só os VALORES mudaram — nenhum componente precisou ser reescrito só
@@ -1435,7 +1435,7 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .marketplace-showcase__tab[data-active='true'] .marketplace-showcase__tab-desc { color: #C2CCDA; }
 .marketplace-showcase__tab-outcome { margin-top: 2px; font-size: 12px; line-height: 1.3; color: #63C7FF; font-weight: 600; }
 
-/* Coluna direita — frame proprietário Vintec (NÃO é mockup de navegador) */
+/* Coluna direita — frame proprietário MKTOnline (NÃO é mockup de navegador) */
 .marketplace-showcase__frame {
   position: relative;
   isolation: isolate;
@@ -2284,7 +2284,7 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   }
 }
 
-/* ---- Faixa final compacta (substitui "Por que Vintec" como seção própria) ---- */
+/* ---- Faixa final compacta (substitui "Por que MKTOnline" como seção própria) ---- */
 .closing-strip { margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--vintec-border); }
 .closing-strip__intro { font-size: 15px; color: var(--vintec-text-soft); max-width: 52ch; }
 .closing-strip__row { margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
@@ -2451,7 +2451,7 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 @media (max-width: 767px) { .closing-strip__row { grid-template-columns: 1fr; gap: 18px; } }
 
 /* ==========================================================================
-   Login (/login) — reconstrucao visual completa. Paleta Vintec propria em
+   Login (/login) — reconstrucao visual completa. Paleta MKTOnline propria em
    tokens locais (nao reutiliza os tokens do site institucional, para evitar
    acoplamento). Classes login- isoladas, usadas so nesta pagina.
    ========================================================================== */

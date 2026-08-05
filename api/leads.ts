@@ -23,12 +23,17 @@ interface CnpjInfoPayload {
   dataSituacaoCadastral?: unknown
   dataInicioAtividade?: unknown
   atividadePrincipal?: unknown
+  cnaeCodigo?: unknown
+  cnaesSecundarios?: unknown
   naturezaJuridica?: unknown
   porte?: unknown
   capitalSocial?: unknown
   telefone?: unknown
   email?: unknown
   endereco?: unknown
+  matrizFilial?: unknown
+  simplesNacional?: unknown
+  socios?: unknown
 }
 
 interface LeadPayload {
@@ -52,13 +57,18 @@ const RECEITA_FIELDS: { key: keyof CnpjInfoPayload; label: string }[] = [
   { key: 'situacaoCadastral', label: 'Situação cadastral' },
   { key: 'dataSituacaoCadastral', label: 'Data da situação' },
   { key: 'dataInicioAtividade', label: 'Início de atividade' },
+  { key: 'matrizFilial', label: 'Matriz/Filial' },
   { key: 'atividadePrincipal', label: 'Atividade principal (CNAE)' },
+  { key: 'cnaeCodigo', label: 'Código CNAE' },
+  { key: 'cnaesSecundarios', label: 'CNAEs secundários' },
   { key: 'naturezaJuridica', label: 'Natureza jurídica' },
   { key: 'porte', label: 'Porte' },
+  { key: 'simplesNacional', label: 'Simples Nacional' },
   { key: 'capitalSocial', label: 'Capital social' },
   { key: 'telefone', label: 'Telefone cadastrado' },
   { key: 'email', label: 'E-mail cadastrado' },
   { key: 'endereco', label: 'Endereço' },
+  { key: 'socios', label: 'Sócios / administradores' },
 ]
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -113,6 +123,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const receitaLines = RECEITA_FIELDS
     .map(({ key, label }) => {
       const v = body.cnpjInfo?.[key]
+      if (Array.isArray(v)) {
+        const items = v.filter(isNonEmptyString)
+        if (items.length === 0) return null
+        return { label, value: items.join('; ') }
+      }
       if (!isNonEmptyString(v) && typeof v !== 'number') return null
       const value = key === 'capitalSocial' && typeof v === 'number' ? `R$ ${v.toLocaleString('pt-BR')}` : String(v)
       return { label, value }
@@ -133,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await transporter.sendMail({
       from: `"MKTOnline — Site" <${process.env.LEADS_SMTP_USER}>`,
-      to: process.env.LEADS_EMAIL_TO,
+      to: Array.from(new Set([process.env.LEADS_EMAIL_TO, 'diretoria@mktonline.com.br'].filter(Boolean))).join(', '),
       subject: `Novo contato — ${company} · CNPJ ${cnpj} · ${whatsapp}`,
       text: [
         `Nome: ${name}`,

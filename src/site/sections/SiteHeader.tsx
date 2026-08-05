@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, Lock } from 'lucide-react'
-import { ctaLabels, nav, specialistHref } from '@/site/content'
+import { ctaLabels, nav } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
@@ -13,7 +13,6 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const firstLinkRef = useRef<HTMLAnchorElement>(null)
-  const specialist = specialistHref()
 
   useEffect(() => {
     if (!open) return
@@ -54,7 +53,7 @@ export default function SiteHeader() {
           <Link to="/login" className="vt-header-btn-secondary">
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
+          <a href="#conversao" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
             {ctaLabels.principal}
           </a>
         </div>
@@ -122,9 +121,7 @@ export default function SiteHeader() {
               <div className="flex flex-col gap-2 p-2 pt-3">
                 <Link to="/login" onClick={() => setOpen(false)} className="btn btn-glass w-full">Entrar</Link>
                 <a
-                  href={specialist}
-                  target={specialist.startsWith('http') ? '_blank' : undefined}
-                  rel="noopener noreferrer"
+                  href="#conversao"
                   onClick={() => setOpen(false)}
                   className="btn btn-primary w-full"
                 >
