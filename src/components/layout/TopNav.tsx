@@ -13,6 +13,10 @@ import {
   User,
   ShieldCheck,
   ArrowLeft,
+  Building2,
+  Plug,
+  Headset,
+  Eye,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
@@ -32,6 +36,17 @@ const navItems: Item[] = [
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
+]
+
+// Nav do Painel Admin — vive na MESMA barra global (nunca uma segunda
+// barra abaixo). "Clientes" é a lista real de empresas; os demais ainda
+// não têm tela própria e ficam desabilitados (link morto é pior que
+// ausência de link).
+const adminNavItems: (Item | { icon: typeof Package; label: string; disabled: true })[] = [
+  { icon: Building2, label: 'Clientes', to: '/app/admin' },
+  { icon: Plug, label: 'Integrações', disabled: true },
+  { icon: Headset, label: 'Consultoria', disabled: true },
+  { icon: Settings, label: 'Configurações', disabled: true },
 ]
 
 // Unified top navigation bar. Replaces the old fixed sidebar (SideRail) on
@@ -56,6 +71,7 @@ export default function TopNav() {
   const { options, periodKey, setPeriodKey } = usePeriod()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [demoMode, setDemoMode] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdminArea = location.pathname.startsWith('/app/admin')
 
@@ -106,13 +122,33 @@ export default function TopNav() {
             className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar à plataforma
+            <span className="hidden sm:inline">Voltar à plataforma</span>
           </NavLink>
           <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border-subtle sm:block" />
-          <span className="hidden items-center gap-1.5 text-[13px] font-bold text-accent-cyan sm:flex">
+          <span className="hidden shrink-0 items-center gap-1.5 text-[13px] font-bold text-accent-cyan md:flex">
             <ShieldCheck className="h-4 w-4" />
-            Painel Administrativo
+            Admin
           </span>
+
+          <nav className="hide-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
+            {adminNavItems.map((item) =>
+              'disabled' in item ? (
+                <span
+                  key={item.label}
+                  title="Em breve"
+                  className="flex h-9 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-semibold text-text-muted/35 lg:gap-1.5 lg:px-2"
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+                </span>
+              ) : (
+                <NavLink key={item.label} to={item.to} end title={item.label} className={linkClass}>
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
+                </NavLink>
+              ),
+            )}
+          </nav>
         </div>
       ) : (
         <>
@@ -139,6 +175,26 @@ export default function TopNav() {
             <SearchMenu />
             <NotificationsMenu />
           </>
+        )}
+
+        {isAdminArea && (
+          <button
+            type="button"
+            onClick={() => setDemoMode((v) => !v)}
+            title="Alterna só o indicador visual — não troca nenhum dado"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-2 py-1.5"
+            aria-pressed={demoMode}
+          >
+            <Eye className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
+            <span className={`relative h-4.5 w-8 shrink-0 rounded-full transition-colors ${demoMode ? 'bg-accent-cyan' : 'bg-border-subtle'}`}>
+              <span
+                className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                  demoMode ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </span>
+            <span className="hidden text-[11.5px] font-medium text-text-secondary lg:inline">Demonstração</span>
+          </button>
         )}
 
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />

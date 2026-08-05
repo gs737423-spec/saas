@@ -17,7 +17,6 @@ function maskCnpj(raw: string | null): string {
 }
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
-import AdminTopBar from '@/components/admin/AdminTopBar'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
@@ -355,8 +354,6 @@ export default function AdminCompany() {
 
   return (
     <div className="flex flex-col gap-5 pb-10">
-      <AdminTopBar />
-
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
           <Link to="/app/admin" className="flex items-center gap-1.5 transition-colors hover:text-text-primary">

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Building2, Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, ArrowUpRight, AlertTriangle, Activity, Users2, Building } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
-import AdminTopBar from '@/components/admin/AdminTopBar'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 interface Company {
@@ -142,8 +141,6 @@ export default function Admin() {
 
   return (
     <div className="flex flex-col gap-5 pb-10">
-      <AdminTopBar />
-
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
