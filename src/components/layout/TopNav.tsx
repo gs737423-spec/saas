@@ -44,7 +44,7 @@ const navItems: Item[] = [
 // ausência de link).
 const adminNavItems: (Item | { icon: typeof Package; label: string; disabled: true })[] = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
-  { icon: Building2, label: 'Clientes', to: '/app/admin' },
+  { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
   { icon: Plug, label: 'Integrações', disabled: true },
   { icon: Headset, label: 'Consultoria', disabled: true },
   { icon: Settings, label: 'Configurações', disabled: true },

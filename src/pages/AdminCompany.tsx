@@ -296,7 +296,7 @@ export default function AdminCompany() {
     try {
       const res = await apiFetchJson<{ ok: boolean; message?: string }>(`/api/admin/companies?id=${id}`, { method: 'DELETE' })
       if (res?.ok) {
-        navigate('/app/admin')
+        navigate('/app/admin/clientes')
       } else {
         setDeleting(false)
         setConfirmingDelete(false)
@@ -340,7 +340,7 @@ export default function AdminCompany() {
     return (
       <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <p className="text-sm text-text-muted">Empresa não encontrada.</p>
-        <Link to="/app/admin" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-cyan">
+        <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-cyan">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
         </Link>
       </div>
@@ -356,7 +356,7 @@ export default function AdminCompany() {
     <div className="flex flex-col gap-5 pb-10">
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-          <Link to="/app/admin" className="flex items-center gap-1.5 transition-colors hover:text-text-primary">
+          <Link to="/app/admin/clientes" className="flex items-center gap-1.5 transition-colors hover:text-text-primary">
             <ArrowLeft className="h-3.5 w-3.5" /> Empresas
           </Link>
           <span>/</span>
