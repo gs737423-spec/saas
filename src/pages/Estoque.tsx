@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import InventoryKPIs from '@/components/estoque/InventoryKPIs'
 import InventoryTable from '@/components/estoque/InventoryTable'
 import RealInventoryTable from '@/components/estoque/RealInventoryTable'
 import { defaultInventoryFilters, type InventoryFilterState } from '@/components/estoque/InventoryFilters'
 import type { DashboardInventoryResponse } from '@/server/integrations/types'
+import { apiFetchJson } from '@/lib/apiFetch'
 
 export default function Estoque() {
   const [filters, setFilters] = useState<InventoryFilterState>(defaultInventoryFilters)
@@ -11,14 +13,9 @@ export default function Estoque() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/dashboard/inventory')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: DashboardInventoryResponse | null) => {
-        if (!cancelled) setInventory(data)
-      })
-      .catch(() => {
-        if (!cancelled) setInventory(null)
-      })
+    apiFetchJson<DashboardInventoryResponse>('/api/dashboard/inventory').then((data) => {
+      if (!cancelled) setInventory(data)
+    })
     return () => {
       cancelled = true
     }
@@ -33,6 +30,12 @@ export default function Estoque() {
         <RealInventoryTable items={inventory.items} />
       ) : (
         <>
+          {source === 'demo' && (
+            <div className="flex items-center gap-2 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-xs font-medium text-accent-amber">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              Dados de demonstração — conecte um marketplace em Conexões pra ver o estoque real.
+            </div>
+          )}
           <div className="motion-block-in">
             <InventoryKPIs filters={filters} onChange={setFilters} />
           </div>

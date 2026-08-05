@@ -15,8 +15,12 @@ interface ResolvedKpi extends OverviewKpi {
   resolvedRaw: number
 }
 
-/** Scales a 30-day baseline KPI to the selected period. */
+/** Scales a 30-day baseline KPI to the selected period. Dado real (tag
+ *  'real') já vem exato pro período pedido — não escala/reamostra de novo. */
 function resolveKpi(kpi: OverviewKpi, period: PeriodOption): ResolvedKpi {
+  if (kpi.tag === 'dado real') {
+    return { ...kpi, resolvedRaw: kpi.raw }
+  }
   const scale = kpi.scalesWithPeriod ? (period.days / BASELINE_DAYS) * period.jitter : period.jitter
   const raw = kpi.raw * scale
   return { ...kpi, value: formatKpiValue(kpi, raw), resolvedRaw: raw }
@@ -39,7 +43,8 @@ const toneColor: Record<KpiTone, string> = {
   neutral: '#9EB3C9',
 }
 
-function Delta({ change }: { change: number }) {
+function Delta({ change }: { change: number | null }) {
+  if (change === null) return null
   const positive = change >= 0
   return (
     <span className={`flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${positive ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
@@ -115,8 +120,8 @@ function StatCard({ kpi }: { kpi: ResolvedKpi }) {
   )
 }
 
-export default function KPICards({ period }: { period: PeriodOption }) {
-  const resolved = overviewKpis.map((kpi) => resolveKpi(kpi, period))
+export default function KPICards({ period, kpis }: { period: PeriodOption; kpis?: OverviewKpi[] }) {
+  const resolved = (kpis ?? overviewKpis).map((kpi) => resolveKpi(kpi, period))
   const hero = resolved.find((k) => k.hero)!
   const rest = resolved.filter((k) => !k.hero)
   return (

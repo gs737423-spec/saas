@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '../supabaseAdmin.js'
 import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
 import type { SyncSummary } from '../types.js'
+import type { MLOrder } from './types.js'
 import { getItemDetail, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
@@ -138,9 +139,20 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       }
     }
 
+    let orders: MLOrder[] = []
     try {
-      const orders = await searchOrders(connection.seller_id!, accessToken)
-      for (const order of orders) {
+      orders = await searchOrders(connection.seller_id!, accessToken)
+    } catch (searchErr) {
+      const message = searchErr instanceof MercadoLivreApiError
+        ? searchErr.message
+        : searchErr instanceof Error ? searchErr.message : 'Unknown error fetching orders'
+      errors.push(message)
+    }
+
+    // Erro em 1 pedido não pode abortar os demais — mesmo padrão de
+    // isolamento por item que o loop de produtos já usa acima.
+    for (const order of orders) {
+      try {
         const orderRow = mapOrderToRow(order)
         const { data: upsertedOrder, error: orderError } = await supabase
           .from('orders')
@@ -166,12 +178,12 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
           const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
           if (itemsError) throw new Error(`Failed to insert items for order ${order.id}: ${itemsError.message}`)
         }
+      } catch (orderErr) {
+        const message = orderErr instanceof MercadoLivreApiError
+          ? orderErr.message
+          : orderErr instanceof Error ? orderErr.message : `Unknown error processing order ${order.id}`
+        errors.push(message)
       }
-    } catch (orderErr) {
-      const message = orderErr instanceof MercadoLivreApiError
-        ? orderErr.message
-        : orderErr instanceof Error ? orderErr.message : 'Unknown error processing orders'
-      errors.push(message)
     }
 
     const finishedAt = new Date()

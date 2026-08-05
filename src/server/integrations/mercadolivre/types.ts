@@ -62,6 +62,9 @@ export interface MLOrderItem {
   }
   quantity: number
   unit_price: number
+  // Comissão do Mercado Livre pra este item do pedido — vem no próprio
+  // payload de /orders/search, não precisa endpoint separado.
+  sale_fee?: number
 }
 
 export interface MLOrder {

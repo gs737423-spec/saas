@@ -97,8 +97,9 @@ export async function exchangeCodeForToken(code: string): Promise<MLTokenRespons
   return (await res.json()) as MLTokenResponse
 }
 
-/** Refreshes an expired access token. TODO: not yet wired into sync.ts automatically —
- *  see docs/integrations/mercadolivre-oauth.md, section "Refresh token". */
+/** Refreshes an expired access token. Called automatically by
+ *  `ensureValidAccessToken` in sync.ts before every sync — see
+ *  docs/integrations/mercadolivre-oauth.md, section "Refresh token". */
 export async function refreshAccessToken(refreshToken: string): Promise<MLTokenResponse> {
   const { clientId, clientSecret } = getClientCredentials()
 

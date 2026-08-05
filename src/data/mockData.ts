@@ -616,7 +616,9 @@ export interface OverviewKpi {
   scalesWithPeriod: boolean
   prefix?: string
   suffix?: string
-  change: number
+  /** null quando não há comparação real com o período anterior (dado real
+   *  sem histórico agregado ainda) — Delta não renderiza nesse caso. */
+  change: number | null
   /** Contexto curto sob o número. */
   context: string
   /** Micro-tag de transparência de dado (ex.: "estimado"). */

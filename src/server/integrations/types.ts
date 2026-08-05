@@ -88,6 +88,22 @@ export interface DashboardInventoryResponse {
   lastSyncAt: string | null
 }
 
+export type DashboardSummarySource = 'real' | 'demo' | 'config_missing' | 'error'
+
+/** Agregado real de `orders`/`order_items` no período pedido — nunca inclui
+ *  pedido cancelado no faturamento/ticket (cancelado vira `returnsCount`/
+ *  `returnsAmount`, ver api/dashboard/summary.ts). */
+export interface DashboardSummary {
+  source: DashboardSummarySource
+  grossRevenue: number
+  ordersCount: number
+  averageTicket: number
+  feesTotal: number
+  returnsCount: number
+  returnsAmount: number
+  lastSyncAt: string | null
+}
+
 export interface SyncSummary {
   productsImported: number
   inventoryUpdated: number

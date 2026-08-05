@@ -62,6 +62,7 @@ export interface NormalizedOrderRow {
   external_order_id: string
   status: string
   total_amount: number
+  fee_amount: number
   currency: string
   buyer_external_id: string | null
   ordered_at: string
@@ -79,10 +80,12 @@ export interface NormalizedOrderItemRow {
 /** O dashboard nunca deve ler o shape cru de `MLOrder` — só este mapper traduz
  *  pra o modelo interno (mesma regra do mapItemTo* acima). */
 export function mapOrderToRow(order: MLOrder): NormalizedOrderRow {
+  const feeAmount = order.order_items.reduce((sum, oi) => sum + (oi.sale_fee ?? 0), 0)
   return {
     external_order_id: String(order.id),
     status: order.status,
     total_amount: order.total_amount,
+    fee_amount: feeAmount,
     currency: order.currency_id,
     buyer_external_id: order.buyer ? String(order.buyer.id) : null,
     ordered_at: order.date_closed ?? order.date_created,
