@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, ArrowUpRight, AlertTriangle } from 'lucide-react'
+import {
+  Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, AlertTriangle, Mail, Phone,
+  MoreVertical, Eye, ShieldAlert, Users2,
+} from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, maskCnpj } from '@/lib/adminUi'
-import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
+import MarketplaceRow from '@/components/admin/MarketplaceRow'
+import EmptyState from '@/components/admin/EmptyState'
 
 interface Company {
   id: string
@@ -23,12 +27,20 @@ type Feedback = { type: 'success' | 'error'; text: string } | null
 
 const statusLabel: Record<string, { label: string; color: string; bg: string }> = {
   onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
-  ativo: { label: 'Ativa', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
+  ativo: { label: 'Ativo', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
   em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
-  suspenso: { label: 'Suspensa', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
+  suspenso: { label: 'Suspenso', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
 }
 
-// Aba "Clientes" — única tela com gestão de empresas (lista, busca, criação).
+// CNPJ mockado, determinístico por empresa — só usado quando a empresa
+// ainda não tem CNPJ real cadastrado, pra não mostrar um traço vazio.
+function mockCnpjDigits(seed: string): string {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return String(h).padStart(14, '0').slice(0, 14)
+}
+
+// Aba "Clientes" — única tela com gestão de empresas (tabela, busca, criação).
 // A Dashboard (Admin.tsx) não mostra mais nada disso.
 export default function AdminClients() {
   const [companies, setCompanies] = useState<Company[]>([])
@@ -84,6 +96,16 @@ export default function AdminClients() {
     } finally {
       setCreatingCompany(false)
     }
+  }
+
+  async function handleToggleStatus(company: Company) {
+    const nextStatus = company.status === 'suspenso' ? 'ativo' : 'suspenso'
+    const res = await apiFetchJson<{ ok: boolean }>('/api/admin/companies', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: company.id, name: company.name, status: nextStatus }),
+    })
+    if (res?.ok) await loadCompanies()
   }
 
   const filtered = useMemo(() => {
@@ -194,31 +216,39 @@ export default function AdminClients() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-subtle p-6 text-center">
-          <Building2 className="h-6 w-6 text-text-muted" />
-          <p className="text-sm text-text-muted">{companies.length === 0 ? 'Nenhuma empresa cadastrada ainda.' : 'Nenhum resultado pra essa busca.'}</p>
-        </div>
+        <EmptyState
+          icon={Users2}
+          title={companies.length === 0 ? 'Nenhum cliente ainda' : 'Nenhum resultado'}
+          subtitle={companies.length === 0 ? 'Cadastre a primeira empresa pelo botão "Nova Empresa".' : 'Nenhuma empresa bate com essa busca.'}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c) => (
-            <CompanyCard key={c.id} company={c} />
-          ))}
+        <div className="glass-panel overflow-x-auto rounded-xl">
+          <table className="w-full min-w-[720px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                <th className="px-4 py-3 font-semibold">Empresa</th>
+                <th className="px-4 py-3 font-semibold">Contato</th>
+                <th className="px-4 py-3 font-semibold">Integrações</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-subtle">
+              {filtered.map((c) => (
+                <CompanyRow key={c.id} company={c} onToggleStatus={() => handleToggleStatus(c)} />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   )
 }
 
-// CNPJ mockado, determinístico por empresa — só usado quando a empresa
-// ainda não tem CNPJ real cadastrado, pra não mostrar um traço vazio.
-function mockCnpjDigits(seed: string): string {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  return String(h).padStart(14, '0').slice(0, 14)
-}
-
-function CompanyCard({ company }: { company: Company }) {
+function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleStatus: () => void }) {
   const [connected, setConnected] = useState<boolean | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -228,49 +258,79 @@ function CompanyCard({ company }: { company: Company }) {
     return () => { cancelled = true }
   }, [company.id])
 
+  useEffect(() => {
+    if (!menuOpen) return
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [menuOpen])
+
   const st = statusLabel[company.status] ?? statusLabel.ativo
+  const cnpjDisplay = company.cnpj ? maskCnpj(company.cnpj) : maskCnpj(mockCnpjDigits(company.id))
 
   return (
-    <Link
-      to={`/app/admin/empresa/${company.id}`}
-      className="group glass-panel glass-panel-hover flex flex-col gap-3 rounded-xl p-4 transition-transform"
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[11px] font-bold"
-          style={{ background: hueFor(company.id), color: '#081423' }}
-        >
-          {initialsFor(company.name)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold text-text-primary">{company.name}</p>
-            <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase ${st.color} ${st.bg}`}>{st.label}</span>
+    <tr className="transition-colors hover:bg-white/[0.03]">
+      <td className="px-4 py-3">
+        <Link to={`/app/admin/empresa/${company.id}`} className="flex min-w-0 items-center gap-3">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+            style={{ background: hueFor(company.id), color: '#081423' }}
+          >
+            {initialsFor(company.name)}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[13.5px] font-semibold text-text-primary hover:underline">{company.name}</p>
+            <p className={`truncate text-[11px] ${company.cnpj ? 'text-text-muted' : 'italic text-text-muted/70'}`}>{cnpjDisplay}</p>
           </div>
-          <p className={`truncate text-[11px] ${company.cnpj ? 'text-text-muted' : 'italic text-text-muted/70'}`}>
-            {company.cnpj ? maskCnpj(company.cnpj) : maskCnpj(mockCnpjDigits(company.id))}
-          </p>
+        </Link>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col gap-1 text-[12px] text-text-secondary">
+          <span className="flex items-center gap-1.5 truncate">
+            <Mail className="h-3 w-3 shrink-0 text-text-muted" /> {company.contactEmail ?? '—'}
+          </span>
+          <span className="flex items-center gap-1.5 truncate">
+            <Phone className="h-3 w-3 shrink-0 text-text-muted" /> {company.whatsapp ?? company.contactPhone ?? '—'}
+          </span>
         </div>
-        <ArrowUpRight className="h-4 w-4 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
-      </div>
-
-      <div className="flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-        <div className="flex items-center gap-3">
-          <div className={`[&>svg]:h-6 [&>svg]:w-6 ${connected ? '' : 'opacity-40 grayscale'}`} title={connected ? 'Mercado Livre — conectado' : 'Mercado Livre — não conectado'}>
-            <LogoMercadoLivre />
-          </div>
-          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Shopee — não conectado"><LogoShopee /></div>
-          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Amazon — não conectado"><LogoAmazon /></div>
-          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Loja Própria — não conectado"><LogoLojaPropria /></div>
-        </div>
-        <span className="shrink-0 text-[11px] font-medium text-text-muted">
-          {company.memberCount === 0 ? (
-            <span className="text-accent-amber">sem acesso</span>
-          ) : (
-            `${company.memberCount} ${company.memberCount === 1 ? 'acesso' : 'acessos'}`
+      </td>
+      <td className="px-4 py-3">
+        <MarketplaceRow active={connected ? ['mercadolivre'] : []} size="sm" />
+      </td>
+      <td className="px-4 py-3">
+        <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${st.color} ${st.bg}`}>{st.label}</span>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div ref={menuRef} className="relative inline-block">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-white/5 hover:text-text-primary"
+            aria-label="Ações"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-border-subtle bg-bg-card shadow-2xl">
+              <Link
+                to={`/app/admin/empresa/${company.id}`}
+                className="flex items-center gap-2 px-3 py-2 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+              >
+                <Eye className="h-3.5 w-3.5" /> Ver Detalhes
+              </Link>
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); onToggleStatus() }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10"
+              >
+                <ShieldAlert className="h-3.5 w-3.5" /> {company.status === 'suspenso' ? 'Reativar Acesso' : 'Bloquear Acesso'}
+              </button>
+            </div>
           )}
-        </span>
-      </div>
-    </Link>
+        </div>
+      </td>
+    </tr>
   )
 }
