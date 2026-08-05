@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Loader2, Wallet } from 'lucide-react'
 import FinanceHeader from '@/components/financeiro/FinanceHeader'
 import FinanceKPIs from '@/components/financeiro/FinanceKPIs'
 import FinancialComposition from '@/components/financeiro/FinancialComposition'
 import MarketplaceFinanceTable from '@/components/financeiro/MarketplaceFinanceTable'
 import TransactionsLedger from '@/components/financeiro/TransactionsLedger'
-import { marketplaceFinance, scaleMarketplaceFinance, buildFinanceOverview, financeTransactions } from '@/data/financeData'
+import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import type { FinanceOverview, MarketplaceFinance, FinanceTransaction } from '@/data/financeShapes'
 import type { Marketplace } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
@@ -21,35 +22,44 @@ export default function Financeiro() {
   const { period } = usePeriod()
   const [marketplaceFilter, setMarketplaceFilter] = useState<Marketplace | 'all'>('all')
   const [real, setReal] = useState<FinanceApiResponse | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
     apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?days=${period.days}`).then((data) => {
-      if (!cancelled) setReal(data)
+      if (!cancelled) {
+        setReal(data)
+        setLoading(false)
+      }
     })
     return () => {
       cancelled = true
     }
   }, [period.days])
 
-  const isReal = real?.ok && real.overview.source === 'real'
-
-  const scaledDemo = useMemo(() => scaleMarketplaceFinance(marketplaceFinance, period), [period])
-
   const filtered = useMemo(() => {
-    const source = isReal ? real!.byMarketplace : scaledDemo
+    const source = real?.byMarketplace ?? []
     return marketplaceFilter === 'all' ? source : source.filter((m) => m.marketplace === marketplaceFilter)
-  }, [isReal, real, scaledDemo, marketplaceFilter])
-
-  const overview = useMemo(() => {
-    if (isReal) return real!.overview
-    return buildFinanceOverview(filtered)
-  }, [isReal, real, filtered])
+  }, [real, marketplaceFilter])
 
   const transactions = useMemo(() => {
-    const source = isReal ? real!.transactions : financeTransactions
+    const source = real?.transactions ?? []
     return marketplaceFilter === 'all' ? source : source.filter((t) => t.marketplace === marketplaceFilter)
-  }, [isReal, real, marketplaceFilter])
+  }, [real, marketplaceFilter])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Carregando...
+      </div>
+    )
+  }
+
+  if (!real || !real.ok || real.overview.source !== 'real') {
+    return <ConnectMarketplacePrompt icon={Wallet} title="Conecte um marketplace pra ver o financeiro" description="Faturamento, comissão, estornos e extrato reais aparecem aqui assim que houver pedido pago sincronizado." />
+  }
 
   return (
     <div className="space-y-2 sm:space-y-2.5">
@@ -57,11 +67,11 @@ export default function Financeiro() {
         marketplaceFilter={marketplaceFilter}
         onMarketplaceFilterChange={setMarketplaceFilter}
         lastUpdated="há poucos minutos"
-        isDemo={overview.source === 'demo'}
+        isDemo={false}
       />
 
       <div className="motion-block-in">
-        <FinanceKPIs overview={overview} />
+        <FinanceKPIs overview={real.overview} />
       </div>
 
       <p className="text-[11px] text-text-muted">
@@ -69,7 +79,7 @@ export default function Financeiro() {
       </p>
 
       <div className="motion-block-in motion-block-in-2">
-        <FinancialComposition overview={overview} />
+        <FinancialComposition overview={real.overview} />
       </div>
 
       <div className="motion-block-in motion-block-in-3">

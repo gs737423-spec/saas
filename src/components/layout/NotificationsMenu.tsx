@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, AlertTriangle, AlertCircle, Info } from 'lucide-react'
-import { getExecutiveAlerts, type ExecutiveAlertSeverity, type ExecutiveAlert } from '@/data/mockData'
+import type { ExecutiveAlertSeverity, ExecutiveAlert } from '@/data/mockData'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardProductsResponse } from '@/server/dashboardProducts'
 
@@ -36,7 +36,9 @@ function useAlerts(): ExecutiveAlert[] {
     }
   }, [])
 
-  if (real?.source !== 'real') return getExecutiveAlerts()
+  // Sem conexão/sync ainda — sem alerta nenhum, nunca mock (sino aparece em
+  // toda página, inclusive no primeiro login de um vendedor real).
+  if (real?.source !== 'real') return []
 
   const alerts: ExecutiveAlert[] = []
   real.items

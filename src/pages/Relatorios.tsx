@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Printer, Loader2, FileBarChart2 } from 'lucide-react'
 import { usePeriod } from '@/contexts/PeriodContext'
-import { getExecutiveSummary, getExecutiveAlerts, type ExecutiveSummaryLine, type ExecutiveAlert } from '@/data/mockData'
+import type { ExecutiveSummaryLine, ExecutiveAlert } from '@/data/mockData'
 import KPICards from '@/components/dashboard/KPICards'
 import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
+import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardSummary } from '@/server/integrations/types'
 import type { DashboardProductsResponse } from '@/server/dashboardProducts'
@@ -46,10 +47,12 @@ export default function Relatorios() {
   const { period } = usePeriod()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [products, setProducts] = useState<DashboardProductsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
   const [slide, setSlide] = useState(0)
 
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
     Promise.all([
       apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`),
       apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`),
@@ -57,6 +60,7 @@ export default function Relatorios() {
       if (!cancelled) {
         setSummary(s)
         setProducts(p)
+        setLoading(false)
       }
     })
     return () => {
@@ -68,7 +72,7 @@ export default function Relatorios() {
   const kpis = isReal ? buildRealKpis(summary!) : undefined
 
   const executiveLines: ExecutiveSummaryLine[] = useMemo(() => {
-    if (!isReal || !summary) return getExecutiveSummary()
+    if (!isReal || !summary) return []
     const items = products?.items ?? []
     const lowStock = items.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
     const topProduct = [...items].sort((a, b) => b.revenue - a.revenue)[0]
@@ -99,7 +103,7 @@ export default function Relatorios() {
   }, [isReal, summary, products])
 
   const executiveAlerts: ExecutiveAlert[] = useMemo(() => {
-    if (!isReal) return getExecutiveAlerts().slice(0, 6)
+    if (!isReal) return []
     const items = products?.items ?? []
     const alerts: ExecutiveAlert[] = []
     items
@@ -116,6 +120,19 @@ export default function Relatorios() {
   const summaryLines = executiveLines
   const alerts = executiveAlerts
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Carregando...
+      </div>
+    )
+  }
+
+  if (!isReal) {
+    return <ConnectMarketplacePrompt icon={FileBarChart2} title="Conecte um marketplace pra gerar o relatório" description="O relatório executivo usa faturamento, produtos e estoque reais — conecte e sincronize o Mercado Livre primeiro." />
+  }
+
   const slides = [
     <SlideShell key="cover" index={0} total={5}>
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
@@ -123,7 +140,6 @@ export default function Relatorios() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary">Relatório executivo</h1>
         <p className="text-sm text-text-secondary">Período: {period.label}</p>
         <p className="text-xs text-text-muted">Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-        {!isReal && <p className="text-[11px] font-medium text-accent-amber">Dados de demonstração — conecte um marketplace pra gerar o relatório real.</p>}
       </div>
     </SlideShell>,
 

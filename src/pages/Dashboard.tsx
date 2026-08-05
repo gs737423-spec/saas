@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import KPICards from '@/components/dashboard/KPICards'
 import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
+import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardSummary } from '@/server/integrations/types'
@@ -27,29 +28,42 @@ function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
 export default function Dashboard() {
   const { period } = usePeriod()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
     apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`).then((data) => {
-      if (!cancelled) setSummary(data)
+      if (!cancelled) {
+        setSummary(data)
+        setLoading(false)
+      }
     })
     return () => {
       cancelled = true
     }
   }, [period.days])
 
-  const isReal = summary?.source === 'real'
-  const kpis = isReal ? buildRealKpis(summary!) : undefined
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Carregando...
+      </div>
+    )
+  }
+
+  // Empresa nunca conectou/sincronizou nada ainda — nenhum número
+  // ilustrativo aparece, só o caminho pra conectar. "Demonstração com
+  // banner" foi trocado por vazio real (ver decisão 2026-08-05).
+  if (!summary || summary.source !== 'real') {
+    return <ConnectMarketplacePrompt />
+  }
+
+  const kpis = buildRealKpis(summary)
 
   return (
     <div className="space-y-2">
-      {summary && summary.source === 'demo' && (
-        <div className="flex items-center gap-2 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-xs font-medium text-accent-amber">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Dados de demonstração — conecte um marketplace em Conexões pra ver o faturamento real.
-        </div>
-      )}
-
       {/* KPIs com hierarquia: hero Bruto + secundários */}
       <div className="motion-block-in">
         <KPICards period={period} kpis={kpis} />

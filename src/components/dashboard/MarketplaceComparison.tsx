@@ -125,8 +125,13 @@ export default function MarketplaceComparison() {
     <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-3.5 sm:p-4">
       <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-text-primary">GMV</h3>
-          <p className="mt-0.5 text-xs text-text-muted">Faturamento por marketplace</p>
+          <h3 className="flex items-center gap-2 text-base font-semibold tracking-tight text-text-primary">
+            GMV
+            <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted" title="Comparativo entre marketplaces ainda não é real — só Mercado Livre está integrado hoje.">
+              exemplo
+            </span>
+          </h3>
+          <p className="mt-0.5 text-xs text-text-muted">Faturamento por marketplace — ilustrativo até ter mais de 1 canal conectado</p>
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-0.5">
           <span className="px-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted">Ordenar</span>

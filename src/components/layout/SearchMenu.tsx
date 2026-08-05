@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, Package } from 'lucide-react'
-import { products as mockProducts } from '@/data/mockData'
 import { LayoutDashboard, Store, Boxes, Wallet, Link2, FileBarChart2, Settings } from 'lucide-react'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
@@ -47,7 +46,8 @@ export default function SearchMenu() {
 
   const q = query.trim().toLowerCase()
 
-  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name'>[] = real?.source === 'real' ? real.items : mockProducts.map((p) => ({ id: String(p.id), sku: p.sku, name: p.name }))
+  // Sem conexão/sync ainda, busca de produto fica vazia — nunca mock.
+  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name'>[] = real?.source === 'real' ? real.items : []
 
   const matchedPages = useMemo(
     () => (q ? pages.filter((p) => p.label.toLowerCase().includes(q)) : pages),
