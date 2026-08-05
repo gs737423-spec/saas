@@ -72,7 +72,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const upstream = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
+    let upstream: Response
+    try {
+      upstream = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`, {
+        headers: { 'User-Agent': 'MKTOnline/1.0 (+https://mktonline.com.br)', Accept: 'application/json' },
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeout)
+    }
 
     if (upstream.status === 404) {
       res.status(200).json({ ok: false, found: false, message: 'CNPJ não encontrado na Receita Federal.' })
