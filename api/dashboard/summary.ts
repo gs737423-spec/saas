@@ -12,6 +12,13 @@ const EMPTY: Omit<DashboardSummary, 'source' | 'lastSyncAt'> = {
   feesTotal: 0,
   returnsCount: 0,
   returnsAmount: 0,
+  grossRevenueChangePct: null,
+  ordersCountChangePct: null,
+}
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous <= 0) return null
+  return ((current - previous) / previous) * 100
 }
 
 // Agrega orders/order_items reais (já sincronizados do Mercado Livre) pro
@@ -31,7 +38,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!auth) return
 
     const days = Math.min(365, Math.max(1, Number(req.query.days) || 30))
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+    const now = Date.now()
+    const since = new Date(now - days * 24 * 60 * 60 * 1000).toISOString()
+    const prevSince = new Date(now - 2 * days * 24 * 60 * 60 * 1000).toISOString()
 
     const supabase = await getSupabaseAdmin()
 
@@ -82,6 +91,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ordersCount = paid.length
     const averageTicket = ordersCount > 0 ? grossRevenue / ordersCount : 0
 
+    const { data: previousOrders } = await supabase
+      .from('orders')
+      .select('status, total_amount')
+      .eq('connection_id', connection.id)
+      .eq('company_id', auth.companyId)
+      .eq('status', 'paid')
+      .gte('ordered_at', prevSince)
+      .lt('ordered_at', since)
+    const previousGross = (previousOrders ?? []).reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)
+    const previousOrdersCount = (previousOrders ?? []).length
+
     const response: SummaryApiResponse = {
       ok: true,
       source: 'real',
@@ -92,6 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       returnsCount: cancelled.length,
       returnsAmount,
       lastSyncAt: connection.last_sync_at,
+      grossRevenueChangePct: pctChange(grossRevenue, previousGross),
+      ordersCountChangePct: pctChange(ordersCount, previousOrdersCount),
     }
     res.status(200).json(response)
   } catch (err) {

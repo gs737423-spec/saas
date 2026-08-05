@@ -2,14 +2,13 @@ import type { MLCategoryDetail, MLItemDetail, MLItemSearchResponse, MLOrder, MLO
 
 const BASE_URL = 'https://api.mercadolibre.com'
 
-/** First-sync safety cap — avoids hammering a large catalog (and the 1500 req/min
- *  per-seller rate limit) before the pipeline has been proven end-to-end. Raise once
- *  pagination/backoff have been validated against a real account. */
-export const MAX_ITEMS_FIRST_SYNC = 200
+/** Teto de segurança (não "primeiro sync só" — todo sync repassa o catálogo
+ *  inteiro hoje, não tem sync incremental por data ainda). Alto o bastante
+ *  pra cobrir a esmagadora maioria dos catálogos reais sem estourar o rate
+ *  limit de 1500 req/min por vendedor (a paginação já tem backoff em 429). */
+export const MAX_ITEMS_FIRST_SYNC = 2000
 const ITEMS_PAGE_SIZE = 50
-/** Same reasoning as MAX_ITEMS_FIRST_SYNC — orders/search already returns the full
- *  order object per result (no per-order detail fetch needed, unlike items). */
-export const MAX_ORDERS_FIRST_SYNC = 300
+export const MAX_ORDERS_FIRST_SYNC = 2000
 const ORDERS_PAGE_SIZE = 50
 const MAX_429_RETRIES = 3
 

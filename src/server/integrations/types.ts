@@ -102,6 +102,10 @@ export interface DashboardSummary {
   returnsCount: number
   returnsAmount: number
   lastSyncAt: string | null
+  /** % vs período anterior de mesma duração — null quando não há pedido
+   *  pago no período anterior pra comparar (sem base, não é 0% de verdade). */
+  grossRevenueChangePct: number | null
+  ordersCountChangePct: number | null
 }
 
 export interface SyncSummary {

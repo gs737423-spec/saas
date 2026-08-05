@@ -10,13 +10,14 @@ import type { OverviewKpi } from '@/data/mockData'
 const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 // Constrói os 5 KPIs a partir do resumo real de orders/order_items — mesma
-// forma que o mock (OverviewKpi), só que sem escala/jitter e sem comparação
-// (change: null, ver KPICards.Delta) porque não temos período anterior
-// agregado ainda. tag 'dado real' faz o KPICards pular o resolveKpi mock.
+// forma que o mock (OverviewKpi), só que sem escala/jitter. change vem da
+// comparação real com o período anterior de mesma duração (null quando não
+// há pedido pago no período anterior pra comparar). tag 'dado real' faz o
+// KPICards pular o resolveKpi mock.
 function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
   return [
-    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: null, context: '', tag: 'dado real', tone: 'cyan', hero: true },
-    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: null, context: 'Volume consolidado', tag: 'dado real', tone: 'blue' },
+    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag: 'dado real', tone: 'cyan', hero: true },
+    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag: 'dado real', tone: 'blue' },
     { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag: 'dado real', tone: 'violet' },
     { key: 'fees', label: 'Comissão', value: brl(s.feesTotal), raw: s.feesTotal, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.grossRevenue > 0 ? `${((s.feesTotal / s.grossRevenue) * 100).toFixed(1)}% do bruto` : '', tag: 'dado real', tone: 'amber' },
     { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag: 'dado real', tone: 'neutral' },

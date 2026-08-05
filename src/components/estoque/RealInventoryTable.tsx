@@ -12,12 +12,26 @@ function relativeTime(iso: string | null): string {
 
 export default function RealInventoryTable({ items }: { items: DashboardInventoryItem[] }) {
   const mp = getMarketplaceColor('Mercado Livre')
+  const totalUnits = items.reduce((sum, i) => sum + (i.availableQuantity ?? 0), 0)
+  const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * (i.availableQuantity ?? 0), 0)
 
   return (
     <div className="overview-glass-elevated flex flex-col rounded-2xl p-4 sm:p-5">
-      <div className="mb-3.5">
-        <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
-        <p className="mt-0.5 text-xs text-text-muted">{items.length} produtos sincronizados do Mercado Livre</p>
+      <div className="mb-3.5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
+          <p className="mt-0.5 text-xs text-text-muted">{items.length} produtos sincronizados do Mercado Livre</p>
+        </div>
+        <div className="flex gap-4 text-right">
+          <div>
+            <p className="text-lg font-bold tabular-nums text-text-primary">{totalUnits.toLocaleString('pt-BR')}</p>
+            <p className="text-[10px] uppercase tracking-wide text-text-muted">unidades em estoque</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold tabular-nums text-text-primary">R$ {totalValue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
+            <p className="text-[10px] uppercase tracking-wide text-text-muted">valor em estoque</p>
+          </div>
+        </div>
       </div>
 
       {/* Mobile: stacked cards */}
