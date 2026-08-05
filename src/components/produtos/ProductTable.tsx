@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getMarketplaceColor } from '@/data/mockData'
 import type { DashboardProduct as Product } from '@/server/dashboardProducts'
@@ -29,17 +29,58 @@ function TrendBadge({ trend }: { trend: number | null }) {
   )
 }
 
-function MarginCell({ margin }: { margin: number | null }) {
+function MarginCell({ product, editable, onSetCost }: { product: Product; editable: boolean; onSetCost?: (product: Product, costPrice: number) => Promise<void> }) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const [saving, setSaving] = useState(false)
+  const margin = product.margin
+
+  async function save() {
+    const parsed = Number(value.replace(',', '.'))
+    if (!Number.isFinite(parsed) || parsed < 0 || !onSetCost) return
+    setSaving(true)
+    try {
+      await onSetCost(product, parsed)
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center justify-center gap-1">
+        <span className="text-[11px] text-text-muted">R$</span>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+          placeholder="custo"
+          className="w-16 rounded border border-border-subtle bg-bg-primary/60 px-1.5 py-0.5 text-[11px] text-text-primary focus:border-accent-cyan/50 focus:outline-none"
+        />
+        <button type="button" onClick={save} disabled={saving} className="text-[11px] font-medium text-accent-cyan disabled:opacity-40">
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : 'ok'}
+        </button>
+      </div>
+    )
+  }
+
   if (margin === null) {
-    return <span className="text-[11px] text-text-muted" title="Cliente ainda não informou o custo deste produto">definir custo</span>
+    if (!editable) return <span className="text-[11px] text-text-muted">sem custo</span>
+    return (
+      <button type="button" onClick={() => setEditing(true)} className="text-[11px] font-medium text-accent-cyan hover:underline" title="Informar custo do produto pra calcular margem">
+        definir custo
+      </button>
+    )
   }
   return (
-    <div className="flex items-center justify-center gap-2">
+    <button type="button" onClick={() => editable && setEditing(true)} className={`flex items-center justify-center gap-2 ${editable ? 'cursor-pointer' : 'cursor-default'}`} title={editable ? 'Clique pra editar o custo' : undefined}>
       <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border-subtle">
         <div className="h-full rounded-full bg-accent-emerald" style={{ width: `${Math.max(0, Math.min(100, margin))}%` }} />
       </div>
       <span className="font-mono text-text-secondary">{margin.toFixed(0)}%</span>
-    </div>
+    </button>
   )
 }
 
@@ -71,6 +112,10 @@ interface Props {
   filteredProducts: Product[]
   filters: ProductFilterState
   onFiltersChange: (next: ProductFilterState) => void
+  /** Edição de custo só faz sentido quando há produto real por trás (linha
+   *  em marketplace_products) — no demo não tem o que salvar. */
+  editable?: boolean
+  onSetCost?: (product: Product, costPrice: number) => Promise<void>
 }
 
 const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
@@ -84,7 +129,7 @@ const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
   { key: 'trend', label: 'Tendência', align: 'center' },
 ]
 
-export default function ProductTable({ filteredProducts, filters, onFiltersChange }: Props) {
+export default function ProductTable({ filteredProducts, filters, onFiltersChange, editable = false, onSetCost }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -136,7 +181,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
             <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link to={`/app/produto/${p.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                  <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -153,7 +198,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Margem</p>
-                  <div className="mt-1"><MarginCell margin={p.margin} /></div>
+                  <div className="mt-1"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></div>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Vendas</p>
@@ -196,7 +241,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                 <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
                   <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
                   <td className="py-3 pr-4">
-                    <Link to={`/app/produto/${p.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                     <span className="mt-0.5 block text-[11px] text-text-muted">{p.category ?? 'Sem categoria'}</span>
                   </td>
                   <td className="py-3 pr-4">
@@ -211,7 +256,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                   <td className="py-3 pr-4 text-center font-mono text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
                   <td className={`py-3 pr-4 text-center font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
                   <td className="py-3 pr-4 text-center font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
-                  <td className="py-3 pr-4 text-center"><MarginCell margin={p.margin} /></td>
+                  <td className="py-3 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
                   <td className="py-3 text-center"><TrendBadge trend={p.trend} /></td>
                 </tr>
               )

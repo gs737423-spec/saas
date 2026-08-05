@@ -7,7 +7,7 @@ import ProductTable from '@/components/produtos/ProductTable'
 import { products as mockProducts } from '@/data/mockData'
 import { BASELINE_DAYS } from '@/lib/periods'
 import { usePeriod } from '@/contexts/PeriodContext'
-import { apiFetchJson } from '@/lib/apiFetch'
+import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
 
 export default function Produtos() {
@@ -50,6 +50,17 @@ export default function Produtos() {
     }))
   }, [isReal, real, period])
 
+  async function handleSetCost(product: DashboardProduct, costPrice: number) {
+    const res = await apiFetch('/api/dashboard/products', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ externalProductId: product.id, costPrice }),
+    })
+    if (res.ok) {
+      setReal((prev) => prev ? { ...prev, items: prev.items.map((p) => p.id === product.id ? { ...p, costPrice, margin: p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null } : p) } : prev)
+    }
+  }
+
   const filteredProducts = useMemo(() => {
     return allProducts.filter((p) => {
       if (filters.marketplaces.size > 0 && !filters.marketplaces.has(p.marketplace)) return false
@@ -80,7 +91,7 @@ export default function Produtos() {
       </div>
 
       <div className="motion-block-in motion-block-in-2">
-        <ProductTable filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} />
+        <ProductTable filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} editable={isReal} onSetCost={handleSetCost} />
       </div>
     </div>
   )
