@@ -1,10 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
 import { usePeriod } from '@/contexts/PeriodContext'
-import { getExecutiveSummary, getExecutiveAlerts } from '@/data/mockData'
+import { getExecutiveSummary, getExecutiveAlerts, type ExecutiveSummaryLine, type ExecutiveAlert } from '@/data/mockData'
 import KPICards from '@/components/dashboard/KPICards'
 import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
+import { apiFetchJson } from '@/lib/apiFetch'
+import type { DashboardSummary } from '@/server/integrations/types'
+import type { DashboardProductsResponse } from '@/server/dashboardProducts'
+import type { OverviewKpi } from '@/data/mockData'
+
+const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
+  return [
+    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag: 'dado real', tone: 'cyan', hero: true },
+    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag: 'dado real', tone: 'blue' },
+    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag: 'dado real', tone: 'violet' },
+    { key: 'fees', label: 'Comissão', value: brl(s.feesTotal), raw: s.feesTotal, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.grossRevenue > 0 ? `${((s.feesTotal / s.grossRevenue) * 100).toFixed(1)}% do bruto` : '', tag: 'dado real', tone: 'amber' },
+    { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag: 'dado real', tone: 'neutral' },
+  ]
+}
+
+const LOW_STOCK_THRESHOLD = 10
 
 const toneColor: Record<string, string> = {
   neutral: '#9EB3C9',
@@ -26,9 +44,77 @@ function SlideShell({ children, index, total }: { children: React.ReactNode; ind
 
 export default function Relatorios() {
   const { period } = usePeriod()
-  const summary = getExecutiveSummary()
-  const alerts = getExecutiveAlerts().slice(0, 6)
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [products, setProducts] = useState<DashboardProductsResponse | null>(null)
   const [slide, setSlide] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`),
+      apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`),
+    ]).then(([s, p]) => {
+      if (!cancelled) {
+        setSummary(s)
+        setProducts(p)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [period.days])
+
+  const isReal = summary?.source === 'real'
+  const kpis = isReal ? buildRealKpis(summary!) : undefined
+
+  const executiveLines: ExecutiveSummaryLine[] = useMemo(() => {
+    if (!isReal || !summary) return getExecutiveSummary()
+    const items = products?.items ?? []
+    const lowStock = items.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
+    const topProduct = [...items].sort((a, b) => b.revenue - a.revenue)[0]
+    const withoutCost = items.filter((p) => p.costPrice === null).length
+
+    const lines: ExecutiveSummaryLine[] = []
+    lines.push({
+      text: summary.grossRevenueChangePct !== null
+        ? `Faturamento pago no período: R$ ${brl(summary.grossRevenue)}, ${summary.grossRevenueChangePct >= 0 ? 'crescimento' : 'queda'} de ${Math.abs(summary.grossRevenueChangePct).toFixed(1)}% vs período anterior.`
+        : `Faturamento pago no período: R$ ${brl(summary.grossRevenue)} (sem período anterior pra comparar ainda).`,
+      tone: summary.grossRevenueChangePct !== null && summary.grossRevenueChangePct < 0 ? 'warning' : 'neutral',
+    })
+    if (topProduct) {
+      lines.push({ text: `Produto que mais faturou: ${topProduct.name} (R$ ${brl(topProduct.revenue)}, ${topProduct.units} unidades).`, tone: 'neutral' })
+    }
+    lines.push({
+      text: `Comissão do Mercado Livre consumiu ${summary.grossRevenue > 0 ? ((summary.feesTotal / summary.grossRevenue) * 100).toFixed(1) : '0'}% do bruto.`,
+      tone: 'warning',
+    })
+    lines.push({
+      text: `${lowStock.length} ${lowStock.length === 1 ? 'produto está' : 'produtos estão'} com estoque baixo (≤${LOW_STOCK_THRESHOLD} unidades).`,
+      tone: lowStock.length > 0 ? 'danger' : 'positive',
+    })
+    if (withoutCost > 0) {
+      lines.push({ text: `${withoutCost} ${withoutCost === 1 ? 'produto sem' : 'produtos sem'} custo cadastrado — margem incompleta em Produtos.`, tone: 'neutral' })
+    }
+    return lines
+  }, [isReal, summary, products])
+
+  const executiveAlerts: ExecutiveAlert[] = useMemo(() => {
+    if (!isReal) return getExecutiveAlerts().slice(0, 6)
+    const items = products?.items ?? []
+    const alerts: ExecutiveAlert[] = []
+    items
+      .filter((p) => p.stock === 0)
+      .slice(0, 4)
+      .forEach((p) => alerts.push({ id: `stock-${p.id}`, rule: 'Estoque zerado', message: `${p.name} está sem estoque disponível.`, severity: 'danger', sku: p.sku ?? p.id }))
+    items
+      .filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
+      .slice(0, 4)
+      .forEach((p) => alerts.push({ id: `low-${p.id}`, rule: 'Estoque baixo', message: `${p.name} tem só ${p.stock} unidade(s) disponíveis.`, severity: 'warning', sku: p.sku ?? p.id }))
+    return alerts.slice(0, 6)
+  }, [isReal, products])
+
+  const summaryLines = executiveLines
+  const alerts = executiveAlerts
 
   const slides = [
     <SlideShell key="cover" index={0} total={5}>
@@ -37,12 +123,13 @@ export default function Relatorios() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary">Relatório executivo</h1>
         <p className="text-sm text-text-secondary">Período: {period.label}</p>
         <p className="text-xs text-text-muted">Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+        {!isReal && <p className="text-[11px] font-medium text-accent-amber">Dados de demonstração — conecte um marketplace pra gerar o relatório real.</p>}
       </div>
     </SlideShell>,
 
     <SlideShell key="kpis" index={1} total={5}>
       <h2 className="mb-4 text-lg font-semibold text-text-primary">Indicadores do período</h2>
-      <KPICards period={period} />
+      <KPICards period={period} kpis={kpis} />
     </SlideShell>,
 
     <SlideShell key="gmv" index={2} total={5}>
@@ -53,7 +140,7 @@ export default function Relatorios() {
     <SlideShell key="summary" index={3} total={5}>
       <h2 className="mb-4 text-lg font-semibold text-text-primary">Resumo executivo</h2>
       <ul className="flex flex-col gap-3">
-        {summary.map((line, i) => (
+        {summaryLines.map((line, i) => (
           <li key={i} className="flex items-start gap-2.5 text-sm text-text-secondary">
             <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: toneColor[line.tone] }} />
             {line.text}
