@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, Package } from 'lucide-react'
-import { products } from '@/data/mockData'
+import { products as mockProducts } from '@/data/mockData'
 import { LayoutDashboard, Store, Boxes, Wallet, Link2, FileBarChart2, Settings } from 'lucide-react'
+import { apiFetchJson } from '@/lib/apiFetch'
+import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
 
 const pages = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
@@ -21,6 +23,7 @@ export default function SearchMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const [real, setReal] = useState<DashboardProductsResponse | null>(null)
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -35,7 +38,16 @@ export default function SearchMenu() {
     else setQuery('')
   }, [open])
 
+  // Busca produto real (não mock) quando a empresa tem marketplace
+  // sincronizado — carrega só na primeira vez que o usuário abre a busca.
+  useEffect(() => {
+    if (!open || real) return
+    apiFetchJson<DashboardProductsResponse>('/api/dashboard/products?days=30').then(setReal)
+  }, [open, real])
+
   const q = query.trim().toLowerCase()
+
+  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name'>[] = real?.source === 'real' ? real.items : mockProducts.map((p) => ({ id: String(p.id), sku: p.sku, name: p.name }))
 
   const matchedPages = useMemo(
     () => (q ? pages.filter((p) => p.label.toLowerCase().includes(q)) : pages),
@@ -44,9 +56,9 @@ export default function SearchMenu() {
   const matchedProducts = useMemo(
     () =>
       q
-        ? products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 6)
+        ? searchableProducts.filter((p) => p.name.toLowerCase().includes(q) || (p.sku ?? '').toLowerCase().includes(q)).slice(0, 6)
         : [],
-    [q]
+    [q, searchableProducts]
   )
 
   function go(to: string) {
@@ -105,14 +117,14 @@ export default function SearchMenu() {
                 <p className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Produtos</p>
                 {matchedProducts.map((p) => (
                   <button
-                    key={p.sku}
-                    onClick={() => go(`/app/produto/${p.sku}`)}
+                    key={p.id}
+                    onClick={() => go(`/app/produto/${p.sku ?? p.id}`)}
                     className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
                   >
                     <Package className="h-4 w-4 shrink-0 text-text-muted" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-text-primary">{p.name}</span>
-                      <span className="block truncate font-mono text-[10px] text-text-muted">{p.sku}</span>
+                      <span className="block truncate font-mono text-[10px] text-text-muted">{p.sku ?? p.id}</span>
                     </span>
                   </button>
                 ))}
