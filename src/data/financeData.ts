@@ -1,5 +1,8 @@
 import { BASELINE_DAYS, TODAY, type PeriodOption } from '@/lib/periods'
 import { marketplaceMetrics, type Marketplace } from '@/data/mockData'
+import type { FinanceSource, MarketplaceFinance, FinanceOverview, FinanceTransactionType, FinanceTransaction } from '@/data/financeShapes'
+
+export type { FinanceSource, MarketplaceFinance, FinanceOverview, FinanceTransactionType, FinanceTransaction }
 
 /* ============================================================================
  * FINANCEIRO — dados operacionais derivados dos canais de venda.
@@ -13,8 +16,6 @@ import { marketplaceMetrics, type Marketplace } from '@/data/mockData'
  * lucro: não desconta impostos próprios, folha, aluguel, mídia, logística
  * interna ou qualquer outra despesa da empresa.
  * ========================================================================= */
-
-export type FinanceSource = 'demo' | 'real' | 'estimated'
 
 /** Mesmas faixas de taxa usadas na Visão Geral (ChannelOverview) — mock para demonstração. */
 const FEE_RATES: Record<Marketplace, number> = {
@@ -30,16 +31,6 @@ const REFUND_RATES: Record<Marketplace, number> = {
   'Shopee': 0.029,
   'Amazon': 0.018,
   'Loja Própria': 0.012,
-}
-
-export interface MarketplaceFinance {
-  marketplace: Marketplace
-  grossRevenue: number
-  fees: number
-  refunds: number
-  /** bruto - taxas - estornos. Não é lucro. */
-  netValue: number
-  source: FinanceSource
 }
 
 function buildBaseline(): MarketplaceFinance[] {
@@ -80,15 +71,6 @@ export function scaleMarketplaceFinance(items: MarketplaceFinance[], period: Per
   })
 }
 
-export interface FinanceOverview {
-  grossRevenue: number
-  fees: number
-  refunds: number
-  /** bruto - comissão - estornos. Não é lucro. */
-  netValue: number
-  source: FinanceSource
-}
-
 /** Soma o comparativo por marketplace em um único total — KPIs, waterfall e tabela derivam todos daqui. */
 export function buildFinanceOverview(items: MarketplaceFinance[]): FinanceOverview {
   const grossRevenue = items.reduce((s, m) => s + m.grossRevenue, 0)
@@ -104,17 +86,6 @@ export function buildFinanceOverview(items: MarketplaceFinance[]): FinanceOvervi
   }
 }
 
-export type FinanceTransactionType = 'Venda' | 'Comissão' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'
-
-export interface FinanceTransaction {
-  date: string
-  marketplace: Marketplace
-  type: FinanceTransactionType
-  identifier: string
-  gross: number
-  discount: number
-  net: number
-}
 
 function seeded(seed: number): number {
   const x = Math.sin(seed) * 10000
