@@ -2738,12 +2738,15 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   --login-muted: var(--lx-muted);
   --login-border: var(--lx-border);
 
-  /* dimensões dos estados (desktop) */
+  /* dimensões dos estados (desktop) — expanded usa clamp() em vez de px
+     fixo: em monitores grandes (1440p, 4K, ultrawide) o card crescia
+     igual numa tela de notebook, ficando minúsculo perdido no centro.
+     Agora acompanha a largura da viewport entre um piso e um teto. */
   --lx-w-collapsed: 352px;
   --lx-h-collapsed: 268px;
   --lx-r-collapsed: 30px;
-  --lx-w-expanded: 628px;
-  --lx-h-expanded: 736px;
+  --lx-w-expanded: clamp(628px, 34vw, 860px);
+  --lx-h-expanded: clamp(736px, 68vh, 940px);
   --lx-r-expanded: 34px;
 
   /* animação */
@@ -2916,14 +2919,14 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
   .lx-atmo-dust i:nth-child(n+3) { display: none; }
 }
 
-/* Barra superior — alinhada à largura do card aberto */
+/* Barra superior — largura total da página, não mais presa à largura do
+   card (que era o que empurrava "Voltar ao site" pra perto do centro em
+   telas grandes em vez de ficar fixo na quina esquerda). */
 .lx-topbar {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: var(--lx-w-expanded);
-  margin: 0 auto;
-  padding: 22px clamp(16px, 4vw, 24px) 0;
+  padding: 22px clamp(16px, 4vw, 32px) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2992,7 +2995,11 @@ a.footer-link:hover { color: #FFFFFF; transform: translateX(2px); }
 /* Card estático — abolido o collapsed/expanding, formulário sempre visível.
    Altura por conteúdo (não o --lx-h-expanded fixo, que sobrava vazio). */
 .lx-card--static {
-  width: min(340px, 100%);
+  /* clamp() em vez de largura fixa — em monitores grandes (1440p, 4K,
+     ultrawide) 340px ficava minúsculo no meio da tela. Cresce com a
+     viewport entre um piso (mobile) e um teto (não vira gigante). */
+  width: clamp(340px, 26vw, 460px);
+  max-width: 100%;
   height: auto;
   /* Gradiente EXATO de .overview-hero-card (index.css) — não uma aproximação
      translúcida. Sólido, como todo card real da plataforma; blur/glass tinha

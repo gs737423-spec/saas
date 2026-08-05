@@ -4,26 +4,14 @@ import { CheckCircle2, Loader2, AlertCircle, MessageCircle } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
 import { contact, ctaLabels, specialistHref } from '@/site/content'
 
-const CHANNELS = ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Outros']
-const DIFFICULTIES = [
-  'Falta de visão consolidada',
-  'Dificuldade para comparar canais',
-  'Problemas de estoque',
-  'Baixa margem',
-  'Excesso de trabalho manual',
-  'Dificuldade para crescer com controle',
-  'Outro',
-]
-
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'unconfigured'
 
 type FormState = {
   name: string
-  email: string
   whatsapp: string
   company: string
-  marketplaces: string[]
-  mainDifficulty: string
+  cnpj: string
+  message: string
   consent: boolean
 }
 
@@ -35,16 +23,27 @@ function maskPhone(v: string): string {
   return d.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3')
 }
 
-const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+function maskCnpj(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 14)
+  return d
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
+}
 
-// Conversão única — funde os dois CommercialBanner humanos + o antigo Demo em
-// uma só seção, sem pessoa (protagonismo pro formulário). Gradiente oficial.
+const MESSAGE_MAX = 1500
+
+// Conversão única — formulário curto e direto: só o que a equipe realmente
+// precisa pra ligar de volta e já abrir o cadastro no painel admin (CNPJ é
+// obrigatório aqui exatamente por isso). Sem campos genéricos de
+// qualificação (canal de venda, "maior desafio") que não mudam o próximo
+// passo, que é sempre "conversar por telefone/WhatsApp".
 export default function ConversionSection() {
   const [status, setStatus] = useState<Status>('idle')
-  const [showOptional, setShowOptional] = useState(false)
-  const [form, setForm] = useState<FormState>({ name: '', email: '', whatsapp: '', company: '', marketplaces: [], mainDifficulty: '', consent: false })
+  const [form, setForm] = useState<FormState>({ name: '', whatsapp: '', company: '', cnpj: '', message: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da Vintec.')
+  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -54,9 +53,10 @@ export default function ConversionSection() {
   function validate(): boolean {
     const e: Record<string, string> = {}
     if (!form.name.trim()) e.name = 'Informe seu nome.'
-    if (!emailRe.test(form.email.trim())) e.email = 'Informe um e-mail válido.'
     if (form.whatsapp.replace(/\D/g, '').length < 10) e.whatsapp = 'Informe um WhatsApp com DDD.'
     if (!form.company.trim()) e.company = 'Informe o nome da empresa.'
+    if (form.cnpj.replace(/\D/g, '').length !== 14) e.cnpj = 'Informe um CNPJ válido.'
+    if (!form.message.trim()) e.message = 'Conte pra gente o que você precisa.'
     if (!form.consent) e.consent = 'É necessário concordar para continuar.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -71,7 +71,7 @@ export default function ConversionSection() {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, marketplaces: form.marketplaces.join(', ') }),
+        body: JSON.stringify(form),
       })
       if (res.ok) { setStatus('success'); return }
       if (res.status === 501 || res.status === 404) { setStatus('unconfigured'); return }
@@ -93,13 +93,13 @@ export default function ConversionSection() {
   if (status === 'success') {
     return (
       <section id="conversao" className="sec-conversion scroll-mt-24">
-        <div className="site-container py-16 md:py-20">
-          <Reveal className="vt-card mx-auto max-w-xl p-10 text-center">
+        <div className="site-container py-10 md:py-12">
+          <Reveal className="vt-card mx-auto max-w-xl p-8 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'rgba(120,202,255,0.14)', color: '#78CAFF' }}>
               <CheckCircle2 className="h-7 w-7" />
             </span>
             <h2 className="site-h3 mt-5 vt-ink">Pedido recebido!</h2>
-            <p className="site-lead mt-3 vt-muted">Recebemos sua solicitação. Nosso time entrará em contato pelo WhatsApp ou e-mail informado.</p>
+            <p className="site-lead mt-3 vt-muted">Recebemos sua solicitação. Nosso time entrará em contato pelo WhatsApp informado.</p>
           </Reveal>
         </div>
       </section>
@@ -109,31 +109,26 @@ export default function ConversionSection() {
   return (
     <section id="conversao" className="sec-conversion scroll-mt-24">
       <span id="faq" aria-hidden="true" className="conversion-compat-anchor" />
-      <div className="site-container py-16 md:py-24">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <div className="site-container py-8 md:py-10">
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-5">
-            <span className="site-label mb-3" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
-            <h2 className="site-h2 vt-ink">Vamos entender os desafios e as oportunidades do seu e‑commerce.</h2>
-            <p className="site-lead mt-4 vt-muted">Converse com a equipe Vintec sobre seus canais, resultados e objetivos. A partir desse primeiro contato, avaliamos como nossos serviços podem contribuir com a operação.</p>
-            <p className="mt-5 text-[13px] vt-muted">Conversa inicial, sem compromisso.</p>
+            <span className="site-label mb-2" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
+            <h2 className="vt-ink text-[26px] font-extrabold leading-tight tracking-tight md:text-[32px]">Fale com a gente sobre o seu e‑commerce.</h2>
+            <p className="mt-2.5 text-[14px] leading-relaxed vt-muted">Conta pra gente o que você precisa — nosso time responde direto no WhatsApp.</p>
 
             {waHref.startsWith('http') && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
                 <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
               </a>
             )}
           </div>
 
-          <Reveal className="vt-card p-7 md:p-8 lg:col-span-7">
-            <h3 className="text-[17px] font-bold vt-ink">Fale com um especialista</h3>
-            <p className="mt-1 text-[13.5px] vt-muted">Compartilhe um pouco sobre o seu cenário atual.</p>
-            <form onSubmit={onSubmit} noValidate className="mt-5">
-              <div className="grid gap-4 sm:grid-cols-2">
+          <Reveal className="vt-card p-5 md:p-6 lg:col-span-7">
+            <h3 className="text-[15px] font-bold vt-ink">Fale com um especialista</h3>
+            <form onSubmit={onSubmit} noValidate className="mt-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Nome completo" error={errors.name} htmlFor="f-name">
                   <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
-                </Field>
-                <Field label="E-mail profissional" error={errors.email} htmlFor="f-email">
-                  <input id="f-email" type="email" className="vt-input" value={form.email} onChange={(e) => set('email', e.target.value)} aria-invalid={!!errors.email} autoComplete="email" />
                 </Field>
                 <Field label="WhatsApp com DDD" error={errors.whatsapp} htmlFor="f-phone">
                   <input id="f-phone" inputMode="tel" placeholder="(11) 99999-9999" className="vt-input" value={form.whatsapp} onChange={(e) => set('whatsapp', maskPhone(e.target.value))} aria-invalid={!!errors.whatsapp} />
@@ -141,63 +136,46 @@ export default function ConversionSection() {
                 <Field label="Nome da empresa" error={errors.company} htmlFor="f-company">
                   <input id="f-company" className="vt-input" value={form.company} onChange={(e) => set('company', e.target.value)} aria-invalid={!!errors.company} autoComplete="organization" />
                 </Field>
+                <Field label="CNPJ" error={errors.cnpj} htmlFor="f-cnpj">
+                  <input id="f-cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" className="vt-input" value={form.cnpj} onChange={(e) => set('cnpj', maskCnpj(e.target.value))} aria-invalid={!!errors.cnpj} />
+                </Field>
               </div>
 
-              <button type="button" onClick={() => setShowOptional((v) => !v)} aria-expanded={showOptional}
-                className="mt-4 text-[12.5px] font-semibold hover:underline vt-muted">
-                {showOptional ? 'Ocultar detalhes da rotina' : '+ Conte um pouco sobre sua rotina'}
-              </button>
+              <Field label="O que você gostaria de falar com a gente?" error={errors.message} htmlFor="f-message" className="mt-3">
+                <textarea
+                  id="f-message"
+                  rows={2}
+                  maxLength={MESSAGE_MAX}
+                  placeholder="Conte um pouco sobre sua operação e o que você está buscando."
+                  className="vt-input resize-none"
+                  value={form.message}
+                  onChange={(e) => set('message', e.target.value)}
+                  aria-invalid={!!errors.message}
+                />
+              </Field>
 
-              {showOptional && (
-                <div className="mt-3 space-y-4 rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <fieldset>
-                    <legend className="mb-2 text-[12px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
-                    <div className="flex flex-wrap gap-2">
-                      {CHANNELS.map((c) => {
-                        const on = form.marketplaces.includes(c)
-                        return (
-                          <button type="button" key={c} onClick={() => set('marketplaces', on ? form.marketplaces.filter((x) => x !== c) : [...form.marketplaces, c])}
-                            aria-pressed={on}
-                            className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
-                            style={on ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}>
-                            {c}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </fieldset>
-
-                  <Field label="Qual é o maior desafio da sua operação hoje?" htmlFor="f-difficulty">
-                    <select id="f-difficulty" className="vt-input" value={form.mainDifficulty} onChange={(e) => set('mainDifficulty', e.target.value)}>
-                      <option value="">Selecione (opcional)</option>
-                      {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </Field>
-                </div>
-              )}
-
-              <label className="mt-5 flex items-start gap-2.5 text-[13px] vt-muted">
+              <label className="mt-3 flex items-start gap-2.5 text-[12.5px] vt-muted">
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />
                 <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: '#78CAFF', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
               </label>
               {errors.consent && <p className="mt-1 text-[12px]" style={{ color: 'var(--s-rose)' }}>{errors.consent}</p>}
 
               {status === 'unconfigured' && (
-                <p className="mt-4 flex items-start gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(233,168,58,0.12)', border: '1px solid rgba(233,168,58,0.3)', color: '#F0C572' }}>
+                <p className="mt-3 flex items-start gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(233,168,58,0.12)', border: '1px solid rgba(233,168,58,0.3)', color: '#F0C572' }}>
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>O envio automático ainda não está configurado neste ambiente. {contact.email ? <>Escreva para <a href={`mailto:${contact.email}`} style={{ textDecoration: 'underline' }}>{contact.email}</a>.</> : 'Configure LEADS_WEBHOOK_URL para ativar o recebimento.'}</span>
+                  <span>O envio automático ainda não está configurado neste ambiente. {contact.email ? <>Escreva para <a href={`mailto:${contact.email}`} style={{ textDecoration: 'underline' }}>{contact.email}</a>.</> : 'Configure o SMTP de leads para ativar o recebimento.'}</span>
                 </p>
               )}
               {status === 'error' && (
-                <p className="mt-4 flex items-center gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(240,70,108,0.12)', border: '1px solid rgba(240,70,108,0.3)', color: '#FF8FA6' }}>
+                <p className="mt-3 flex items-center gap-2 rounded-xl p-3 text-[13px]" style={{ background: 'rgba(240,70,108,0.12)', border: '1px solid rgba(240,70,108,0.3)', color: '#FF8FA6' }}>
                   <AlertCircle className="h-4 w-4" /> Não foi possível enviar agora. Tente novamente em instantes.
                 </p>
               )}
 
-              <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-6 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
+              <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-4 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
                 {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : ctaLabels.principal}
               </button>
-              <p className="mt-3 text-center text-[12px] vt-muted">Retorno da equipe Vintec • Conversa inicial sem compromisso</p>
+              <p className="mt-2.5 text-center text-[11.5px] vt-muted">Retorno da equipe MKTOnline • Conversa inicial sem compromisso</p>
             </form>
           </Reveal>
         </div>
