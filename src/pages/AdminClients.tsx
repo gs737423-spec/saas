@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, AlertTriangle, Mail, Phone,
+  Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, X, Search, AlertTriangle, Mail, Phone,
   MoreVertical, Eye, ShieldAlert, Users2,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
@@ -25,11 +25,11 @@ interface Company {
 
 type Feedback = { type: 'success' | 'error'; text: string } | null
 
-const statusLabel: Record<string, { label: string; color: string; bg: string }> = {
-  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
-  ativo: { label: 'Ativo', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
-  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
-  suspenso: { label: 'Suspenso', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
+const statusLabel: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
+  ativo: { label: 'Ativo', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20' },
+  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20' },
+  suspenso: { label: 'Suspenso', color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20' },
 }
 
 // CNPJ mockado, determinístico por empresa — só usado quando a empresa
@@ -50,7 +50,6 @@ export default function AdminClients() {
 
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
-  const [newCompanyName, setNewCompanyName] = useState('')
   const [creatingCompany, setCreatingCompany] = useState(false)
   const [feedback, setFeedback] = useState<Feedback>(null)
 
@@ -75,19 +74,22 @@ export default function AdminClients() {
 
   useEffect(() => { loadCompanies() }, [loadCompanies])
 
-  async function handleCreateCompany(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newCompanyName.trim()) return
+  async function handleCreateCompany(form: NewClientForm) {
     setCreatingCompany(true)
     setFeedback(null)
     try {
       const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCompanyName.trim() }),
+        body: JSON.stringify({
+          name: form.nomeFantasia,
+          cnpj: form.cnpj || null,
+          contactEmail: form.email || null,
+          whatsapp: form.whatsapp || null,
+          notes: form.razaoSocial ? `Razão Social: ${form.razaoSocial}` : null,
+        }),
       })
       if (res?.ok) {
-        setNewCompanyName('')
         setShowCreate(false)
         await loadCompanies()
       } else {
@@ -146,40 +148,16 @@ export default function AdminClients() {
   }
 
   return (
-    <div className="flex flex-col gap-5 pb-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-text-primary">Clientes</h1>
-          <p className="mt-1 text-sm text-text-muted">{companies.length} {companies.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}.</p>
-        </div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
-          onClick={() => setShowCreate((v) => !v)}
+          onClick={() => setShowCreate(true)}
           className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" /> Nova Empresa
         </button>
       </div>
-
-      {showCreate && (
-        <form onSubmit={handleCreateCompany} className="glass-panel flex flex-wrap items-center gap-2 rounded-xl p-4">
-          <input
-            autoFocus
-            value={newCompanyName}
-            onChange={(e) => setNewCompanyName(e.target.value)}
-            placeholder="Nome da nova empresa"
-            className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={creatingCompany || !newCompanyName.trim()}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-2 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {creatingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            Criar
-          </button>
-        </form>
-      )}
 
       {feedback && (
         <p className={`flex items-center gap-1.5 text-xs ${feedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
@@ -241,8 +219,108 @@ export default function AdminClients() {
           </table>
         </div>
       )}
+
+      {showCreate && (
+        <CreateClientModal
+          submitting={creatingCompany}
+          onClose={() => setShowCreate(false)}
+          onSubmit={handleCreateCompany}
+        />
+      )}
     </div>
   )
+}
+
+interface NewClientForm {
+  razaoSocial: string
+  nomeFantasia: string
+  cnpj: string
+  email: string
+  whatsapp: string
+}
+
+function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => void; onSubmit: (form: NewClientForm) => void; submitting: boolean }) {
+  const [form, setForm] = useState<NewClientForm>({ razaoSocial: '', nomeFantasia: '', cnpj: '', email: '', whatsapp: '' })
+
+  function set<K extends keyof NewClientForm>(key: K, value: string) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.nomeFantasia.trim()) return
+    onSubmit(form)
+  }
+
+  const inputClass = 'w-full rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none'
+  const labelClass = 'mb-1.5 block text-[11px] font-medium text-text-muted'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" onClick={onClose}>
+      <form onSubmit={handleSubmit} className="glass-panel w-full max-w-2xl rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-start justify-between gap-3">
+          <h2 className="text-lg font-bold text-text-primary">Cadastrar Novo Cliente</h2>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-lg p-1 text-text-muted transition-colors hover:bg-white/5 hover:text-text-primary">
+            <X className="h-4.5 w-4.5" />
+          </button>
+        </div>
+        <p className="mb-5 text-[13px] text-text-muted">Insira os dados do lojista para gerar o acesso imediato à plataforma.</p>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className={labelClass}>Razão Social</label>
+            <input value={form.razaoSocial} onChange={(e) => set('razaoSocial', e.target.value)} placeholder="Nome Fantasia Comercio Ltda" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Nome Fantasia *</label>
+            <input required autoFocus value={form.nomeFantasia} onChange={(e) => set('nomeFantasia', e.target.value)} placeholder="Nome Fantasia" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>CNPJ</label>
+            <input
+              value={form.cnpj}
+              onChange={(e) => set('cnpj', maskCnpjInput(e.target.value))}
+              placeholder="00.000.000/0001-00"
+              maxLength={18}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>E-mail de Acesso</label>
+            <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="contato@cliente.com" className={inputClass} />
+          </div>
+          <div className="md:col-span-2">
+            <label className={labelClass}>WhatsApp</label>
+            <input value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="(11) 90000-0000" className={inputClass} />
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-center justify-end gap-3 border-t border-border-subtle pt-4">
+          <button type="button" onClick={onClose} className="rounded-lg border border-border-subtle px-4 py-2.5 text-[13px] font-medium text-text-secondary transition-colors hover:bg-white/5">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={submitting || !form.nomeFantasia.trim()}
+            className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+            Criar Cliente
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// Máscara simulada, aplicada enquanto o usuário digita — só formata, não valida dígito verificador.
+function maskCnpjInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 14)
+  return digits
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
 }
 
 function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleStatus: () => void }) {
@@ -287,12 +365,12 @@ function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleSta
         </Link>
       </td>
       <td className="px-4 py-3">
-        <div className="flex flex-col gap-1 text-[12px] text-text-secondary">
-          <span className="flex items-center gap-1.5 truncate">
-            <Mail className="h-3 w-3 shrink-0 text-text-muted" /> {company.contactEmail ?? '—'}
+        <div className="flex flex-col gap-1.5 text-[13px] text-text-secondary">
+          <span className="flex items-center gap-2 truncate">
+            <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" /> {company.contactEmail ?? '—'}
           </span>
-          <span className="flex items-center gap-1.5 truncate">
-            <Phone className="h-3 w-3 shrink-0 text-text-muted" /> {company.whatsapp ?? company.contactPhone ?? '—'}
+          <span className="flex items-center gap-2 truncate">
+            <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" /> {company.whatsapp ?? company.contactPhone ?? '—'}
           </span>
         </div>
       </td>
@@ -300,7 +378,7 @@ function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleSta
         <MarketplaceRow active={connected ? ['mercadolivre'] : []} size="sm" />
       </td>
       <td className="px-4 py-3">
-        <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${st.color} ${st.bg}`}>{st.label}</span>
+        <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${st.color} ${st.bg} ${st.border}`}>{st.label}</span>
       </td>
       <td className="px-4 py-3 text-right">
         <div ref={menuRef} className="relative inline-block">

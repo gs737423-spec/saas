@@ -7,6 +7,7 @@ import {
 import { apiFetch } from '@/lib/apiFetch'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon } from '@/site/logos'
 import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Company {
   id: string
@@ -20,6 +21,7 @@ interface Company {
 // nem alertas automáticos no banco — ficam com badge "exemplo" explícito
 // em vez de fingir ser real (ver CORE-RULES #3 evidência antes de afirmação).
 export default function Admin() {
+  const { user } = useAuth()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [unauthorized, setUnauthorized] = useState(false)
@@ -83,8 +85,20 @@ export default function Admin() {
   const activeAccess = companies.reduce((s, c) => s + c.memberCount, 0)
   const withoutAccess = companies.filter((c) => c.memberCount === 0).length
 
+  const firstName = (user?.email?.split('@')[0].split(/[._]/)[0] ?? 'Admin').replace(/^./, (c) => c.toUpperCase())
+
   return (
-    <div className="flex flex-col gap-5 pb-10">
+    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
+      {/* Barra de boas-vindas — dado real é só o nome; "operando normalmente"
+          é uma frase de clima, não uma checagem real de uptime. */}
+      <div className="flex items-center gap-2.5 text-[13px] text-text-secondary">
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
+        </span>
+        Olá, {firstName}. O ecossistema está operando normalmente hoje.
+      </div>
+
       {/* Banner do funil comercial — leva pra Solicitações (mock hoje, real
           quando a tabela `leads` existir). */}
       {MOCK_LEADS_COUNT > 0 && (
@@ -115,7 +129,7 @@ export default function Admin() {
       </div>
 
       {/* Bloco 2 — Saúde das integrações */}
-      <div className="glass-panel rounded-xl p-5">
+      <div className="glass-panel rounded-xl p-5 transition-all duration-200 hover:border-border-active">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde das Integrações</h3>
           <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[9px] font-semibold uppercase text-text-muted" title="Ainda não existe telemetria real de API no banco">exemplo</span>
@@ -128,7 +142,7 @@ export default function Admin() {
       </div>
 
       {/* Bloco 3 — Alertas operacionais */}
-      <div className="glass-panel rounded-xl p-5">
+      <div className="glass-panel rounded-xl p-5 transition-all duration-200 hover:border-border-active">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Alertas Operacionais</h3>
           <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[9px] font-semibold uppercase text-text-muted" title="Combina 1 alerta real com exemplos de alertas que ainda não existem no banco">real + exemplo</span>
@@ -173,7 +187,7 @@ const colorMap = {
 
 function KpiCard({ icon: Icon, color, value, label, example }: { icon: typeof Building; color: keyof typeof colorMap; value: number | string; label: string; example?: boolean }) {
   return (
-    <div className="glass-panel relative flex flex-col items-start gap-2 rounded-xl p-4">
+    <div className="glass-panel relative flex flex-col items-start gap-2 rounded-xl p-4 transition-all duration-200 hover:border-border-active hover:-translate-y-0.5">
       {example && (
         <span className="absolute right-3 top-3 rounded-full border border-border-subtle px-1.5 py-0.5 text-[8px] font-semibold uppercase text-text-muted" title="Ilustrativo — ainda sem sync real de pedidos/GMV">exemplo</span>
       )}

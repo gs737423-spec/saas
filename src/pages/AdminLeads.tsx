@@ -11,12 +11,8 @@ export default function AdminLeads() {
   const [analyzing, setAnalyzing] = useState<MockLead | null>(null)
 
   return (
-    <div className="flex flex-col gap-5 pb-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-text-primary">Solicitações</h1>
-          <p className="mt-1 text-sm text-text-muted">Cadastros recebidos pelo formulário do site, aguardando triagem.</p>
-        </div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <span className="flex items-center gap-1.5 rounded-full border border-border-subtle px-2.5 py-1 text-[10px] font-semibold uppercase text-text-muted" title="Ainda não existe tabela de leads no Supabase — dados de exemplo">
           dados de exemplo
         </span>

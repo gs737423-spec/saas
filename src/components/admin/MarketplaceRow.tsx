@@ -10,16 +10,17 @@ const MARKETPLACES: { key: MarketplaceKey; name: string; Logo: () => React.JSX.E
 ]
 
 /**
- * Linha de logos de marketplace com 3 estados visuais:
- * - active (conectado de verdade): tile colorido, opacidade cheia.
+ * Linha de logos de marketplace — sempre em círculo padronizado
+ * (w-8 h-8 / w-6 h-6), 3 estados visuais:
+ * - active (conectado de verdade): cor cheia da marca.
  * - interest (só interesse declarado no lead, ainda não é integração): anel
- *   colorido da marca ao redor, tile com opacidade reduzida.
+ *   colorido da marca ao redor, opacidade reduzida.
  * - none: grayscale opaco (nem conectado, nem de interesse).
  */
 export default function MarketplaceRow({ active = [], interest = [], size = 'md' }: { active?: MarketplaceKey[]; interest?: MarketplaceKey[]; size?: 'sm' | 'md' }) {
-  const dim = size === 'sm' ? '[&>svg]:h-6 [&>svg]:w-6' : '[&>svg]:h-8 [&>svg]:w-8'
+  const box = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8'
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2">
       {MARKETPLACES.map((mp) => {
         const isActive = active.includes(mp.key)
         const isInterest = !isActive && interest.includes(mp.key)
@@ -27,8 +28,8 @@ export default function MarketplaceRow({ active = [], interest = [], size = 'md'
           <div
             key={mp.key}
             title={isActive ? `${mp.name} — conectado` : isInterest ? `${mp.name} — interesse declarado` : `${mp.name} — não conectado`}
-            className={`rounded-lg ${dim} ${
-              isActive ? '' : isInterest ? `opacity-70 ring-2 ${mp.ring}` : 'opacity-35 grayscale'
+            className={`flex ${box} shrink-0 items-center justify-center overflow-hidden rounded-full [&>svg]:h-full [&>svg]:w-full [&>svg]:rounded-none ${
+              isActive ? '' : isInterest ? `opacity-75 ring-2 ${mp.ring}` : 'opacity-35 grayscale'
             }`}
           >
             <mp.Logo />
