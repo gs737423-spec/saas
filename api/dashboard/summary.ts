@@ -67,13 +67,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
+    // searchOrders() não filtra por status na origem — traz confirmed,
+    // payment_required, payment_in_process, paid, cancelled, invalid, tudo.
+    // Só "paid" é venda de fato; "cancelled" é devolução; o resto (pedido
+    // criado mas ainda não pago) não é nem uma coisa nem outra — não entra
+    // em faturamento nem em devolução, senão infla o bruto com dinheiro que
+    // ainda não caiu.
+    const paid = orders.filter((o) => o.status === 'paid')
     const cancelled = orders.filter((o) => o.status === 'cancelled')
-    const valid = orders.filter((o) => o.status !== 'cancelled')
 
-    const grossRevenue = valid.reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)
-    const feesTotal = valid.reduce((sum, o) => sum + Number(o.fee_amount ?? 0), 0)
+    const grossRevenue = paid.reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)
+    const feesTotal = paid.reduce((sum, o) => sum + Number(o.fee_amount ?? 0), 0)
     const returnsAmount = cancelled.reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)
-    const ordersCount = valid.length
+    const ordersCount = paid.length
     const averageTicket = ordersCount > 0 ? grossRevenue / ordersCount : 0
 
     const response: SummaryApiResponse = {
