@@ -4,13 +4,24 @@ import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
   UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
-  CheckCircle, AlertCircle, Link as LinkIcon,
+  CheckCircle, AlertCircle, Link as LinkIcon, User, Building2, ExternalLink,
 } from 'lucide-react'
+
+// CNPJ real (company.cnpj) recebe máscara; dados fiscais que ainda não
+// existem no Supabase (razão social, IE, IM, CNAE) ficam com placeholder
+// visual explícito — nunca escondido como se fosse dado real.
+function maskCnpj(raw: string | null): string {
+  const digits = (raw ?? '').replace(/\D/g, '')
+  if (digits.length !== 14) return raw || '—'
+  return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+}
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
-import AdminSidebar, { type AdminCompanyTab } from '@/components/admin/AdminSidebar'
+import AdminTopBar from '@/components/admin/AdminTopBar'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
+
+export type AdminCompanyTab = 'visao-geral' | 'acessos' | 'integracoes' | 'cobranca' | 'suporte' | 'configuracoes'
 
 const TAB_ORDER: AdminCompanyTab[] = ['visao-geral', 'acessos', 'integracoes', 'cobranca', 'suporte', 'configuracoes']
 
@@ -343,8 +354,8 @@ export default function AdminCompany() {
   const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
 
   return (
-    <div className="flex flex-col gap-5 pb-10 lg:flex-row lg:gap-6">
-      <AdminSidebar activeTab={tab} onTabChange={setTab} />
+    <div className="flex flex-col gap-5 pb-10">
+      <AdminTopBar />
 
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
@@ -381,10 +392,9 @@ export default function AdminCompany() {
               </div>
             </div>
 
+            {/* Ação principal fica sempre visível e destacada — é a ferramenta
+                de consultoria (entrar no ambiente do cliente para suporte). */}
             <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <button type="button" title="Ainda não implementado — depende de fluxo de personificação" disabled className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-xs font-semibold text-text-muted opacity-50">
-                <LogIn className="h-3.5 w-3.5" /> Entrar como cliente
-              </button>
               {company.whatsapp && (
                 <a href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20">
                   <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
@@ -394,22 +404,30 @@ export default function AdminCompany() {
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={togglingStatus}
-                className="flex items-center gap-1.5 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-xs font-semibold text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-lg border border-accent-rose/25 bg-transparent px-3 py-2 text-xs font-medium text-accent-rose/80 transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
               >
                 {togglingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />}
                 {status === 'suspenso' ? 'Reativar empresa' : 'Suspender empresa'}
               </button>
+              <button
+                type="button"
+                title="Ainda não implementado — depende de fluxo de personificação"
+                disabled
+                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] opacity-90 shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ExternalLink className="h-4 w-4" /> Acessar Painel do Lojista
+              </button>
             </div>
           </div>
 
-          {/* Tab bar secundária — mesma navegação da sidebar, só mais rápida de alcançar com o mouse no topo */}
-          <div className="flex items-center gap-1 overflow-x-auto border-t border-border-subtle pt-3">
+          {/* Tab bar interna — ocupa a largura toda agora que a sidebar saiu */}
+          <div className="grid grid-cols-3 gap-1 border-t border-border-subtle pt-3 sm:flex sm:items-center">
             {TAB_ORDER.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-center text-[12.5px] font-semibold transition-colors sm:flex-1 ${
                   tab === t ? 'bg-accent-cyan/15 text-accent-cyan' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
                 }`}
               >
@@ -574,14 +592,47 @@ export default function AdminCompany() {
                 </div>
               </div>
 
+              {/* Dados Cadastrais e Fiscais — só CNPJ vem do Supabase hoje; o
+                  resto (Receita Federal) ainda não existe no banco, por isso
+                  fica com placeholder explícito em vez de esconder o campo. */}
               <div className="glass-panel admin-card rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <UserCog className="h-3.5 w-3.5" /> Contato
+                  <Building2 className="h-3.5 w-3.5" /> Dados Cadastrais e Fiscais
                 </h3>
-                <div className="flex flex-col gap-1.5 text-xs text-text-secondary">
-                  <p><span className="text-text-muted">E-mail: </span>{company.contactEmail ?? 'não cadastrado'}</p>
-                  <p><span className="text-text-muted">Telefone: </span>{company.contactPhone ?? 'não cadastrado'}</p>
-                  <p><span className="text-text-muted">Site: </span>{company.website ?? 'não cadastrado'}</p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                  {[
+                    { label: 'Razão Social', value: company.name, real: true },
+                    { label: 'Nome Fantasia', value: company.name, real: true },
+                    { label: 'CNPJ', value: maskCnpj(company.cnpj), real: Boolean(company.cnpj) },
+                    { label: 'Inscrição Estadual', value: 'placeholder — sem fonte ainda', real: false },
+                    { label: 'Inscrição Municipal', value: 'placeholder — sem fonte ainda', real: false },
+                    { label: 'CNAE Principal', value: 'placeholder — sem fonte ainda', real: false },
+                  ].map((f) => (
+                    <div key={f.label} className="col-span-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 py-1.5 last:border-0 sm:col-span-1">
+                      <span className="text-[11px] text-text-muted">{f.label}</span>
+                      <span className={`truncate text-[12.5px] font-medium ${f.real ? 'text-text-primary' : 'italic text-text-muted/70'}`}>{f.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-panel admin-card rounded-xl p-6">
+                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <UserCog className="h-3.5 w-3.5" /> Contato Corporativo
+                </h3>
+                <div className="flex flex-col gap-2.5 text-[13px]">
+                  <div className="flex items-center gap-2.5 text-text-secondary">
+                    <User className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    {company.contactEmail ? company.contactEmail.split('@')[0] : 'proprietário não cadastrado'}
+                  </div>
+                  <div className="flex items-center gap-2.5 text-text-secondary">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    {company.contactEmail ?? 'não cadastrado'}
+                  </div>
+                  <div className="flex items-center gap-2.5 text-text-secondary">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    {company.contactPhone ?? 'não cadastrado'}
+                  </div>
                 </div>
               </div>
             </div>
