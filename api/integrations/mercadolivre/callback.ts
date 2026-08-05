@@ -48,24 +48,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const tokenResponse = await exchangeCodeForToken(code)
     const supabase = await getSupabaseAdmin()
 
+    // Sem refresh_token = a conta autorizante não tem permissão de
+    // vendedor no Mercado Livre. Marcar como "connected" mesmo assim fazia
+    // o sync falhar pra sempre em silêncio (loadConnection exige
+    // refresh_token) enquanto a UI mostrava "Conectado" — cliente nunca
+    // entendia o motivo. Agora fica status:'error' com mensagem explícita
+    // desde a primeira tentativa.
+    const isSellerAccount = Boolean(tokenResponse.refresh_token)
+
     const { data, error: upsertError } = await supabase
       .from('marketplace_connections')
       .upsert(
         {
           company_id: companyId,
           provider: 'mercadolivre',
-          status: 'connected',
+          status: isSellerAccount ? 'connected' : 'error',
           external_account_id: String(tokenResponse.user_id),
           seller_id: String(tokenResponse.user_id),
           access_token_encrypted: encryptSecret(tokenResponse.access_token),
-          // Ausente quando a conta autorizante não é vendedora — armazena
-          // null em vez de quebrar; sync.ts/refreshAccessToken já tratam
-          // a ausência de refresh_token como "reconectar manualmente
-          // quando expirar" em vez de renovar sozinho.
           refresh_token_encrypted: tokenResponse.refresh_token ? encryptSecret(tokenResponse.refresh_token) : null,
           token_expires_at: new Date(Date.now() + tokenResponse.expires_in * 1000).toISOString(),
           scopes: tokenResponse.scope,
-          last_error: null,
+          last_error: isSellerAccount ? null : 'A conta do Mercado Livre autorizada não tem permissão de vendedor. Reconecte usando uma conta vendedora (com anúncios ativos).',
         },
         { onConflict: 'company_id,provider' }
       )
@@ -81,12 +85,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       connectionId: data.id,
       provider: 'mercadolivre',
       eventType: 'oauth_connected',
-      status: 'success',
-      message: 'Mercado Livre connection established',
+      status: isSellerAccount ? 'success' : 'error',
+      message: isSellerAccount ? 'Mercado Livre connection established' : 'Connected account has no seller permission (no refresh_token)',
       payload: { externalAccountId: String(tokenResponse.user_id), scopes: tokenResponse.scope },
     })
 
-    res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre`)
+    res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre${isSellerAccount ? '' : '&status=error'}`)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error during token exchange'
     console.error('[mercadolivre/callback]', message)
