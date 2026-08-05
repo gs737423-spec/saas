@@ -1,4 +1,4 @@
-import type { MarketplaceFinance } from '@/data/financeData'
+import type { MarketplaceFinance } from '@/data/financeShapes'
 import { getMarketplaceColor } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
 

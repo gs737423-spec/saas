@@ -2,21 +2,42 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { DashboardProduct, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
+import type { Marketplace } from '../../src/data/mockData.js'
+import type { Provider } from '../../src/server/integrations/types.js'
 
 type ProductsApiResponse = DashboardProductsResponse
+
+// Mesmo mapa de rótulo por provider usado em finance.ts — mantém os dois em
+// sincronia manualmente por enquanto (ambos pequenos e estáveis; extrair
+// pra um módulo compartilhado se um terceiro endpoint precisar do mesmo).
+const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
+  mercadolivre: 'Mercado Livre',
+  shopee: 'Shopee',
+}
 
 interface OrderItemAgg {
   quantity: number
   unit_price: number
   external_product_id: string | null
   sku: string | null
+  orders: { connection_id: string } | { connection_id: string }[]
+}
+
+/** Chave = conexão + id externo, não só o id externo — dois marketplaces
+ *  diferentes podem coincidentemente usar o mesmo external_product_id
+ *  (ex.: ambos numéricos sequenciais), e sem isolar por conexão os dados
+ *  de um produto Shopee poderiam se misturar com um produto Mercado Livre
+ *  que por acaso tem o mesmo id. */
+function productKey(connectionId: string, externalProductId: string): string {
+  return `${connectionId}:${externalProductId}`
 }
 
 function aggregateByProduct(rows: OrderItemAgg[]): Map<string, { revenue: number; units: number }> {
   const map = new Map<string, { revenue: number; units: number }>()
   for (const row of rows) {
-    const key = row.external_product_id ?? row.sku ?? ''
-    if (!key) continue
+    const order = Array.isArray(row.orders) ? row.orders[0] : row.orders
+    if (!row.external_product_id || !order?.connection_id) continue
+    const key = productKey(order.connection_id, row.external_product_id)
     const prev = map.get(key) ?? { revenue: 0, units: 0 }
     prev.revenue += Number(row.unit_price ?? 0) * Number(row.quantity ?? 0)
     prev.units += Number(row.quantity ?? 0)
@@ -25,10 +46,18 @@ function aggregateByProduct(rows: OrderItemAgg[]): Map<string, { revenue: number
   return map
 }
 
-// Produtos reais: junta marketplace_products (catálogo+categoria+custo
-// opcional) + marketplace_inventory (estoque) + order_items de pedidos
-// pagos (receita/unidades no período, e no período anterior pra tendência
-// real por comparação). Nunca fabrica margem/tendência quando falta base.
+// Produtos reais de TODOS os marketplaces conectados: junta
+// marketplace_products (catálogo+categoria+custo opcional) +
+// marketplace_inventory (estoque) + order_items de pedidos pagos
+// (receita/unidades no período, e no período anterior pra tendência real
+// por comparação). Nunca fabrica margem/tendência quando falta base.
+// LIMITAÇÃO CONHECIDA: filtra só por company_id + external_product_id, sem
+// connection_id — se a empresa tiver 2 marketplaces conectados e, por
+// coincidência, um produto Shopee e um produto Mercado Livre tiverem
+// exatamente o mesmo external_product_id, o update de custo atualizaria os
+// dois. Risco baixo na prática (formatos de id divergem entre os
+// marketplaces hoje), mas documentado — resolver plumbing o connectionId
+// até aqui se algum dia isso colidir de verdade.
 async function handlePatchCost(req: VercelRequest, res: VercelResponse) {
   const auth = await requireCompany(req, res)
   if (!auth) return
@@ -80,23 +109,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = await getSupabaseAdmin()
 
-    const { data: connection, error: connError } = await supabase
+    const { data: connections, error: connError } = await supabase
       .from('marketplace_connections')
-      .select('id, status')
-      .eq('provider', 'mercadolivre')
+      .select('id, provider, status')
       .eq('company_id', auth.companyId)
-      .maybeSingle()
+      .eq('status', 'connected')
     if (connError) throw new Error(connError.message)
 
-    if (!connection || connection.status !== 'connected') {
+    if (!connections || connections.length === 0) {
       res.status(200).json({ ok: true, source: 'demo', items: [] } satisfies ProductsApiResponse)
       return
     }
 
+    const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
+    const connectionIds = connections.map((c) => c.id)
+
     const { data: products, error: productsError } = await supabase
       .from('marketplace_products')
-      .select('external_product_id, sku, title, price, status, category_name, cost_price')
-      .eq('connection_id', connection.id)
+      .select('connection_id, external_product_id, sku, title, price, status, category_name, cost_price')
+      .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
     if (productsError) throw new Error(productsError.message)
 
@@ -107,14 +138,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: inventoryRows } = await supabase
       .from('marketplace_inventory')
-      .select('external_product_id, available_quantity')
-      .eq('connection_id', connection.id)
+      .select('connection_id, external_product_id, available_quantity')
+      .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
-    const stockByExternalId = new Map((inventoryRows ?? []).map((r) => [r.external_product_id, r.available_quantity]))
+    const stockByExternalId = new Map((inventoryRows ?? []).map((r) => [productKey(r.connection_id, r.external_product_id), r.available_quantity]))
 
     const { data: currentItems } = await supabase
       .from('order_items')
-      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at)')
+      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
       .eq('company_id', auth.companyId)
       .eq('orders.status', 'paid')
       .gte('orders.ordered_at', since)
@@ -122,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: previousItems } = await supabase
       .from('order_items')
-      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at)')
+      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
       .eq('company_id', auth.companyId)
       .eq('orders.status', 'paid')
       .gte('orders.ordered_at', prevSince)
@@ -132,22 +163,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const totalRevenue = [...currentByProduct.values()].reduce((s, v) => s + v.revenue, 0)
 
     const items: DashboardProduct[] = products.map((p) => {
-      const agg = currentByProduct.get(p.external_product_id) ?? { revenue: 0, units: 0 }
-      const prevAgg = previousByProduct.get(p.external_product_id)
+      const key = productKey(p.connection_id, p.external_product_id)
+      const agg = currentByProduct.get(key) ?? { revenue: 0, units: 0 }
+      const prevAgg = previousByProduct.get(key)
       const trend = prevAgg && prevAgg.revenue > 0 ? ((agg.revenue - prevAgg.revenue) / prevAgg.revenue) * 100 : null
       const costPrice = p.cost_price === null || p.cost_price === undefined ? null : Number(p.cost_price)
       const margin = costPrice !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null
+      const provider = providerByConnectionId.get(p.connection_id)
 
       return {
         id: p.external_product_id,
         sku: p.sku,
         name: p.title,
-        marketplace: 'Mercado Livre',
+        marketplace: (provider && PROVIDER_LABEL[provider]) || 'Mercado Livre',
         category: p.category_name,
         price: Number(p.price ?? 0),
         costPrice,
         margin,
-        stock: stockByExternalId.get(p.external_product_id) ?? 0,
+        stock: stockByExternalId.get(key) ?? 0,
         revenue: agg.revenue,
         units: agg.units,
         trend,

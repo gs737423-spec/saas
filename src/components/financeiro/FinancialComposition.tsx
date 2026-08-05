@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import type { FinanceOverview } from '@/data/financeData'
+import type { FinanceOverview } from '@/data/financeShapes'
 import { useReducedMotion } from '@/lib/motion'
 
 /* Composição do valor líquido — substitui o waterfall anterior (base

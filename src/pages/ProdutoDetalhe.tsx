@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { products, stockItems, getProductStatus, getProductHealthScore } from '@/data/mockData'
-import ProdutoHeader from '@/components/produto-detalhe/ProdutoHeader'
-import ProdutoKPIs from '@/components/produto-detalhe/ProdutoKPIs'
-import SalesTrendChart from '@/components/produto-detalhe/SalesTrendChart'
-import ProdutoHealthScore from '@/components/produto-detalhe/ProdutoHealthScore'
-import MarketplacePerformanceBreakdown from '@/components/produto-detalhe/MarketplacePerformanceBreakdown'
-import ProdutoAtividade from '@/components/produto-detalhe/ProdutoAtividade'
+import { getMarketplaceColor } from '@/data/mockData'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
@@ -17,7 +11,25 @@ import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashb
 // e marketplace_products/inventory. Card enxuto, honesto sobre o que falta,
 // em vez de reaproveitar os componentes mock (que assumem 4 marketplaces,
 // meta, sparkline diário — nada disso existe pra dado real hoje).
-function ProdutoDetalheReal({ product }: { product: DashboardProduct }) {
+//
+// Um SKU pode estar anunciado em mais de um marketplace ao mesmo tempo —
+// cada `matches[i]` é um anúncio (1 linha em marketplace_products). A
+// página soma tudo pro card principal e detalha o breakdown por
+// marketplace embaixo, em vez de mostrar só o primeiro que aparecer.
+function ProdutoDetalheReal({ matches }: { matches: DashboardProduct[] }) {
+  const first = matches[0]
+  const totalRevenue = matches.reduce((s, p) => s + p.revenue, 0)
+  const totalUnits = matches.reduce((s, p) => s + p.units, 0)
+  const totalStock = matches.reduce((s, p) => s + p.stock, 0)
+
+  // Margem combinada só faz sentido se TODO marketplace tiver custo
+  // informado — misturar "com custo" e "sem custo" produziria um número
+  // que parece completo mas não é (mesma regra de nunca estimar margem).
+  const allHaveMargin = matches.every((p) => p.margin !== null)
+  const blendedMargin = allHaveMargin && totalRevenue > 0
+    ? matches.reduce((s, p) => s + (p.margin! * p.revenue), 0) / totalRevenue
+    : null
+
   return (
     <div className="space-y-3">
       <Link to="/app/produtos" className="flex w-fit items-center gap-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary">
@@ -25,30 +37,58 @@ function ProdutoDetalheReal({ product }: { product: DashboardProduct }) {
       </Link>
 
       <div className="glass-panel rounded-2xl p-5">
-        <h1 className="text-lg font-bold tracking-tight text-text-primary">{product.name}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-text-primary">{first.name}</h1>
         <p className="mt-1 text-xs text-text-muted">
-          {product.sku ?? product.id} · {product.category ?? 'Sem categoria'} · {product.marketplace}
+          {first.sku ?? first.id} · {first.category ?? 'Sem categoria'}
+          {matches.length > 1 ? ` · vendido em ${matches.length} marketplaces` : ` · ${first.marketplace}`}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="glass-panel rounded-2xl p-4">
-          <p className="text-2xl font-bold tabular-nums text-text-primary">R$ {product.revenue.toLocaleString('pt-BR')}</p>
-          <p className="text-[11px] text-text-muted">faturamento no período</p>
+          <p className="text-2xl font-bold tabular-nums text-text-primary">R$ {totalRevenue.toLocaleString('pt-BR')}</p>
+          <p className="text-[11px] text-text-muted">faturamento total no período</p>
         </div>
         <div className="glass-panel rounded-2xl p-4">
-          <p className="text-2xl font-bold tabular-nums text-text-primary">{product.units.toLocaleString('pt-BR')}</p>
+          <p className="text-2xl font-bold tabular-nums text-text-primary">{totalUnits.toLocaleString('pt-BR')}</p>
           <p className="text-[11px] text-text-muted">unidades vendidas</p>
         </div>
         <div className="glass-panel rounded-2xl p-4">
-          <p className="text-2xl font-bold tabular-nums text-text-primary">{product.stock.toLocaleString('pt-BR')}</p>
-          <p className="text-[11px] text-text-muted">estoque disponível</p>
+          <p className="text-2xl font-bold tabular-nums text-text-primary">{totalStock.toLocaleString('pt-BR')}</p>
+          <p className="text-[11px] text-text-muted">estoque disponível total</p>
         </div>
         <div className="glass-panel rounded-2xl p-4">
-          <p className="text-2xl font-bold tabular-nums text-text-primary">{product.margin !== null ? `${product.margin.toFixed(0)}%` : '—'}</p>
-          <p className="text-[11px] text-text-muted">{product.margin !== null ? 'margem' : 'defina o custo em Produtos'}</p>
+          <p className="text-2xl font-bold tabular-nums text-text-primary">{blendedMargin !== null ? `${blendedMargin.toFixed(0)}%` : '—'}</p>
+          <p className="text-[11px] text-text-muted">{blendedMargin !== null ? 'margem média ponderada' : 'defina o custo em todos os marketplaces'}</p>
         </div>
       </div>
+
+      {matches.length > 1 && (
+        <div className="glass-panel rounded-2xl p-4 sm:p-5">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Por marketplace</h3>
+          <div className="flex flex-col gap-2.5">
+            {matches
+              .slice()
+              .sort((a, b) => b.revenue - a.revenue)
+              .map((p) => {
+                const color = getMarketplaceColor(p.marketplace)
+                return (
+                  <div key={p.id} className="flex items-center justify-between gap-3 border-t border-border-subtle/50 pt-2.5 first:border-t-0 first:pt-0">
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="font-medium text-text-primary">{p.marketplace}</span>
+                      <span className="font-mono text-[11px] text-text-muted">{p.sku ?? p.id}</span>
+                    </div>
+                    <div className="text-right text-[13px]">
+                      <span className="font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</span>
+                      <span className="ml-2 text-text-muted">{p.units.toLocaleString('pt-BR')} un</span>
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      )}
 
       <div className="glass-panel rounded-2xl p-5 text-center text-xs text-text-muted">
         Histórico diário de vendas e feed de atividade por produto ainda não existem pra dado real — dependem de uma tabela de série temporal que não foi criada ainda.
@@ -63,13 +103,7 @@ export default function ProdutoDetalhe() {
   const [real, setReal] = useState<DashboardProductsResponse | null>(null)
   const [loadingReal, setLoadingReal] = useState(true)
 
-  const mockProduct = products.find((p) => p.sku === sku)
-
   useEffect(() => {
-    if (mockProduct) {
-      setLoadingReal(false)
-      return
-    }
     let cancelled = false
     apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`).then((data) => {
       if (!cancelled) {
@@ -80,29 +114,7 @@ export default function ProdutoDetalhe() {
     return () => {
       cancelled = true
     }
-  }, [mockProduct, period.days])
-
-  if (mockProduct) {
-    const stock = stockItems.find((s) => s.sku === mockProduct.sku)
-    const status = getProductStatus(mockProduct.sku)
-    const health = getProductHealthScore(mockProduct, stock, status)
-
-    return (
-      <div className="space-y-2 sm:space-y-2.5">
-        <ProdutoHeader product={mockProduct} status={status} stock={stock} />
-        <ProdutoKPIs product={mockProduct} stock={stock} />
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <SalesTrendChart sku={mockProduct.sku} />
-          <ProdutoHealthScore health={health} stock={stock} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <MarketplacePerformanceBreakdown product={mockProduct} />
-          <ProdutoAtividade sku={mockProduct.sku} />
-        </div>
-      </div>
-    )
-  }
+  }, [period.days])
 
   if (loadingReal) {
     return (
@@ -113,10 +125,13 @@ export default function ProdutoDetalhe() {
     )
   }
 
-  const realProduct = real?.items.find((p) => p.sku === sku || p.id === sku)
+  // Um SKU vendido em 2+ marketplaces produz 2+ linhas em items (1 por
+  // anúncio/conexão) — pega todas, não só a primeira, senão o
+  // faturamento/estoque dos outros marketplaces some da tela sem aviso.
+  const matches = (real?.items ?? []).filter((p) => (p.sku && p.sku === sku) || p.id === sku)
 
-  if (realProduct) {
-    return <ProdutoDetalheReal product={realProduct} />
+  if (matches.length > 0) {
+    return <ProdutoDetalheReal matches={matches} />
   }
 
   return (

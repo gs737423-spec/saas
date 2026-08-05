@@ -21,10 +21,11 @@ function pctChange(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
-// Agrega orders/order_items reais (já sincronizados do Mercado Livre) pro
-// período pedido. Nunca fabrica número — sem conexão/sem pedido sincronizado
-// ainda, devolve zerado com source:'demo' (mesmo padrão de
-// api/dashboard/inventory.ts), pro frontend decidir como avisar o usuário.
+// Agrega orders/order_items reais de TODOS os marketplaces conectados
+// (Mercado Livre, Shopee, ...) pro período pedido — não filtra por um
+// provider fixo, senão a empresa com 2+ marketplaces conectados nunca veria
+// o segundo no resumo. Nunca fabrica número — sem conexão/sem pedido
+// sincronizado ainda, devolve zerado com source:'demo'.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const missing = getMissingEnvVars(CORE_ENV_VARS)
@@ -44,25 +45,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = await getSupabaseAdmin()
 
-    const { data: connection, error: connError } = await supabase
+    const { data: connections, error: connError } = await supabase
       .from('marketplace_connections')
       .select('id, status, last_sync_at')
-      .eq('provider', 'mercadolivre')
       .eq('company_id', auth.companyId)
-      .maybeSingle()
+      .eq('status', 'connected')
 
     if (connError) throw new Error(connError.message)
 
-    if (!connection || connection.status !== 'connected') {
+    if (!connections || connections.length === 0) {
       const response: SummaryApiResponse = { ok: true, source: 'demo', ...EMPTY, lastSyncAt: null }
       res.status(200).json(response)
       return
     }
 
+    const connectionIds = connections.map((c) => c.id)
+    const lastSyncAt = connections.reduce<string | null>((latest, c) => {
+      if (!c.last_sync_at) return latest
+      if (!latest || c.last_sync_at > latest) return c.last_sync_at
+      return latest
+    }, null)
+
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
       .select('status, total_amount, fee_amount')
-      .eq('connection_id', connection.id)
+      .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
       .gte('ordered_at', since)
 
@@ -71,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!orders || orders.length === 0) {
       // Conectado mas sem pedido sincronizado ainda nesse período — segue
       // demo, nunca finge que teve venda.
-      const response: SummaryApiResponse = { ok: true, source: 'demo', ...EMPTY, lastSyncAt: connection.last_sync_at }
+      const response: SummaryApiResponse = { ok: true, source: 'demo', ...EMPTY, lastSyncAt }
       res.status(200).json(response)
       return
     }
@@ -94,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: previousOrders } = await supabase
       .from('orders')
       .select('status, total_amount')
-      .eq('connection_id', connection.id)
+      .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
       .eq('status', 'paid')
       .gte('ordered_at', prevSince)
@@ -111,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       feesTotal,
       returnsCount: cancelled.length,
       returnsAmount,
-      lastSyncAt: connection.last_sync_at,
+      lastSyncAt,
       grossRevenueChangePct: pctChange(grossRevenue, previousGross),
       ordersCountChangePct: pctChange(ordersCount, previousOrdersCount),
     }

@@ -1,8 +1,10 @@
+import type { Marketplace } from '@/data/mockData'
+
 export interface DashboardProduct {
   id: string
   sku: string | null
   name: string
-  marketplace: 'Mercado Livre'
+  marketplace: Marketplace
   category: string | null
   price: number
   costPrice: number | null

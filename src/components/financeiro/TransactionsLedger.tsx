@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
-import type { FinanceTransaction, FinanceTransactionType } from '@/data/financeData'
+import type { FinanceTransaction, FinanceTransactionType } from '@/data/financeShapes'
 import { getMarketplaceColor } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
 

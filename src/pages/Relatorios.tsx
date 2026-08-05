@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Printer, Loader2, FileBarChart2 } from 'luci
 import { usePeriod } from '@/contexts/PeriodContext'
 import type { ExecutiveSummaryLine, ExecutiveAlert } from '@/data/mockData'
 import KPICards from '@/components/dashboard/KPICards'
-import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
+import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import { apiFetchJson } from '@/lib/apiFetch'
@@ -150,7 +150,7 @@ export default function Relatorios() {
 
     <SlideShell key="gmv" index={2} total={5}>
       <h2 className="mb-4 text-lg font-semibold text-text-primary">Faturamento por marketplace</h2>
-      <MarketplaceComparison />
+      <RealMarketplaceBreakdown />
     </SlideShell>,
 
     <SlideShell key="summary" index={3} total={5}>

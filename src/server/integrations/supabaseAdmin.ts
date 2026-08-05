@@ -14,6 +14,17 @@ export const MERCADOLIVRE_ENV_VARS = [
   'INTEGRATIONS_ENCRYPTION_KEY',
 ] as const
 
+/** Env vars additionally required for the Shopee OAuth flow. */
+export const SHOPEE_ENV_VARS = [
+  ...CORE_ENV_VARS,
+  'SHOPEE_PARTNER_ID',
+  'SHOPEE_PARTNER_KEY',
+  'SHOPEE_REDIRECT_URI',
+  'APP_BASE_URL',
+  'OAUTH_STATE_SECRET',
+  'INTEGRATIONS_ENCRYPTION_KEY',
+] as const
+
 /** Returns the subset of `names` that are missing/empty in `process.env`. */
 export function getMissingEnvVars(names: readonly string[]): string[] {
   return names.filter((name) => !process.env[name] || process.env[name]!.trim() === '')

@@ -1,5 +1,5 @@
 import { DollarSign, Percent, RotateCcw, Wallet } from 'lucide-react'
-import type { FinanceOverview } from '@/data/financeData'
+import type { FinanceOverview } from '@/data/financeShapes'
 import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')

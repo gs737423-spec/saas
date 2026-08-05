@@ -15,6 +15,17 @@ export interface MercadoLivreStatus {
   lastError: string | null
 }
 
+export interface ShopeeStatus {
+  provider: 'shopee'
+  status: IntegrationStatus
+  lastSyncAt: string | null
+  externalAccountId: string | null
+  productsCount: number
+  inventoryCount: number
+  ordersCount: number
+  lastError: string | null
+}
+
 export interface SyncLogEntry {
   id: string
   provider: string
@@ -35,8 +46,10 @@ interface SyncSummary {
 
 interface ConnectionContextValue {
   mercadoLivre: MercadoLivreStatus | null
+  shopee: ShopeeStatus | null
   loading: boolean
   syncing: boolean
+  syncingShopee: boolean
   /** True once a fetch to /api/integrations/status has genuinely failed (network
    *  error, non-200, backend unreachable) — distinct from `loading`, so the UI
    *  can show "backend indisponível" instead of spinning forever. This never
@@ -50,9 +63,12 @@ interface ConnectionContextValue {
   /** Mensagem da última tentativa de conectar que falhou (env var faltando,
    *  sessão sem empresa, etc) — null quando não há erro pendente. */
   connectError: string | null
+  connectErrorShopee: string | null
   refresh: () => Promise<void>
   connectMercadoLivre: () => void
+  connectShopee: () => void
   syncMercadoLivre: () => Promise<SyncSummary | null>
+  syncShopee: () => Promise<SyncSummary | null>
 }
 
 const ConnectionContext = createContext<ConnectionContextValue | null>(null)
@@ -93,19 +109,24 @@ async function fetchJsonWithError<T>(url: string, init?: RequestInit): Promise<{
 
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [mercadoLivre, setMercadoLivre] = useState<MercadoLivreStatus | null>(null)
+  const [shopee, setShopee] = useState<ShopeeStatus | null>(null)
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [syncingShopee, setSyncingShopee] = useState(false)
   const [backendUnreachable, setBackendUnreachable] = useState(false)
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
+  const [connectErrorShopee, setConnectErrorShopee] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    const [{ data: status, message }, logsResponse] = await Promise.all([
+    const [{ data: status, message }, { data: shopeeStatus }, logsResponse] = await Promise.all([
       fetchJsonWithError<MercadoLivreStatus>('/api/integrations/status'),
+      fetchJsonWithError<ShopeeStatus>('/api/integrations/status?provider=shopee'),
       fetchJson<{ logs: SyncLogEntry[] }>('/api/integrations/logs?limit=20'),
     ])
     if (status) setMercadoLivre(status)
+    if (shopeeStatus) setShopee(shopeeStatus)
     if (logsResponse) setLogs(logsResponse.logs)
     // status is only ever null here if the request itself failed — every real
     // response (including config_missing) is a 200 with a body.
@@ -137,6 +158,22 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const connectShopee = useCallback(async () => {
+    setConnectErrorShopee(null)
+    try {
+      const headers = await authHeader()
+      const res = await fetch('/api/integrations/shopee/authorize', { headers })
+      const body = (await res.json().catch(() => null)) as { ok: boolean; url?: string; message?: string } | null
+      if (body?.url) {
+        window.location.href = body.url
+        return
+      }
+      setConnectErrorShopee(body?.message ?? 'Não foi possível iniciar a conexão com a Shopee.')
+    } catch {
+      setConnectErrorShopee('Não foi possível iniciar a conexão com a Shopee.')
+    }
+  }, [])
+
   const syncMercadoLivre = useCallback(async () => {
     setSyncing(true)
     try {
@@ -148,8 +185,37 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh])
 
+  const syncShopee = useCallback(async () => {
+    setSyncingShopee(true)
+    try {
+      const summary = await fetchJson<SyncSummary>('/api/integrations/shopee/sync', { method: 'POST' })
+      await refresh()
+      return summary
+    } finally {
+      setSyncingShopee(false)
+    }
+  }, [refresh])
+
   return (
-    <ConnectionContext.Provider value={{ mercadoLivre, loading, syncing, backendUnreachable, statusErrorMessage, logs, connectError, refresh, connectMercadoLivre, syncMercadoLivre }}>
+    <ConnectionContext.Provider
+      value={{
+        mercadoLivre,
+        shopee,
+        loading,
+        syncing,
+        syncingShopee,
+        backendUnreachable,
+        statusErrorMessage,
+        logs,
+        connectError,
+        connectErrorShopee,
+        refresh,
+        connectMercadoLivre,
+        connectShopee,
+        syncMercadoLivre,
+        syncShopee,
+      }}
+    >
       {children}
     </ConnectionContext.Provider>
   )

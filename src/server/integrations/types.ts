@@ -1,3 +1,5 @@
+import type { Marketplace } from '@/data/mockData'
+
 export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria'
 
 /**
@@ -69,14 +71,28 @@ export type SyncLogStatus = 'info' | 'success' | 'error'
 
 export type SyncSource = 'real' | 'demo' | 'config_missing' | 'error'
 
+export type AbcClass = 'A' | 'B' | 'C'
+
 export interface DashboardInventoryItem {
   sku: string | null
   title: string
-  marketplace: 'Mercado Livre'
+  marketplace: Marketplace
   availableQuantity: number
   price: number | null
   status: string | null
+  /** Unidades vendidas nos últimos 30 dias — calculado de order_items real,
+   *  nunca fabricado. null só quando não há pedido pago no período. */
   soldQuantity: number | null
+  /** Faturamento dos últimos 30 dias pra este produto — base da Curva ABC. */
+  revenue30d: number
+  /** Giro = unidades vendidas em 30d / estoque disponível. null quando
+   *  estoque é 0 (divisão indefinida, não é giro zero). */
+  turnoverRate: number | null
+  /** A = produtos que somam até 80% do faturamento acumulado (ordenado do
+   *  maior pro menor), B = até 95%, C = resto — classificação clássica de
+   *  gestão de estoque. null quando o produto não teve nenhuma venda no
+   *  período (sem base pra classificar). */
+  abcClass: AbcClass | null
   lastSyncAt: string | null
 }
 

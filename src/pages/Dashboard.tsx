@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import KPICards from '@/components/dashboard/KPICards'
-import MarketplaceComparison from '@/components/dashboard/MarketplaceComparison'
+import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
@@ -69,9 +69,8 @@ export default function Dashboard() {
         <KPICards period={period} kpis={kpis} />
       </div>
 
-      {/* Comparativo (GMV) — ainda mock, depende de histórico por canal que não existe hoje */}
       <div className="motion-block-in motion-block-in-2">
-        <MarketplaceComparison />
+        <RealMarketplaceBreakdown />
       </div>
     </div>
   )

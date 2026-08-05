@@ -1,18 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
-import type { SanitizedConnectionStatusResponse } from '../../src/server/integrations/types.js'
+import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS, SHOPEE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import type { Provider, SanitizedConnectionStatusResponse } from '../../src/server/integrations/types.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 
 type StatusResponse = SanitizedConnectionStatusResponse & { ok: boolean; source: string; message?: string }
 
+const PROVIDER_ENV_VARS: Partial<Record<Provider, readonly string[]>> = {
+  mercadolivre: MERCADOLIVRE_ENV_VARS,
+  shopee: SHOPEE_ENV_VARS,
+}
+
+const VALID_PROVIDERS: Provider[] = ['mercadolivre', 'shopee', 'amazon', 'magalu', 'loja_propria']
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // ?provider= — default 'mercadolivre' pra manter compatibilidade com o
+  // client antigo que sempre chamava sem esse parâmetro.
+  const requestedProvider = typeof req.query.provider === 'string' ? req.query.provider : 'mercadolivre'
+  const provider = VALID_PROVIDERS.includes(requestedProvider as Provider) ? (requestedProvider as Provider) : 'mercadolivre'
+
   try {
     const missingCore = getMissingEnvVars(CORE_ENV_VARS)
     if (missingCore.length > 0) {
       const response: StatusResponse = {
         ok: false,
         source: 'config_missing',
-        provider: 'mercadolivre',
+        provider,
         status: 'config_missing',
         lastSyncAt: null,
         externalAccountId: null,
@@ -26,12 +38,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const missingMl = getMissingEnvVars(MERCADOLIVRE_ENV_VARS)
-    if (missingMl.length > 0) {
+    const providerEnvVars = PROVIDER_ENV_VARS[provider]
+    const missingProvider = providerEnvVars ? getMissingEnvVars(providerEnvVars) : []
+    if (missingProvider.length > 0) {
       const response: StatusResponse = {
         ok: false,
         source: 'config_missing',
-        provider: 'mercadolivre',
+        provider,
         status: 'config_missing',
         lastSyncAt: null,
         externalAccountId: null,
@@ -39,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         inventoryCount: 0,
         ordersCount: 0,
         lastError: null,
-        message: 'Credenciais do Mercado Livre ainda não configuradas.',
+        message: `Credenciais de ${provider} ainda não configuradas.`,
       }
       res.status(200).json(response)
       return
@@ -52,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: connection, error } = await supabase
       .from('marketplace_connections')
       .select('id, status, external_account_id, last_sync_at, last_error, token_expires_at')
-      .eq('provider', 'mercadolivre')
+      .eq('provider', provider)
       .eq('company_id', auth.companyId)
       .maybeSingle()
 
@@ -62,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const response: StatusResponse = {
         ok: true,
         source: 'demo',
-        provider: 'mercadolivre',
+        provider,
         status: 'disconnected',
         lastSyncAt: null,
         externalAccountId: null,
@@ -87,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response: StatusResponse = {
       ok: true,
       source: finalStatus === 'connected' ? 'real' : 'demo',
-      provider: 'mercadolivre',
+      provider,
       status: finalStatus,
       lastSyncAt: connection.last_sync_at,
       externalAccountId: connection.external_account_id,
@@ -102,13 +115,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response: StatusResponse = {
       ok: false,
       source: 'error',
-      provider: 'mercadolivre',
+      provider,
       status: 'error',
       lastSyncAt: null,
       externalAccountId: null,
       productsCount: 0,
       inventoryCount: 0,
-        ordersCount: 0,
+      ordersCount: 0,
       lastError: null,
       message: 'Erro controlado ao consultar status da integração.',
     }
