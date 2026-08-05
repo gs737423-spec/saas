@@ -11,9 +11,18 @@ type FormState = {
   whatsapp: string
   company: string
   cnpj: string
+  marketplaces: string[]
   message: string
   consent: boolean
 }
+
+const CHANNELS = ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Outro']
+
+const VALUE_POINTS = [
+  'Consultoria estratégica combinada com tecnologia própria',
+  'Time dedicado a operações multicanal',
+  'Primeira conversa sem compromisso',
+]
 
 function maskPhone(v: string): string {
   const d = v.replace(/\D/g, '').slice(0, 11)
@@ -36,12 +45,12 @@ const MESSAGE_MAX = 1500
 
 // Conversão única — formulário curto e direto: só o que a equipe realmente
 // precisa pra ligar de volta e já abrir o cadastro no painel admin (CNPJ é
-// obrigatório aqui exatamente por isso). Sem campos genéricos de
-// qualificação (canal de venda, "maior desafio") que não mudam o próximo
-// passo, que é sempre "conversar por telefone/WhatsApp".
+// obrigatório aqui exatamente por isso). Empresa primeiro (é uma consultoria
+// B2B — quem preenche já sabe que está falando em nome de uma operação),
+// depois contato pessoal.
 export default function ConversionSection() {
   const [status, setStatus] = useState<Status>('idle')
-  const [form, setForm] = useState<FormState>({ name: '', whatsapp: '', company: '', cnpj: '', message: '', consent: false })
+  const [form, setForm] = useState<FormState>({ name: '', whatsapp: '', company: '', cnpj: '', marketplaces: [], message: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
@@ -50,13 +59,17 @@ export default function ConversionSection() {
     setErrors((e) => ({ ...e, [k]: '' }))
   }
 
+  function toggleMarketplace(m: string) {
+    set('marketplaces', form.marketplaces.includes(m) ? form.marketplaces.filter((x) => x !== m) : [...form.marketplaces, m])
+  }
+
   function validate(): boolean {
     const e: Record<string, string> = {}
-    if (!form.name.trim()) e.name = 'Informe seu nome.'
-    if (form.whatsapp.replace(/\D/g, '').length < 10) e.whatsapp = 'Informe um WhatsApp com DDD.'
     if (!form.company.trim()) e.company = 'Informe o nome da empresa.'
     if (form.cnpj.replace(/\D/g, '').length !== 14) e.cnpj = 'Informe um CNPJ válido.'
-    if (!form.message.trim()) e.message = 'Conte pra gente o que você precisa.'
+    if (!form.name.trim()) e.name = 'Informe seu nome.'
+    if (form.whatsapp.replace(/\D/g, '').length < 10) e.whatsapp = 'Informe um WhatsApp com DDD.'
+    if (!form.message.trim()) e.message = 'Conte o que você gostaria de tratar com a equipe.'
     if (!form.consent) e.consent = 'É necessário concordar para continuar.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -71,7 +84,7 @@ export default function ConversionSection() {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, marketplaces: form.marketplaces.join(', ') }),
       })
       if (res.ok) { setStatus('success'); return }
       if (res.status === 501 || res.status === 404) { setStatus('unconfigured'); return }
@@ -99,7 +112,7 @@ export default function ConversionSection() {
               <CheckCircle2 className="h-7 w-7" />
             </span>
             <h2 className="site-h3 mt-5 vt-ink">Pedido recebido!</h2>
-            <p className="site-lead mt-3 vt-muted">Recebemos sua solicitação. Nosso time entrará em contato pelo WhatsApp informado.</p>
+            <p className="site-lead mt-3 vt-muted">Recebemos sua solicitação. Nossa equipe entrará em contato pelo WhatsApp informado.</p>
           </Reveal>
         </div>
       </section>
@@ -113,11 +126,20 @@ export default function ConversionSection() {
         <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-5">
             <span className="site-label mb-2" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
-            <h2 className="vt-ink text-[26px] font-extrabold leading-tight tracking-tight md:text-[32px]">Fale com a gente sobre o seu e‑commerce.</h2>
-            <p className="mt-2.5 text-[14px] leading-relaxed vt-muted">Conta pra gente o que você precisa — nosso time responde direto no WhatsApp.</p>
+            <h2 className="vt-ink text-[26px] font-extrabold leading-tight tracking-tight md:text-[32px]">Vamos entender a operação do seu e‑commerce.</h2>
+            <p className="mt-2.5 text-[14px] leading-relaxed vt-muted">Conte um pouco sobre o seu cenário atual. Nossa equipe responde diretamente pelo WhatsApp.</p>
+
+            <ul className="mt-5 flex flex-col gap-2.5">
+              {VALUE_POINTS.map((point) => (
+                <li key={point} className="flex items-start gap-2 text-[13px] leading-snug vt-muted">
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: '#78CAFF' }} />
+                  {point}
+                </li>
+              ))}
+            </ul>
 
             {waHref.startsWith('http') && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
                 <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
               </a>
             )}
@@ -127,21 +149,44 @@ export default function ConversionSection() {
             <h3 className="text-[15px] font-bold vt-ink">Fale com um especialista</h3>
             <form onSubmit={onSubmit} noValidate className="mt-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Nome completo" error={errors.name} htmlFor="f-name">
-                  <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
-                </Field>
-                <Field label="WhatsApp com DDD" error={errors.whatsapp} htmlFor="f-phone">
-                  <input id="f-phone" inputMode="tel" placeholder="(11) 99999-9999" className="vt-input" value={form.whatsapp} onChange={(e) => set('whatsapp', maskPhone(e.target.value))} aria-invalid={!!errors.whatsapp} />
-                </Field>
                 <Field label="Nome da empresa" error={errors.company} htmlFor="f-company">
                   <input id="f-company" className="vt-input" value={form.company} onChange={(e) => set('company', e.target.value)} aria-invalid={!!errors.company} autoComplete="organization" />
                 </Field>
                 <Field label="CNPJ" error={errors.cnpj} htmlFor="f-cnpj">
                   <input id="f-cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" className="vt-input" value={form.cnpj} onChange={(e) => set('cnpj', maskCnpj(e.target.value))} aria-invalid={!!errors.cnpj} />
                 </Field>
+                <Field label="Seu nome" error={errors.name} htmlFor="f-name">
+                  <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
+                </Field>
+                <Field label="WhatsApp com DDD" error={errors.whatsapp} htmlFor="f-phone">
+                  <input id="f-phone" inputMode="tel" placeholder="(11) 99999-9999" className="vt-input" value={form.whatsapp} onChange={(e) => set('whatsapp', maskPhone(e.target.value))} aria-invalid={!!errors.whatsapp} />
+                </Field>
               </div>
 
-              <Field label="O que você gostaria de falar com a gente?" error={errors.message} htmlFor="f-message" className="mt-3">
+              <fieldset className="mt-3">
+                <legend className="mb-1.5 text-[13px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
+                <div className="flex flex-wrap gap-1.5">
+                  {CHANNELS.map((c) => {
+                    const on = form.marketplaces.includes(c)
+                    return (
+                      <button
+                        type="button"
+                        key={c}
+                        onClick={() => toggleMarketplace(c)}
+                        aria-pressed={on}
+                        className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
+                        style={on
+                          ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' }
+                          : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}
+                      >
+                        {c}
+                      </button>
+                    )
+                  })}
+                </div>
+              </fieldset>
+
+              <Field label="O que você gostaria de tratar com a equipe?" error={errors.message} htmlFor="f-message" className="mt-3">
                 <textarea
                   id="f-message"
                   rows={2}

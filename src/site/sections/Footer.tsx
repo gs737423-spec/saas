@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
-import { marketplaces, specialistHref } from '@/site/content'
+import { ArrowRight, Mail, MessageCircle } from 'lucide-react'
+import { contact, marketplaces, specialistHref } from '@/site/content'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
 // Footer editorial — wordmark textual (sem símbolo), bloco institucional +
@@ -11,26 +11,36 @@ export default function Footer() {
 
   return (
     <footer id="privacidade-anchor" className="sec-footer-flat">
-      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 72, paddingBottom: 32 }}>
-        <div className="grid gap-12 lg:grid-cols-[30%_1fr]">
+      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 48, paddingBottom: 28 }}>
+        <div className="grid gap-10 lg:grid-cols-[30%_1fr]">
           <div className="footer-main max-w-[320px]">
             <div className="flex items-center gap-2 mb-2">
               <MKTOnlineLogo mode="symbol" size="sm" />
               <span className="footer-word">MKTOnline</span>
             </div>
-            <h2 className="footer-tagline">Menos controles paralelos. Mais clareza para decidir e crescer.</h2>
-            <p className="footer-desc">
-              A MKTOnline combina consultoria e tecnologia para acompanhar a operação de empresas que vendem em
-              múltiplos canais. Centralizamos indicadores, organizamos prioridades e apoiamos decisões com uma visão
-              mais clara do negócio ao longo do tempo.
+            <p className="footer-desc" style={{ marginTop: 10 }}>
+              Consultoria e tecnologia para empresas que vendem em múltiplos marketplaces.
             </p>
             <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="footer-cta">
               Fale com um especialista <ArrowRight className="h-3.5 w-3.5" />
             </a>
-            <p className="footer-cta-note">Entenda como a MKTOnline pode acompanhar a sua operação.</p>
+
+            <div className="footer-contact">
+              <a href={`mailto:${contact.email}`} className="footer-contact__row">
+                <Mail className="h-3.5 w-3.5" /> {contact.email}
+              </a>
+              <a href={`mailto:${contact.diretoriaEmail}`} className="footer-contact__row">
+                <Mail className="h-3.5 w-3.5" /> {contact.diretoriaEmail}
+              </a>
+              {specialist.startsWith('http') && (
+                <a href={specialist} target="_blank" rel="noopener noreferrer" className="footer-contact__row">
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp comercial
+                </a>
+              )}
+            </div>
           </div>
 
-          <div className="footer-cols grid grid-cols-1 gap-y-10 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
+          <div className="footer-cols grid grid-cols-1 gap-y-7 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
             <nav aria-label="Rodapé — soluções">
               <h3 className="footer-col-title">Soluções</h3>
               <ul className="footer-col-list">

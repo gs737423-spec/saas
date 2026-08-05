@@ -18,6 +18,7 @@ interface LeadPayload {
   whatsapp?: unknown
   company?: unknown
   cnpj?: unknown
+  marketplaces?: unknown
   message?: unknown
   consent?: unknown
 }
@@ -59,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const whatsapp = String(body.whatsapp).trim()
   const company = String(body.company).trim()
   const cnpj = String(body.cnpj).trim()
+  const marketplaces = isNonEmptyString(body.marketplaces) ? String(body.marketplaces).trim() : null
   const message = String(body.message).trim()
 
   try {
@@ -79,15 +81,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `Empresa: ${company}`,
         `CNPJ: ${cnpj}`,
         `WhatsApp: ${whatsapp}`,
+        marketplaces ? `Marketplaces: ${marketplaces}` : null,
         '',
         'Assunto:',
         message,
-      ].join('\n'),
+      ].filter(Boolean).join('\n'),
       html: `
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
         <p><strong>Empresa:</strong> ${escapeHtml(company)}</p>
         <p><strong>CNPJ:</strong> ${escapeHtml(cnpj)}</p>
         <p><strong>WhatsApp:</strong> ${escapeHtml(whatsapp)}</p>
+        ${marketplaces ? `<p><strong>Marketplaces:</strong> ${escapeHtml(marketplaces)}</p>` : ''}
         <p><strong>Assunto:</strong></p>
         <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
       `,

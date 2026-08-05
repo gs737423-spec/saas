@@ -260,7 +260,8 @@ export const faqItems = [
 ]
 
 export const contact = {
-  email: '',
+  email: 'comercial@mktonline.com.br',
+  diretoriaEmail: 'diretoria@mktonline.com.br',
 }
 
 /* ==========================================================================

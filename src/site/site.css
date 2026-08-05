@@ -2137,6 +2137,17 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .footer-cta:hover { color: #FFFFFF; gap: 11px; background: rgba(104, 200, 255, 0.16); border-color: rgba(104, 200, 255, 0.4); }
 .footer-cta-note { margin-top: 10px; font-size: 12px; line-height: 1.5; color: rgba(159, 176, 196, 0.85); }
 
+.footer-contact { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.footer-contact__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #9FB0C4;
+  transition: color 180ms ease;
+}
+.footer-contact__row:hover { color: #8FDBFF; }
+
 /* Coluna principal — mais presença: linha vertical sutil separando das
    colunas secundárias em telas largas, onde sobra vazio no centro. */
 @media (min-width: 1024px) {
