@@ -14,6 +14,7 @@ import Relatorios from '@/pages/Relatorios'
 import Configuracoes from '@/pages/Configuracoes'
 import ProdutoDetalhe from '@/pages/ProdutoDetalhe'
 import Admin from '@/pages/Admin'
+import AdminLeads from '@/pages/AdminLeads'
 import AdminClients from '@/pages/AdminClients'
 import AdminCompany from '@/pages/AdminCompany'
 import { useIdleLogout } from '@/hooks/useIdleLogout'
@@ -56,6 +57,7 @@ export default function App() {
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="admin" element={<Admin />} />
+              <Route path="admin/solicitacoes" element={<AdminLeads />} />
               <Route path="admin/clientes" element={<AdminClients />} />
               <Route path="admin/empresa/:id" element={<AdminCompany />} />
               <Route path="*" element={<Navigate to="/app" replace />} />

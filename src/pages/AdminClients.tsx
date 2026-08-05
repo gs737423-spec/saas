@@ -209,6 +209,14 @@ export default function AdminClients() {
   )
 }
 
+// CNPJ mockado, determinístico por empresa — só usado quando a empresa
+// ainda não tem CNPJ real cadastrado, pra não mostrar um traço vazio.
+function mockCnpjDigits(seed: string): string {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return String(h).padStart(14, '0').slice(0, 14)
+}
+
 function CompanyCard({ company }: { company: Company }) {
   const [connected, setConnected] = useState<boolean | null>(null)
 
@@ -239,7 +247,9 @@ function CompanyCard({ company }: { company: Company }) {
             <p className="truncate text-sm font-semibold text-text-primary">{company.name}</p>
             <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase ${st.color} ${st.bg}`}>{st.label}</span>
           </div>
-          <p className="truncate text-[11px] text-text-muted">{maskCnpj(company.cnpj)}</p>
+          <p className={`truncate text-[11px] ${company.cnpj ? 'text-text-muted' : 'italic text-text-muted/70'}`}>
+            {company.cnpj ? maskCnpj(company.cnpj) : maskCnpj(mockCnpjDigits(company.id))}
+          </p>
         </div>
         <ArrowUpRight className="h-4 w-4 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
