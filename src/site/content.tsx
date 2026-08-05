@@ -29,7 +29,9 @@ export const nav = [
 // reposicionamento "consultoria de e-commerce como produto principal"),
 // nunca variações.
 export const ctaLabels = {
-  principal: 'Agendar conversa estratégica',
+  // "Agendar" sugeria um horário marcado de verdade — o que acontece de fato
+  // é o time entrar em contato depois do formulário/WhatsApp, sem agenda.
+  principal: 'Falar com a equipe',
   plataforma: 'Conhecer a plataforma da Vintec',
   contexto: 'Conversar sobre minha operação',
 }

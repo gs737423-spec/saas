@@ -1,7 +1,29 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Mail, MessageCircle } from 'lucide-react'
 import { contact, marketplaces, specialistHref } from '@/site/content'
 import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
+
+function CopyEmailButton({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false)
+  const onClick = () => {
+    navigator.clipboard.writeText(email).then(() => {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    })
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="footer-contact__row footer-contact__row--copy"
+      aria-label={`Copiar e-mail ${email}`}
+    >
+      <Mail className="h-3.5 w-3.5" /> {email}
+      <span className={`footer-contact__copied ${copied ? 'footer-contact__copied--show' : ''}`}>Copiado!</span>
+    </button>
+  )
+}
 
 // Footer editorial — wordmark textual (sem símbolo), bloco institucional +
 // 4 colunas de navegação, barra legal inferior. Fundo azul-marinho.
@@ -26,12 +48,8 @@ export default function Footer() {
             </a>
 
             <div className="footer-contact">
-              <a href={`mailto:${contact.email}`} className="footer-contact__row">
-                <Mail className="h-3.5 w-3.5" /> {contact.email}
-              </a>
-              <a href={`mailto:${contact.diretoriaEmail}`} className="footer-contact__row">
-                <Mail className="h-3.5 w-3.5" /> {contact.diretoriaEmail}
-              </a>
+              <CopyEmailButton email={contact.email} />
+              <CopyEmailButton email={contact.diretoriaEmail} />
               {specialist.startsWith('http') && (
                 <a href={specialist} target="_blank" rel="noopener noreferrer" className="footer-contact__row">
                   <MessageCircle className="h-3.5 w-3.5" /> WhatsApp comercial

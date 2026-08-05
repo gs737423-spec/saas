@@ -1,8 +1,56 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Loader2, AlertCircle, MessageCircle } from 'lucide-react'
 import Reveal from '@/site/components/Reveal'
 import { contact, ctaLabels, specialistHref } from '@/site/content'
+
+type CnpjCheckStatus = 'idle' | 'loading' | 'matched' | 'mismatch' | 'not_found' | 'unavailable'
+
+/** Espelha CnpjInfo de api/cnpj-lookup.ts — duplicado de propósito (tipo
+ *  leve, mesmo padrão dos mappers de integração) em vez de importar de
+ *  api/** direto no bundle do site. */
+interface CnpjInfo {
+  razaoSocial: string | null
+  nomeFantasia: string | null
+  situacaoCadastral: string | null
+  dataSituacaoCadastral: string | null
+  dataInicioAtividade: string | null
+  atividadePrincipal: string | null
+  naturezaJuridica: string | null
+  porte: string | null
+  capitalSocial: number | null
+  telefone: string | null
+  email: string | null
+  endereco: string | null
+}
+
+interface CnpjCheckState {
+  status: CnpjCheckStatus
+  info: CnpjInfo | null
+}
+
+const IDLE_CNPJ_CHECK: CnpjCheckState = { status: 'idle', info: null }
+
+/** minúsculo, sem acento, sem sufixo de tipo societário — pra comparar
+ *  "Acme Comercio LTDA" digitado pelo usuário com "ACME COMERCIO LTDA" (ou
+ *  só "Acme") devolvido pela Receita sem falso-negativo por causa de
+ *  maiúscula/abreviação/pontuação. */
+function normalizeCompanyName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(ltda|me|eireli|epp|s\/a|sa|s\.a\.?)\b/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function namesMatch(typed: string, razaoSocial: string | null, nomeFantasia: string | null): boolean {
+  const t = normalizeCompanyName(typed)
+  if (!t) return false
+  const candidates = [razaoSocial, nomeFantasia].filter((v): v is string => !!v).map(normalizeCompanyName)
+  return candidates.some((c) => c.includes(t) || t.includes(c))
+}
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'unconfigured'
 
@@ -16,7 +64,17 @@ type FormState = {
   consent: boolean
 }
 
-const CHANNELS = ['Mercado Livre', 'Amazon', 'Shopee', 'Leroy Merlin', 'Outro']
+// Cor de marca por canal (mesmas do resto da plataforma pra Mercado
+// Livre/Amazon/Shopee via getMarketplaceColor; Leroy Merlin e "Outro" não
+// existem nesse helper — cor própria aqui). text = cor do texto/ícone em
+// cima do fundo da marca (amarelo do ML precisa de texto escuro).
+const CHANNELS: { label: string; bg: string; text: string }[] = [
+  { label: 'Mercado Livre', bg: '#FFE600', text: '#3D3200' },
+  { label: 'Amazon', bg: '#FF9900', text: '#3D2400' },
+  { label: 'Shopee', bg: '#EE4D2D', text: '#FFFFFF' },
+  { label: 'Leroy Merlin', bg: '#78BE20', text: '#0D2400' },
+  { label: 'Outro', bg: '#5F6B7A', text: '#FFFFFF' },
+]
 
 const VALUE_POINTS = [
   'Consultoria estratégica combinada com tecnologia própria',
@@ -52,12 +110,70 @@ export default function ConversionSection() {
   const [status, setStatus] = useState<Status>('idle')
   const [form, setForm] = useState<FormState>({ name: '', whatsapp: '', company: '', cnpj: '', marketplaces: [], message: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [cnpjCheck, setCnpjCheck] = useState<CnpjCheckState>(IDLE_CNPJ_CHECK)
+  const cnpjCheckSeq = useRef(0)
   const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
     setErrors((e) => ({ ...e, [k]: '' }))
   }
+
+  // Consulta a Receita assim que o CNPJ completa 14 dígitos, com debounce —
+  // e reconsulta o "bate com o nome?" sempre que o nome da empresa muda
+  // depois, sem precisar reconsultar a Receita de novo.
+  useEffect(() => {
+    const digits = form.cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) {
+      setCnpjCheck(IDLE_CNPJ_CHECK)
+      return
+    }
+    const seq = ++cnpjCheckSeq.current
+    setCnpjCheck({ status: 'loading', info: null })
+    const t = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/cnpj-lookup?cnpj=${digits}`)
+        const data = await res.json().catch(() => null)
+        if (seq !== cnpjCheckSeq.current) return // resposta de uma consulta antiga, ignora
+        if (data?.found === false) {
+          setCnpjCheck({ status: 'not_found', info: null })
+        } else if (data?.ok && data?.found) {
+          const info: CnpjInfo = {
+            razaoSocial: data.razaoSocial ?? null,
+            nomeFantasia: data.nomeFantasia ?? null,
+            situacaoCadastral: data.situacaoCadastral ?? null,
+            dataSituacaoCadastral: data.dataSituacaoCadastral ?? null,
+            dataInicioAtividade: data.dataInicioAtividade ?? null,
+            atividadePrincipal: data.atividadePrincipal ?? null,
+            naturezaJuridica: data.naturezaJuridica ?? null,
+            porte: data.porte ?? null,
+            capitalSocial: data.capitalSocial ?? null,
+            telefone: data.telefone ?? null,
+            email: data.email ?? null,
+            endereco: data.endereco ?? null,
+          }
+          const matched = namesMatch(form.company, info.razaoSocial, info.nomeFantasia)
+          setCnpjCheck({ status: matched ? 'matched' : 'mismatch', info })
+        } else {
+          setCnpjCheck({ status: 'unavailable', info: null })
+        }
+      } catch {
+        if (seq === cnpjCheckSeq.current) setCnpjCheck({ status: 'unavailable', info: null })
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, 500)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.cnpj])
+
+  // Nome mudou depois do CNPJ já ter sido consultado — reavalia o match sem
+  // bater na Receita de novo (já temos os dados em mãos).
+  useEffect(() => {
+    if (cnpjCheck.status !== 'matched' && cnpjCheck.status !== 'mismatch') return
+    const matched = namesMatch(form.company, cnpjCheck.info?.razaoSocial ?? null, cnpjCheck.info?.nomeFantasia ?? null)
+    setCnpjCheck((c) => (c.status === (matched ? 'matched' : 'mismatch') ? c : { ...c, status: matched ? 'matched' : 'mismatch' }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.company])
 
   function toggleMarketplace(m: string) {
     set('marketplaces', form.marketplaces.includes(m) ? form.marketplaces.filter((x) => x !== m) : [...form.marketplaces, m])
@@ -67,6 +183,9 @@ export default function ConversionSection() {
     const e: Record<string, string> = {}
     if (!form.company.trim()) e.company = 'Informe o nome da empresa.'
     if (form.cnpj.replace(/\D/g, '').length !== 14) e.cnpj = 'Informe um CNPJ válido.'
+    else if (cnpjCheck.status === 'not_found') e.cnpj = 'Esse CNPJ não foi encontrado na Receita Federal.'
+    else if (cnpjCheck.status === 'loading') e.cnpj = 'Aguarde a confirmação do CNPJ.'
+    else if (cnpjCheck.status === 'mismatch') e.company = `O nome não bate com o CNPJ (Receita: ${cnpjCheck.info?.razaoSocial ?? cnpjCheck.info?.nomeFantasia}).`
     if (!form.name.trim()) e.name = 'Informe seu nome.'
     if (form.whatsapp.replace(/\D/g, '').length < 10) e.whatsapp = 'Informe um WhatsApp com DDD.'
     if (!form.message.trim()) e.message = 'Conte o que você gostaria de tratar com a equipe.'
@@ -84,7 +203,7 @@ export default function ConversionSection() {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, marketplaces: form.marketplaces.join(', ') }),
+        body: JSON.stringify({ ...form, marketplaces: form.marketplaces.join(', '), cnpjInfo: cnpjCheck.info }),
       })
       if (res.ok) { setStatus('success'); return }
       if (res.status === 501 || res.status === 404) { setStatus('unconfigured'); return }
@@ -154,6 +273,21 @@ export default function ConversionSection() {
                 </Field>
                 <Field label="CNPJ" error={errors.cnpj} htmlFor="f-cnpj">
                   <input id="f-cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" className="vt-input" value={form.cnpj} onChange={(e) => set('cnpj', maskCnpj(e.target.value))} aria-invalid={!!errors.cnpj} />
+                  {cnpjCheck.status === 'loading' && (
+                    <p className="mt-1 flex items-center gap-1.5 text-[11.5px] vt-muted"><Loader2 className="h-3 w-3 animate-spin" /> Confirmando CNPJ na Receita Federal...</p>
+                  )}
+                  {cnpjCheck.status === 'matched' && (
+                    <p className="mt-1 flex items-center gap-1.5 text-[11.5px]" style={{ color: '#78E0A8' }}><CheckCircle2 className="h-3 w-3" /> {cnpjCheck.info?.razaoSocial ?? cnpjCheck.info?.nomeFantasia}</p>
+                  )}
+                  {cnpjCheck.status === 'unavailable' && (
+                    <p className="mt-1 text-[11.5px] vt-muted">Não foi possível confirmar agora — você pode continuar.</p>
+                  )}
+                  {cnpjCheck.status === 'not_found' && !errors.cnpj && (
+                    <p className="mt-1 text-[11.5px]" style={{ color: '#FF8FA6' }}>CNPJ não encontrado na Receita Federal.</p>
+                  )}
+                  {cnpjCheck.status === 'mismatch' && !errors.company && (
+                    <p className="mt-1 text-[11.5px]" style={{ color: '#F0C572' }}>Nome não bate com a Receita: {cnpjCheck.info?.razaoSocial ?? cnpjCheck.info?.nomeFantasia}.</p>
+                  )}
                 </Field>
                 <Field label="Seu nome" error={errors.name} htmlFor="f-name">
                   <input id="f-name" className="vt-input" value={form.name} onChange={(e) => set('name', e.target.value)} aria-invalid={!!errors.name} autoComplete="name" />
@@ -167,19 +301,19 @@ export default function ConversionSection() {
                 <legend className="mb-1.5 text-[13px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
                 <div className="flex flex-wrap gap-1.5">
                   {CHANNELS.map((c) => {
-                    const on = form.marketplaces.includes(c)
+                    const on = form.marketplaces.includes(c.label)
                     return (
                       <button
                         type="button"
-                        key={c}
-                        onClick={() => toggleMarketplace(c)}
+                        key={c.label}
+                        onClick={() => toggleMarketplace(c.label)}
                         aria-pressed={on}
                         className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
                         style={on
-                          ? { background: '#275DFF', color: '#062229', border: '1px solid #275DFF' }
+                          ? { background: c.bg, color: c.text, border: `1px solid ${c.bg}` }
                           : { background: 'rgba(255,255,255,0.05)', color: 'rgba(214,235,232,0.82)', border: '1px solid rgba(255,255,255,0.14)' }}
                       >
-                        {c}
+                        {c.label}
                       </button>
                     )
                   })}

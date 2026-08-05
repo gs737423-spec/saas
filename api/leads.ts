@@ -1,17 +1,35 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import nodemailer from 'nodemailer'
+import { getSupabaseAdmin } from '../src/server/integrations/supabaseAdmin.js'
 
 /**
  * Recebe pedidos de contato do site institucional e manda por e-mail direto
  * pro time comercial (SMTP, não mais webhook externo) — porta de entrada
  * real da empresa: é daqui que vem o CNPJ/contato usados depois pra criar a
- * empresa no painel admin.
+ * empresa no painel admin. O e-mail também traz os dados da Receita Federal
+ * (já consultados no front, em api/cnpj-lookup.ts) e se esse CNPJ já é
+ * cliente cadastrado na plataforma.
  *
  * Configuração no Vercel:
  *   LEADS_SMTP_HOST, LEADS_SMTP_PORT, LEADS_SMTP_USER, LEADS_SMTP_PASS — a
  *   mesma caixa de e-mail usada como remetente (ex.: comercial@mktonline.com.br).
  *   LEADS_EMAIL_TO — pra onde o lead chega (pode ser a mesma caixa).
  */
+
+interface CnpjInfoPayload {
+  razaoSocial?: unknown
+  nomeFantasia?: unknown
+  situacaoCadastral?: unknown
+  dataSituacaoCadastral?: unknown
+  dataInicioAtividade?: unknown
+  atividadePrincipal?: unknown
+  naturezaJuridica?: unknown
+  porte?: unknown
+  capitalSocial?: unknown
+  telefone?: unknown
+  email?: unknown
+  endereco?: unknown
+}
 
 interface LeadPayload {
   name?: unknown
@@ -21,11 +39,27 @@ interface LeadPayload {
   marketplaces?: unknown
   message?: unknown
   consent?: unknown
+  cnpjInfo?: CnpjInfoPayload | null
 }
 
 const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
 const MESSAGE_MAX = 1500
 const REQUIRED_ENV = ['LEADS_SMTP_HOST', 'LEADS_SMTP_PORT', 'LEADS_SMTP_USER', 'LEADS_SMTP_PASS', 'LEADS_EMAIL_TO'] as const
+
+const RECEITA_FIELDS: { key: keyof CnpjInfoPayload; label: string }[] = [
+  { key: 'razaoSocial', label: 'Razão social' },
+  { key: 'nomeFantasia', label: 'Nome fantasia' },
+  { key: 'situacaoCadastral', label: 'Situação cadastral' },
+  { key: 'dataSituacaoCadastral', label: 'Data da situação' },
+  { key: 'dataInicioAtividade', label: 'Início de atividade' },
+  { key: 'atividadePrincipal', label: 'Atividade principal (CNAE)' },
+  { key: 'naturezaJuridica', label: 'Natureza jurídica' },
+  { key: 'porte', label: 'Porte' },
+  { key: 'capitalSocial', label: 'Capital social' },
+  { key: 'telefone', label: 'Telefone cadastrado' },
+  { key: 'email', label: 'E-mail cadastrado' },
+  { key: 'endereco', label: 'Endereço' },
+]
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -60,8 +94,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const whatsapp = String(body.whatsapp).trim()
   const company = String(body.company).trim()
   const cnpj = String(body.cnpj).trim()
+  const cnpjDigits = cnpj.replace(/\D/g, '')
   const marketplaces = isNonEmptyString(body.marketplaces) ? String(body.marketplaces).trim() : null
   const message = String(body.message).trim()
+
+  // Checa se esse CNPJ já é cliente cadastrado na plataforma — não bloqueia
+  // nada, só avisa o time (lead pode ser um cliente já existente tentando
+  // outro canal, ou um segundo contato da mesma empresa).
+  let existingCompany: { name: string; status: string } | null = null
+  try {
+    const supabase = await getSupabaseAdmin()
+    const { data } = await supabase.from('companies').select('name, status').eq('cnpj', cnpjDigits).maybeSingle()
+    if (data) existingCompany = { name: data.name, status: data.status }
+  } catch (err) {
+    console.error('[api/leads] company lookup failed (non-blocking)', err)
+  }
+
+  const receitaLines = RECEITA_FIELDS
+    .map(({ key, label }) => {
+      const v = body.cnpjInfo?.[key]
+      if (!isNonEmptyString(v) && typeof v !== 'number') return null
+      const value = key === 'capitalSocial' && typeof v === 'number' ? `R$ ${v.toLocaleString('pt-BR')}` : String(v)
+      return { label, value }
+    })
+    .filter((v): v is { label: string; value: string } => v !== null)
 
   try {
     const transporter = nodemailer.createTransport({
@@ -71,10 +127,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       auth: { user: process.env.LEADS_SMTP_USER, pass: process.env.LEADS_SMTP_PASS },
     })
 
+    const statusLine = existingCompany
+      ? `Já é cliente cadastrado — "${existingCompany.name}" (status: ${existingCompany.status})`
+      : 'Lead novo — sem cadastro na plataforma ainda'
+
     await transporter.sendMail({
       from: `"MKTOnline — Site" <${process.env.LEADS_SMTP_USER}>`,
       to: process.env.LEADS_EMAIL_TO,
-      replyTo: undefined,
       subject: `Novo contato — ${company} · CNPJ ${cnpj} · ${whatsapp}`,
       text: [
         `Nome: ${name}`,
@@ -82,18 +141,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `CNPJ: ${cnpj}`,
         `WhatsApp: ${whatsapp}`,
         marketplaces ? `Marketplaces: ${marketplaces}` : null,
+        `Cadastro: ${statusLine}`,
         '',
         'Assunto:',
         message,
-      ].filter(Boolean).join('\n'),
+        receitaLines.length > 0 ? '\nDados da Receita Federal:' : null,
+        ...receitaLines.map((l) => `${l.label}: ${l.value}`),
+      ].filter((l): l is string => l !== null).join('\n'),
       html: `
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
         <p><strong>Empresa:</strong> ${escapeHtml(company)}</p>
         <p><strong>CNPJ:</strong> ${escapeHtml(cnpj)}</p>
         <p><strong>WhatsApp:</strong> ${escapeHtml(whatsapp)}</p>
         ${marketplaces ? `<p><strong>Marketplaces:</strong> ${escapeHtml(marketplaces)}</p>` : ''}
+        <p><strong>Cadastro:</strong> ${escapeHtml(statusLine)}</p>
         <p><strong>Assunto:</strong></p>
         <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
+        ${receitaLines.length > 0 ? `
+          <hr style="margin:16px 0;border:none;border-top:1px solid #ddd">
+          <p><strong>Dados da Receita Federal</strong></p>
+          <table cellpadding="4" style="font-size:13px">
+            ${receitaLines.map((l) => `<tr><td style="color:#555">${escapeHtml(l.label)}</td><td><strong>${escapeHtml(l.value)}</strong></td></tr>`).join('')}
+          </table>
+        ` : ''}
       `,
     })
 

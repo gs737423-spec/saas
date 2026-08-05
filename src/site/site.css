@@ -2012,8 +2012,8 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
    ========================================================================== */
 .trabalhamos-section { position: relative; }
 .trabalhamos-compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
-.trabalhamos-container { padding-top: 44px; padding-bottom: 48px; }
-@media (min-width: 1024px) { .trabalhamos-container { padding-top: 56px; padding-bottom: 60px; } }
+.trabalhamos-container { padding-top: 32px; padding-bottom: 36px; }
+@media (min-width: 1024px) { .trabalhamos-container { padding-top: 40px; padding-bottom: 44px; } }
 
 .trabalhamos-eyebrow {
   display: block;
@@ -2021,39 +2021,39 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   font-weight: 800;
   letter-spacing: 0.14em;
   color: var(--vintec-blue-700);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .trabalhamos-title {
   max-width: 760px;
   font-weight: 800;
-  font-size: clamp(1.85rem, 1.15rem + 2.4vw, 2.75rem);
-  line-height: 1.18;
+  font-size: clamp(1.6rem, 1.15rem + 1.8vw, 2.3rem);
+  line-height: 1.16;
   letter-spacing: -0.018em;
   color: var(--vintec-text);
 }
 .trabalhamos-intro {
-  margin-top: 16px;
+  margin-top: 12px;
   max-width: 720px;
-  font-size: 16.5px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--vintec-text-soft);
 }
 
 .trabalhamos-panel {
-  margin-top: 32px;
-  padding: 26px;
-  border-radius: 22px;
+  margin-top: 22px;
+  padding: 20px;
+  border-radius: 20px;
   background: #fff;
   border: 1px solid var(--vintec-border);
   box-shadow: var(--vintec-shadow-md);
 }
-@media (min-width: 1024px) { .trabalhamos-panel { padding: 34px 38px; } }
+@media (min-width: 1024px) { .trabalhamos-panel { padding: 26px 30px; } }
 
 .trabalhamos-steps { display: grid; grid-template-columns: 1fr; }
 @media (min-width: 768px) { .trabalhamos-steps { grid-template-columns: repeat(3, 1fr); } }
 
-.trabalhamos-step { padding: 16px 0; }
-.trabalhamos-step + .trabalhamos-step { border-top: 1px solid var(--vintec-border); margin-top: 4px; padding-top: 16px; }
+.trabalhamos-step { padding: 10px 0; }
+.trabalhamos-step + .trabalhamos-step { border-top: 1px solid var(--vintec-border); margin-top: 2px; padding-top: 10px; }
 @media (min-width: 768px) {
   .trabalhamos-step { padding: 0 24px; }
   .trabalhamos-step:first-child { padding-left: 0; }
@@ -2065,28 +2065,28 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   font-weight: 800;
   letter-spacing: 0.05em;
   color: var(--vintec-sky-400);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
-.trabalhamos-step__label { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: 0.06em; color: var(--vintec-blue-700); margin-bottom: 6px; }
-.trabalhamos-step__text { font-size: 14.5px; line-height: 1.52; color: var(--vintec-text-soft); }
+.trabalhamos-step__label { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: 0.06em; color: var(--vintec-blue-700); margin-bottom: 4px; }
+.trabalhamos-step__text { font-size: 14px; line-height: 1.48; color: var(--vintec-text-soft); }
 
 .trabalhamos-panel__base {
-  margin-top: 22px;
-  padding-top: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--vintec-border);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--vintec-text);
 }
 
 .trabalhamos-cta {
-  margin-top: 32px;
-  padding-top: 28px;
+  margin-top: 22px;
+  padding-top: 20px;
   border-top: 1px solid var(--vintec-border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: center;
 }
 .trabalhamos-cta__btn { padding: 1rem 2.2rem; font-size: 1rem; }
@@ -2147,6 +2147,22 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   transition: color 180ms ease;
 }
 .footer-contact__row:hover { color: #8FDBFF; }
+.footer-contact__row.footer-contact__row--copy {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  position: relative;
+}
+.footer-contact__copied {
+  color: #8FDBFF;
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.footer-contact__copied--show { opacity: 1; transform: translateY(0); }
 
 /* Coluna principal — mais presença: linha vertical sutil separando das
    colunas secundárias em telas largas, onde sobra vazio no centro. */

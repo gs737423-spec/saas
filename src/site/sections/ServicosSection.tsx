@@ -6,10 +6,10 @@ interface Service {
 }
 
 const services: Service[] = [
-  { label: 'DIAGNÓSTICO E DIREÇÃO ESTRATÉGICA', text: 'Analisamos a operação, identificamos gargalos e ajudamos a definir quais problemas e oportunidades devem receber atenção primeiro.' },
-  { label: 'ACOMPANHAMENTO DE PERFORMANCE', text: 'Avaliamos faturamento, margem, pedidos, estoque, produtos e desempenho dos canais para apoiar decisões da gestão.' },
-  { label: 'DESENVOLVIMENTO DE MARKETPLACES', text: 'Ajudamos a empresa a entender o papel de cada canal, identificar oportunidades e organizar prioridades para crescer com mais controle.' },
-  { label: 'PLATAFORMA DE GESTÃO VINTEC', text: 'Disponibilizamos uma plataforma própria para consolidar os principais indicadores e apoiar o acompanhamento realizado entre consultores e gestores.' },
+  { label: 'DIAGNÓSTICO E DIREÇÃO ESTRATÉGICA', text: 'Analisamos a operação junto com a empresa, identificamos gargalos e definimos em conjunto quais problemas e oportunidades devem receber atenção primeiro.' },
+  { label: 'ACOMPANHAMENTO DE PERFORMANCE', text: 'Acompanhamos faturamento, margem, pedidos, estoque, produtos e desempenho dos canais lado a lado com a gestão, ao longo do tempo.' },
+  { label: 'DESENVOLVIMENTO DE MARKETPLACES', text: 'Colaboramos com a empresa para entender o papel de cada canal, identificar oportunidades e organizar prioridades para crescer com mais controle.' },
+  { label: 'PLATAFORMA DE GESTÃO VINTEC', text: 'Disponibilizamos uma plataforma própria, mantida junto com a empresa, para consolidar os principais indicadores e sustentar o acompanhamento entre consultores e gestores.' },
 ]
 
 // Serviços da consultoria — substitui de vez a antiga ExperienceSection.
