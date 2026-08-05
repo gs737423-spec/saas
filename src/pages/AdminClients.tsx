@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Building2, Plus, ShieldCheck, Settings, Loader2, CheckCircle2, XCircle, Search, ArrowUpRight, AlertTriangle } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor } from '@/lib/adminUi'
+import { hueFor, initialsFor, maskCnpj } from '@/lib/adminUi'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 interface Company {
@@ -239,17 +239,21 @@ function CompanyCard({ company }: { company: Company }) {
             <p className="truncate text-sm font-semibold text-text-primary">{company.name}</p>
             <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase ${st.color} ${st.bg}`}>{st.label}</span>
           </div>
-          <p className="truncate text-[11px] text-text-muted">{company.contactEmail ?? 'sem contato cadastrado'}</p>
+          <p className="truncate text-[11px] text-text-muted">{maskCnpj(company.cnpj)}</p>
         </div>
         <ArrowUpRight className="h-4 w-4 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
 
-      <div className="flex items-center gap-1.5 border-t border-border-subtle pt-3">
-        <div className={connected ? '' : 'opacity-35 grayscale'}><LogoMercadoLivre /></div>
-        <div className="opacity-35 grayscale"><LogoShopee /></div>
-        <div className="opacity-35 grayscale"><LogoAmazon /></div>
-        <div className="opacity-35 grayscale"><LogoLojaPropria /></div>
-        <span className="ml-auto flex items-center gap-1 text-[11px] font-medium text-text-muted">
+      <div className="flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
+        <div className="flex items-center gap-3">
+          <div className={`[&>svg]:h-6 [&>svg]:w-6 ${connected ? '' : 'opacity-40 grayscale'}`} title={connected ? 'Mercado Livre — conectado' : 'Mercado Livre — não conectado'}>
+            <LogoMercadoLivre />
+          </div>
+          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Shopee — não conectado"><LogoShopee /></div>
+          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Amazon — não conectado"><LogoAmazon /></div>
+          <div className="opacity-40 grayscale [&>svg]:h-6 [&>svg]:w-6" title="Loja Própria — não conectado"><LogoLojaPropria /></div>
+        </div>
+        <span className="shrink-0 text-[11px] font-medium text-text-muted">
           {company.memberCount === 0 ? (
             <span className="text-accent-amber">sem acesso</span>
           ) : (

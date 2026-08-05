@@ -6,17 +6,8 @@ import {
   UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
   CheckCircle, AlertCircle, Link as LinkIcon, User, Building2, ExternalLink,
 } from 'lucide-react'
-
-// CNPJ real (company.cnpj) recebe máscara; dados fiscais que ainda não
-// existem no Supabase (razão social, IE, IM, CNAE) ficam com placeholder
-// visual explícito — nunca escondido como se fosse dado real.
-function maskCnpj(raw: string | null): string {
-  const digits = (raw ?? '').replace(/\D/g, '')
-  if (digits.length !== 14) return raw || '—'
-  return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
-}
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor, timeAgo } from '@/lib/adminUi'
+import { hueFor, initialsFor, timeAgo, maskCnpj } from '@/lib/adminUi'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
