@@ -43,6 +43,7 @@ const navItems: Item[] = [
 // não têm tela própria e ficam desabilitados (link morto é pior que
 // ausência de link).
 const adminNavItems: (Item | { icon: typeof Package; label: string; disabled: true })[] = [
+  { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
   { icon: Building2, label: 'Clientes', to: '/app/admin' },
   { icon: Plug, label: 'Integrações', disabled: true },
   { icon: Headset, label: 'Consultoria', disabled: true },
@@ -117,19 +118,6 @@ export default function TopNav() {
           Só um indicador + volta pra plataforma. */}
       {isAdminArea ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <NavLink
-            to="/app"
-            className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Voltar à plataforma</span>
-          </NavLink>
-          <span className="mx-0.5 hidden h-5 w-px shrink-0 bg-border-subtle sm:block" />
-          <span className="hidden shrink-0 items-center gap-1.5 text-[13px] font-bold text-accent-cyan md:flex">
-            <ShieldCheck className="h-4 w-4" />
-            Admin
-          </span>
-
           <nav className="hide-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
             {adminNavItems.map((item) =>
               'disabled' in item ? (
