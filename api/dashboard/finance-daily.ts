@@ -68,7 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!auth) return
 
     const periodDays = Math.min(180, Math.max(1, Number(req.query.days) || 30))
-    const totalDays = periodDays * 2
+    // +30 sempre, não só *2 — "Mês passado" desloca 30 dias pra trás, e um
+    // período curto (ex. 13 dias) buscando só o dobro (26) fica sem janela
+    // suficiente pra achar o par de comparação (linha tracejada some).
+    const totalDays = periodDays + Math.max(periodDays, 30)
     const since = new Date(Date.now() - totalDays * 24 * 60 * 60 * 1000).toISOString()
 
     const supabase = await getSupabaseAdmin()

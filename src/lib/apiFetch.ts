@@ -30,7 +30,7 @@ function demoInterceptFor(url: string): unknown | null {
   if (url.startsWith('/api/dashboard/inventory')) return demoDashboardInventory()
   if (url.startsWith('/api/dashboard/finance-daily')) {
     const days = Number(new URL(url, 'http://x').searchParams.get('days')) || 30
-    return { ok: true, source: 'demo', days: demoFinanceDaily(days * 2) }
+    return { ok: true, source: 'demo', days: demoFinanceDaily(days + Math.max(days, 30)) }
   }
   if (url.startsWith('/api/dashboard/finance')) {
     const { overview, byMarketplace } = demoFinanceOverview()
