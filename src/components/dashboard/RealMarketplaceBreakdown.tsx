@@ -71,7 +71,7 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
       </div>
 
       <div className="w-24 shrink-0 text-right sm:w-28">
-        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.netValue)}</div>
+        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.grossRevenue)}</div>
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
@@ -149,7 +149,7 @@ export default function RealMarketplaceBreakdown() {
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
 
   const sorted = [...rows].sort((a, b) => {
-    if (sort === 'netRevenue') return b.netValue - a.netValue
+    if (sort === 'netRevenue') return b.grossRevenue - a.grossRevenue
     if (sort === 'avgTicket') return b.averageTicket - a.averageTicket
     const feeA = a.grossRevenue > 0 ? a.fees / a.grossRevenue : 0
     const feeB = b.grossRevenue > 0 ? b.fees / b.grossRevenue : 0
