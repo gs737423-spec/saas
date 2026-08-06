@@ -91,6 +91,71 @@ export function demoFinanceOverview(): { overview: FinanceOverview; byMarketplac
 
 const TX_TYPES: FinanceTransaction['type'][] = ['Venda', 'Comissão', 'Tarifa', 'Estorno', 'Devolução']
 
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000
+  return x - Math.floor(x)
+}
+
+export interface DemoDailyRevenuePoint {
+  date: string
+  label: string
+  mercadolivre: number
+  shopee: number
+  amazon: number
+  lojapropria: number
+  total: number
+}
+
+const DAILY_BASELINE: Record<'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria', number> = {
+  mercadolivre: 2800,
+  shopee: 1600,
+  amazon: 900,
+  lojapropria: 550,
+}
+const DAILY_GROWTH: Record<'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria', number> = {
+  mercadolivre: 3.5,
+  shopee: 4.2,
+  amazon: 2.8,
+  lojapropria: 1.8,
+}
+
+// Curva diária determinística (mesmo seed sempre gera o mesmo gráfico) —
+// usada só quando o admin ativa o Modo Demonstração. `totalDays` já vem
+// dobrado pelo endpoint (periodDays*2) pra sempre ter janela anterior.
+export function demoFinanceDaily(totalDays: number): DemoDailyRevenuePoint[] {
+  const points: DemoDailyRevenuePoint[] = []
+  const keys = ['mercadolivre', 'shopee', 'amazon', 'lojapropria'] as const
+  for (let i = totalDays - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const dayOfWeek = d.getDay()
+    const weekendFactor = dayOfWeek === 0 ? 0.7 : dayOfWeek === 6 ? 0.85 : 1
+    const dayIndex = totalDays - i
+    const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+
+    const point: DemoDailyRevenuePoint = {
+      date: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+      mercadolivre: 0,
+      shopee: 0,
+      amazon: 0,
+      lojapropria: 0,
+      total: 0,
+    }
+    let total = 0
+    for (const key of keys) {
+      const base = DAILY_BASELINE[key]
+      const growth = DAILY_GROWTH[key] * dayIndex
+      const variation = (seededRandom(seed + key.length) - 0.5) * base * 0.3
+      const value = Math.max(0, Math.round((base + growth + variation) * weekendFactor))
+      point[key] = value
+      total += value
+    }
+    point.total = total
+    points.push(point)
+  }
+  return points
+}
+
 export function demoFinanceTransactions(): FinanceTransaction[] {
   return Array.from({ length: 18 }, (_, i) => {
     const marketplace = MARKETPLACES[i % MARKETPLACES.length]

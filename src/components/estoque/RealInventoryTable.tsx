@@ -99,15 +99,19 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     <div className="flex flex-col gap-2.5">
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
         {kpis.map((k) => (
-          <div key={k.label} className="overview-glass flex flex-col gap-1.5 rounded-2xl p-3">
-            <div className="flex items-center justify-between">
+          <div key={k.label} className="overview-glass overview-card-hover group relative flex flex-col gap-1.5 overflow-hidden rounded-2xl p-3">
+            <div
+              className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-50 blur-2xl transition-opacity duration-500 group-hover:opacity-80"
+              style={{ background: `radial-gradient(circle, ${k.tone}33, transparent 68%)` }}
+            />
+            <div className="relative flex items-center justify-between">
               <span className="text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{k.label}</span>
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${k.tone}16`, boxShadow: `inset 0 0 0 1px ${k.tone}33` }}>
                 <k.icon className="h-3.5 w-3.5" style={{ color: k.tone }} />
               </span>
             </div>
-            <p className="truncate font-mono text-[15px] font-bold text-text-primary">{k.value}</p>
-            <p className="truncate text-[10px] text-text-muted">{k.sub}</p>
+            <p className="relative truncate font-mono text-[15px] font-bold text-text-primary">{k.value}</p>
+            <p className="relative truncate text-[10px] text-text-muted">{k.sub}</p>
           </div>
         ))}
       </div>

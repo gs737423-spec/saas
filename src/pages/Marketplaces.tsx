@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Trophy, Ticket, ShoppingCart, TrendingUp, Percent, AlertTriangle, Store } from 'lucide-react'
+import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Shield, AlertTriangle, Store } from 'lucide-react'
+import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import type { FinanceOverview, MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
+import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 
@@ -12,30 +14,13 @@ interface FinanceApiResponse {
   byMarketplace: MarketplaceFinance[]
 }
 
-const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const brl = (v: number) => v.toLocaleString('pt-BR')
+const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-interface KpiSpec {
-  icon: typeof Trophy
-  label: string
-  value: string
-  marketplace: string
-  detail: string
-  tone: 'cyan' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose'
-}
-
-const toneClass: Record<KpiSpec['tone'], string> = {
-  cyan: 'bg-accent-cyan/10 text-accent-cyan',
-  emerald: 'bg-accent-emerald/10 text-accent-emerald',
-  blue: 'bg-accent-blue/10 text-accent-blue',
-  violet: 'bg-accent-violet/10 text-accent-violet',
-  amber: 'bg-accent-amber/10 text-accent-amber',
-  rose: 'bg-accent-rose/10 text-accent-rose',
-}
-
-/** 6 KPIs comparativos entre marketplaces — cada um é "quem lidera nessa
- *  métrica", derivado 100% de MarketplaceFinance já carregado (sem fetch
- *  extra). "Canal em atenção" = maior queda de D-30 (ou null se nenhum caiu). */
-function buildComparisonKpis(rows: MarketplaceFinance[]): KpiSpec[] {
+// KPIs verdicto — mesmo desenho aprovado (borda colorida à esquerda, ícone
+// pequeno), 100% derivado do MarketplaceFinance já carregado.
+function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
   const byNet = [...rows].sort((a, b) => b.netValue - a.netValue)
   const byTicket = [...rows].sort((a, b) => b.averageTicket - a.averageTicket)
   const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount)
@@ -43,29 +28,101 @@ function buildComparisonKpis(rows: MarketplaceFinance[]): KpiSpec[] {
   const byFeeImpact = [...rows]
     .map((r) => ({ r, pct: r.grossRevenue > 0 ? (r.fees / r.grossRevenue) * 100 : 0 }))
     .sort((a, b) => b.pct - a.pct)
+  const totalNet = rows.reduce((s, r) => s + r.netValue, 0)
   const worstGrowth = [...rows].filter((r) => r.growth.d30 !== null).sort((a, b) => (a.growth.d30 ?? 0) - (b.growth.d30 ?? 0))[0]
 
-  const kpis: KpiSpec[] = [
-    { icon: Trophy, label: 'Líder em líquido', value: `R$ ${brl(byNet[0].netValue)}`, marketplace: byNet[0].marketplace, detail: `${((byNet[0].netValue / rows.reduce((s, r) => s + r.netValue, 0 || 1)) * 100).toFixed(1)}% do líquido total`, tone: 'amber' },
-    { icon: Ticket, label: 'Melhor ticket', value: `R$ ${brl(byTicket[0].averageTicket)}`, marketplace: byTicket[0].marketplace, detail: `${byTicket[0].ordersCount} pedidos`, tone: 'cyan' },
-    { icon: ShoppingCart, label: 'Mais pedidos', value: byOrders[0].ordersCount.toLocaleString('pt-BR'), marketplace: byOrders[0].marketplace, detail: `ticket R$ ${brl(byOrders[0].averageTicket)}`, tone: 'blue' },
-    { icon: TrendingUp, label: 'Maior crescimento', value: byGrowth[0].growth.d30 !== null ? `${byGrowth[0].growth.d30 >= 0 ? '+' : ''}${byGrowth[0].growth.d30.toFixed(1)}%` : '—', marketplace: byGrowth[0].marketplace, detail: `líquido R$ ${brl(byGrowth[0].netValue)}`, tone: 'emerald' },
-    { icon: Percent, label: 'Maior impacto de comissão', value: `${byFeeImpact[0].pct.toFixed(1)}%`, marketplace: byFeeImpact[0].r.marketplace, detail: `R$ ${brl(byFeeImpact[0].r.fees)} retidos`, tone: 'violet' },
-    { icon: AlertTriangle, label: 'Canal em atenção', value: worstGrowth ? worstGrowth.marketplace : '—', marketplace: worstGrowth ? worstGrowth.marketplace : '', detail: worstGrowth ? `Atenção · ${worstGrowth.growth.d30!.toFixed(1)}%` : 'Nenhum canal em queda', tone: 'rose' },
+  const verdicts = [
+    { label: 'Líder em Líquido', value: `R$ ${brl(byNet[0].netValue)}`, channel: byNet[0].marketplace, sub: `${totalNet > 0 ? pct((byNet[0].netValue / totalNet) * 100) : '0,0'}% do líquido total`, icon: Crown, tone: '#3BE38E' },
+    { label: 'Melhor Ticket', value: `R$ ${brl2(byTicket[0].averageTicket)}`, channel: byTicket[0].marketplace, sub: `${brl(byTicket[0].ordersCount)} pedidos`, icon: Receipt, tone: '#194B9B' },
+    { label: 'Mais Pedidos', value: brl(byOrders[0].ordersCount), channel: byOrders[0].marketplace, sub: `ticket R$ ${brl2(byOrders[0].averageTicket)}`, icon: ShoppingCart, tone: '#3A8DFF' },
+    { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#46E5FF' },
+    { label: 'Maior Impacto de Comissão', value: `${pct(byFeeImpact[0].pct)}%`, channel: byFeeImpact[0].r.marketplace, sub: `R$ ${brl(byFeeImpact[0].r.fees)} retidos`, icon: Shield, tone: '#FFC95A' },
+    { label: 'Canal em Atenção', value: worstGrowth ? worstGrowth.marketplace : '—', channel: worstGrowth ? worstGrowth.marketplace : rows[0].marketplace, sub: worstGrowth ? `Atenção · ${pct(worstGrowth.growth.d30!)}%` : 'Nenhum canal em queda', icon: AlertTriangle, tone: '#FF5E7D' },
   ]
-  return kpis
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      {verdicts.map((v) => {
+        const brand = getMarketplaceColor(v.channel)
+        return (
+          <div key={v.label} className="overview-glass overview-card-hover relative flex h-full min-h-[98px] min-w-0 flex-col overflow-hidden rounded-[18px] p-2.5">
+            <div className="absolute inset-y-0 left-0 w-[3px]" style={{ background: brand }} />
+            <div className="mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
+              <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{v.label}</span>
+              <v.icon className="h-3.5 w-3.5 shrink-0" style={{ color: v.tone }} />
+            </div>
+            <div className="font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">{v.value}</div>
+            <div className="mt-auto flex items-center gap-1.5 pt-1.5">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: brand }} />
+              <span className="truncate text-[11px] font-medium text-text-secondary">{v.channel}</span>
+            </div>
+            <div className="mt-0.5 truncate text-[10px] text-text-muted">{v.sub}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
-function KpiCard({ kpi }: { kpi: KpiSpec }) {
+interface MiniChartProps {
+  title: string
+  question: string
+  data: { marketplace: Marketplace; value: number; display: string }[]
+  maxValue?: number
+}
+
+function MiniBarChart({ title, question, data, maxValue }: MiniChartProps) {
+  const max = maxValue ?? Math.max(...data.map((d) => d.value), 1)
   return (
-    <div className="glass-panel flex flex-col gap-2 rounded-xl p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{kpi.label}</span>
-        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${toneClass[kpi.tone]}`}><kpi.icon className="h-3.5 w-3.5" /></span>
+    <div>
+      <div className="mb-0.5 text-[13px] font-semibold text-text-primary">{title}</div>
+      <div className="mb-2.5 text-[11px] text-text-muted">{question}</div>
+      <div className="space-y-2">
+        {data.map((d) => {
+          const brand = getMarketplaceColor(d.marketplace)
+          return (
+            <div key={d.marketplace} className="flex items-center gap-2.5">
+              <span className="w-20 shrink-0 truncate text-[11.5px] text-text-secondary">{d.marketplace}</span>
+              <div className="overview-track h-2 flex-1 overflow-hidden rounded-full">
+                <div className="h-full rounded-full" style={{ width: `${(d.value / max) * 100}%`, background: `linear-gradient(90deg, ${brand}66, ${brand})` }} />
+              </div>
+              <span className="w-16 shrink-0 text-right font-mono text-[12px] font-semibold text-text-primary">{d.display}</span>
+            </div>
+          )
+        })}
       </div>
-      <p className="text-xl font-bold text-text-primary">{kpi.value}</p>
-      {kpi.marketplace && <p className="text-[11px] text-text-secondary">{kpi.marketplace}</p>}
-      <p className="text-[10px] text-text-muted">{kpi.detail}</p>
+    </div>
+  )
+}
+
+// 4 rankings — mesmos dados de ChannelKPIVerdict, sem fetch novo.
+function ChannelMiniCharts({ rows }: { rows: MarketplaceFinance[] }) {
+  const totalGross = rows.reduce((s, r) => s + r.grossRevenue, 0)
+
+  const byShare = [...rows].sort((a, b) => b.netValue - a.netValue).map((m) => ({
+    marketplace: m.marketplace,
+    value: totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0,
+    display: `${pct(totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0)}%`,
+  }))
+  const byTicket = [...rows].sort((a, b) => b.averageTicket - a.averageTicket).map((m) => ({
+    marketplace: m.marketplace, value: m.averageTicket, display: `R$ ${brl2(m.averageTicket)}`,
+  }))
+  const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount).map((m) => ({
+    marketplace: m.marketplace, value: m.ordersCount, display: brl(m.ordersCount),
+  }))
+  const byFees = [...rows]
+    .map((m) => ({ m, feePct: m.grossRevenue > 0 ? (m.fees / m.grossRevenue) * 100 : 0 }))
+    .sort((a, b) => b.feePct - a.feePct)
+    .map(({ m, feePct }) => ({ marketplace: m.marketplace, value: feePct, display: `${pct(feePct)}%` }))
+
+  return (
+    <div className="overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
+        <MiniBarChart title="Ticket Médio" question="Quem tem o maior ticket médio?" data={byTicket} />
+        <MiniBarChart title="Pedidos" question="Quem traz mais volume?" data={byOrders} />
+        <MiniBarChart title="Impacto de Comissão" question="Quem consome mais em comissão?" data={byFees} maxValue={25} />
+      </div>
     </div>
   )
 }
@@ -110,15 +167,21 @@ export default function Marketplaces() {
     )
   }
 
-  const kpis = buildComparisonKpis(rows)
-
   return (
-    <div className="space-y-2 sm:space-y-2.5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {kpis.map((kpi) => <KpiCard key={kpi.label} kpi={kpi} />)}
+    <div className="space-y-2">
+      <div className="motion-block-in">
+        <ChannelKPIVerdict rows={rows} />
       </div>
 
-      <div className="motion-block-in">
+      <div className="motion-block-in motion-block-in-2">
+        <RevenueByChannelChart />
+      </div>
+
+      <div className="motion-block-in motion-block-in-3">
+        <ChannelMiniCharts rows={rows} />
+      </div>
+
+      <div className="motion-block-in motion-block-in-3">
         <RealMarketplaceBreakdown />
       </div>
     </div>
