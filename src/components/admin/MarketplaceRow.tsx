@@ -28,7 +28,7 @@ export default function MarketplaceRow({ active = [], interest = [], size = 'md'
           <div
             key={mp.key}
             title={isActive ? `${mp.name} — conectado` : isInterest ? `${mp.name} — interesse declarado` : `${mp.name} — não conectado`}
-            className={`flex ${box} shrink-0 items-center justify-center overflow-hidden rounded-full [&>svg]:h-full [&>svg]:w-full [&>svg]:rounded-none ${
+            className={`flex ${box} shrink-0 items-center justify-center overflow-hidden rounded-full [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full [&>svg]:rounded-none ${
               isActive ? '' : isInterest ? `opacity-75 ring-2 ${mp.ring}` : 'opacity-35 grayscale'
             }`}
           >

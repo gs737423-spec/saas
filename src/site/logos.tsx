@@ -22,42 +22,31 @@ function Wrap({ children, title }: { children: React.ReactNode; title: string })
   )
 }
 
-export function LogoMercadoLivre() {
+// Arquivos reais fornecidos pelo dono do produto (public/site/logos/), não
+// mais recriação em SVG. LogoImg cobre o tile inteiro (object-fit: cover)
+// pra manter o peso visual quadrado igual entre as marcas.
+function LogoImg({ src, title }: { src: string; title: string }) {
   return (
-    <Wrap title="Mercado Livre">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#FFE600" />
-      <path d="M8 15c1.8-2.2 5.4-2.2 7.2 0 1.8 2.2 5.4 2.2 7.2 0" fill="none" stroke="#2D3277" strokeWidth="2.2" strokeLinecap="round" />
-    </Wrap>
+    <img
+      src={src}
+      alt={title}
+      width={SIZE}
+      height={SIZE}
+      style={{ display: 'block', width: SIZE, height: SIZE, objectFit: 'cover', borderRadius: 8 }}
+    />
   )
+}
+
+export function LogoMercadoLivre() {
+  return <LogoImg src="/site/logos/mercadolivre.png" title="Mercado Livre" />
 }
 
 export function LogoShopee() {
-  return (
-    <svg role="img" aria-label="Shopee" viewBox={`0 0 ${SIZE} ${SIZE}`} width={SIZE} height={SIZE} style={{ display: 'block' }}>
-      <title>Shopee</title>
-      <defs>
-        <linearGradient id="shopee-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#FF7337" />
-          <stop offset="100%" stopColor="#EE4D2D" />
-        </linearGradient>
-      </defs>
-      <rect width={SIZE} height={SIZE} rx="8" fill="url(#shopee-grad)" />
-      <path d="M9 12.5h10l-0.9 9.2a1.5 1.5 0 0 1-1.5 1.3h-5.2a1.5 1.5 0 0 1-1.5-1.3L9 12.5z" fill="#fff" />
-      <path d="M11.6 12.5a2.4 2.4 0 0 1 4.8 0" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M12.3 16.5c0.4 0.5 1 0.8 1.7 0.8s1.3-0.3 1.7-0.8" fill="none" stroke="#EE4D2D" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  )
+  return <LogoImg src="/site/logos/shopee.jpg" title="Shopee" />
 }
 
 export function LogoAmazon() {
-  return (
-    <Wrap title="Amazon">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#131921" />
-      <text x={SIZE / 2} y="16.5" textAnchor="middle" fontFamily="Georgia, serif" fontSize="13" fontWeight="700" fill="#fff">a</text>
-      <path d="M7.5 19.5c4.5 3 11 3 14.5-0.3" fill="none" stroke="#FF9900" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20.5 19.7l1.6-0.6-0.5 1.7z" fill="#FF9900" />
-    </Wrap>
-  )
+  return <LogoImg src="/site/logos/amazon.jpg" title="Amazon" />
 }
 
 // Leroy Merlin: a marca é um WORDMARK (não há símbolo/ícone oficial). Recriação

@@ -476,7 +476,7 @@ export default function AdminCompany() {
                   <div className="flex flex-col divide-y divide-border-subtle">
                     <div className="flex items-center justify-between py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                         <div>
                           <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
                           <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
@@ -493,7 +493,7 @@ export default function AdminCompany() {
                     {OTHER_MARKETPLACES.map((mp) => (
                       <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                           <p className="text-sm font-medium text-text-primary">{mp.name}</p>
                         </div>
                         <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
@@ -684,7 +684,7 @@ export default function AdminCompany() {
           <div className="flex flex-col gap-4">
             <div className="glass-panel admin-card rounded-xl p-6">
               <div className="mb-3 flex items-center gap-2.5">
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary">Mercado Livre</h3>
                   <span className={`text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isConnected ? 'Operacional' : 'Não conectado'}</span>
@@ -720,7 +720,7 @@ export default function AdminCompany() {
             {OTHER_MARKETPLACES.map((mp) => (
               <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-6 opacity-60">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">{mp.name}</h3>
                     <p className="text-[11px] text-text-muted">Integração ainda não existe nesta plataforma</p>

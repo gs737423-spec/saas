@@ -208,7 +208,7 @@ function IntegrationHealth({ Logo, name, status }: { Logo: () => React.JSX.Eleme
   const st = healthStyle[status]
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-bg-primary/30 p-3.5">
-      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full [&>svg]:h-9 [&>svg]:w-9"><Logo /></div>
+      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full [&>img]:h-9 [&>img]:w-9 [&>svg]:h-9 [&>svg]:w-9"><Logo /></div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-text-primary">{name}</p>
         <span className={`flex items-center gap-1.5 text-[11px] font-medium ${st.color}`}>
