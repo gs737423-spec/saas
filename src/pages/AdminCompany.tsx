@@ -4,7 +4,7 @@ import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
   MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
-  ExternalLink,
+  ExternalLink, Lock,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
@@ -99,6 +99,9 @@ export default function AdminCompany() {
   const [contactPhone, setContactPhone] = useState('')
   const [notes, setNotes] = useState('')
   const [cnpj, setCnpj] = useState('')
+  const [cnpjLocked, setCnpjLocked] = useState(true)
+  const [cnpjLookup, setCnpjLookup] = useState<'idle' | 'checking' | 'found' | 'notfound' | 'error'>('idle')
+  const [cnpjLookupInfo, setCnpjLookupInfo] = useState<CnpjInfo | null>(null)
   const [whatsapp, setWhatsapp] = useState('')
   const [website, setWebsite] = useState('')
   const [status, setStatus] = useState('ativo')
@@ -187,6 +190,59 @@ export default function AdminCompany() {
     loadShopeeIntegration()
   }, [loadCompany, loadMembers, loadIntegration, loadShopeeIntegration])
 
+  // CNPJ destrancado (botão "Editar") — consulta a Receita Federal de novo,
+  // mesma lógica do cadastro de cliente novo. Só entra no payload de save
+  // se de fato foi reaberto e reconfirmado, nunca sobrescreve o snapshot
+  // salvo por engano.
+  useEffect(() => {
+    if (cnpjLocked) return
+    const digits = cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) {
+      setCnpjLookup('idle')
+      setCnpjLookupInfo(null)
+      return
+    }
+    let cancelled = false
+    setCnpjLookup('checking')
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await apiFetchJson<{ ok: boolean; found: boolean | null } & Partial<CnpjInfo>>(`/api/cnpj-lookup?cnpj=${digits}`)
+        if (cancelled) return
+        if (res?.ok && res.found) {
+          setCnpjLookupInfo({
+            razaoSocial: res.razaoSocial ?? null,
+            nomeFantasia: res.nomeFantasia ?? null,
+            situacaoCadastral: res.situacaoCadastral ?? null,
+            dataSituacaoCadastral: res.dataSituacaoCadastral ?? null,
+            dataInicioAtividade: res.dataInicioAtividade ?? null,
+            atividadePrincipal: res.atividadePrincipal ?? null,
+            cnaeCodigo: res.cnaeCodigo ?? null,
+            cnaesSecundarios: res.cnaesSecundarios ?? [],
+            naturezaJuridica: res.naturezaJuridica ?? null,
+            porte: res.porte ?? null,
+            capitalSocial: res.capitalSocial ?? null,
+            telefone: res.telefone ?? null,
+            email: res.email ?? null,
+            endereco: res.endereco ?? null,
+            matrizFilial: res.matrizFilial ?? null,
+            simplesNacional: res.simplesNacional ?? null,
+            socios: res.socios ?? [],
+          })
+          setCnpjLookup('found')
+        } else if (res?.found === false) {
+          setCnpjLookup('notfound')
+          setCnpjLookupInfo(null)
+        } else {
+          setCnpjLookup('error')
+          setCnpjLookupInfo(null)
+        }
+      } catch {
+        if (!cancelled) { setCnpjLookup('error'); setCnpjLookupInfo(null) }
+      }
+    }, 500)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [cnpj, cnpjLocked])
+
   async function handleToggleStatus() {
     if (!id) return
     const nextStatus = status === 'suspenso' ? 'ativo' : 'suspenso'
@@ -209,16 +265,27 @@ export default function AdminCompany() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!id) return
+    // CNPJ destrancado precisa ter sido reconfirmado na Receita antes de
+    // salvar — nunca grava um CNPJ trocado sem validar (mesma regra do
+    // cadastro de cliente novo em AdminClients.tsx).
+    if (!cnpjLocked && cnpj.replace(/\D/g, '').length > 0 && cnpjLookup !== 'found' && cnpjLookup !== 'error') {
+      setSaveFeedback({ type: 'error', text: 'Confirme o CNPJ na Receita Federal antes de salvar (ou clique no cadeado pra cancelar a edição).' })
+      return
+    }
     setSaving(true)
     setSaveFeedback(null)
     try {
       const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status }),
+        body: JSON.stringify({
+          id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status,
+          ...(!cnpjLocked && cnpjLookupInfo ? { receitaData: cnpjLookupInfo } : {}),
+        }),
       })
       if (res?.ok) {
         setSaveFeedback({ type: 'success', text: 'Salvo.' })
+        setCnpjLocked(true)
         loadCompany()
       } else {
         setSaveFeedback({ type: 'error', text: res?.message ?? 'Erro ao salvar.' })
@@ -642,6 +709,18 @@ export default function AdminCompany() {
               ) : (
                 <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
               )}
+              {!isConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com o Mercado Livre, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Mercado Livre". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
+              )}
             </div>
 
             <div className="glass-panel rounded-xl p-6">
@@ -676,6 +755,18 @@ export default function AdminCompany() {
                 </div>
               ) : (
                 <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+              )}
+              {!isShopeeConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com a Shopee, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Shopee". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
               )}
             </div>
 
@@ -817,11 +908,36 @@ export default function AdminCompany() {
                   <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-text-muted">CNPJ</label>
-                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                    CNPJ {cnpjLocked && <span className="text-text-muted/60" title="Vem da Receita Federal — clique em Editar pra corrigir">(imutável)</span>}
+                  </label>
+                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${cnpjLocked ? 'border-border-subtle/60 bg-bg-primary/20' : 'border-accent-cyan/40 bg-bg-primary/40'}`}>
+                    {cnpjLocked ? <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />}
+                    {cnpjLocked ? (
+                      <span className="min-w-0 flex-1 text-sm text-text-secondary">{cnpj || 'não cadastrado'}</span>
+                    ) : (
+                      <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!cnpjLocked) { setCnpj(company?.cnpj ?? ''); setCnpjLookup('idle'); setCnpjLookupInfo(null) }
+                        setCnpjLocked((l) => !l)
+                      }}
+                      className="shrink-0 text-[11px] font-medium text-accent-cyan hover:underline"
+                    >
+                      {cnpjLocked ? 'Editar' : 'Cancelar'}
+                    </button>
                   </div>
+                  {!cnpjLocked && cnpjLookup === 'checking' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted"><Loader2 className="h-3 w-3 animate-spin" /> Consultando Receita Federal...</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'found' && cnpjLookupInfo && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-emerald"><CheckCircle2 className="h-3 w-3" /> {cnpjLookupInfo.razaoSocial ?? cnpjLookupInfo.nomeFantasia}</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'notfound' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-rose"><AlertTriangle className="h-3 w-3" /> CNPJ não encontrado — corrija pra poder salvar.</p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[11px] text-text-muted">E-mail de contato</label>
