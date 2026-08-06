@@ -7,7 +7,7 @@ import {
   CheckCircle, AlertCircle, Link as LinkIcon, User, Building2, ExternalLink,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor, timeAgo, maskCnpj } from '@/lib/adminUi'
+import { hueFor, initialsFor, timeAgo, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
@@ -35,6 +35,7 @@ interface Company {
   whatsapp: string | null
   website: string | null
   status: string
+  receitaData: CnpjInfo | null
   memberCount: number
 }
 
@@ -580,25 +581,35 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              {/* Dados Cadastrais e Fiscais — só CNPJ vem do Supabase hoje; o
-                  resto (Receita Federal) ainda não existe no banco, por isso
-                  fica com placeholder explícito em vez de esconder o campo. */}
+              {/* Dados Cadastrais e Fiscais — vem do snapshot da Receita
+                  Federal salvo no cadastro (company.receitaData). Campos que
+                  a Receita Federal não devolve (Inscrição Estadual/Municipal
+                  são cadastro estadual/municipal, fora do escopo do CNPJ)
+                  ficam marcados como indisponíveis, nunca inventados. */}
               <div className="glass-panel admin-card rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <Building2 className="h-3.5 w-3.5" /> Dados Cadastrais e Fiscais
                 </h3>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
                   {[
-                    { label: 'Razão Social', value: company.name, real: true },
-                    { label: 'Nome Fantasia', value: company.name, real: true },
+                    { label: 'Razão Social', value: company.receitaData?.razaoSocial ?? company.name, real: true },
+                    { label: 'Nome Fantasia', value: company.receitaData?.nomeFantasia ?? company.name, real: true },
                     { label: 'CNPJ', value: maskCnpj(company.cnpj), real: Boolean(company.cnpj) },
-                    { label: 'Inscrição Estadual', value: 'placeholder — sem fonte ainda', real: false },
-                    { label: 'Inscrição Municipal', value: 'placeholder — sem fonte ainda', real: false },
-                    { label: 'CNAE Principal', value: 'placeholder — sem fonte ainda', real: false },
+                    { label: 'Situação Cadastral', value: company.receitaData?.situacaoCadastral, real: Boolean(company.receitaData?.situacaoCadastral) },
+                    { label: 'Natureza Jurídica', value: company.receitaData?.naturezaJuridica, real: Boolean(company.receitaData?.naturezaJuridica) },
+                    { label: 'Capital Social', value: typeof company.receitaData?.capitalSocial === 'number' ? company.receitaData.capitalSocial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null, real: typeof company.receitaData?.capitalSocial === 'number' },
+                    { label: 'Data de Abertura', value: company.receitaData?.dataInicioAtividade, real: Boolean(company.receitaData?.dataInicioAtividade) },
+                    { label: 'Inscrição Estadual', value: 'indisponível via Receita Federal', real: false },
+                    { label: 'Inscrição Municipal', value: 'indisponível via Receita Federal', real: false },
+                    { label: 'CNAE Principal', value: company.receitaData?.cnaeCodigo ? `${company.receitaData.cnaeCodigo} — ${company.receitaData.atividadePrincipal ?? ''}` : null, real: Boolean(company.receitaData?.cnaeCodigo) },
+                    { label: 'Endereço', value: company.receitaData?.endereco, real: Boolean(company.receitaData?.endereco), span2: true },
+                    { label: 'Sócios / Administradores', value: company.receitaData?.socios && company.receitaData.socios.length > 0 ? company.receitaData.socios.join(', ') : null, real: Boolean(company.receitaData?.socios?.length), span2: true },
                   ].map((f) => (
-                    <div key={f.label} className="col-span-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 py-1.5 last:border-0 sm:col-span-1">
-                      <span className="text-[11px] text-text-muted">{f.label}</span>
-                      <span className={`truncate text-[12.5px] font-medium ${f.real ? 'text-text-primary' : 'italic text-text-muted/70'}`}>{f.value}</span>
+                    <div key={f.label} className={`col-span-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 py-1.5 last:border-0 ${f.span2 ? '' : 'sm:col-span-1'}`}>
+                      <span className="shrink-0 text-[11px] text-text-muted">{f.label}</span>
+                      <span className={`truncate text-[12.5px] font-medium ${f.real ? 'text-text-primary' : 'italic text-text-muted/70'}`}>
+                        {f.value ?? 'sem dado ainda'}
+                      </span>
                     </div>
                   ))}
                 </div>

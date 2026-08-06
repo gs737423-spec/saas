@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { apiFetch } from '@/lib/apiFetch'
 import { whatsappAccessHelpUrl } from '@/lib/whatsapp'
 import ExpandingLoginCard from '@/site/components/login-expanding/ExpandingLoginCard'
 import type { LoginBridge } from '@/site/components/login-expanding/expanding-login.types'
@@ -32,8 +31,7 @@ export default function Login() {
   // ProtectedRoute manda pra cá com state.from = a rota que o usuário
   // tentava acessar (ex: /app/admin) — sem isso, login sempre jogava todo
   // mundo em /app fixo, mesmo quem tinha digitado /app/admin direto.
-  const explicitFrom = (location.state as { from?: string } | null)?.from
-  const redirectTo = explicitFrom || '/app'
+  const redirectTo = (location.state as { from?: string } | null)?.from || '/app'
 
   const [view, setView] = useState<View>('login')
   const [email, setEmail] = useState('')
@@ -89,14 +87,7 @@ export default function Login() {
       const { error: signInError } = await signIn(email, password)
       if (!signInError) {
         attemptsRef.current = 0
-        // Sem destino explícito (login direto, não deep-link): time interna
-        // cai direto no painel admin, cliente cai no dashboard normal.
-        if (!explicitFrom) {
-          const isAdmin = await apiFetch('/api/admin/companies').then((r) => r.ok).catch(() => false)
-          navigate(isAdmin ? '/app/admin' : '/app', { replace: true })
-        } else {
-          navigate(redirectTo, { replace: true })
-        }
+        navigate(redirectTo, { replace: true })
         return
       }
 

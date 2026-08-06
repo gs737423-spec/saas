@@ -5,7 +5,7 @@ import {
   MoreVertical, Eye, ShieldAlert, Users2, AlertCircle,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor, maskCnpj } from '@/lib/adminUi'
+import { hueFor, initialsFor, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
 import MarketplaceRow from '@/components/admin/MarketplaceRow'
 import EmptyState from '@/components/admin/EmptyState'
 
@@ -24,15 +24,6 @@ interface Company {
 }
 
 type Feedback = { type: 'success' | 'error'; text: string } | null
-
-// Espelha CnpjInfo de api/cnpj-lookup.ts (só os campos usados aqui) —
-// duplicado de propósito, mesmo padrão de ConversionSection.tsx: front não
-// importa tipos do lado serverless (build target diferente).
-interface CnpjInfo {
-  razaoSocial: string | null
-  nomeFantasia: string | null
-  situacaoCadastral: string | null
-}
 
 const statusLabel: Record<string, { label: string; color: string; bg: string; border: string }> = {
   onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
@@ -87,10 +78,9 @@ export default function AdminClients() {
     setCreatingCompany(true)
     setFeedback(null)
     try {
-      const notesParts = [
-        form.razaoSocial ? `Razão Social: ${form.razaoSocial}` : null,
-        cnpjInfo?.situacaoCadastral ? `Situação na Receita: ${cnpjInfo.situacaoCadastral}` : null,
-      ].filter(Boolean)
+      const receitaData: CnpjInfo | null = cnpjInfo
+        ? { ...cnpjInfo, razaoSocial: form.razaoSocial || cnpjInfo.razaoSocial, nomeFantasia: form.nomeFantasia || cnpjInfo.nomeFantasia }
+        : (form.razaoSocial ? { razaoSocial: form.razaoSocial, nomeFantasia: form.nomeFantasia, situacaoCadastral: null, dataSituacaoCadastral: null, dataInicioAtividade: null, atividadePrincipal: null, cnaeCodigo: null, cnaesSecundarios: [], naturezaJuridica: null, porte: null, capitalSocial: null, telefone: null, email: null, endereco: null, matrizFilial: null, simplesNacional: null, socios: [] } : null)
 
       const res = await apiFetchJson<{ ok: boolean; message?: string; company?: { id: string } }>('/api/admin/companies', {
         method: 'POST',
@@ -100,7 +90,7 @@ export default function AdminClients() {
           cnpj: form.cnpj || null,
           contactEmail: form.email || null,
           whatsapp: form.whatsapp || null,
-          notes: notesParts.length > 0 ? notesParts.join(' · ') : null,
+          receitaData,
         }),
       })
 
@@ -312,6 +302,20 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
             razaoSocial: res.razaoSocial ?? null,
             nomeFantasia: res.nomeFantasia ?? null,
             situacaoCadastral: res.situacaoCadastral ?? null,
+            dataSituacaoCadastral: res.dataSituacaoCadastral ?? null,
+            dataInicioAtividade: res.dataInicioAtividade ?? null,
+            atividadePrincipal: res.atividadePrincipal ?? null,
+            cnaeCodigo: res.cnaeCodigo ?? null,
+            cnaesSecundarios: res.cnaesSecundarios ?? [],
+            naturezaJuridica: res.naturezaJuridica ?? null,
+            porte: res.porte ?? null,
+            capitalSocial: res.capitalSocial ?? null,
+            telefone: res.telefone ?? null,
+            email: res.email ?? null,
+            endereco: res.endereco ?? null,
+            matrizFilial: res.matrizFilial ?? null,
+            simplesNacional: res.simplesNacional ?? null,
+            socios: res.socios ?? [],
           }
           setCnpjInfo(info)
           setCnpjStatus('found')

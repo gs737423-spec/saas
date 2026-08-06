@@ -12,6 +12,7 @@ export interface MockLead {
 
   // Bloco A — o que o lead preencheu no formulário
   nomeContato: string
+  email: string
   whatsapp: string
   assunto: string
   interesses: ('mercadolivre' | 'shopee' | 'amazon' | 'lojapropria')[]
@@ -37,6 +38,7 @@ export const MOCK_LEADS: MockLead[] = [
     dataSolicitacao: '03/08/2026',
     status: 'pendente',
     nomeContato: 'Fernanda Ribeiro',
+    email: 'fernanda@novaeracalcados.com.br',
     whatsapp: '+55 21 97777-1234',
     assunto: 'Quer consolidar Mercado Livre e Shopee numa gestão só',
     interesses: ['mercadolivre', 'shopee'],
@@ -58,6 +60,7 @@ export const MOCK_LEADS: MockLead[] = [
     dataSolicitacao: '04/08/2026',
     status: 'pendente',
     nomeContato: 'Paulo Andrade',
+    email: 'paulo@casaverdeutilidades.com.br',
     whatsapp: '+55 41 96666-5678',
     assunto: 'Loja própria crescendo, quer entrar em marketplace pela primeira vez',
     interesses: ['lojapropria', 'mercadolivre'],
@@ -79,6 +82,7 @@ export const MOCK_LEADS: MockLead[] = [
     dataSolicitacao: '05/08/2026',
     status: 'pendente',
     nomeContato: 'Juliana Kimura',
+    email: 'juliana@techfastacessorios.com.br',
     whatsapp: '+55 11 95555-9012',
     assunto: 'Já vende em 3 canais, precisa parar de perder estoque',
     interesses: ['mercadolivre', 'shopee', 'amazon'],

@@ -1,14 +1,53 @@
 import { useState } from 'react'
-import { X, Phone, Calendar, ClipboardCheck, Inbox, MessageCircle, Scale, Landmark, MapPin, Users, Tag, ThumbsDown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, Phone, Calendar, ClipboardCheck, Inbox, MessageCircle, Scale, Landmark, MapPin, Users, Tag, ThumbsDown, Loader2, CheckCircle2 } from 'lucide-react'
 import { MOCK_LEADS, type MockLead } from '@/lib/mockLeads'
+import { apiFetchJson } from '@/lib/apiFetch'
+import type { CnpjInfo } from '@/lib/adminUi'
 import MarketplaceRow from '@/components/admin/MarketplaceRow'
 import EmptyState from '@/components/admin/EmptyState'
+
+// Converte "R$ 50.000,00" -> 50000 (número puro, mesmo shape de
+// CnpjInfo.capitalSocial). Só usado nesse mock — a Receita real já devolve
+// número, ver api/cnpj-lookup.ts.
+function parseCapitalSocial(raw: string): number | null {
+  const n = Number(raw.replace(/[^\d,]/g, '').replace(',', '.'))
+  return Number.isFinite(n) ? n : null
+}
+
+function leadToReceitaData(lead: MockLead): CnpjInfo {
+  return {
+    razaoSocial: lead.razaoSocial,
+    nomeFantasia: lead.nomeFantasia,
+    situacaoCadastral: lead.statusReceita,
+    dataSituacaoCadastral: null,
+    dataInicioAtividade: lead.dataAbertura,
+    atividadePrincipal: lead.cnaeDescricao,
+    cnaeCodigo: lead.cnaeCodigo,
+    cnaesSecundarios: [],
+    naturezaJuridica: lead.naturezaJuridica,
+    porte: null,
+    capitalSocial: parseCapitalSocial(lead.capitalSocial),
+    telefone: null,
+    email: lead.email,
+    endereco: lead.endereco,
+    matrizFilial: null,
+    simplesNacional: null,
+    socios: lead.socios,
+  }
+}
 
 // Solicitações que chegam pelo formulário do site — hoje só existem por
 // e-mail (api/leads.ts). Esta tela é o desenho de UI do fluxo de triagem;
 // os dados são mockados até existir uma tabela `leads` real no Supabase.
 export default function AdminLeads() {
+  const [leads, setLeads] = useState<MockLead[]>(MOCK_LEADS)
   const [analyzing, setAnalyzing] = useState<MockLead | null>(null)
+
+  function handleResolved(leadId: string) {
+    setLeads((prev) => prev.filter((l) => l.id !== leadId))
+    setAnalyzing(null)
+  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
@@ -18,7 +57,7 @@ export default function AdminLeads() {
         </span>
       </div>
 
-      {MOCK_LEADS.length === 0 ? (
+      {leads.length === 0 ? (
         <EmptyState
           icon={Inbox}
           title="Tudo limpo por aqui!"
@@ -40,7 +79,7 @@ export default function AdminLeads() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {MOCK_LEADS.map((lead) => (
+              {leads.map((lead) => (
                 <tr key={lead.id} className="transition-colors hover:bg-white/[0.03]">
                   <td className="px-4 py-3 text-sm font-medium text-text-primary">{lead.nomeFantasia}</td>
                   <td className="px-4 py-3 text-[13px] text-text-muted">{lead.cnpj}</td>
@@ -66,7 +105,7 @@ export default function AdminLeads() {
         </div>
       )}
 
-      {analyzing && <LeadModal lead={analyzing} onClose={() => setAnalyzing(null)} />}
+      {analyzing && <LeadModal lead={analyzing} onClose={() => setAnalyzing(null)} onResolved={() => handleResolved(analyzing.id)} />}
     </div>
   )
 }
@@ -87,8 +126,50 @@ function Field({ icon: Icon, label, value }: { icon: typeof Phone; label: string
   )
 }
 
-function LeadModal({ lead, onClose }: { lead: MockLead; onClose: () => void }) {
+function LeadModal({ lead, onClose, onResolved }: { lead: MockLead; onClose: () => void; onResolved: () => void }) {
+  const navigate = useNavigate()
   const waHref = `https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`
+  const [approving, setApproving] = useState(false)
+  const [approveError, setApproveError] = useState<string | null>(null)
+
+  // Cria a empresa de verdade (mesmo endpoint do cadastro manual), com o
+  // snapshot completo da Receita anexado, e dispara o convite real por
+  // e-mail — a lista de leads em si ainda é mock (sem tabela `leads`), mas o
+  // resultado da aprovação (empresa + acesso) é real, não simulado.
+  async function handleApprove() {
+    setApproving(true)
+    setApproveError(null)
+    try {
+      const res = await apiFetchJson<{ ok: boolean; message?: string; company?: { id: string } }>('/api/admin/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: lead.nomeFantasia,
+          cnpj: lead.cnpj,
+          contactEmail: lead.email,
+          whatsapp: lead.whatsapp,
+          receitaData: leadToReceitaData(lead),
+        }),
+      })
+      if (!res?.ok || !res.company) {
+        setApproveError(res?.message ?? 'Erro ao criar empresa.')
+        return
+      }
+      const inviteRes = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lead.email, companyId: res.company.id }),
+      })
+      if (!inviteRes?.ok) {
+        setApproveError(`Empresa criada, mas o convite falhou: ${inviteRes?.message ?? 'erro desconhecido'}. Convide pela tela da empresa.`)
+        return
+      }
+      onResolved()
+      navigate(`/app/admin/empresa/${res.company.id}`)
+    } finally {
+      setApproving(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" onClick={onClose}>
@@ -116,6 +197,7 @@ function LeadModal({ lead, onClose }: { lead: MockLead; onClose: () => void }) {
             <SectionTitle>Dados do Formulário</SectionTitle>
             <div className="flex flex-col gap-4">
               <Field icon={Users} label="Nome do contato" value={lead.nomeContato} />
+              <Field icon={MessageCircle} label="E-mail" value={lead.email} />
               <Field
                 icon={Phone}
                 label="WhatsApp"
@@ -151,20 +233,25 @@ function LeadModal({ lead, onClose }: { lead: MockLead; onClose: () => void }) {
         </div>
 
         <p className="shrink-0 border-t border-border-subtle px-6 py-2.5 text-[11px] text-text-muted">
-          Dados de exemplo. Próximo passo: persistir solicitações reais numa tabela `leads` e ligar "Aprovar" à criação de empresa em Clientes.
+          Lista de solicitações é de exemplo (sem tabela `leads` real ainda) — mas "Aprovar" cria a empresa e envia o convite de verdade.
         </p>
+
+        {approveError && (
+          <p className="mx-6 mb-2 flex items-center gap-1.5 text-[12px] text-accent-rose">{approveError}</p>
+        )}
 
         {/* Rodapé — CTAs */}
         <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-bg-primary/30 p-4">
-          <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-lg border border-border-subtle px-4 py-2.5 text-[13px] font-medium text-text-secondary transition-colors hover:bg-white/5">
+          <button type="button" onClick={onClose} disabled={approving} className="flex items-center gap-1.5 rounded-lg border border-border-subtle px-4 py-2.5 text-[13px] font-medium text-text-secondary transition-colors hover:bg-white/5 disabled:opacity-50">
             <ThumbsDown className="h-3.5 w-3.5" /> Recusar
           </button>
           <button
             type="button"
-            disabled
-            title="Depende da tabela `leads` real ainda não existir"
-            className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] opacity-60 disabled:cursor-not-allowed"
+            onClick={handleApprove}
+            disabled={approving}
+            className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {approving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
             Aprovar e Criar Login
           </button>
         </div>

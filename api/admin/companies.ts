@@ -4,8 +4,32 @@ import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 
 const DELETE_LIMIT = { max: 10, windowSeconds: 1800 }
-const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status'
+const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status, receita_data'
 const STATUSES = ['onboarding', 'ativo', 'em_risco', 'suspenso'] as const
+
+// Snapshot da Receita Federal — mesmo shape de CnpjInfo (api/cnpj-lookup.ts),
+// gravado como veio, sem reformatar. Todos os campos são opcionais porque a
+// consulta pode ter vindo parcial (ex: lead antigo sem alguns dados).
+interface ReceitaData {
+  razaoSocial?: string | null
+  nomeFantasia?: string | null
+  situacaoCadastral?: string | null
+  dataSituacaoCadastral?: string | null
+  dataInicioAtividade?: string | null
+  atividadePrincipal?: string | null
+  cnaeCodigo?: string | null
+  cnaesSecundarios?: string[]
+  naturezaJuridica?: string | null
+  porte?: string | null
+  capitalSocial?: number | null
+  telefone?: string | null
+  email?: string | null
+  endereco?: string | null
+  matrizFilial?: string | null
+  simplesNacional?: string | null
+  socios?: string[]
+  inscricaoEstadual?: string | null
+}
 
 function mapCompany(c: {
   id: string
@@ -18,6 +42,7 @@ function mapCompany(c: {
   whatsapp: string | null
   website: string | null
   status: string
+  receita_data: ReceitaData | null
   company_members?: { count: number }[]
 }) {
   return {
@@ -31,6 +56,7 @@ function mapCompany(c: {
     whatsapp: c.whatsapp,
     website: c.website,
     status: c.status,
+    receitaData: c.receita_data,
     memberCount: Array.isArray(c.company_members) ? (c.company_members[0]?.count ?? 0) : 0,
   }
 }
@@ -70,6 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const cnpj = typeof req.body?.cnpj === 'string' ? req.body.cnpj.trim() || null : null
       const whatsapp = typeof req.body?.whatsapp === 'string' ? req.body.whatsapp.trim() || null : null
       const website = typeof req.body?.website === 'string' ? req.body.website.trim() || null : null
+      const receitaData = req.body?.receitaData && typeof req.body.receitaData === 'object' ? (req.body.receitaData as ReceitaData) : null
       if (!name) {
         res.status(400).json({ ok: false, message: 'Nome da empresa é obrigatório.' })
         return
@@ -77,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data, error } = await supabase
         .from('companies')
-        .insert({ name, contact_email: contactEmail, contact_phone: contactPhone, notes, cnpj, whatsapp, website })
+        .insert({ name, contact_email: contactEmail, contact_phone: contactPhone, notes, cnpj, whatsapp, website, receita_data: receitaData })
         .select(COMPANY_COLUMNS)
         .single()
       if (error) throw new Error(error.message)
@@ -99,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const body = req.body ?? {}
-      const update: Record<string, string | null> = {}
+      const update: Record<string, string | null | ReceitaData> = {}
       if (typeof body.name === 'string' && body.name.trim()) update.name = body.name.trim()
       if ('contactEmail' in body) update.contact_email = typeof body.contactEmail === 'string' ? body.contactEmail.trim() || null : null
       if ('contactPhone' in body) update.contact_phone = typeof body.contactPhone === 'string' ? body.contactPhone.trim() || null : null
@@ -108,6 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if ('whatsapp' in body) update.whatsapp = typeof body.whatsapp === 'string' ? body.whatsapp.trim() || null : null
       if ('website' in body) update.website = typeof body.website === 'string' ? body.website.trim() || null : null
       if ('status' in body && STATUSES.includes(body.status)) update.status = body.status
+      if (body.receitaData && typeof body.receitaData === 'object') update.receita_data = body.receitaData as ReceitaData
 
       if (Object.keys(update).length === 0) {
         res.status(400).json({ ok: false, message: 'Nenhum campo pra atualizar.' })
