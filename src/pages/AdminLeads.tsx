@@ -230,12 +230,12 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-4 py-8" role="dialog" aria-modal="true" onClick={onClose}>
       <div
-        className="glass-panel flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
+        className="glass-panel mx-auto flex w-full max-w-4xl flex-col rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho fixo */}
+        {/* Cabeçalho */}
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle p-6">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -251,8 +251,8 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
           </button>
         </div>
 
-        {/* Corpo — 2 blocos */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto p-6 md:grid-cols-2">
+        {/* Corpo — 2 blocos, sem rolagem interna: página única, tudo visível */}
+        <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
           <div className="glass-panel rounded-xl p-5">
             <SectionTitle>Dados do Formulário</SectionTitle>
             <div className="flex flex-col gap-4">

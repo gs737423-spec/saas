@@ -180,9 +180,9 @@ export default function TopNav() {
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
         {!isAdminArea && (
           <>
-            <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
             <SearchMenu />
             <NotificationsMenu />
           </>
