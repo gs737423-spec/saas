@@ -1,6 +1,25 @@
 import { supabase } from './supabaseClient'
 import { isDemoModeActive } from '@/contexts/DemoModeContext'
+import { getViewAsCompanyId } from '@/contexts/ViewAsContext'
 import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, demoFinanceOverview, demoFinanceTransactions, demoFinanceDaily } from './demoData'
+
+/** "Acessar Painel do Lojista" — só nas leituras de dashboard (GET), nunca
+ *  em escrita (POST/PATCH/DELETE seguem exigindo membership real do
+ *  próprio usuário, requireCompany.ts não muda isso). O backend já
+ *  autoriza platform_admin a passar ?company_id= explícito (migration 005
+ *  + requireCompany.ts) — aqui só anexamos o parâmetro quando o modo
+ *  "ver como" está ativo. */
+function withViewAsCompanyId(url: string, init?: RequestInit): string {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (method !== 'GET') return url
+  if (isDemoModeActive()) return url
+  if (!url.startsWith('/api/dashboard/')) return url
+  const companyId = getViewAsCompanyId()
+  if (!companyId) return url
+  const withParam = new URL(url, 'http://x')
+  withParam.searchParams.set('company_id', companyId)
+  return withParam.pathname + withParam.search
+}
 
 /** fetch() com o access_token do Supabase Auth no header Authorization —
  *  todo endpoint de api/** que exige sessão (requireUser/requireCompany/
@@ -12,7 +31,7 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(init?.headers ?? {}),
   }
-  return fetch(url, { ...init, headers })
+  return fetch(withViewAsCompanyId(url, init), { ...init, headers })
 }
 
 // Modo Demonstração — intercepta só os 4 endpoints de leitura do dashboard

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
-  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
-  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
-  CheckCircle, AlertCircle, Link as LinkIcon, User, Building2, ExternalLink,
+  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
+  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
+  User, Building2, ExternalLink,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
+import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
+import { useViewAs } from '@/contexts/ViewAsContext'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 export type AdminCompanyTab = 'visao-geral' | 'acessos' | 'integracoes' | 'cobranca' | 'suporte' | 'configuracoes'
@@ -46,31 +48,20 @@ const STATUS_OPTIONS = [
   { value: 'suspenso', label: 'Suspensa' },
 ]
 
-const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
-  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
-  ativo: { label: 'Ativa', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
-  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
-  suspenso: { label: 'Suspensa', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
+const STATUS_STYLE: Record<string, { label: string; variant: StatusBadgeVariant }> = {
+  onboarding: { label: 'Onboarding', variant: 'info' },
+  ativo: { label: 'Ativa', variant: 'success' },
+  em_risco: { label: 'Em risco', variant: 'warning' },
+  suspenso: { label: 'Suspensa', variant: 'danger' },
 }
 
-// Só Mercado Livre tem integração real hoje — os outros 3 aparecem como "não
-// existe ainda" (verdade, não é mock) até virarem integrações de verdade.
-// Logos reais (src/site/logos.tsx), não ícone genérico.
-const OTHER_MARKETPLACES: { name: string; Logo: () => React.JSX.Element }[] = [
-  { name: 'Shopee', Logo: LogoShopee },
+// Mercado Livre e Shopee têm integração real (sync de verdade, ver
+// src/server/integrations/{mercadolivre,shopee}/**) — Amazon/Loja Própria
+// ainda não (verdade, não é mock) até virarem integrações de verdade.
+const NOT_YET_IMPLEMENTED: { name: string; Logo: () => React.JSX.Element }[] = [
   { name: 'Amazon', Logo: LogoAmazon },
   { name: 'Loja Própria', Logo: LogoLojaPropria },
 ]
-
-interface ActivityEntry {
-  id: string
-  companyId: string | null
-  provider: string
-  eventType: string
-  status: 'info' | 'success' | 'error'
-  message: string | null
-  createdAt: string
-}
 
 // Score derivado de sinais reais (integração conectada, tem acesso vinculado,
 // status da conta) — nunca um número solto. Ver HealthScoreRing.
@@ -102,6 +93,7 @@ type Feedback = { type: 'success' | 'error'; text: string } | null
 export default function AdminCompany() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { enterViewAs } = useViewAs()
 
   const [company, setCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
@@ -130,14 +122,13 @@ export default function AdminCompany() {
 
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null)
   const [loadingIntegration, setLoadingIntegration] = useState(true)
+  const [shopeeIntegration, setShopeeIntegration] = useState<IntegrationStatus | null>(null)
+  const [loadingShopee, setLoadingShopee] = useState(true)
 
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const [tab, setTab] = useState<AdminCompanyTab>('visao-geral')
-
-  const [activity, setActivity] = useState<ActivityEntry[]>([])
-  const [loadingActivity, setLoadingActivity] = useState(true)
   const [togglingStatus, setTogglingStatus] = useState(false)
 
   const loadCompany = useCallback(async () => {
@@ -188,20 +179,20 @@ export default function AdminCompany() {
     setLoadingIntegration(false)
   }, [id])
 
-  const loadActivity = useCallback(async () => {
+  const loadShopeeIntegration = useCallback(async () => {
     if (!id) return
-    setLoadingActivity(true)
-    const res = await apiFetchJson<{ ok: boolean; activity: ActivityEntry[] }>('/api/admin/activity?limit=50')
-    setActivity((res?.activity ?? []).filter((a) => a.companyId === id))
-    setLoadingActivity(false)
+    setLoadingShopee(true)
+    const res = await apiFetchJson<IntegrationStatus & { ok: boolean }>(`/api/integrations/status?company_id=${id}&provider=shopee`)
+    setShopeeIntegration(res?.ok ? res : null)
+    setLoadingShopee(false)
   }, [id])
 
   useEffect(() => {
     loadCompany()
     loadMembers()
     loadIntegration()
-    loadActivity()
-  }, [loadCompany, loadMembers, loadIntegration, loadActivity])
+    loadShopeeIntegration()
+  }, [loadCompany, loadMembers, loadIntegration, loadShopeeIntegration])
 
   async function handleToggleStatus() {
     if (!id) return
@@ -340,8 +331,9 @@ export default function AdminCompany() {
   }
 
   const isConnected = integration?.status === 'connected'
-  const connectedCount = isConnected ? 1 : 0
-  const healthScore = computeHealthScore(company, members.length, isConnected)
+  const isShopeeConnected = shopeeIntegration?.status === 'connected'
+  const connectedCount = (isConnected ? 1 : 0) + (isShopeeConnected ? 1 : 0)
+  const healthScore = computeHealthScore(company, members.length, isConnected || isShopeeConnected)
   const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
 
   return (
@@ -369,9 +361,7 @@ export default function AdminCompany() {
                 <button type="button" onClick={() => setTab('configuracoes')} title="Editar" className="text-text-muted transition-colors hover:text-text-primary">
                   <PenLine className="h-3.5 w-3.5" />
                 </button>
-                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${st.color} ${st.bg}`}>
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" /> {st.label}
-                </span>
+                <StatusBadge variant={st.variant} label={st.label} />
               </div>
               <p className="mt-0.5 text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)} · ID #{company.id.slice(0, 8)}</p>
               <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-medium text-text-secondary">
@@ -400,9 +390,9 @@ export default function AdminCompany() {
               </button>
               <button
                 type="button"
-                title="Ainda não implementado — depende de fluxo de personificação"
-                disabled
-                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] opacity-90 shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                title="Abre o dashboard real do cliente, somente leitura — pra usar em call de consultoria"
+                onClick={() => { enterViewAs(company.id, company.name); navigate('/app') }}
+                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <ExternalLink className="h-4 w-4" /> Acessar Painel do Lojista
               </button>
@@ -429,20 +419,6 @@ export default function AdminCompany() {
         {tab === 'visao-geral' && (
           <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
             <div className="flex flex-col gap-4">
-              <div className="glass-panel admin-card flex items-center justify-between gap-4 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><TrendingUp className="h-4 w-4" /></span>
-                  <div>
-                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted">Receita (últimos 30 dias) <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span></p>
-                    <p className="text-3xl font-bold tabular-nums text-text-primary">R$ 1.870,45</p>
-                    <p className="text-[11px] font-medium text-accent-emerald">↑ 12% vs mês anterior</p>
-                  </div>
-                </div>
-                <svg width="96" height="32" viewBox="0 0 96 32" className="shrink-0 text-accent-emerald" aria-hidden="true">
-                  <polyline points="0,26 16,22 32,24 48,14 64,17 80,6 96,4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-                </svg>
-              </div>
-
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <button type="button" onClick={() => setTab('acessos')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
@@ -466,70 +442,55 @@ export default function AdminCompany() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-2">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
-                    <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
-                      Ver todas as integrações <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex flex-col divide-y divide-border-subtle">
-                    <div className="flex items-center justify-between py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
-                          <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
-                          {isConnected ? 'Operacional' : 'Não conectado'}
-                        </span>
-                        <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
-                      </div>
-                    </div>
-                    {OTHER_MARKETPLACES.map((mp) => (
-                      <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
-                          <p className="text-sm font-medium text-text-primary">{mp.name}</p>
-                        </div>
-                        <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
+                  <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
+                    Ver todas as integrações <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
-
-                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-1">
-                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                    <Activity className="h-3.5 w-3.5" /> Atividade recente
-                  </h3>
-                  {loadingActivity ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
-                  ) : activity.length === 0 ? (
-                    <p className="py-2 text-xs text-text-muted">Nenhuma atividade registrada ainda.</p>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {activity.slice(0, 8).map((a) => (
-                        <div key={a.id} className="flex items-start gap-2.5 rounded-lg px-1 py-1.5 text-xs">
-                          {a.status === 'success' ? (
-                            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-emerald" />
-                          ) : a.status === 'error' ? (
-                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-rose" />
-                          ) : (
-                            <LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-cyan" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-text-secondary">{a.message ?? a.eventType}</p>
-                            <p className="text-xs text-text-muted">{timeAgo(a.createdAt)}</p>
-                          </div>
-                        </div>
-                      ))}
+                <div className="flex flex-col divide-y divide-border-subtle">
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
+                        <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
                     </div>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Shopee</p>
+                        <p className="text-[11px] text-text-muted">{shopeeIntegration?.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isShopeeConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isShopeeConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  {NOT_YET_IMPLEMENTED.map((mp) => (
+                    <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                        <p className="text-sm font-medium text-text-primary">{mp.name}</p>
+                      </div>
+                      <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -540,8 +501,8 @@ export default function AdminCompany() {
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
                   <p className="mt-1.5 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {isConnected ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
-                    {isConnected ? 'Integração ok' : 'Sem integração'}
+                    {isConnected || isShopeeConnected ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
+                    {isConnected || isShopeeConnected ? 'Integração ok' : 'Sem integração'}
                   </p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
                     {members.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
@@ -559,7 +520,7 @@ export default function AdminCompany() {
                   <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
                 </h3>
                 <div className="flex flex-col gap-2">
-                  {!isConnected && (
+                  {!isConnected && !isShopeeConnected && (
                     <div className="flex items-start justify-between gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5">
                       <div className="flex items-start gap-2">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
@@ -577,7 +538,7 @@ export default function AdminCompany() {
                       <button type="button" onClick={() => setTab('acessos')} className="shrink-0 rounded-md bg-accent-amber/15 px-2 py-1 text-[10px] font-semibold text-accent-amber">Resolver</button>
                     </div>
                   )}
-                  {isConnected && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
+                  {(isConnected || isShopeeConnected) && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
                 </div>
               </div>
 
@@ -728,7 +689,42 @@ export default function AdminCompany() {
               )}
             </div>
 
-            {OTHER_MARKETPLACES.map((mp) => (
+            <div className="glass-panel admin-card rounded-xl p-6">
+              <div className="mb-3 flex items-center gap-2.5">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Shopee</h3>
+                  <span className={`text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isShopeeConnected ? 'Operacional' : 'Não conectado'}</span>
+                </div>
+              </div>
+              {loadingShopee ? (
+                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              ) : shopeeIntegration ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-baseline gap-6">
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.productsCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.inventoryCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">estoque</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.ordersCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    {shopeeIntegration.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'Cliente ainda não conectou a Shopee.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+              )}
+            </div>
+
+            {NOT_YET_IMPLEMENTED.map((mp) => (
               <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-6 opacity-60">
                 <div className="flex items-center gap-2.5">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>

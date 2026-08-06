@@ -8,6 +8,8 @@ import { apiFetch } from '@/lib/apiFetch'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon } from '@/site/logos'
 import { useLeadsCount } from '@/lib/useLeadsCount'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePeriod } from '@/contexts/PeriodContext'
+import PeriodDropdown from '@/components/common/PeriodDropdown'
 
 interface Company {
   id: string
@@ -27,6 +29,7 @@ export default function Admin() {
   const [unauthorized, setUnauthorized] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
   const leadsCount = useLeadsCount()
+  const { options, period, periodKey, setPeriodKey } = usePeriod()
 
   const loadCompanies = useCallback(async () => {
     try {
@@ -78,11 +81,8 @@ export default function Admin() {
     )
   }
 
-  const now = new Date()
-  const newThisMonth = companies.filter((c) => {
-    const d = new Date(c.createdAt)
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  }).length
+  const since = new Date(Date.now() - period.days * 24 * 60 * 60 * 1000)
+  const newInPeriod = companies.filter((c) => new Date(c.createdAt) >= since).length
   const activeAccess = companies.reduce((s, c) => s + c.memberCount, 0)
   const withoutAccess = companies.filter((c) => c.memberCount === 0).length
 
@@ -92,12 +92,15 @@ export default function Admin() {
     <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
       {/* Barra de boas-vindas — dado real é só o nome; "operando normalmente"
           é uma frase de clima, não uma checagem real de uptime. */}
-      <div className="flex items-center gap-2.5 text-[13px] text-text-secondary">
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
-        </span>
-        Olá, {firstName}. O ecossistema está operando normalmente hoje.
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 text-[13px] text-text-secondary">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
+          </span>
+          Olá, {firstName}. O ecossistema está operando normalmente hoje.
+        </div>
+        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="compact" />
       </div>
 
       {/* Banner do funil comercial — leva pra Solicitações, contagem real
@@ -123,7 +126,7 @@ export default function Admin() {
           são ilustrativos, marcados, até existir sync real de pedidos/GMV). */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard icon={Building} color="cyan" value={companies.length} label={companies.length === 1 ? 'cliente' : 'clientes'} />
-        <KpiCard icon={UserPlus} color="emerald" value={newThisMonth} label="novos clientes (mês)" />
+        <KpiCard icon={UserPlus} color="emerald" value={newInPeriod} label="novos clientes no período" />
         <KpiCard icon={Users2} color="violet" value={activeAccess} label="acessos ativos" />
         <KpiCard icon={PackageCheck} color="blue" value="128" label="pedidos sincronizados (hoje)" example />
         <KpiCard icon={CircleDollarSign} color="amber" value="R$ 84,2k" label="GMV transacionado (mês)" example />

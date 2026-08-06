@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { useDemoMode } from '@/contexts/DemoModeContext'
+import { useViewAs } from '@/contexts/ViewAsContext'
 import { apiFetch } from '@/lib/apiFetch'
 import { useLeadsCount } from '@/lib/useLeadsCount'
 import Brand from '@/components/layout/Brand'
@@ -76,6 +77,7 @@ export default function TopNav() {
   const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const { demoMode, enterDemoMode, exitDemoMode } = useDemoMode()
+  const { viewAs, exitViewAs } = useViewAs()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -215,6 +217,19 @@ export default function TopNav() {
           >
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Demonstração</span>
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {!isAdminArea && viewAs && (
+          <button
+            type="button"
+            onClick={() => { exitViewAs(); navigate(`/app/admin/empresa/${viewAs.companyId}`) }}
+            title={`Visualizando como ${viewAs.companyName} (dado real, somente leitura) — sair`}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-cyan"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Visualizando: {viewAs.companyName}</span>
             <X className="h-3.5 w-3.5" />
           </button>
         )}

@@ -3,6 +3,8 @@ import { ConnectionProvider } from '@/contexts/ConnectionContext'
 import { PeriodProvider } from '@/contexts/PeriodContext'
 import { InventorySettingsProvider } from '@/contexts/InventorySettingsContext'
 import { DemoModeProvider } from '@/contexts/DemoModeContext'
+import { ToastProvider } from '@/contexts/ToastContext'
+import { ViewAsProvider } from '@/contexts/ViewAsContext'
 import BottomNav from '@/components/layout/BottomNav'
 import TopNav from '@/components/layout/TopNav'
 import Dashboard from '@/pages/Dashboard'
@@ -30,6 +32,8 @@ export default function App() {
   useIdleLogout()
 
   return (
+    <ToastProvider>
+    <ViewAsProvider>
     <DemoModeProvider>
     <ConnectionProvider>
     <PeriodProvider>
@@ -73,5 +77,7 @@ export default function App() {
     </PeriodProvider>
     </ConnectionProvider>
     </DemoModeProvider>
+    </ViewAsProvider>
+    </ToastProvider>
   )
 }

@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, Phone, Calendar, ClipboardCheck, Inbox, MessageCircle, Scale, Landmark, MapPin, Users, Tag, ThumbsDown, Loader2, CheckCircle2 } from 'lucide-react'
 import { apiFetchJson } from '@/lib/apiFetch'
+import { useToast } from '@/contexts/ToastContext'
 import EmptyState from '@/components/admin/EmptyState'
+import StatusBadge from '@/components/common/StatusBadge'
+import SortableHeader from '@/components/common/SortableHeader'
+import PaginationBar from '@/components/common/PaginationBar'
+import { useSortedPaginatedRows } from '@/lib/useSortedPaginatedRows'
 
 interface ReceitaData {
   razaoSocial?: string | null
@@ -59,6 +64,15 @@ export default function AdminLeads() {
     setAnalyzing(null)
   }
 
+  const { sortKey, sortDir, handleSort, page, setPage, totalPages, pageRows, totalRows } = useSortedPaginatedRows<Lead, 'company' | 'createdAt'>(
+    leads,
+    {
+      company: (a, b) => (a.receitaData?.nomeFantasia ?? a.company).localeCompare(b.receitaData?.nomeFantasia ?? b.company),
+      createdAt: (a, b) => a.createdAt.localeCompare(b.createdAt),
+    },
+    'createdAt'
+  )
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
       {loading ? (
@@ -75,41 +89,42 @@ export default function AdminLeads() {
         // <table> nativa em vez de grid manual — colunas de cabeçalho e linha
         // alinham por construção, sem depender de fr/gap ficarem sincronizados
         // entre dois elementos separados (era a causa do desalinhamento).
-        <div className="glass-panel overflow-x-auto rounded-xl">
-          <table className="w-full min-w-[720px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">CNPJ</th>
-                <th className="px-4 py-3 font-semibold">Solicitado em</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {leads.map((lead) => (
-                <tr key={lead.id} className="transition-colors hover:bg-white/[0.03]">
-                  <td className="max-w-[220px] truncate px-4 py-3 text-sm font-medium text-text-primary" title={lead.receitaData?.nomeFantasia ?? lead.company}>{lead.receitaData?.nomeFantasia ?? lead.company}</td>
-                  <td className="px-4 py-3 text-[13px] text-text-muted">{lead.cnpj}</td>
-                  <td className="px-4 py-3 text-[13px] text-text-muted">{fmtDate(lead.createdAt)}</td>
-                  <td className="px-4 py-3">
-                    <span className="flex w-fit items-center gap-1.5 rounded-full bg-accent-amber/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent-amber">
-                      <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" /> Pendente
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setAnalyzing(lead)}
-                      className="ml-auto flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1.5 text-[12px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/20"
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" /> Analisar Cadastro
-                    </button>
-                  </td>
+        <div className="glass-panel overflow-hidden rounded-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                  <SortableHeader label="Empresa" sortKeyValue="company" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                  <th className="px-4 py-3 font-semibold">CNPJ</th>
+                  <SortableHeader label="Solicitado em" sortKeyValue="createdAt" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border-subtle">
+                {pageRows.map((lead) => (
+                  <tr key={lead.id} className="transition-colors hover:bg-white/[0.03]">
+                    <td className="max-w-[220px] truncate px-4 py-3 text-sm font-medium text-text-primary" title={lead.receitaData?.nomeFantasia ?? lead.company}>{lead.receitaData?.nomeFantasia ?? lead.company}</td>
+                    <td className="px-4 py-3 text-[13px] text-text-muted">{lead.cnpj}</td>
+                    <td className="px-4 py-3 text-[13px] text-text-muted">{fmtDate(lead.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge variant="warning" label="Pendente" />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setAnalyzing(lead)}
+                        className="ml-auto flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1.5 text-[12px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/20"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" /> Analisar Cadastro
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <PaginationBar page={page} totalPages={totalPages} totalRows={totalRows} pageSize={10} onPageChange={setPage} />
         </div>
       )}
 
@@ -137,6 +152,7 @@ function Field({ icon: Icon, label, value }: { icon: typeof Phone; label: string
 
 function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => void; onResolved: () => void }) {
   const navigate = useNavigate()
+  const toast = useToast()
   const waHref = `https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`
   const [approving, setApproving] = useState(false)
   const [rejecting, setRejecting] = useState(false)
@@ -155,6 +171,7 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
     setRejecting(true)
     try {
       await updateStatus('recusado')
+      toast.success('Solicitação recusada.')
       onResolved()
     } finally {
       setRejecting(false)
@@ -167,7 +184,9 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
   // site não pede e-mail direto) — sem isso não dá pra convidar.
   async function handleApprove() {
     if (!r?.email) {
-      setApproveError('Esse lead não tem e-mail (a Receita Federal não devolveu um pra esse CNPJ). Cadastre a empresa manualmente em Clientes e informe o e-mail de contato lá.')
+      const msg = 'Esse lead não tem e-mail (a Receita Federal não devolveu um pra esse CNPJ). Cadastre a empresa manualmente em Clientes e informe o e-mail de contato lá.'
+      setApproveError(msg)
+      toast.error(msg)
       return
     }
     setApproving(true)
@@ -185,7 +204,9 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
         }),
       })
       if (!res?.ok || !res.company) {
-        setApproveError(res?.message ?? 'Erro ao criar empresa.')
+        const msg = res?.message ?? 'Erro ao criar empresa.'
+        setApproveError(msg)
+        toast.error(msg)
         return
       }
       const inviteRes = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/invite', {
@@ -194,10 +215,13 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
         body: JSON.stringify({ email: r.email, companyId: res.company.id }),
       })
       if (!inviteRes?.ok) {
-        setApproveError(`Empresa criada, mas o convite falhou: ${inviteRes?.message ?? 'erro desconhecido'}. Convide pela tela da empresa.`)
+        const msg = `Empresa criada, mas o convite falhou: ${inviteRes?.message ?? 'erro desconhecido'}. Convide pela tela da empresa.`
+        setApproveError(msg)
+        toast.error(msg)
         return
       }
       await updateStatus('aprovado')
+      toast.success('Cadastro aprovado e perfil criado com sucesso!')
       onResolved()
       navigate(`/app/admin/empresa/${res.company.id}`)
     } finally {
