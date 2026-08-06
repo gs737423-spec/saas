@@ -7,6 +7,9 @@ import { getMarketplaceColor } from '@/data/mockData'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
+import SalesTrendChart from '@/components/produto-detalhe/SalesTrendChart'
+import ProdutoHealthScore, { computeHealthBreakdown } from '@/components/produto-detalhe/ProdutoHealthScore'
+import MarketplacePerformanceBreakdown from '@/components/produto-detalhe/MarketplacePerformanceBreakdown'
 
 type ProductStatus = 'Saudável' | 'Atenção' | 'Crítico' | 'Parado'
 
@@ -132,39 +135,19 @@ function ProdutoDetalheReal({ matches, periodDays }: { matches: DashboardProduct
   const cov = coverageDays(main, periodDays)
   const status = classifyStatus(main, cov)
   const summary = buildSummary(main, status, cov)
+  const { score, breakdown } = computeHealthBreakdown(main.trend, main.margin, cov)
 
   return (
     <div className="space-y-2 sm:space-y-2.5">
       <ProdutoHeader product={main} status={status} summary={summary} />
       <ProdutoKPIs product={main} cov={cov} />
 
-      {matches.length > 1 && (
-        <div className="glass-panel rounded-2xl p-4 sm:p-5">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Por marketplace</h3>
-          <div className="flex flex-col gap-2.5">
-            {sorted.map((p) => {
-              const color = getMarketplaceColor(p.marketplace)
-              return (
-                <div key={p.id} className="flex items-center justify-between gap-3 border-t border-border-subtle/50 pt-2.5 first:border-t-0 first:pt-0">
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="font-medium text-text-primary">{p.marketplace}</span>
-                    <span className="font-mono text-[11px] text-text-muted">{p.sku ?? p.id}</span>
-                  </div>
-                  <div className="text-right text-[13px]">
-                    <span className="font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</span>
-                    <span className="ml-2 text-text-muted">{p.units.toLocaleString('pt-BR')} un</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="glass-panel rounded-2xl p-5 text-center text-xs text-text-muted">
-        Histórico diário de vendas e feed de atividade por produto ainda não existem pra dado real — dependem de uma tabela de série temporal que não foi criada ainda.
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <SalesTrendChart product={main} periodDays={periodDays} />
+        <ProdutoHealthScore status={status} score={score} breakdown={breakdown} coverageDays={cov} stock={main.stock} />
       </div>
+
+      {matches.length > 1 && <MarketplacePerformanceBreakdown matches={matches} />}
     </div>
   )
 }
