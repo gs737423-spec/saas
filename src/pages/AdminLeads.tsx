@@ -134,18 +134,16 @@ export default function AdminLeads() {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-3 text-[12.5px] font-semibold uppercase tracking-wider text-text-muted">{children}</h3>
+  return <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{children}</h3>
 }
 
 function Field({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: React.ReactNode }) {
   if (!value) return null
   return (
-    <div className="flex items-start gap-2.5">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
-      <div className="min-w-0">
-        <p className="text-[11px] text-text-muted">{label}</p>
-        <p className="text-[14.5px] text-text-primary">{value}</p>
-      </div>
+    <div className="flex items-start gap-1.5 border-b border-border-subtle/40 py-1 text-[13px] last:border-0">
+      <Icon className="mt-0.5 h-3 w-3 shrink-0 text-text-muted" />
+      <span className="shrink-0 text-text-muted">{label}:</span>
+      <span className="min-w-0 text-text-primary">{value}</span>
     </div>
   )
 }
@@ -236,7 +234,7 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle p-6">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle p-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="truncate text-lg font-bold text-text-primary">{r?.nomeFantasia ?? lead.company}</h2>
@@ -252,17 +250,17 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
         </div>
 
         {/* Corpo — 2 blocos, sem rolagem interna: página única, tudo visível */}
-        <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-          <div className="glass-panel rounded-xl p-5">
+        <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
+          <div className="glass-panel rounded-xl p-3">
             <SectionTitle>Dados do Formulário</SectionTitle>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
               <Field icon={Users} label="Nome do contato" value={lead.name} />
               <Field
                 icon={Phone}
                 label="WhatsApp"
                 value={
-                  <a href={waHref} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-accent-emerald hover:underline">
-                    <MessageCircle className="h-3.5 w-3.5" /> {lead.whatsapp}
+                  <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent-emerald hover:underline">
+                    <MessageCircle className="h-3 w-3" /> {lead.whatsapp}
                   </a>
                 }
               />
@@ -271,18 +269,18 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
             </div>
           </div>
 
-          <div className="glass-panel rounded-xl p-5">
+          <div className="glass-panel rounded-xl p-3">
             <SectionTitle>Varredura Receita Federal</SectionTitle>
             {r ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col">
                 <Field icon={Scale} label="Razão Social" value={r.razaoSocial} />
                 <Field icon={MessageCircle} label="E-mail (Receita)" value={r.email} />
-                <Field icon={Calendar} label="Data de Abertura" value={r.dataInicioAtividade} />
+                <Field icon={Calendar} label="Abertura" value={r.dataInicioAtividade} />
                 <Field icon={Landmark} label="Natureza Jurídica" value={r.naturezaJuridica} />
                 <Field icon={Landmark} label="Capital Social" value={r.capitalSocial != null ? `R$ ${r.capitalSocial.toLocaleString('pt-BR')}` : null} />
                 <Field icon={MapPin} label="Endereço" value={r.endereco} />
-                <Field icon={Users} label="Sócios / Administradores" value={r.socios?.join(', ')} />
-                <Field icon={Tag} label="CNAE Principal" value={r.atividadePrincipal ? `${r.cnaeCodigo ?? ''} — ${r.atividadePrincipal}` : null} />
+                <Field icon={Users} label="Sócios" value={r.socios?.join(', ')} />
+                <Field icon={Tag} label="CNAE" value={r.atividadePrincipal ? `${r.cnaeCodigo ?? ''} — ${r.atividadePrincipal}` : null} />
               </div>
             ) : (
               <p className="text-[13px] text-text-muted">Sem dado da Receita Federal pra esse CNPJ.</p>
@@ -291,11 +289,11 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
         </div>
 
         {approveError && (
-          <p className="mx-6 mb-2 flex items-center gap-1.5 text-[12px] text-accent-rose">{approveError}</p>
+          <p className="mx-4 mb-2 flex items-center gap-1.5 text-[12px] text-accent-rose">{approveError}</p>
         )}
 
         {/* Rodapé — CTAs */}
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-bg-primary/30 p-4">
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-bg-primary/30 p-3">
           <button type="button" onClick={handleReject} disabled={approving || rejecting} className="flex items-center gap-1.5 rounded-lg border border-border-subtle px-4 py-2.5 text-[13px] font-medium text-text-secondary transition-colors hover:bg-white/5 disabled:opacity-50">
             {rejecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsDown className="h-3.5 w-3.5" />} Recusar
           </button>
