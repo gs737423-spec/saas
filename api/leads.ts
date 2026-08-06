@@ -108,16 +108,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const marketplaces = isNonEmptyString(body.marketplaces) ? String(body.marketplaces).trim() : null
   const message = String(body.message).trim()
 
+  const supabase = await getSupabaseAdmin()
+
   // Checa se esse CNPJ já é cliente cadastrado na plataforma — não bloqueia
   // nada, só avisa o time (lead pode ser um cliente já existente tentando
   // outro canal, ou um segundo contato da mesma empresa).
   let existingCompany: { name: string; status: string } | null = null
   try {
-    const supabase = await getSupabaseAdmin()
     const { data } = await supabase.from('companies').select('name, status').eq('cnpj', cnpjDigits).maybeSingle()
     if (data) existingCompany = { name: data.name, status: data.status }
   } catch (err) {
     console.error('[api/leads] company lookup failed (non-blocking)', err)
+  }
+
+  // Grava o lead de verdade (tela AdminLeads.tsx lê daqui) — nunca bloqueia
+  // o envio do e-mail se a gravação falhar (ex: migration 013 ainda não
+  // rodou em produção), e vice-versa: e-mail é o canal de aviso imediato,
+  // a tabela é o histórico/fila de triagem.
+  try {
+    await supabase.from('leads').insert({
+      name,
+      whatsapp,
+      company,
+      cnpj: cnpjDigits,
+      marketplaces,
+      message,
+      receita_data: body.cnpjInfo ?? null,
+    })
+  } catch (err) {
+    console.error('[api/leads] failed to persist lead (non-blocking)', err)
   }
 
   const receitaLines = RECEITA_FIELDS

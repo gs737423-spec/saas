@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { useDemoMode } from '@/contexts/DemoModeContext'
 import { apiFetch } from '@/lib/apiFetch'
-import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
+import { useLeadsCount } from '@/lib/useLeadsCount'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
@@ -48,7 +48,7 @@ const navItems: Item[] = [
 // ausência de link).
 const adminNavItems: (Item | { icon: typeof Package; label: string; disabled: true })[] = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
-  { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes', badge: MOCK_LEADS_COUNT },
+  { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes' },
   { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
   { icon: Plug, label: 'Integrações', disabled: true },
   { icon: Headset, label: 'Consultoria', disabled: true },
@@ -80,6 +80,7 @@ export default function TopNav() {
   const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdminArea = location.pathname.startsWith('/app/admin')
+  const leadsCount = useLeadsCount(isAdmin)
 
   function handleToggleDemo() {
     if (demoMode) {
@@ -148,9 +149,9 @@ export default function TopNav() {
                 <NavLink key={item.label} to={item.to} end title={item.label} className={linkClass}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
-                  {Boolean(item.badge) && (
+                  {Boolean(item.label === 'Solicitações' ? leadsCount : item.badge) && (
                     <span className="ml-1 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-accent-rose px-1 text-[9px] font-bold text-white">
-                      {item.badge}
+                      {item.label === 'Solicitações' ? leadsCount : item.badge}
                     </span>
                   )}
                 </NavLink>

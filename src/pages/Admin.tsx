@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { apiFetch } from '@/lib/apiFetch'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon } from '@/site/logos'
-import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
+import { useLeadsCount } from '@/lib/useLeadsCount'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Company {
@@ -26,6 +26,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [unauthorized, setUnauthorized] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
+  const leadsCount = useLeadsCount()
 
   const loadCompanies = useCallback(async () => {
     try {
@@ -99,9 +100,9 @@ export default function Admin() {
         Olá, {firstName}. O ecossistema está operando normalmente hoje.
       </div>
 
-      {/* Banner do funil comercial — leva pra Solicitações (mock hoje, real
-          quando a tabela `leads` existir). */}
-      {MOCK_LEADS_COUNT > 0 && (
+      {/* Banner do funil comercial — leva pra Solicitações, contagem real
+          da tabela `leads` (ver migration 013). */}
+      {leadsCount > 0 && (
         <Link
           to="/app/admin/solicitacoes"
           className="group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/15 to-accent-cyan/5 px-5 py-4 transition-colors hover:from-accent-cyan/20"
@@ -109,7 +110,7 @@ export default function Admin() {
           <span className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-cyan/15 text-accent-cyan"><Inbox className="h-4.5 w-4.5" /></span>
             <span className="text-[13.5px] font-medium text-text-primary">
-              Você tem <strong className="font-bold text-accent-cyan">{MOCK_LEADS_COUNT} {MOCK_LEADS_COUNT === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
+              Você tem <strong className="font-bold text-accent-cyan">{leadsCount} {leadsCount === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-3.5 py-2 text-[12.5px] font-bold text-[#081423] transition-transform group-hover:scale-[1.02]">
