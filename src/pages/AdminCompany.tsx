@@ -4,12 +4,13 @@ import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
   UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
-  User, Building2, ExternalLink,
+  User, ExternalLink,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor, timeAgo, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
+import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
 import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
+import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
 import { useViewAs } from '@/contexts/ViewAsContext'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
@@ -301,7 +302,7 @@ export default function AdminCompany() {
 
   if (configMissing) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
         <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas.</p>
@@ -311,7 +312,7 @@ export default function AdminCompany() {
 
   if (unauthorized) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-accent-rose" />
         <h2 className="text-base font-semibold text-text-primary">Acesso restrito</h2>
         <p className="mt-1.5 text-sm text-text-muted">Esta área é só para a equipe interna.</p>
@@ -321,7 +322,7 @@ export default function AdminCompany() {
 
   if (notFound || !company) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <p className="text-sm text-text-muted">Empresa não encontrada.</p>
         <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-cyan">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
@@ -350,7 +351,7 @@ export default function AdminCompany() {
         </div>
 
         {/* Header — identidade, badges reais, ações que existem de verdade */}
-        <div className="glass-panel admin-card flex flex-col gap-4 rounded-xl p-6">
+        <div className="glass-panel flex flex-col gap-4 rounded-xl p-6">
           <div className="flex flex-wrap items-start gap-3">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-base font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
               {initialsFor(company.name)}
@@ -399,6 +400,13 @@ export default function AdminCompany() {
             </div>
           </div>
 
+          {/* Dados cadastrais/fiscais — compacto, direto no header (nunca
+              mais em card separado lá embaixo). Vem do snapshot da Receita
+              Federal salvo no cadastro (company.receitaData). */}
+          <div className="border-t border-border-subtle pt-3">
+            <CompanyRegistrationInfo name={company.name} cnpj={company.cnpj} receitaData={company.receitaData} />
+          </div>
+
           {/* Tab bar interna — ocupa a largura toda agora que a sidebar saiu */}
           <div className="grid grid-cols-3 gap-1 border-t border-border-subtle pt-3 sm:flex sm:items-center">
             {TAB_ORDER.map((t) => (
@@ -420,29 +428,29 @@ export default function AdminCompany() {
           <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <button type="button" onClick={() => setTab('acessos')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{members.length}</p>
                   <p className="text-[11px] text-text-muted">acessos vinculados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Plug className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">produtos sincronizados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-blue/10 text-accent-blue"><Ticket className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">pedidos importados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><Wifi className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
                   <p className="text-[11px] text-text-muted">integrações ativas</p>
                 </button>
               </div>
 
-              <div className="glass-panel admin-card rounded-xl p-6">
+              <div className="glass-panel rounded-xl p-6">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
                   <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
@@ -496,7 +504,7 @@ export default function AdminCompany() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="glass-panel admin-card flex items-center gap-4 rounded-xl p-6">
+              <div className="glass-panel flex items-center gap-4 rounded-xl p-6">
                 <HealthScoreRing score={healthScore} />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
@@ -515,7 +523,7 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              <div className="glass-panel admin-card rounded-xl p-6">
+              <div className="glass-panel rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
                 </h3>
@@ -542,41 +550,7 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              {/* Dados Cadastrais e Fiscais — vem do snapshot da Receita
-                  Federal salvo no cadastro (company.receitaData). Campos que
-                  a Receita Federal não devolve (Inscrição Estadual/Municipal
-                  são cadastro estadual/municipal, fora do escopo do CNPJ)
-                  ficam marcados como indisponíveis, nunca inventados. */}
-              <div className="glass-panel admin-card rounded-xl p-6">
-                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <Building2 className="h-3.5 w-3.5" /> Dados Cadastrais e Fiscais
-                </h3>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                  {[
-                    { label: 'Razão Social', value: company.receitaData?.razaoSocial ?? company.name, real: true },
-                    { label: 'Nome Fantasia', value: company.receitaData?.nomeFantasia ?? company.name, real: true },
-                    { label: 'CNPJ', value: maskCnpj(company.cnpj), real: Boolean(company.cnpj) },
-                    { label: 'Situação Cadastral', value: company.receitaData?.situacaoCadastral, real: Boolean(company.receitaData?.situacaoCadastral) },
-                    { label: 'Natureza Jurídica', value: company.receitaData?.naturezaJuridica, real: Boolean(company.receitaData?.naturezaJuridica) },
-                    { label: 'Capital Social', value: typeof company.receitaData?.capitalSocial === 'number' ? company.receitaData.capitalSocial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null, real: typeof company.receitaData?.capitalSocial === 'number' },
-                    { label: 'Data de Abertura', value: company.receitaData?.dataInicioAtividade, real: Boolean(company.receitaData?.dataInicioAtividade) },
-                    { label: 'Inscrição Estadual', value: 'indisponível via Receita Federal', real: false },
-                    { label: 'Inscrição Municipal', value: 'indisponível via Receita Federal', real: false },
-                    { label: 'CNAE Principal', value: company.receitaData?.cnaeCodigo ? `${company.receitaData.cnaeCodigo} — ${company.receitaData.atividadePrincipal ?? ''}` : null, real: Boolean(company.receitaData?.cnaeCodigo) },
-                    { label: 'Endereço', value: company.receitaData?.endereco, real: Boolean(company.receitaData?.endereco), span2: true },
-                    { label: 'Sócios / Administradores', value: company.receitaData?.socios && company.receitaData.socios.length > 0 ? company.receitaData.socios.join(', ') : null, real: Boolean(company.receitaData?.socios?.length), span2: true },
-                  ].map((f) => (
-                    <div key={f.label} className={`col-span-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 py-1.5 last:border-0 ${f.span2 ? '' : 'sm:col-span-1'}`}>
-                      <span className="shrink-0 text-[11px] text-text-muted">{f.label}</span>
-                      <span className={`truncate text-[12.5px] font-medium ${f.real ? 'text-text-primary' : 'italic text-text-muted/70'}`}>
-                        {f.value ?? 'sem dado ainda'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="glass-panel admin-card rounded-xl p-6">
+              <div className="glass-panel rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <UserCog className="h-3.5 w-3.5" /> Contato Corporativo
                 </h3>
@@ -600,7 +574,7 @@ export default function AdminCompany() {
         )}
 
         {tab === 'acessos' && (
-          <div className="glass-panel admin-card rounded-xl p-6">
+          <div className="glass-panel rounded-xl p-6">
             <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
               <Users2 className="h-3.5 w-3.5" />
               Acessos ({members.length})
@@ -654,7 +628,7 @@ export default function AdminCompany() {
 
         {tab === 'integracoes' && (
           <div className="flex flex-col gap-4">
-            <div className="glass-panel admin-card rounded-xl p-6">
+            <div className="glass-panel rounded-xl p-6">
               <div className="mb-3 flex items-center gap-2.5">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                 <div>
@@ -689,7 +663,7 @@ export default function AdminCompany() {
               )}
             </div>
 
-            <div className="glass-panel admin-card rounded-xl p-6">
+            <div className="glass-panel rounded-xl p-6">
               <div className="mb-3 flex items-center gap-2.5">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
                 <div>
@@ -725,7 +699,7 @@ export default function AdminCompany() {
             </div>
 
             {NOT_YET_IMPLEMENTED.map((mp) => (
-              <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-6 opacity-60">
+              <div key={mp.name} className="glass-panel flex items-center justify-between rounded-xl p-6 opacity-60">
                 <div className="flex items-center gap-2.5">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                   <div>
@@ -740,7 +714,7 @@ export default function AdminCompany() {
         )}
 
         {tab === 'cobranca' && (
-          <div className="glass-panel admin-card flex flex-col items-center gap-2 rounded-xl p-10 text-center">
+          <div className="glass-panel flex flex-col items-center gap-2 rounded-xl p-10 text-center">
             <CreditCard className="h-6 w-6 text-text-muted" />
             <p className="text-sm font-medium text-text-primary">Cobrança ainda não está conectada</p>
             <p className="max-w-sm text-xs text-text-muted">Plano e valor ficam em "Observações" na aba Configurações por enquanto. Histórico de faturas depende de integrar um provedor de cobrança.</p>
@@ -756,7 +730,7 @@ export default function AdminCompany() {
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Clock3 className="h-3.5 w-3.5" /> Histórico de atendimento
                   </h3>
@@ -777,7 +751,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Ticket className="h-3.5 w-3.5" /> Chamados
                   </h3>
@@ -796,7 +770,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
+                <div className="glass-panel grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
                   {[
                     { icon: Clock3, label: 'tempo médio resposta', value: '—' },
                     { icon: Star, label: 'satisfação média', value: '—' },
@@ -812,11 +786,11 @@ export default function AdminCompany() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Observações internas</h3>
                   <p className="text-xs text-text-secondary">Cliente prefere atendimento via WhatsApp. Nenhuma observação real registrada ainda.</p>
                 </div>
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <PhoneCall className="h-3.5 w-3.5" /> Atalhos rápidos
                   </h3>
@@ -843,7 +817,7 @@ export default function AdminCompany() {
 
         {tab === 'configuracoes' && (
           <>
-            <form onSubmit={handleSave} className="glass-panel admin-card flex flex-col gap-3 rounded-xl p-6">
+            <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
                 <select

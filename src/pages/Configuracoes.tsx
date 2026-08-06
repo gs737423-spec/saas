@@ -1,4 +1,5 @@
-import { RotateCcw, SlidersHorizontal, Gauge, Boxes } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { RotateCcw, SlidersHorizontal, Gauge, Boxes, Building2, KeyRound, Mail, Users2, Loader2, CheckCircle2, XCircle, UserX, UserPlus } from 'lucide-react'
 import {
   useInventorySettings,
   DEFAULT_INVENTORY_SETTINGS,
@@ -7,6 +8,11 @@ import {
 } from '@/contexts/InventorySettingsContext'
 import type { TurnoverStatus } from '@/data/mockData'
 import type { CoverageLabel } from '@/contexts/InventorySettingsContext'
+import { supabase } from '@/lib/supabaseClient'
+import { apiFetchJson } from '@/lib/apiFetch'
+import { useAuth } from '@/contexts/AuthContext'
+import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
+import type { CnpjInfo } from '@/lib/adminUi'
 
 const giroOrder: TurnoverStatus[] = ['Normal', 'Lento', 'Parado', 'Parado crítico']
 const giroHint: Record<TurnoverStatus, string> = {
@@ -70,11 +76,12 @@ function ColorSwatch({ label, hint, color, onChange }: { label: string; hint: st
   )
 }
 
-function SectionShell({ icon: Icon, title, description, onReset, children }: {
+function SectionShell({ icon: Icon, title, description, onReset, noReset, children }: {
   icon: typeof Gauge
   title: string
   description: string
   onReset: () => void
+  noReset?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -89,16 +96,243 @@ function SectionShell({ icon: Icon, title, description, onReset, children }: {
             <p className="mt-0.5 text-xs text-text-muted">{description}</p>
           </div>
         </div>
-        <button
-          onClick={onReset}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-muted transition-colors hover:border-border-default hover:text-text-primary"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Restaurar padrão
-        </button>
+        {!noReset && (
+          <button
+            onClick={onReset}
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-muted transition-colors hover:border-border-default hover:text-text-primary"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Restaurar padrão
+          </button>
+        )}
       </div>
       {children}
     </div>
+  )
+}
+
+interface Company {
+  id: string
+  name: string
+  cnpj: string | null
+  receitaData: CnpjInfo | null
+}
+
+interface TeamMember {
+  userId: string
+  email: string | null
+  role: string
+  addedAt: string
+  isSelf: boolean
+}
+
+function MyCompanySection() {
+  const [company, setCompany] = useState<Company | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetchJson<{ ok: boolean; company: Company }>('/api/company').then((res) => {
+      if (!cancelled) {
+        setCompany(res?.company ?? null)
+        setLoading(false)
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <SectionShell icon={Building2} title="Minha Empresa" description="Dados cadastrais e fiscais, capturados na Receita Federal no seu cadastro." onReset={() => {}} noReset>
+      {loading ? (
+        <div className="flex items-center gap-2 pt-4 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...</div>
+      ) : company ? (
+        <div className="border-t border-border-subtle pt-4">
+          <CompanyRegistrationInfo name={company.name} cnpj={company.cnpj} receitaData={company.receitaData} />
+        </div>
+      ) : (
+        <p className="border-t border-border-subtle pt-4 text-xs text-text-muted">Não foi possível carregar os dados da empresa agora.</p>
+      )}
+    </SectionShell>
+  )
+}
+
+function SecuritySection() {
+  const { user } = useAuth()
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailFeedback, setEmailFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordFeedback, setPasswordFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  async function handleChangeEmail(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.trim() || email.trim() === user?.email) return
+    setSavingEmail(true)
+    setEmailFeedback(null)
+    const { error } = await supabase.auth.updateUser({ email: email.trim() })
+    setSavingEmail(false)
+    if (error) {
+      setEmailFeedback({ type: 'error', text: error.message })
+    } else {
+      setEmailFeedback({ type: 'success', text: 'Confirme a troca pelo link enviado nos dois e-mails (atual e novo).' })
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (password.length < 8) {
+      setPasswordFeedback({ type: 'error', text: 'A senha precisa ter pelo menos 8 caracteres.' })
+      return
+    }
+    if (password !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', text: 'As senhas não coincidem.' })
+      return
+    }
+    setSavingPassword(true)
+    setPasswordFeedback(null)
+    const { error } = await supabase.auth.updateUser({ password })
+    setSavingPassword(false)
+    if (error) {
+      setPasswordFeedback({ type: 'error', text: error.message })
+    } else {
+      setPasswordFeedback({ type: 'success', text: 'Senha atualizada.' })
+      setPassword('')
+      setConfirmPassword('')
+    }
+  }
+
+  const inputClass = 'w-full rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-blue/50'
+
+  return (
+    <SectionShell icon={KeyRound} title="Segurança" description="Troque seu e-mail de acesso ou sua senha." onReset={() => {}} noReset>
+      <div className="grid grid-cols-1 gap-4 border-t border-border-subtle pt-4 sm:grid-cols-2">
+        <form onSubmit={handleChangeEmail} className="flex flex-col gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted"><Mail className="h-3.5 w-3.5" /> E-mail de acesso</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+          <button type="submit" disabled={savingEmail || !email.trim() || email.trim() === user?.email} className="flex w-fit items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-1.5 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:opacity-40">
+            {savingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Salvar e-mail
+          </button>
+          {emailFeedback && (
+            <p className={`flex items-center gap-1.5 text-xs ${emailFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+              {emailFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+              {emailFeedback.text}
+            </p>
+          )}
+        </form>
+
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted"><KeyRound className="h-3.5 w-3.5" /> Nova senha</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="mínimo 8 caracteres" className={inputClass} />
+          <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="confirmar senha" className={inputClass} />
+          <button type="submit" disabled={savingPassword || !password} className="flex w-fit items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-1.5 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:opacity-40">
+            {savingPassword ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Salvar senha
+          </button>
+          {passwordFeedback && (
+            <p className={`flex items-center gap-1.5 text-xs ${passwordFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+              {passwordFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 shrink-0" />}
+              {passwordFeedback.text}
+            </p>
+          )}
+        </form>
+      </div>
+    </SectionShell>
+  )
+}
+
+function TeamSection() {
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  async function loadMembers() {
+    const res = await apiFetchJson<{ ok: boolean; members: TeamMember[] }>('/api/team')
+    setMembers(res?.members ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadMembers() }, [])
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    setFeedback(null)
+    const res = await apiFetchJson<{ ok: boolean; message?: string; invited?: boolean }>('/api/team', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: inviteEmail.trim() }),
+    })
+    setInviting(false)
+    if (res?.ok) {
+      setFeedback({ type: 'success', text: res.invited ? `Convite enviado para ${inviteEmail.trim()}.` : 'Usuário já existia — vinculado à sua equipe.' })
+      setInviteEmail('')
+      await loadMembers()
+    } else {
+      setFeedback({ type: 'error', text: res?.message ?? 'Erro ao convidar.' })
+    }
+  }
+
+  async function handleRemove(userId: string) {
+    setRemovingUserId(userId)
+    const res = await apiFetchJson<{ ok: boolean; message?: string }>(`/api/team?userId=${userId}`, { method: 'DELETE' })
+    setRemovingUserId(null)
+    if (res?.ok) await loadMembers()
+    else setFeedback({ type: 'error', text: res?.message ?? 'Erro ao remover acesso.' })
+  }
+
+  return (
+    <SectionShell icon={Users2} title="Equipe" description="Quem mais da sua empresa tem acesso à plataforma." onReset={() => {}} noReset>
+      <div className="border-t border-border-subtle pt-4">
+        {loading ? (
+          <div className="flex items-center gap-2 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...</div>
+        ) : (
+          <div className="flex flex-col gap-1 pb-3">
+            {members.length === 0 && <p className="py-1.5 text-xs text-text-muted">Só você tem acesso por enquanto.</p>}
+            {members.map((m) => (
+              <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-white/5">
+                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{m.email ?? m.userId}{m.isSelf ? ' (você)' : ''}</span>
+                {!m.isSelf && (
+                  <button
+                    onClick={() => handleRemove(m.userId)}
+                    disabled={removingUserId === m.userId}
+                    title="Remover acesso"
+                    className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
+                  >
+                    {removingUserId === m.userId ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleInvite} className="flex gap-2">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="email@suaempresa.com"
+            className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
+          />
+          <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan/15 px-3 text-xs font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/25 disabled:opacity-40">
+            {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />}
+            Convidar
+          </button>
+        </form>
+        {feedback && (
+          <p className={`mt-2 flex items-center gap-1.5 text-xs ${feedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+            {feedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+            {feedback.text}
+          </p>
+        )}
+      </div>
+    </SectionShell>
   )
 }
 
@@ -130,9 +364,13 @@ export default function Configuracoes() {
   return (
     <div className="space-y-2.5">
       <div>
-        <h2 className="text-lg font-bold tracking-tight text-text-primary">Configurações</h2>
-        <p className="mt-0.5 text-sm text-text-muted">Preferências da plataforma — ajustadas aqui refletem em todo o módulo de Estoque.</p>
+        <h2 className="text-lg font-bold tracking-tight text-text-primary">Minha Conta</h2>
+        <p className="mt-0.5 text-sm text-text-muted">Dados da sua empresa, segurança de acesso, equipe e preferências da plataforma.</p>
       </div>
+
+      <MyCompanySection />
+      <SecuritySection />
+      <TeamSection />
 
       {/* Giro — por dias de cobertura */}
       <SectionShell
