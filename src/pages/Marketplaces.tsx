@@ -3,7 +3,6 @@ import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Shield, AlertTriangl
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import type { FinanceOverview, MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
-import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
@@ -179,10 +178,6 @@ export default function Marketplaces() {
 
       <div className="motion-block-in motion-block-in-3">
         <ChannelMiniCharts rows={rows} />
-      </div>
-
-      <div className="motion-block-in motion-block-in-3">
-        <RealMarketplaceBreakdown />
       </div>
     </div>
   )

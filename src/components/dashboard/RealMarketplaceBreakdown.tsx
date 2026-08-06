@@ -11,32 +11,106 @@ interface FinanceApiResponse {
   byMarketplace: MarketplaceFinance[]
 }
 
-const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+type SortKey = 'netRevenue' | 'avgTicket' | 'feePct'
 
-function GrowthChip({ label, value }: { label: string; value: number | null }) {
-  if (value === null) {
-    return (
-      <span className="flex flex-col items-center">
-        <span className="text-[10px] font-medium text-text-muted">{value}</span>
-        <span className="text-[9px] text-text-muted/70">{label}</span>
-      </span>
-    )
-  }
-  const positive = value >= 0
+const sortOptions: { key: SortKey; label: string }[] = [
+  { key: 'netRevenue', label: 'Faturamento' },
+  { key: 'avgTicket', label: 'Ticket Médio' },
+  { key: 'feePct', label: 'Comissão' },
+]
+
+const brl = (v: number) => v.toLocaleString('pt-BR')
+const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+// Sempre "Crescimento" — os percentuais D-1/D-7/D-30/D-365 já são o que
+// importa; a cor não muda porque não temos um "status" de canal calculado
+// pra dado real (era mock antes, ver 'Saudável/Atenção/Crítico').
+function StatusBadge() {
   return (
-    <span className="flex flex-col items-center">
-      <span className={`text-[11px] font-semibold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-        {positive ? '+' : ''}{value.toFixed(1)}%
-      </span>
-      <span className="text-[9px] text-text-muted">{label}</span>
+    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold text-accent-emerald" style={{ background: 'rgba(43,214,160,0.12)' }}>
+      Crescimento
     </span>
   )
 }
 
-/** GMV por marketplace — reaproveitado em Dashboard (Visão Geral) e
- *  Marketplaces. Dado real via /api/dashboard/finance (ou ilustrativo, mesmo
- *  endpoint, quando o admin ativa o Modo Demonstração — ver apiFetch.ts). */
+function GrowthCell({ label, value }: { label: string; value: number | null }) {
+  if (value === null) {
+    return (
+      <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+        <span className="font-mono text-[11px] font-bold text-text-muted">—</span>
+        <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+      </div>
+    )
+  }
+  const positive = value >= 0
+  return (
+    <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+      <span className={`font-mono text-[11px] font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+        {positive ? '+' : ''}{pct(value)}%
+      </span>
+      <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+    </div>
+  )
+}
+
+function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: number }) {
+  const brand = getMarketplaceColor(m.marketplace)
+  const isLeader = rank === 1
+  const feePct = m.grossRevenue > 0 ? (m.fees / m.grossRevenue) * 100 : 0
+
+  return (
+    <div className={`group flex flex-1 items-center gap-2.5 rounded-xl px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'}`}>
+      <span className="flex w-5 shrink-0 items-center justify-center">
+        {isLeader ? <Crown className="h-4 w-4" style={{ color: brand }} /> : <span className="font-mono text-sm font-bold text-text-muted">{rank}</span>}
+      </span>
+
+      <div className="flex w-24 shrink-0 items-center gap-2 sm:w-32">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: brand, boxShadow: `0 0 8px ${brand}88` }} />
+        <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
+      </div>
+
+      <div className="w-24 shrink-0 text-right sm:w-28">
+        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.netValue)}</div>
+        <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
+      </div>
+
+      <div className="hidden min-w-[100px] max-w-[920px] flex-1 items-center gap-2 md:flex">
+        <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
+          <div className="h-full rounded-full" style={{ width: `${share}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
+        </div>
+        <span className="w-10 shrink-0 text-right font-mono text-[11.5px] text-text-secondary">{pct(share)}%</span>
+      </div>
+
+      <div className="hidden w-20 shrink-0 whitespace-nowrap text-right lg:block">
+        <div className="font-mono text-[14px] font-semibold text-text-secondary">R$ {brl2(m.averageTicket)}</div>
+        <div className="text-[9.5px] uppercase tracking-wider text-text-muted">ticket médio</div>
+      </div>
+      <div className="hidden w-14 shrink-0 text-right lg:block">
+        <div className="font-mono text-[14px] font-semibold text-accent-amber">{pct(feePct)}%</div>
+        <div className="text-[9.5px] uppercase tracking-wider text-text-muted">comissão</div>
+      </div>
+
+      <div className="hidden shrink-0 items-center gap-2.5 xl:flex">
+        <GrowthCell label="D-1" value={m.growth.d1} />
+        <GrowthCell label="D-7" value={m.growth.d7} />
+        <GrowthCell label="D-30" value={m.growth.d30} />
+        <GrowthCell label="D-365" value={m.growth.d365} />
+      </div>
+
+      <div className="ml-auto shrink-0">
+        <StatusBadge />
+      </div>
+    </div>
+  )
+}
+
+/** GMV — reaproveitado em Dashboard (Visão Geral). Dado real via
+ *  /api/dashboard/finance (ou ilustrativo em Modo Demonstração, mesmo
+ *  endpoint, ver apiFetch.ts). Mesmo layout/estrutura do componente
+ *  original MarketplaceComparison.tsx. */
 export default function RealMarketplaceBreakdown() {
+  const [sort, setSort] = useState<SortKey>('netRevenue')
   const { period } = usePeriod()
   const [data, setData] = useState<FinanceApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,9 +124,7 @@ export default function RealMarketplaceBreakdown() {
         setLoading(false)
       }
     })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [period.days])
 
   if (loading) {
@@ -64,7 +136,7 @@ export default function RealMarketplaceBreakdown() {
     )
   }
 
-  const rows = (data?.byMarketplace ?? []).filter((m) => m.grossRevenue > 0).sort((a, b) => b.grossRevenue - a.grossRevenue)
+  const rows = (data?.byMarketplace ?? []).filter((m) => m.grossRevenue > 0)
 
   if (rows.length === 0) {
     return (
@@ -76,56 +148,42 @@ export default function RealMarketplaceBreakdown() {
 
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
 
+  const sorted = [...rows].sort((a, b) => {
+    if (sort === 'netRevenue') return b.netValue - a.netValue
+    if (sort === 'avgTicket') return b.averageTicket - a.averageTicket
+    const feeA = a.grossRevenue > 0 ? a.fees / a.grossRevenue : 0
+    const feeB = b.grossRevenue > 0 ? b.fees / b.grossRevenue : 0
+    return feeB - feeA
+  })
+
   return (
-    <div className="glass-panel rounded-2xl p-4 sm:p-5">
-      <h3 className="mb-1 text-sm font-semibold text-text-primary">GMV</h3>
-      <p className="mb-3 text-[11px] text-text-muted">Faturamento por marketplace</p>
-      <div className="flex flex-col divide-y divide-border-subtle">
-        {rows.map((row, i) => {
-          const color = getMarketplaceColor(row.marketplace)
-          const share = totalGross > 0 ? (row.grossRevenue / totalGross) * 100 : 0
-          const feePct = row.grossRevenue > 0 ? (row.fees / row.grossRevenue) * 100 : 0
-          const growing = (row.growth.d30 ?? 0) >= 0
-          return (
-            <div key={row.marketplace} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4">
-              <div className="flex w-6 shrink-0 items-center justify-center">
-                {i === 0 ? <Crown className="h-4 w-4 text-accent-amber" /> : <span className="text-[12px] font-semibold text-text-muted">{i + 1}</span>}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 truncate text-[13px] font-medium text-text-primary">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                    {row.marketplace}
-                  </span>
-                  <span className="shrink-0 text-[13px] font-semibold text-text-primary">R$ {brl(row.grossRevenue)}</span>
-                </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-bg-card">
-                  <div className="h-full rounded-full" style={{ width: `${share}%`, backgroundColor: color }} />
-                </div>
-                <p className="mt-1 text-[10px] text-text-muted">{share.toFixed(1)}% faturamento</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-4 sm:pl-2">
-                <span className="flex flex-col items-center">
-                  <span className="text-[12px] font-semibold text-text-secondary">R$ {brl(row.averageTicket)}</span>
-                  <span className="text-[9px] text-text-muted">ticket médio</span>
-                </span>
-                <span className="flex flex-col items-center">
-                  <span className="text-[12px] font-semibold text-text-secondary">{feePct.toFixed(1)}%</span>
-                  <span className="text-[9px] text-text-muted">comissão</span>
-                </span>
-                <div className="flex items-center gap-2.5 border-l border-border-subtle pl-3">
-                  <GrowthChip label="D-1" value={row.growth.d1} />
-                  <GrowthChip label="D-7" value={row.growth.d7} />
-                  <GrowthChip label="D-30" value={row.growth.d30} />
-                  <GrowthChip label="D-365" value={row.growth.d365} />
-                </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase ${growing ? 'bg-accent-emerald/10 text-accent-emerald' : 'bg-accent-rose/10 text-accent-rose'}`}>
-                  {growing ? 'Crescimento' : 'Queda'}
-                </span>
-              </div>
-            </div>
-          )
-        })}
+    <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-3.5 sm:p-4">
+      <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-text-primary">GMV</h3>
+          <p className="mt-0.5 text-xs text-text-muted">Faturamento por marketplace</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-0.5">
+          <span className="px-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted">Ordenar</span>
+          {sortOptions.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => setSort(o.key)}
+              className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${
+                sort === o.key ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2.5 sm:gap-3">
+        {sorted.map((m, i) => (
+          <Row key={m.marketplace} m={m} rank={i + 1} share={totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0} />
+        ))}
       </div>
     </div>
   )
