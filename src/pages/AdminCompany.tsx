@@ -395,10 +395,31 @@ export default function AdminCompany() {
             </div>
           </div>
 
+          {/* Atalhos pros dois blocos que mais importam — clicáveis, levam
+              direto pra aba correspondente. */}
+          <div className="grid grid-cols-1 gap-3 border-t border-border-subtle pt-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTab('acessos')}
+              className="flex items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-primary/30 px-4 py-3 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Users2 className="h-4 w-4 shrink-0 text-accent-cyan" />
+              <span className="text-[12.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('integracoes')}
+              className="flex items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-primary/30 px-4 py-3 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Plug className="h-4 w-4 shrink-0 text-accent-cyan" />
+              <span className="text-[12.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
+            </button>
+          </div>
+
           {/* Dados cadastrais/fiscais — compacto, direto no header (nunca
               mais em card separado lá embaixo). Vem do snapshot da Receita
               Federal salvo no cadastro (company.receitaData). */}
-          <div className="border-t border-border-subtle pt-3">
+          <div>
             <CompanyRegistrationInfo
               name={company.name}
               cnpj={company.cnpj}
