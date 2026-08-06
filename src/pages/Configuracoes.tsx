@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { useAuth } from '@/contexts/AuthContext'
 import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
+import CompanyAvatar from '@/components/common/CompanyAvatar'
 import type { CnpjInfo } from '@/lib/adminUi'
 
 const giroOrder: TurnoverStatus[] = ['Normal', 'Lento', 'Parado', 'Parado crítico']
@@ -119,6 +120,7 @@ interface Company {
   contactEmail: string | null
   contactPhone: string | null
   whatsapp: string | null
+  logoUrl: string | null
 }
 
 interface TeamMember {
@@ -150,6 +152,20 @@ function MyCompanySection() {
         <div className="flex items-center gap-2 pt-4 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...</div>
       ) : company ? (
         <div className="border-t border-border-subtle pt-4">
+          <div className="mb-3 flex items-center gap-3">
+            <CompanyAvatar
+              companyId={company.id}
+              companyName={company.name}
+              logoUrl={company.logoUrl}
+              size="lg"
+              editable
+              onUploaded={(url) => setCompany((prev) => prev ? { ...prev, logoUrl: url } : prev)}
+            />
+            <div>
+              <p className="text-sm font-semibold text-text-primary">{company.name}</p>
+              <p className="text-[11px] text-text-muted">Passe o mouse na logo pra trocar</p>
+            </div>
+          </div>
           <CompanyRegistrationInfo
             name={company.name}
             cnpj={company.cnpj}

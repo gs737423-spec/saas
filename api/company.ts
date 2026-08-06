@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = await getSupabaseAdmin()
     const { data, error } = await supabase
       .from('companies')
-      .select('id, name, cnpj, receita_data, contact_email, contact_phone, whatsapp')
+      .select('id, name, cnpj, receita_data, contact_email, contact_phone, whatsapp, logo_url')
       .eq('id', auth.companyId)
       .maybeSingle()
     if (error) throw new Error(error.message)
@@ -37,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         contactEmail: data.contact_email,
         contactPhone: data.contact_phone,
         whatsapp: data.whatsapp,
+        logoUrl: data.logo_url,
       },
     })
   } catch (err) {

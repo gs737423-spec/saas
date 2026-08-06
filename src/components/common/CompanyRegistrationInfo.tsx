@@ -1,4 +1,5 @@
-import { MapPin, Users, Tag } from 'lucide-react'
+import { useState } from 'react'
+import { MapPin, Users, Tag, Copy, Check, MessageCircle } from 'lucide-react'
 import { maskCnpj, type CnpjInfo } from '@/lib/adminUi'
 
 interface Props {
@@ -19,6 +20,48 @@ function Item({ label, value, span }: { label: string; value: string | null; spa
   )
 }
 
+function CopyableEmail({ email }: { email: string | null }) {
+  const [copied, setCopied] = useState(false)
+
+  if (!email) return <Item label="E-mail" value={null} />
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(email!)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <button type="button" onClick={handleCopy} title="Copiar e-mail" className="group flex items-center gap-1 truncate text-left text-[13px] text-text-secondary">
+      <span className="text-text-muted">E-mail: </span>
+      <span className="truncate font-medium text-text-primary">{email}</span>
+      {copied ? (
+        <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-accent-emerald"><Check className="h-3 w-3" /> copiado</span>
+      ) : (
+        <Copy className="h-3 w-3 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+      )}
+    </button>
+  )
+}
+
+function ClickableTelefone({ telefone }: { telefone: string | null }) {
+  if (!telefone) return <Item label="Telefone" value={null} />
+  const digits = telefone.replace(/\D/g, '')
+  return (
+    <a
+      href={`https://wa.me/55${digits}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Abrir no WhatsApp"
+      className="group flex items-center gap-1 truncate text-[13px] text-text-secondary hover:text-accent-emerald"
+    >
+      <span className="text-text-muted group-hover:text-text-muted">Telefone: </span>
+      <span className="truncate font-medium text-text-primary group-hover:text-accent-emerald">{telefone}</span>
+      <MessageCircle className="h-3 w-3 shrink-0 text-accent-emerald opacity-0 transition-opacity group-hover:opacity-100" />
+    </a>
+  )
+}
+
 /** 3 cards por assunto (cadastral/fiscal, contato+endereço, sociedade) —
  *  nunca 1 chip por campo, nunca um card gigante só. Mesmo componente no
  *  header da página do cliente no admin (AdminCompany.tsx) e na aba
@@ -32,8 +75,8 @@ export default function CompanyRegistrationInfo({ name, cnpj, receitaData, conta
   const telefone = whatsapp ?? contactPhone ?? r?.telefone ?? null
 
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr]">
-      <div className="glass-panel rounded-xl p-4">
+    <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[1.6fr_1fr]">
+      <div className="glass-panel rounded-xl p-3">
         <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados Cadastrais e Fiscais</h3>
         <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
           <Item label="CNPJ" value={cnpj ? maskCnpj(cnpj) : null} />
@@ -49,12 +92,12 @@ export default function CompanyRegistrationInfo({ name, cnpj, receitaData, conta
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="glass-panel rounded-xl p-4">
+      <div className="flex flex-col gap-2.5">
+        <div className="glass-panel rounded-xl p-3">
           <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Contato &amp; Endereço</h3>
           <div className="flex flex-col gap-1.5">
-            <Item label="E-mail" value={contactEmail ?? r?.email ?? null} />
-            <Item label="Telefone" value={telefone} />
+            <CopyableEmail email={contactEmail ?? r?.email ?? null} />
+            <ClickableTelefone telefone={telefone} />
             <div className="flex items-start gap-1.5">
               <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-text-muted" />
               <span className="text-[13px] text-text-secondary">{r?.endereco ?? <span className="italic text-text-muted/60">endereço não cadastrado</span>}</span>
@@ -62,7 +105,7 @@ export default function CompanyRegistrationInfo({ name, cnpj, receitaData, conta
           </div>
         </div>
 
-        <div className="glass-panel rounded-xl p-4">
+        <div className="glass-panel rounded-xl p-3">
           <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Estrutura Societária</h3>
           <div className="flex items-start gap-1.5">
             <Users className="mt-0.5 h-3 w-3 shrink-0 text-text-muted" />
@@ -75,4 +118,3 @@ export default function CompanyRegistrationInfo({ name, cnpj, receitaData, conta
     </div>
   )
 }
-

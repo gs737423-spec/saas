@@ -8,9 +8,9 @@ import {
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
-import HealthScoreRing from '@/components/admin/HealthScoreRing'
 import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
 import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
+import CompanyAvatar from '@/components/common/CompanyAvatar'
 import { useViewAs } from '@/contexts/ViewAsContext'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
@@ -39,6 +39,7 @@ interface Company {
   website: string | null
   status: string
   receitaData: CnpjInfo | null
+  logoUrl: string | null
   memberCount: number
 }
 
@@ -64,15 +65,6 @@ const NOT_YET_IMPLEMENTED: { name: string; Logo: () => React.JSX.Element }[] = [
   { name: 'Loja Própria', Logo: LogoLojaPropria },
 ]
 
-// Score derivado de sinais reais (integração conectada, tem acesso vinculado,
-// status da conta) — nunca um número solto. Ver HealthScoreRing.
-function computeHealthScore(company: Company, memberCount: number, connected: boolean): number {
-  let score = 35
-  if (connected) score += 35
-  if (memberCount > 0) score += 20
-  if (company.status === 'ativo') score += 10
-  return Math.min(100, score)
-}
 
 interface Member {
   userId: string
@@ -334,7 +326,6 @@ export default function AdminCompany() {
   const isConnected = integration?.status === 'connected'
   const isShopeeConnected = shopeeIntegration?.status === 'connected'
   const connectedCount = (isConnected ? 1 : 0) + (isShopeeConnected ? 1 : 0)
-  const healthScore = computeHealthScore(company, members.length, isConnected || isShopeeConnected)
   const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
 
   return (
@@ -351,11 +342,16 @@ export default function AdminCompany() {
         </div>
 
         {/* Header — identidade, badges reais, ações que existem de verdade */}
-        <div className="glass-panel flex flex-col gap-4 rounded-xl p-6">
+        <div className="glass-panel flex flex-col gap-3 rounded-xl p-4">
           <div className="flex flex-wrap items-start gap-3">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-base font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
-              {initialsFor(company.name)}
-            </span>
+            <CompanyAvatar
+              companyId={company.id}
+              companyName={company.name}
+              logoUrl={company.logoUrl}
+              size="lg"
+              editable
+              onUploaded={(url) => setCompany((prev) => prev ? { ...prev, logoUrl: url } : prev)}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-xl font-bold tracking-tight text-text-primary">{company.name}</h1>
@@ -397,22 +393,22 @@ export default function AdminCompany() {
 
           {/* Atalhos pros dois blocos que mais importam — clicáveis, levam
               direto pra aba correspondente. */}
-          <div className="grid grid-cols-1 gap-3 border-t border-border-subtle pt-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 border-t border-border-subtle pt-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => setTab('acessos')}
-              className="flex items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-primary/30 px-4 py-3 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
             >
-              <Users2 className="h-4 w-4 shrink-0 text-accent-cyan" />
-              <span className="text-[12.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
+              <Users2 className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
             </button>
             <button
               type="button"
               onClick={() => setTab('integracoes')}
-              className="flex items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-primary/30 px-4 py-3 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
             >
-              <Plug className="h-4 w-4 shrink-0 text-accent-cyan" />
-              <span className="text-[12.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
+              <Plug className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
             </button>
           </div>
 
@@ -527,25 +523,6 @@ export default function AdminCompany() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="glass-panel flex items-center gap-4 rounded-xl p-6">
-                <HealthScoreRing score={healthScore} />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {isConnected || isShopeeConnected ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
-                    {isConnected || isShopeeConnected ? 'Integração ok' : 'Sem integração'}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {members.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
-                    {members.length > 0 ? 'Usuários ativos' : 'Sem acesso vinculado'}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {status === 'ativo' ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-amber" />}
-                    Conta {st.label.toLowerCase()}
-                  </p>
-                </div>
-              </div>
-
               <div className="glass-panel rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
