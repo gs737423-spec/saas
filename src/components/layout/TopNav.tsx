@@ -210,11 +210,10 @@ export default function TopNav() {
             type="button"
             onClick={handleToggleDemo}
             title="Sair do modo demonstração e voltar pro painel admin"
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-accent-amber"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/60 px-2.5 py-1.5 text-[11.5px] font-medium text-text-muted"
           >
             <Eye className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Demonstração — dados ilustrativos</span>
-            <span className="sm:hidden">Demo</span>
+            <span className="hidden sm:inline">Demonstração</span>
             <X className="h-3.5 w-3.5" />
           </button>
         )}
