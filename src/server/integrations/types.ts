@@ -94,6 +94,15 @@ export interface DashboardInventoryItem {
    *  período (sem base pra classificar). */
   abcClass: AbcClass | null
   lastSyncAt: string | null
+  /** Dados de compra/fornecedor — não existe fonte real hoje (sem tabela de
+   *  purchase orders/NF), então a API real nunca preenche. Opcionais só pra
+   *  não quebrar o contrato quando existirem de verdade; hoje só o Modo
+   *  Demonstração popula (ver src/lib/demoData.ts). */
+  manufacturerCode?: string | null
+  lastEntryAt?: string | null
+  entryQty?: number | null
+  lastInvoiceNumber?: string | null
+  freightValue?: number | null
 }
 
 export type DashboardInventorySource = 'real' | 'demo' | 'config_missing' | 'error'

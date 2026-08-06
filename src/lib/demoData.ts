@@ -49,6 +49,13 @@ const DEMO_INVENTORY: DashboardInventoryItem[] = DEMO_PRODUCTS.map((p, i) => ({
   turnoverRate: p.stock > 0 ? p.units / p.stock : null,
   abcClass: i < 2 ? 'A' : i < 4 ? 'B' : 'C',
   lastSyncAt: new Date().toISOString(),
+  // Dados de compra/fornecedor — só existem em Modo Demonstração (sem
+  // tabela de purchase orders/NF real ainda, ver types.ts).
+  manufacturerCode: `FAB-${10000 + i * 1000 + p.sku!.length * 37}`,
+  lastEntryAt: new Date(Date.now() - (5 + i * 9) * 86400000).toISOString(),
+  entryQty: Math.round(p.stock * 1.6),
+  lastInvoiceNumber: `NF-${20000 + i * 41}`,
+  freightValue: Math.round(p.price * 0.6 * 100) / 100,
 }))
 
 export function demoDashboardInventory(): DashboardInventoryResponse {
