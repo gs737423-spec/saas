@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = await getSupabaseAdmin()
     const { data, error } = await supabase
       .from('companies')
-      .select('id, name, cnpj, receita_data')
+      .select('id, name, cnpj, receita_data, contact_email, contact_phone, whatsapp')
       .eq('id', auth.companyId)
       .maybeSingle()
     if (error) throw new Error(error.message)
@@ -27,7 +27,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    res.status(200).json({ ok: true, company: { id: data.id, name: data.name, cnpj: data.cnpj, receitaData: data.receita_data } })
+    res.status(200).json({
+      ok: true,
+      company: {
+        id: data.id,
+        name: data.name,
+        cnpj: data.cnpj,
+        receitaData: data.receita_data,
+        contactEmail: data.contact_email,
+        contactPhone: data.contact_phone,
+        whatsapp: data.whatsapp,
+      },
+    })
   } catch (err) {
     console.error('[api/company]', err)
     res.status(500).json({ ok: false, message: 'Erro ao carregar dados da empresa.' })

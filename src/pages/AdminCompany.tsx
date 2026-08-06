@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
   Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
-  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
-  User, ExternalLink,
+  MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
+  ExternalLink,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
@@ -365,11 +365,6 @@ export default function AdminCompany() {
                 <StatusBadge variant={st.variant} label={st.label} />
               </div>
               <p className="mt-0.5 text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)} · ID #{company.id.slice(0, 8)}</p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-medium text-text-secondary">
-                <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{members.length} {members.length === 1 ? 'usuário' : 'usuários'}</span>
-                <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{connectedCount}/4 integrações</span>
-                {company.contactEmail && <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{company.contactEmail}</span>}
-              </div>
             </div>
 
             {/* Ação principal fica sempre visível e destacada — é a ferramenta
@@ -404,7 +399,14 @@ export default function AdminCompany() {
               mais em card separado lá embaixo). Vem do snapshot da Receita
               Federal salvo no cadastro (company.receitaData). */}
           <div className="border-t border-border-subtle pt-3">
-            <CompanyRegistrationInfo name={company.name} cnpj={company.cnpj} receitaData={company.receitaData} />
+            <CompanyRegistrationInfo
+              name={company.name}
+              cnpj={company.cnpj}
+              receitaData={company.receitaData}
+              contactEmail={company.contactEmail}
+              contactPhone={company.contactPhone}
+              whatsapp={company.whatsapp}
+            />
           </div>
 
           {/* Tab bar interna — ocupa a largura toda agora que a sidebar saiu */}
@@ -550,25 +552,6 @@ export default function AdminCompany() {
                 </div>
               </div>
 
-              <div className="glass-panel rounded-xl p-6">
-                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <UserCog className="h-3.5 w-3.5" /> Contato Corporativo
-                </h3>
-                <div className="flex flex-col gap-2.5 text-[13px]">
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <User className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactEmail ? company.contactEmail.split('@')[0] : 'proprietário não cadastrado'}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactEmail ?? 'não cadastrado'}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactPhone ?? 'não cadastrado'}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}

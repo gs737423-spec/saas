@@ -116,6 +116,9 @@ interface Company {
   name: string
   cnpj: string | null
   receitaData: CnpjInfo | null
+  contactEmail: string | null
+  contactPhone: string | null
+  whatsapp: string | null
 }
 
 interface TeamMember {
@@ -147,7 +150,14 @@ function MyCompanySection() {
         <div className="flex items-center gap-2 pt-4 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...</div>
       ) : company ? (
         <div className="border-t border-border-subtle pt-4">
-          <CompanyRegistrationInfo name={company.name} cnpj={company.cnpj} receitaData={company.receitaData} />
+          <CompanyRegistrationInfo
+            name={company.name}
+            cnpj={company.cnpj}
+            receitaData={company.receitaData}
+            contactEmail={company.contactEmail}
+            contactPhone={company.contactPhone}
+            whatsapp={company.whatsapp}
+          />
         </div>
       ) : (
         <p className="border-t border-border-subtle pt-4 text-xs text-text-muted">Não foi possível carregar os dados da empresa agora.</p>
