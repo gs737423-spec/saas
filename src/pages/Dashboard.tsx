@@ -16,12 +16,17 @@ const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2,
 // há pedido pago no período anterior pra comparar). tag 'dado real' faz o
 // KPICards pular o resolveKpi mock.
 function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
+  // Selo "dado real" só faz sentido quando é real de verdade — em modo
+  // demo (source: 'demo') fica sem selo nenhum, nunca "dado real" (seria
+  // mentira) e nunca marcado como ilustrativo (é pra parecer a plataforma
+  // funcionando normalmente).
+  const tag = s.source === 'real' ? 'dado real' : undefined
   return [
-    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag: 'dado real', tone: 'cyan', hero: true },
-    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag: 'dado real', tone: 'blue' },
-    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag: 'dado real', tone: 'violet' },
-    { key: 'fees', label: 'Comissão', value: brl(s.feesTotal), raw: s.feesTotal, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.grossRevenue > 0 ? `${((s.feesTotal / s.grossRevenue) * 100).toFixed(1)}% do bruto` : '', tag: 'dado real', tone: 'amber' },
-    { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag: 'dado real', tone: 'neutral' },
+    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag, tone: 'cyan', hero: true },
+    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag, tone: 'blue' },
+    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag, tone: 'violet' },
+    { key: 'fees', label: 'Comissão', value: brl(s.feesTotal), raw: s.feesTotal, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.grossRevenue > 0 ? `${((s.feesTotal / s.grossRevenue) * 100).toFixed(1)}% do bruto` : '', tag, tone: 'amber' },
+    { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag, tone: 'neutral' },
   ]
 }
 
