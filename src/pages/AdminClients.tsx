@@ -355,8 +355,15 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
     return () => { cancelled = true; window.clearTimeout(timer) }
   }, [form.cnpj, touchedRazao, touchedFantasia])
 
-  const cnpjDigitsValid = form.cnpj.replace(/\D/g, '').length === 0 || form.cnpj.replace(/\D/g, '').length === 14
-  const canSubmit = form.nomeFantasia.trim().length > 0 && cnpjDigitsValid
+  const cnpjDigits = form.cnpj.replace(/\D/g, '')
+  const cnpjDigitsValid = cnpjDigits.length === 0 || cnpjDigits.length === 14
+  // CNPJ preenchido precisa ter sido confirmado pela Receita Federal pra
+  // liberar o cadastro — mesma regra do formulário do site (nunca cria
+  // cliente com CNPJ errado/inexistente). Serviço fora do ar ('error') não
+  // trava, já que a culpa não é do CNPJ; 'checking' trava só enquanto a
+  // consulta ainda está em andamento.
+  const cnpjConfirmed = cnpjDigits.length === 0 || cnpjStatus === 'found' || cnpjStatus === 'error'
+  const canSubmit = form.nomeFantasia.trim().length > 0 && cnpjDigitsValid && cnpjConfirmed
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -426,7 +433,7 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
               </p>
             )}
             {!cnpjInvalid && cnpjStatus === 'notfound' && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-amber"><AlertCircle className="h-3 w-3" /> CNPJ não encontrado na Receita Federal. Confira o número — você ainda pode continuar.</p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-rose"><AlertCircle className="h-3 w-3" /> CNPJ não encontrado na Receita Federal. Confira o número pra liberar o cadastro.</p>
             )}
             {!cnpjInvalid && cnpjStatus === 'error' && (
               <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-text-muted"><AlertCircle className="h-3 w-3" /> Não foi possível confirmar agora. Você pode continuar mesmo assim.</p>
