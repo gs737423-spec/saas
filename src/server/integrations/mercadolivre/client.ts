@@ -8,8 +8,16 @@ const BASE_URL = 'https://api.mercadolibre.com'
  *  limit de 1500 req/min por vendedor (a paginação já tem backoff em 429). */
 export const MAX_ITEMS_FIRST_SYNC = 2000
 const ITEMS_PAGE_SIZE = 50
-export const MAX_ORDERS_FIRST_SYNC = 2000
+// Teto de segurança bem mais alto que o de itens — pedido é o dado que o
+// cliente mais precisa completo (histórico de faturamento/produto campeão
+// depende disso), e o filtro por data abaixo já limita o volume real na
+// prática. Só existe pra nunca rodar indefinidamente se algo vier errado.
+export const MAX_ORDERS_FIRST_SYNC = 10000
 const ORDERS_PAGE_SIZE = 50
+// Garante pelo menos 1 ano de histórico mesmo se o vendedor tiver volume
+// alto — sem isso, "só os N pedidos mais recentes" podia cortar antes de
+// chegar em meses anteriores num catálogo com muito movimento.
+const ORDERS_HISTORY_DAYS = 365
 const MAX_429_RETRIES = 3
 
 export class MercadoLivreApiError extends Error {
@@ -76,24 +84,38 @@ export async function getCategory(categoryId: string, accessToken: string): Prom
   return mlFetch<MLCategoryDetail>(`/categories/${categoryId}`, accessToken)
 }
 
+export interface SearchOrdersResult {
+  orders: MLOrder[]
+  /** true quando a API tinha mais pedidos dentro da janela de 1 ano do que
+   *  MAX_ORDERS_FIRST_SYNC trouxe — nunca fica silencioso, sync.ts anexa
+   *  isso em errors[] pro admin ver. */
+  truncated: boolean
+}
+
 /**
- * Paginates GET /orders/search up to MAX_ORDERS_FIRST_SYNC, most recent first.
- * Unlike items, the search response already contains the full order (items,
- * amounts, buyer, status) — no per-order detail call needed.
+ * Paginates GET /orders/search dentro da janela de ORDERS_HISTORY_DAYS
+ * (1 ano), mais recente primeiro, até MAX_ORDERS_FIRST_SYNC. Unlike items,
+ * the search response already contains the full order (items, amounts,
+ * buyer, status) — no per-order detail call needed.
  */
-export async function searchOrders(sellerId: string, accessToken: string): Promise<MLOrder[]> {
+export async function searchOrders(sellerId: string, accessToken: string): Promise<SearchOrdersResult> {
   const orders: MLOrder[] = []
   let offset = 0
+  const dateFrom = new Date(Date.now() - ORDERS_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  const dateTo = new Date().toISOString()
+  let total = 0
 
   while (orders.length < MAX_ORDERS_FIRST_SYNC) {
     const page = await mlFetch<MLOrderSearchResponse>(
-      `/orders/search?seller=${sellerId}&sort=date_desc&offset=${offset}&limit=${ORDERS_PAGE_SIZE}`,
+      `/orders/search?seller=${sellerId}&sort=date_desc&offset=${offset}&limit=${ORDERS_PAGE_SIZE}` +
+        `&order.date_created.from=${encodeURIComponent(dateFrom)}&order.date_created.to=${encodeURIComponent(dateTo)}`,
       accessToken
     )
     orders.push(...page.results)
     offset += page.results.length
-    if (page.results.length === 0 || offset >= page.paging.total) break
+    total = page.paging.total
+    if (page.results.length === 0 || offset >= total) break
   }
 
-  return orders.slice(0, MAX_ORDERS_FIRST_SYNC)
+  return { orders: orders.slice(0, MAX_ORDERS_FIRST_SYNC), truncated: total > MAX_ORDERS_FIRST_SYNC }
 }

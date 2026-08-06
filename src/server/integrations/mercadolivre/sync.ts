@@ -173,7 +173,11 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
 
     let orders: MLOrder[] = []
     try {
-      orders = await searchOrders(connection.seller_id!, accessToken)
+      const result = await searchOrders(connection.seller_id!, accessToken)
+      orders = result.orders
+      if (result.truncated) {
+        errors.push(`Mais pedidos no último ano do que o sync conseguiu importar de uma vez (limite ${orders.length}) — histórico mais antigo pode estar incompleto, rode o sync de novo em breve.`)
+      }
     } catch (searchErr) {
       const message = searchErr instanceof MercadoLivreApiError
         ? searchErr.message
