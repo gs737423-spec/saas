@@ -58,7 +58,7 @@ function ProdutoHeader({ product, status, summary }: { product: DashboardProduct
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="break-words text-xl font-bold tracking-tight text-text-primary sm:text-2xl">{product.name}</h1>
+            <h1 className="line-clamp-2 break-words text-xl font-bold tracking-tight text-text-primary sm:text-2xl" title={product.name}>{product.name}</h1>
             <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${cfg.color} ${cfg.bg} ${cfg.border}`}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: cfg.dot }} />
               {status}

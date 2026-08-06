@@ -202,11 +202,12 @@ function MultiCategoryDropdown({
                 key={category}
                 type="button"
                 onClick={() => toggle(category)}
+                title={category}
                 className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
                   active ? 'bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
                 }`}
               >
-                {category}
+                <span className="truncate">{category}</span>
                 {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-blue" />}
               </button>
             )

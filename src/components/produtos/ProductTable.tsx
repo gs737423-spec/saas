@@ -270,10 +270,10 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
               const mp = getMarketplaceColor(p.marketplace)
               return (
                 <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                  <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
-                  <td className="py-3 pr-4">
-                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
-                    <span className="mt-0.5 block text-[11px] text-text-muted">{p.category ?? 'Sem categoria'}</span>
+                  <td className="max-w-[140px] truncate py-3 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
+                  <td className="max-w-[280px] py-3 pr-4">
+                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate font-medium text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
+                    <span className="mt-0.5 block truncate text-[11px] text-text-muted" title={p.category ?? undefined}>{p.category ?? 'Sem categoria'}</span>
                   </td>
                   <td className="py-3 pr-4">
                     <span

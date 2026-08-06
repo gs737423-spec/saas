@@ -345,15 +345,15 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                   const share = totalRevenue > 0 ? (item.revenue30d / totalRevenue) * 100 : 0
                   return (
                     <tr key={`${item.marketplace}-${item.sku ?? item.title}`} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                      <td className="py-3 pr-2 pl-2 font-mono text-[11px] text-text-muted">{item.sku ?? '—'}</td>
-                      <td className="py-3 pr-2">
+                      <td className="max-w-[130px] truncate py-3 pr-2 pl-2 font-mono text-[11px] text-text-muted" title={item.sku ?? undefined}>{item.sku ?? '—'}</td>
+                      <td className="max-w-[220px] py-3 pr-2">
                         {item.sku ? (
-                          <Link to={`/app/produto/${item.sku}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{item.title}</Link>
+                          <Link to={`/app/produto/${item.sku}`} className="block truncate font-medium text-text-primary hover:text-accent-blue hover:underline" title={item.title}>{item.title}</Link>
                         ) : (
-                          <span className="font-medium text-text-primary">{item.title}</span>
+                          <span className="block truncate font-medium text-text-primary" title={item.title}>{item.title}</span>
                         )}
                       </td>
-                      <td className="hidden py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell">{item.manufacturerCode ?? '—'}</td>
+                      <td className="hidden max-w-[110px] truncate py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell" title={item.manufacturerCode ?? undefined}>{item.manufacturerCode ?? '—'}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
                       <td className="py-3 pr-2 text-center">
