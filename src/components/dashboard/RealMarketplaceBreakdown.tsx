@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Crown, Loader2 } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
-import type { FinanceOverview, MarketplaceFinance } from '@/data/financeShapes'
+import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 
@@ -136,9 +136,7 @@ export default function RealMarketplaceBreakdown() {
     )
   }
 
-  const rows = (data?.byMarketplace ?? []).filter((m) => m.grossRevenue > 0)
-
-  if (rows.length === 0) {
+  if ((data?.byMarketplace ?? []).length === 0) {
     return (
       <div className="glass-panel rounded-2xl p-6 text-center text-xs text-text-muted">
         Nenhum marketplace com pedido pago sincronizado ainda neste período.
@@ -146,6 +144,9 @@ export default function RealMarketplaceBreakdown() {
     )
   }
 
+  // Sempre os 4 canais, na ordem canônica — canal sem pedido no período vem
+  // zerado, nunca some da tela (ver decisão 2026-08-06).
+  const rows = fillAllMarketplaces(data!.byMarketplace)
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
 
   const sorted = [...rows].sort((a, b) => {

@@ -4,8 +4,9 @@ import type { DashboardProduct } from '@/server/dashboardProducts'
 
 // Distribui o faturamento/vendas reais do produto (um total só, sem série
 // diária no backend ainda) em blocos visuais — determinístico por SKU, nunca
-// aleatório entre renders. Mostra a MESMA soma real do período, só quebrada
-// em barras; não inventa dia nenhum que não aconteceu.
+// aleatório entre renders. A SOMA dos blocos bate com o real, mas o valor de
+// CADA bloco é estimado (curva sintética), não venda daquele dia
+// específico — por isso o rótulo "estimado" no tooltip, nunca escondido.
 function seedFromSku(sku: string): number {
   let h = 0
   for (let i = 0; i < sku.length; i++) h = (h * 31 + sku.charCodeAt(i)) >>> 0
@@ -24,7 +25,7 @@ function buildBuckets(product: DashboardProduct, periodDays: number): Bucket[] {
   const totalWeight = weights.reduce((s, w) => s + w, 0) || 1
   const step = Math.max(1, Math.round(periodDays / count))
   return weights.map((w, i) => ({
-    label: `D${Math.min(periodDays, (i + 1) * step)}`,
+    label: `~D${Math.min(periodDays, (i + 1) * step)}`,
     units: Math.round((product.units * w) / totalWeight),
     revenue: Math.round((product.revenue * w) / totalWeight),
   }))
@@ -62,6 +63,7 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Tendência de Vendas</h3>
+          <p className="mt-0.5 text-[10.5px] text-text-muted">Total real do período · distribuição por dia estimada</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-text-muted"><span className="font-mono text-base font-bold text-text-primary">{product.units.toLocaleString('pt-BR')}</span> <span className="text-xs">un.</span></span>
             <span className="font-mono text-base font-bold text-text-primary">R$ {product.revenue.toLocaleString('pt-BR')}</span>
@@ -119,8 +121,8 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
               <span className="text-[9.5px] text-text-muted">{d.label}</span>
 
               {hoverIdx === i && active && (
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[160px] -translate-x-1/2 rounded-lg border border-border-subtle bg-bg-card px-3 py-2 shadow-xl">
-                  <p className="text-[10px] font-semibold text-text-muted">{active.label}</p>
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[170px] -translate-x-1/2 rounded-lg border border-border-subtle bg-bg-card px-3 py-2 shadow-xl">
+                  <p className="text-[10px] font-semibold text-text-muted">{active.label} · estimado</p>
                   <p className="mt-0.5 font-mono text-[12px] font-semibold text-accent-blue">{active.units} un.</p>
                   <p className="font-mono text-[12px] font-semibold text-accent-cyan">R$ {active.revenue.toLocaleString('pt-BR')}</p>
                 </div>

@@ -1,4 +1,4 @@
-import type { Marketplace } from '@/data/mockData'
+import { ALL_MARKETPLACES, type Marketplace } from '@/data/mockData'
 
 export type FinanceSource = 'demo' | 'real' | 'estimated'
 
@@ -32,6 +32,26 @@ export interface FinanceOverview {
   /** bruto - comissão - estornos. Não é lucro. */
   netValue: number
   source: FinanceSource
+}
+
+const ZERO_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
+
+/** Sempre devolve os 4 canais, na ordem canônica — canal sem pedido no
+ *  período vem zerado, nunca fica de fora. Estrutura da tela nunca varia
+ *  por quantidade de marketplace conectado (ver decisão 2026-08-06). */
+export function fillAllMarketplaces(rows: MarketplaceFinance[]): MarketplaceFinance[] {
+  const byMarketplace = new Map(rows.map((r) => [r.marketplace, r]))
+  return ALL_MARKETPLACES.map((marketplace) => byMarketplace.get(marketplace) ?? {
+    marketplace,
+    grossRevenue: 0,
+    fees: 0,
+    refunds: 0,
+    netValue: 0,
+    ordersCount: 0,
+    averageTicket: 0,
+    growth: ZERO_GROWTH,
+    source: rows[0]?.source ?? 'real',
+  })
 }
 
 export type FinanceTransactionType = 'Venda' | 'Comissão' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'

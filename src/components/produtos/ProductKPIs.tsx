@@ -29,7 +29,11 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
     { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku ?? bestSeller.id}`, change: bestSeller.trend, icon: Flame, primary: '#3BE38E' },
     { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku ?? lowestTurn.id}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5E7D' },
     { label: 'Margem Média', value: avgMargin ?? '—', format: avgMargin !== null ? (v) => `${Math.round(v)}%` : undefined, sub: avgMargin !== null ? 'todos os produtos' : 'defina o custo dos produtos', icon: Percent, primary: '#194B9B' },
-    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#46E5FF' },
+    // Rótulo explícito "por unidade" — em Dashboard/Financeiro/Marketplaces
+    // "Ticket Médio" é receita ÷ pedidos (aqui não temos contagem de pedido
+    // por produto, só receita ÷ unidades). Fórmula diferente, nome tem que
+    // deixar claro, senão parece divergência/bug entre telas.
+    { label: 'Ticket por Unidade', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'receita ÷ unidades vendidas', icon: Receipt, primary: '#46E5FF' },
   ]
 
   return (

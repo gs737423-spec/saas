@@ -25,15 +25,19 @@ function demoInterceptFor(url: string): unknown | null {
   if (!isDemoModeActive()) return null
   if (!url.startsWith('/api/dashboard/')) return null
 
-  if (url.startsWith('/api/dashboard/summary')) return demoDashboardSummary()
+  const days = Number(new URL(url, 'http://x').searchParams.get('days')) || 30
+
+  if (url.startsWith('/api/dashboard/summary')) return demoDashboardSummary(days)
   if (url.startsWith('/api/dashboard/products')) return demoDashboardProducts()
   if (url.startsWith('/api/dashboard/inventory')) return demoDashboardInventory()
   if (url.startsWith('/api/dashboard/finance-daily')) {
-    const days = Number(new URL(url, 'http://x').searchParams.get('days')) || 30
     return { ok: true, source: 'demo', days: demoFinanceDaily(days + Math.max(days, 30)) }
   }
   if (url.startsWith('/api/dashboard/finance')) {
-    const { overview, byMarketplace } = demoFinanceOverview()
+    // Mesmo days do summary — senão o card do topo (Dashboard/Relatórios)
+    // muda com o período e a lista de marketplace (Marketplaces/Financeiro)
+    // fica parada, dois números que não batem na mesma sessão de demo.
+    const { overview, byMarketplace } = demoFinanceOverview(days)
     return { ok: true, overview, byMarketplace, transactions: demoFinanceTransactions() }
   }
   return null

@@ -6,7 +6,7 @@ import FinancialComposition from '@/components/financeiro/FinancialComposition'
 import MarketplaceFinanceTable from '@/components/financeiro/MarketplaceFinanceTable'
 import TransactionsLedger from '@/components/financeiro/TransactionsLedger'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
-import type { FinanceOverview, MarketplaceFinance, FinanceTransaction } from '@/data/financeShapes'
+import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance, type FinanceTransaction } from '@/data/financeShapes'
 import type { Marketplace } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
@@ -39,7 +39,9 @@ export default function Financeiro() {
   }, [period.days])
 
   const filtered = useMemo(() => {
-    const source = real?.byMarketplace ?? []
+    // Sempre os 4 canais, na ordem canônica — canal sem pedido no período
+    // vem zerado, nunca some da tela (ver decisão 2026-08-06).
+    const source = fillAllMarketplaces(real?.byMarketplace ?? [])
     return marketplaceFilter === 'all' ? source : source.filter((m) => m.marketplace === marketplaceFilter)
   }, [real, marketplaceFilter])
 

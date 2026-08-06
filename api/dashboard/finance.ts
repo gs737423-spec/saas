@@ -181,30 +181,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       .filter((row): row is MarketplaceFinance => row !== null)
 
+    // provider desconhecido/não mapeado nunca vira "Mercado Livre" por
+    // fallback — transação de origem indeterminada fica de fora do extrato,
+    // não infla o canal errado (mesma regra dos outros endpoints).
     const transactions: FinanceTransaction[] = [
-      ...paid.map((o) => {
-        const marketplace = providerByConnectionId.get(o.connection_id)
-        return {
+      ...paid.flatMap((o) => {
+        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id)!]
+        if (!marketplace) return []
+        return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],
-          marketplace: (PROVIDER_LABEL[marketplace!] ?? 'Mercado Livre') as Marketplace,
+          marketplace,
           type: 'Venda' as const,
           identifier: o.external_order_id,
           gross: Number(o.total_amount ?? 0),
           discount: Number(o.fee_amount ?? 0),
           net: Number(o.total_amount ?? 0) - Number(o.fee_amount ?? 0),
-        }
+        }]
       }),
-      ...cancelled.map((o) => {
-        const marketplace = providerByConnectionId.get(o.connection_id)
-        return {
+      ...cancelled.flatMap((o) => {
+        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id)!]
+        if (!marketplace) return []
+        return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],
-          marketplace: (PROVIDER_LABEL[marketplace!] ?? 'Mercado Livre') as Marketplace,
+          marketplace,
           type: 'Estorno' as const,
           identifier: o.external_order_id,
           gross: -Number(o.total_amount ?? 0),
           discount: Number(o.total_amount ?? 0),
           net: -Number(o.total_amount ?? 0),
-        }
+        }]
       }),
     ].sort((a, b) => (a.date < b.date ? 1 : -1))
 
