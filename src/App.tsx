@@ -23,6 +23,7 @@ import AdminClients from '@/pages/AdminClients'
 import AdminCompany from '@/pages/AdminCompany'
 import AdminSupport from '@/pages/AdminSupport'
 import { useIdleLogout } from '@/hooks/useIdleLogout'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
 
 // Shell autenticado da plataforma. Montado em `/app/*` sob <ProtectedRoute>
 // (ver main.tsx) — a guarda de sessão real já aconteceu lá, este componente
@@ -54,24 +55,26 @@ export default function App() {
       <main className="app-main" style={{ paddingTop: 'var(--app-header-height)' }}>
         <div className="app-page-container pb-24 pt-2.5 md:pb-6 md:pt-3">
           <div key={location.pathname} className="page-transition">
-            <Routes location={location}>
-              <Route index element={<Dashboard />} />
-              <Route path="produtos" element={<Produtos />} />
-              <Route path="produto/:sku" element={<ProdutoDetalhe />} />
-              <Route path="marketplaces" element={<Marketplaces />} />
-              <Route path="estoque" element={<Estoque />} />
-              <Route path="importacoes" element={<Importacoes />} />
-              <Route path="financeiro" element={<Financeiro />} />
-              <Route path="relatorios" element={<Relatorios />} />
-              <Route path="configuracoes" element={<Configuracoes />} />
-              <Route path="suporte" element={<Suporte />} />
-              <Route path="admin" element={<Admin />} />
-              <Route path="admin/solicitacoes" element={<AdminLeads />} />
-              <Route path="admin/clientes" element={<AdminClients />} />
-              <Route path="admin/empresa/:id" element={<AdminCompany />} />
-              <Route path="admin/suporte" element={<AdminSupport />} />
-              <Route path="*" element={<Navigate to="/app" replace />} />
-            </Routes>
+            <ErrorBoundary key={location.pathname}>
+              <Routes location={location}>
+                <Route index element={<Dashboard />} />
+                <Route path="produtos" element={<Produtos />} />
+                <Route path="produto/:sku" element={<ProdutoDetalhe />} />
+                <Route path="marketplaces" element={<Marketplaces />} />
+                <Route path="estoque" element={<Estoque />} />
+                <Route path="importacoes" element={<Importacoes />} />
+                <Route path="financeiro" element={<Financeiro />} />
+                <Route path="relatorios" element={<Relatorios />} />
+                <Route path="configuracoes" element={<Configuracoes />} />
+                <Route path="suporte" element={<Suporte />} />
+                <Route path="admin" element={<Admin />} />
+                <Route path="admin/solicitacoes" element={<AdminLeads />} />
+                <Route path="admin/clientes" element={<AdminClients />} />
+                <Route path="admin/empresa/:id" element={<AdminCompany />} />
+                <Route path="admin/suporte" element={<AdminSupport />} />
+                <Route path="*" element={<Navigate to="/app" replace />} />
+              </Routes>
+            </ErrorBoundary>
           </div>
         </div>
       </main>
