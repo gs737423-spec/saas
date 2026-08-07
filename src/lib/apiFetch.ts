@@ -3,17 +3,24 @@ import { isDemoModeActive } from '@/contexts/DemoModeContext'
 import { getViewAsCompanyId } from '@/contexts/ViewAsContext'
 import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, demoFinanceOverview, demoFinanceTransactions, demoFinanceDaily } from './demoData'
 
-/** "Acessar Painel do Lojista" — só nas leituras de dashboard (GET), nunca
- *  em escrita (POST/PATCH/DELETE seguem exigindo membership real do
- *  próprio usuário, requireCompany.ts não muda isso). O backend já
+// GETs que requireCompany.ts aceita com ?company_id= explícito quando quem
+// chama é platform_admin — status/logs de integração (Conexões) tanto
+// quanto os endpoints de dashboard. Não inclui rotas de escrita/OAuth
+// (authorize/sync/callback): "ver como" é sempre leitura, nunca dispara
+// ação em nome de outra empresa.
+const VIEW_AS_URL_PREFIXES = ['/api/dashboard/', '/api/integrations/status', '/api/integrations/logs']
+
+/** "Acessar Painel do Lojista" — só nas leituras de dashboard/integrações
+ *  (GET), nunca em escrita (POST/PATCH/DELETE seguem exigindo membership
+ *  real do próprio usuário, requireCompany.ts não muda isso). O backend já
  *  autoriza platform_admin a passar ?company_id= explícito (migration 005
  *  + requireCompany.ts) — aqui só anexamos o parâmetro quando o modo
  *  "ver como" está ativo. */
-function withViewAsCompanyId(url: string, init?: RequestInit): string {
+export function withViewAsCompanyId(url: string, init?: RequestInit): string {
   const method = (init?.method ?? 'GET').toUpperCase()
   if (method !== 'GET') return url
   if (isDemoModeActive()) return url
-  if (!url.startsWith('/api/dashboard/')) return url
+  if (!VIEW_AS_URL_PREFIXES.some((prefix) => url.startsWith(prefix))) return url
   const companyId = getViewAsCompanyId()
   if (!companyId) return url
   const withParam = new URL(url, 'http://x')

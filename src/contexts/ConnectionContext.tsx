@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { getMarketplaceColor } from '@/data/mockData'
 import { supabase } from '@/lib/supabaseClient'
+import { withViewAsCompanyId } from '@/lib/apiFetch'
 
 export type IntegrationStatus = 'disconnected' | 'pending' | 'connected' | 'error' | 'expired' | 'config_missing'
 
@@ -84,7 +85,7 @@ async function authHeader(): Promise<HeadersInit> {
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> {
   try {
     const headers = { ...(await authHeader()), ...(init?.headers ?? {}) }
-    const res = await fetch(url, { ...init, headers })
+    const res = await fetch(withViewAsCompanyId(url, init), { ...init, headers })
     if (!res.ok) return null
     return (await res.json()) as T
   } catch {
@@ -98,7 +99,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T | null> 
 async function fetchJsonWithError<T>(url: string, init?: RequestInit): Promise<{ data: T | null; message: string | null }> {
   try {
     const headers = { ...(await authHeader()), ...(init?.headers ?? {}) }
-    const res = await fetch(url, { ...init, headers })
+    const res = await fetch(withViewAsCompanyId(url, init), { ...init, headers })
     const body = await res.json().catch(() => null)
     if (!res.ok) return { data: null, message: body?.message ?? null }
     return { data: body as T, message: null }
