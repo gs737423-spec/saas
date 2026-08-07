@@ -5,7 +5,6 @@ import Hero from '@/site/sections/Hero'
 import NumbersSection from '@/site/sections/NumbersSection'
 import ServicosSection from '@/site/sections/ServicosSection'
 import MarketplacesSection from '@/site/sections/MarketplacesSection'
-import ComoTrabalhamosSection from '@/site/sections/ComoTrabalhamosSection'
 import ConversionSection from '@/site/sections/ConversionSection'
 import Footer from '@/site/sections/Footer'
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
@@ -15,14 +14,14 @@ import WhatsAppFloatButton from '@/components/WhatsAppFloatButton'
 // um dos serviços, não a seção-argumento central — por isso a antiga
 // ExperienceSection (fundida com "como atuamos") foi aposentada e virou
 // ServicosSection (id="servicos", 4 serviços nomeados, um deles a própria
-// plataforma). ComoTrabalhamosSection (id="como-trabalhamos") é nova e bem
-// compacta — só entendimento→diagnóstico→acompanhamento, sem CTA próprio
-// (evita CTA duplicado com o Contato). MarketplacesSection (id="plataforma"
-// no bloco de seletores/screenshot, não no topo da seção) comunica a
-// tecnologia como apoio da consultoria. FAQ continua fora da renderização —
+// plataforma). MarketplacesSection (id="plataforma" no bloco de
+// seletores/screenshot, não no topo da seção) comunica a tecnologia como
+// apoio da consultoria. FAQ continua fora da renderização —
 // `#faq` é âncora de compatibilidade dentro de ConversionSection (Footer
-// ainda linka pra lá). `#como-funciona` (2 links do Footer) agora é âncora
-// de compatibilidade dentro de ComoTrabalhamosSection. `#sobre` (Footer
+// ainda linka pra lá). ComoTrabalhamosSection (pedido do usuário,
+// 2026-08-07) e seus links/âncoras (`#como-trabalhamos`, `#como-funciona`)
+// foram removidos — todo link que apontava pra lá agora vai pra `#conversao`
+// (Contato). `#sobre` (Footer
 // "Quem somos") é âncora de compatibilidade dentro de NumbersSection, que
 // passou a ter `id="consultoria"` de verdade. NumbersSection permanece —
 // regra explícita do usuário: não pode sair do ar nem ter números alterados,
@@ -51,9 +50,7 @@ export default function SitePage() {
         <ServicosSection />
         {/* 4. Plataforma (screenshots/tabs/logos) — escuro */}
         <MarketplacesSection />
-        {/* 5. Como trabalhamos — claro */}
-        <ComoTrabalhamosSection />
-        {/* 6. Contato / CTA final — escuro, gradiente */}
+        {/* 5. Contato / CTA final — escuro, gradiente */}
         <ConversionSection />
       </main>
       <Footer />

@@ -64,7 +64,7 @@ export default function Footer() {
               <ul className="footer-col-list">
                 <li><a href="#servicos" className="footer-link">Consultoria estratégica</a></li>
                 <li><a href="#plataforma" className="footer-link">Plataforma de gestão</a></li>
-                <li><a href="#como-trabalhamos" className="footer-link">Acompanhamento da operação</a></li>
+                <li><a href="#conversao" className="footer-link">Acompanhamento da operação</a></li>
                 <li><a href="#marketplaces" className="footer-link">Performance por canal</a></li>
               </ul>
             </nav>
@@ -82,7 +82,7 @@ export default function Footer() {
               <h3 className="footer-col-title">Empresa</h3>
               <ul className="footer-col-list">
                 <li><a href="#sobre" className="footer-link">Quem somos</a></li>
-                <li><a href="#como-trabalhamos" className="footer-link">Como funciona</a></li>
+                <li><a href="#conversao" className="footer-link">Como funciona</a></li>
                 <li><a href="#faq" className="footer-link">FAQ</a></li>
                 <li><a href="#conversao" className="footer-link">Contato</a></li>
               </ul>

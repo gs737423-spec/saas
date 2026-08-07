@@ -22,7 +22,6 @@ export const nav = [
   { label: 'Consultoria', href: '#consultoria' },
   { label: 'Serviços', href: '#servicos' },
   { label: 'Plataforma', href: '#plataforma' },
-  { label: 'Como trabalhamos', href: '#como-trabalhamos' },
 ]
 
 // Textos de CTA padronizados — usar só estes em toda a home (regra do

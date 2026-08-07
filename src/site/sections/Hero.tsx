@@ -25,7 +25,7 @@ const slides: Slide[] = [
     sub: 'Pedidos, estoque, vendas e resultados reunidos para sua equipe entender o que aconteceu e decidir onde agir.',
     ctaPrimary: 'Quero organizar minha operação',
     ctaSecondary: 'Ver como funciona',
-    ctaSecondaryHref: '#como-funciona',
+    ctaSecondaryHref: '#conversao',
     microcopy: 'Conversa inicial, sem compromisso.',
     person: '/site/people/processed/vintec-hero-tablet.webp',
     personAlt: 'Profissional com um tablet, representando a operação multicanal mais clara com a MKTOnline',
