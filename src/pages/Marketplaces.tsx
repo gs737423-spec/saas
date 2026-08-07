@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, AlertTriangle, Store } from 'lucide-react'
+import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Store } from 'lucide-react'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
@@ -25,18 +25,16 @@ function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
   const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount)
   const byGrowth = [...rows].sort((a, b) => (b.growth.d30 ?? -Infinity) - (a.growth.d30 ?? -Infinity))
   const totalNet = rows.reduce((s, r) => s + r.netValue, 0)
-  const worstGrowth = [...rows].filter((r) => r.growth.d30 !== null).sort((a, b) => (a.growth.d30 ?? 0) - (b.growth.d30 ?? 0))[0]
 
   const verdicts = [
     { label: 'Líder em Líquido', value: `R$ ${brl(byNet[0].netValue)}`, channel: byNet[0].marketplace, sub: `${totalNet > 0 ? pct((byNet[0].netValue / totalNet) * 100) : '0,0'}% do líquido total`, icon: Crown, tone: '#3BE38E' },
     { label: 'Melhor Ticket', value: `R$ ${brl2(byTicket[0].averageTicket)}`, channel: byTicket[0].marketplace, sub: `${brl(byTicket[0].ordersCount)} pedidos`, icon: Receipt, tone: '#194B9B' },
     { label: 'Mais Pedidos', value: brl(byOrders[0].ordersCount), channel: byOrders[0].marketplace, sub: `ticket R$ ${brl2(byOrders[0].averageTicket)}`, icon: ShoppingCart, tone: '#3A8DFF' },
     { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#00E1FF' },
-    { label: 'Canal em Atenção', value: worstGrowth ? worstGrowth.marketplace : '—', channel: worstGrowth ? worstGrowth.marketplace : rows[0].marketplace, sub: worstGrowth ? `Atenção · ${pct(worstGrowth.growth.d30!)}%` : 'Nenhum canal em queda', icon: AlertTriangle, tone: '#FF5E7D' },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {verdicts.map((v) => {
         const brand = getMarketplaceColor(v.channel)
         return (

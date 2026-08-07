@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronDown, Check, Boxes, PauseCircle, RefreshCw, Crown, Wallet, Layers, ShieldAlert, AlertTriangle } from 'lucide-react'
+import { Search, ChevronDown, Check, Boxes, PauseCircle, Crown, Wallet } from 'lucide-react'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
 import DataTableViewport from '@/components/common/DataTableViewport'
@@ -166,13 +166,8 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   )
 
   const stalledCount = enriched.filter((e) => e.giro === 'Parado' || e.giro === 'Parado crítico').length
-  const criticalCount = enriched.filter((e) => e.cov !== null && e.cov < 7).length
-  const excessCount = enriched.filter((e) => e.cov !== null && e.cov > 45).length
   const curvaA = items.filter((i) => i.abcClass === 'A')
-  const curvaARiskCount = enriched.filter((e) => e.item.abcClass === 'A' && e.cov !== null && e.cov < 15).length
   const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * i.availableQuantity, 0)
-  const turnoverValues = items.map((i) => i.turnoverRate).filter((t): t is number => t !== null)
-  const avgTurnover = turnoverValues.length > 0 ? turnoverValues.reduce((s, t) => s + t, 0) / turnoverValues.length : null
 
   const filtered = enriched.filter(({ item, cov, giro }) => {
     if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
@@ -202,40 +197,13 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#00E1FF' },
     { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
     { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
-    { key: 'turnover', label: 'Giro Médio', value: avgTurnover !== null ? `${avgTurnover.toFixed(1)}x` : '—', sub: 'vendas ÷ estoque médio', icon: RefreshCw, primary: '#FFC95A' },
     { key: 'curveA', label: 'Produtos Curva A', value: String(curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
-    { key: 'curveARisk', label: 'Curva A em Risco', value: String(curvaARiskCount), sub: 'top faturamento, cobertura baixa', icon: ShieldAlert, primary: '#FF5E7D', onClick: () => setFilters((f) => (f.abc.has('A') && f.onlyLowCoverage ? defaultFilters : { ...defaultFilters, abc: new Set<AbcClass>(['A']), onlyLowCoverage: true })), active: filters.abc.has('A') && filters.abc.size === 1 && filters.onlyLowCoverage },
   ]
 
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-        {kpis.slice(0, 2).map((c) => (
-          <KpiCard key={c.key} c={c} />
-        ))}
-
-        {/* Crítico / Excesso — 1 card, 2 metades clicáveis */}
-        <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5">
-          <span className="mb-1.5 block min-h-[28px] text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">Crítico / Excesso</span>
-          <div className="mt-auto grid grid-cols-2 divide-x divide-border-subtle">
-            <button type="button" onClick={() => setFilters((f) => ({ ...defaultFilters, onlyCritical: !f.onlyCritical }))} className="cursor-pointer pr-2 text-left" style={filters.onlyCritical ? { boxShadow: 'inset 0 0 0 1.5px #FF5E7D99' } : undefined}>
-              <div className="flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5" style={{ color: '#FF5E7D' }} />
-                <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{criticalCount}</span>
-              </div>
-              <div className="mt-1 truncate text-[10px] text-text-muted">crítico · ruptura</div>
-            </button>
-            <button type="button" onClick={() => setFilters((f) => ({ ...defaultFilters, onlyExcess: !f.onlyExcess }))} className="cursor-pointer pl-2 text-left" style={filters.onlyExcess ? { boxShadow: 'inset 0 0 0 1.5px #00E1FF99' } : undefined}>
-              <div className="flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5" style={{ color: '#00E1FF' }} />
-                <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{excessCount}</span>
-              </div>
-              <div className="mt-1 truncate text-[10px] text-text-muted">excesso · &gt;45d</div>
-            </button>
-          </div>
-        </div>
-
-        {kpis.slice(2).map((c) => (
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {kpis.map((c) => (
           <KpiCard key={c.key} c={c} />
         ))}
       </div>
