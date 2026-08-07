@@ -6,6 +6,25 @@ function extractSku(item: MLItemDetail): string | null {
   return skuAttr?.value_name ?? null
 }
 
+/** Anúncio com variações (tamanho/cor) não tem `available_quantity` no nível
+ *  raiz — o estoque real é a soma de cada variação. Sem variações, usa o
+ *  campo raiz direto (pode vir null em anúncios pausados/sem preço ativo). */
+function extractAvailableQuantity(item: MLItemDetail): number {
+  if (item.variations && item.variations.length > 0) {
+    return item.variations.reduce((sum, v) => sum + (v.available_quantity ?? 0), 0)
+  }
+  return item.available_quantity ?? 0
+}
+
+function extractPrice(item: MLItemDetail): number {
+  if (item.price != null) return item.price
+  if (item.variations && item.variations.length > 0) {
+    const withPrice = item.variations.find((v) => v.price != null)
+    if (withPrice?.price != null) return withPrice.price
+  }
+  return 0
+}
+
 export interface NormalizedProductRow {
   external_product_id: string
   sku: string | null
@@ -27,8 +46,8 @@ export function mapItemToProductRow(item: MLItemDetail): NormalizedProductRow {
     sku: extractSku(item),
     title: item.title,
     status: item.status,
-    price: item.price,
-    available_quantity: item.available_quantity,
+    price: extractPrice(item),
+    available_quantity: extractAvailableQuantity(item),
     sold_quantity: item.sold_quantity,
     permalink: item.permalink,
     category_id: item.category_id,
@@ -50,7 +69,7 @@ export function mapItemToInventoryRow(item: MLItemDetail): NormalizedInventoryRo
     external_product_id: item.id,
     sku: extractSku(item),
     title: item.title,
-    available_quantity: item.available_quantity,
+    available_quantity: extractAvailableQuantity(item),
     // TODO: /items/{id} only exposes lifetime `sold_quantity`, not a rolling 30-day
     // figure. A real 30d number requires aggregating from orders once that endpoint
     // is validated (see docs/integrations/mercadolivre-sync.md) — left null until then

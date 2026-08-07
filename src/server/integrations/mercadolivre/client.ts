@@ -19,6 +19,7 @@ const ORDERS_PAGE_SIZE = 50
 // chegar em meses anteriores num catálogo com muito movimento.
 const ORDERS_HISTORY_DAYS = 365
 const MAX_429_RETRIES = 3
+const MAX_TRANSIENT_RETRIES = 2
 // Sem isso uma chamada travada (rede degradada, ML sem responder) prendia a
 // serverless function até o maxDuration inteiro de 300s antes de qualquer
 // retry/erro aparecer — agora falha rápido e conta como erro do item, não
@@ -35,7 +36,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promise<T> {
+async function mlFetch<T>(path: string, accessToken: string, attempt = 0, transientAttempt = 0): Promise<T> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   let res: Response
@@ -45,6 +46,14 @@ async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promi
       signal: controller.signal,
     })
   } catch (err) {
+    // Timeout ou rede instável — 1 rajada ruim não pode derrubar o item pra
+    // sempre até o próximo sync manual, mesmo padrão de retry que já existe
+    // pra 429.
+    if (transientAttempt < MAX_TRANSIENT_RETRIES) {
+      clearTimeout(timeout)
+      await sleep(500 * (transientAttempt + 1))
+      return mlFetch<T>(path, accessToken, attempt, transientAttempt + 1)
+    }
     if (err instanceof Error && err.name === 'AbortError') {
       throw new MercadoLivreApiError(`Mercado Livre API timeout (${REQUEST_TIMEOUT_MS}ms) on ${path}`, 0, path)
     }
@@ -57,7 +66,12 @@ async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promi
     // Simple exponential backoff — per docs, exceeding 1500 req/min per seller
     // returns an empty 429 body.
     await sleep(500 * (attempt + 1))
-    return mlFetch<T>(path, accessToken, attempt + 1)
+    return mlFetch<T>(path, accessToken, attempt + 1, transientAttempt)
+  }
+
+  if (res.status >= 500 && transientAttempt < MAX_TRANSIENT_RETRIES) {
+    await sleep(500 * (transientAttempt + 1))
+    return mlFetch<T>(path, accessToken, attempt, transientAttempt + 1)
   }
 
   if (!res.ok) {
