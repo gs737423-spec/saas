@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
 import { apiFetchJson } from '@/lib/apiFetch'
+import { isDemoModeActive } from '@/contexts/DemoModeContext'
 import { usePeriod } from '@/contexts/PeriodContext'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
 
@@ -162,9 +163,14 @@ function ProdutoDetalheReal({ matches, periodDays }: { matches: DashboardProduct
         </div>
       )}
 
-      <div className="glass-panel rounded-2xl p-5 text-center text-xs text-text-muted">
-        Histórico diário de vendas e feed de atividade por produto ainda não existem pra dado real — dependem de uma tabela de série temporal que não foi criada ainda.
-      </div>
+      {/* Confissão de limitação técnica ("ainda não existe") não deve
+          aparecer durante uma demonstração de venda pro lead — só é
+          relevante pro cliente real já operando na plataforma. */}
+      {!isDemoModeActive() && (
+        <div className="glass-panel rounded-2xl p-5 text-center text-xs text-text-muted">
+          Histórico diário de vendas e feed de atividade por produto ainda não existem pra dado real — dependem de uma tabela de série temporal que não foi criada ainda.
+        </div>
+      )}
     </div>
   )
 }

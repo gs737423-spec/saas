@@ -3,7 +3,7 @@ import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
 import type { SyncSummary } from '../types.js'
 import type { MLOrder } from './types.js'
-import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError } from './client.js'
+import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError, MAX_ITEMS_FIRST_SYNC, MAX_ORDERS_FIRST_SYNC } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 
@@ -120,6 +120,13 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
     const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
+    // Teto de segurança atingido — catálogo real tem mais itens do que o sync
+    // trouxe. Não é um erro (sync continua normalmente pros itens buscados),
+    // mas o cliente precisa saber que o catálogo está incompleto, não achar
+    // que só tem esses produtos. Vira aviso visível em "Atividade recente".
+    if (itemIds.length >= MAX_ITEMS_FIRST_SYNC) {
+      errors.push(`Catálogo tem mais de ${MAX_ITEMS_FIRST_SYNC} produtos — sync trouxe só os primeiros ${MAX_ITEMS_FIRST_SYNC}, o restante não foi importado.`)
+    }
 
     await runWithConcurrency(itemIds, 8, async (itemId) => {
       try {
@@ -174,6 +181,9 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     let orders: MLOrder[] = []
     try {
       orders = await searchOrders(connection.seller_id!, accessToken)
+      if (orders.length >= MAX_ORDERS_FIRST_SYNC) {
+        errors.push(`Mais de ${MAX_ORDERS_FIRST_SYNC} pedidos no período — sync trouxe só os ${MAX_ORDERS_FIRST_SYNC} mais recentes, pedidos mais antigos não foram importados.`)
+      }
     } catch (searchErr) {
       const message = searchErr instanceof MercadoLivreApiError
         ? searchErr.message
@@ -222,9 +232,17 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const durationMs = finishedAt.getTime() - startedAt.getTime()
     const hadPartialFailures = errors.length > 0 && productsImported > 0
 
+    // Junta até 5 erros num resumo (não só o primeiro) — múltiplas falhas
+    // viravam uma mensagem só antes, escondendo que havia mais de um problema.
+    const lastErrorSummary = errors.length === 0
+      ? null
+      : errors.length === 1
+        ? errors[0]
+        : `${errors.length} erros: ${errors.slice(0, 5).join(' | ')}${errors.length > 5 ? ` (e mais ${errors.length - 5})` : ''}`
+
     await supabase
       .from('marketplace_connections')
-      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: errors[0] ?? null })
+      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary })
       .eq('id', connection.id)
 
     await logSyncEvent({

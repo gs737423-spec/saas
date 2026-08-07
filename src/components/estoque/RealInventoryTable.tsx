@@ -155,6 +155,16 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     return { item, cov, giro }
   }), [items])
 
+  // Dados de fornecedor/NF só existem no Modo Demonstração (sem tabela de
+  // purchase orders/NF real ainda — ver DashboardInventoryItem em types.ts).
+  // Sync real do Mercado Livre nunca preenche esses 5 campos: em vez de
+  // mostrar colunas inteiras de "—" (parece bug de sync pro cliente),
+  // esconde a seção inteira quando nenhum item tem esse dado.
+  const hasSupplierData = useMemo(
+    () => items.some((i) => i.manufacturerCode != null || i.lastEntryAt != null || i.entryQty != null || i.lastInvoiceNumber != null || i.freightValue != null),
+    [items]
+  )
+
   const stalledCount = enriched.filter((e) => e.giro === 'Parado' || e.giro === 'Parado crítico').length
   const criticalCount = enriched.filter((e) => e.cov !== null && e.cov < 7).length
   const excessCount = enriched.filter((e) => e.cov !== null && e.cov > 45).length
@@ -266,18 +276,22 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           <Chip active={filters.onlyStalled} onClick={() => setFilters((f) => ({ ...f, onlyStalled: !f.onlyStalled }))}>Parado</Chip>
           <Chip active={filters.onlyLowCoverage} onClick={() => setFilters((f) => ({ ...f, onlyLowCoverage: !f.onlyLowCoverage }))}>Cobertura baixa</Chip>
           <Chip active={filters.onlyExcess} onClick={() => setFilters((f) => ({ ...f, onlyExcess: !f.onlyExcess }))}>Excesso</Chip>
-          <Chip active={filters.onlyNoRecentEntry} onClick={() => setFilters((f) => ({ ...f, onlyNoRecentEntry: !f.onlyNoRecentEntry }))}>Sem entrada recente</Chip>
+          {hasSupplierData && (
+            <Chip active={filters.onlyNoRecentEntry} onClick={() => setFilters((f) => ({ ...f, onlyNoRecentEntry: !f.onlyNoRecentEntry }))}>Sem entrada recente</Chip>
+          )}
           <span className="mx-1 h-4 w-px bg-border-subtle" />
           <MarketplaceDropdown value={filters.marketplace} onChange={(v) => setFilters((f) => ({ ...f, marketplace: v }))} />
-          <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
-            <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-            <input
-              value={filters.manufacturerSearch}
-              onChange={(e) => setFilters((f) => ({ ...f, manufacturerSearch: e.target.value }))}
-              placeholder="Código fabricante..."
-              className="w-full bg-transparent text-[11.5px] text-text-secondary placeholder:text-text-muted focus:outline-none"
-            />
-          </div>
+          {hasSupplierData && (
+            <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
+              <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+              <input
+                value={filters.manufacturerSearch}
+                onChange={(e) => setFilters((f) => ({ ...f, manufacturerSearch: e.target.value }))}
+                placeholder="Código fabricante..."
+                className="w-full bg-transparent text-[11.5px] text-text-secondary placeholder:text-text-muted focus:outline-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Mobile: stacked cards */}
@@ -322,14 +336,14 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                 <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
                   <th className="pb-3 pr-2 font-semibold">Descrição</th>
-                  <th className="hidden pb-3 pr-2 font-semibold xl:table-cell">Cód. Fabricante</th>
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 font-semibold xl:table-cell">Cód. Fabricante</th>}
                   <th className="pb-3 pr-2 text-center font-semibold">Estoque</th>
                   <th className="pb-3 pr-2 text-center font-semibold">Vendas 30d</th>
                   <th className="pb-3 pr-2 text-center font-semibold">Cobertura</th>
-                  <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Últ. Entrada</th>
-                  <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Qtd. Entrada</th>
-                  <th className="pb-3 pr-2 text-center font-semibold">Última NF</th>
-                  <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Valor Frete</th>
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Últ. Entrada</th>}
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Qtd. Entrada</th>}
+                  {hasSupplierData && <th className="pb-3 pr-2 text-center font-semibold">Última NF</th>}
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Valor Frete</th>}
                   <th className="pb-3 pr-2 text-center font-semibold">Valor em Estoque</th>
                   <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Média</th>
                   <th className="pb-3 pr-2 text-center font-semibold">Share</th>
@@ -353,7 +367,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                           <span className="font-medium text-text-primary">{item.title}</span>
                         )}
                       </td>
-                      <td className="hidden py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell">{item.manufacturerCode ?? '—'}</td>
+                      {hasSupplierData && <td className="hidden py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell">{item.manufacturerCode ?? '—'}</td>}
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
                       <td className="py-3 pr-2 text-center">
@@ -361,10 +375,10 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                           {cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}
                         </span>
                       </td>
-                      <td className="hidden py-3 pr-2 text-center font-mono text-[11px] text-text-secondary lg:table-cell">{relativeDate(item.lastEntryAt)}</td>
-                      <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">{item.entryQty ?? '—'}</td>
-                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.lastInvoiceNumber ?? '—'}</td>
-                      <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary lg:table-cell">{item.freightValue != null ? `R$ ${brl2(item.freightValue)}` : '—'}</td>
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-[11px] text-text-secondary lg:table-cell">{relativeDate(item.lastEntryAt)}</td>}
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">{item.entryQty ?? '—'}</td>}
+                      {hasSupplierData && <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.lastInvoiceNumber ?? '—'}</td>}
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary lg:table-cell">{item.freightValue != null ? `R$ ${brl2(item.freightValue)}` : '—'}</td>}
                       <td className="py-3 pr-2 text-center font-mono text-text-primary">R$ {brl(stockValue)}</td>
                       <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">R$ {brl2(avgTicket)}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{pct(share)}%</td>

@@ -11,6 +11,11 @@ const ITEMS_PAGE_SIZE = 50
 export const MAX_ORDERS_FIRST_SYNC = 2000
 const ORDERS_PAGE_SIZE = 50
 const MAX_429_RETRIES = 3
+// Sem isso uma chamada travada (rede degradada, ML sem responder) prendia a
+// serverless function até o maxDuration inteiro de 300s antes de qualquer
+// retry/erro aparecer — agora falha rápido e conta como erro do item, não
+// trava o sync inteiro.
+const REQUEST_TIMEOUT_MS = 15000
 
 export class MercadoLivreApiError extends Error {
   constructor(message: string, public status: number, public path: string) {
@@ -23,9 +28,22 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new MercadoLivreApiError(`Mercado Livre API timeout (${REQUEST_TIMEOUT_MS}ms) on ${path}`, 0, path)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (res.status === 429 && attempt < MAX_429_RETRIES) {
     // Simple exponential backoff — per docs, exceeding 1500 req/min per seller

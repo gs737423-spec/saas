@@ -166,19 +166,29 @@ export default function Marketplaces() {
     )
   }
 
+  // KPIs "veredicto" e os 4 mini-rankings são comparativos entre canais —
+  // com 1 marketplace só conectado, os 6 cards e os 4 gráficos repetiam o
+  // mesmo canal em "Líder", "Melhor Ticket" etc., o que não é um ranking de
+  // verdade e confunde o cliente que só tem Mercado Livre conectado.
+  const hasMultipleChannels = rows.length > 1
+
   return (
     <div className="space-y-2">
-      <div className="motion-block-in">
-        <ChannelKPIVerdict rows={rows} />
-      </div>
+      {hasMultipleChannels && (
+        <div className="motion-block-in">
+          <ChannelKPIVerdict rows={rows} />
+        </div>
+      )}
 
       <div className="motion-block-in motion-block-in-2">
         <RevenueByChannelChart />
       </div>
 
-      <div className="motion-block-in motion-block-in-3">
-        <ChannelMiniCharts rows={rows} />
-      </div>
+      {hasMultipleChannels && (
+        <div className="motion-block-in motion-block-in-3">
+          <ChannelMiniCharts rows={rows} />
+        </div>
+      )}
     </div>
   )
 }

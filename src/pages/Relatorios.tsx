@@ -89,7 +89,10 @@ export default function Relatorios() {
       lines.push({ text: `Produto que mais faturou: ${topProduct.name} (R$ ${brl(topProduct.revenue)}, ${topProduct.units} unidades).`, tone: 'neutral' })
     }
     lines.push({
-      text: `Comissão do Mercado Livre consumiu ${summary.grossRevenue > 0 ? ((summary.feesTotal / summary.grossRevenue) * 100).toFixed(1) : '0'}% do bruto.`,
+      // feesTotal soma comissão de TODOS os marketplaces conectados (ver
+      // api/dashboard/summary.ts) — nunca nomear um canal específico aqui,
+      // senão o texto fica errado assim que um segundo provider conectar.
+      text: `Comissão dos marketplaces consumiu ${summary.grossRevenue > 0 ? ((summary.feesTotal / summary.grossRevenue) * 100).toFixed(1) : '0'}% do bruto.`,
       tone: 'warning',
     })
     lines.push({
