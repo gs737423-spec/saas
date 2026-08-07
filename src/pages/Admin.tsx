@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import {
-  Settings, ShieldCheck, Loader2, Building, UserPlus, Users2, AlertTriangle, KeyRound, Link2Off, ArrowUpRight,
+  Settings, ShieldCheck, Loader2, Building, UserPlus, AlertTriangle, KeyRound, Link2Off, ArrowUpRight,
   PackageCheck, CircleDollarSign, Inbox,
 } from 'lucide-react'
-import { apiFetch } from '@/lib/apiFetch'
+import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon } from '@/site/logos'
-import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
-import { useAuth } from '@/contexts/AuthContext'
+import { useLeadsCount } from '@/lib/useLeadsCount'
+import { usePeriod } from '@/contexts/PeriodContext'
 
 interface Company {
   id: string
   name: string
   createdAt: string
   memberCount: number
+  status: string
 }
 
 // Dashboard estratégico do Painel Admin. Bloco 1 é 100% dado real (mesma
@@ -21,11 +22,14 @@ interface Company {
 // nem alertas automáticos no banco — ficam com badge "exemplo" explícito
 // em vez de fingir ser real (ver CORE-RULES #3 evidência antes de afirmação).
 export default function Admin() {
-  const { user } = useAuth()
+  const navigate = useNavigate()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [unauthorized, setUnauthorized] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
+  const [stats, setStats] = useState<{ ordersCount: number; totalGmv: number } | null>(null)
+  const leadsCount = useLeadsCount()
+  const { period } = usePeriod()
 
   const loadCompanies = useCallback(async () => {
     try {
@@ -47,6 +51,14 @@ export default function Admin() {
   }, [])
 
   useEffect(() => { loadCompanies() }, [loadCompanies])
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetchJson<{ ok: boolean; ordersCount: number; totalGmv: number }>('/api/admin/stats').then((res) => {
+      if (!cancelled && res?.ok) setStats({ ordersCount: res.ordersCount, totalGmv: res.totalGmv })
+    })
+    return () => { cancelled = true }
+  }, [])
 
   if (loading) {
     return (
@@ -77,31 +89,17 @@ export default function Admin() {
     )
   }
 
-  const now = new Date()
-  const newThisMonth = companies.filter((c) => {
-    const d = new Date(c.createdAt)
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-  }).length
-  const activeAccess = companies.reduce((s, c) => s + c.memberCount, 0)
+  const since = new Date(Date.now() - period.days * 24 * 60 * 60 * 1000)
+  const newInPeriod = companies.filter((c) => new Date(c.createdAt) >= since).length
+  const activeClients = companies.filter((c) => c.status === 'ativo').length
   const withoutAccess = companies.filter((c) => c.memberCount === 0).length
-
-  const firstName = (user?.email?.split('@')[0].split(/[._]/)[0] ?? 'Admin').replace(/^./, (c) => c.toUpperCase())
+  const gmvLabel = stats ? `R$ ${stats.totalGmv.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` : '—'
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
-      {/* Barra de boas-vindas — dado real é só o nome; "operando normalmente"
-          é uma frase de clima, não uma checagem real de uptime. */}
-      <div className="flex items-center gap-2.5 text-[13px] text-text-secondary">
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-emerald opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
-        </span>
-        Olá, {firstName}. O ecossistema está operando normalmente hoje.
-      </div>
-
-      {/* Banner do funil comercial — leva pra Solicitações (mock hoje, real
-          quando a tabela `leads` existir). */}
-      {MOCK_LEADS_COUNT > 0 && (
+      {/* Banner do funil comercial — leva pra Solicitações, contagem real
+          da tabela `leads` (ver migration 013). */}
+      {leadsCount > 0 && (
         <Link
           to="/app/admin/solicitacoes"
           className="group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/15 to-accent-cyan/5 px-5 py-4 transition-colors hover:from-accent-cyan/20"
@@ -109,7 +107,7 @@ export default function Admin() {
           <span className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-cyan/15 text-accent-cyan"><Inbox className="h-4.5 w-4.5" /></span>
             <span className="text-[13.5px] font-medium text-text-primary">
-              Você tem <strong className="font-bold text-accent-cyan">{MOCK_LEADS_COUNT} {MOCK_LEADS_COUNT === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
+              Você tem <strong className="font-bold text-accent-cyan">{leadsCount} {leadsCount === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-3.5 py-2 text-[12.5px] font-bold text-[#081423] transition-transform group-hover:scale-[1.02]">
@@ -118,14 +116,14 @@ export default function Admin() {
         </Link>
       )}
 
-      {/* Bloco 1 — Crescimento (3 primeiros KPIs = dado real; os 2 últimos
-          são ilustrativos, marcados, até existir sync real de pedidos/GMV). */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard icon={Building} color="cyan" value={companies.length} label={companies.length === 1 ? 'cliente' : 'clientes'} />
-        <KpiCard icon={UserPlus} color="emerald" value={newThisMonth} label="novos clientes (mês)" />
-        <KpiCard icon={Users2} color="violet" value={activeAccess} label="acessos ativos" />
-        <KpiCard icon={PackageCheck} color="blue" value="128" label="pedidos sincronizados (hoje)" example />
-        <KpiCard icon={CircleDollarSign} color="amber" value="R$ 84,2k" label="GMV transacionado (mês)" example />
+      {/* Bloco 1 — Crescimento. Clientes Ativos/Novos Cadastros = dado real
+          por período; Pedidos/GMV = total acumulado real de todos os
+          clientes (api/admin/stats.ts), nunca por período. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <KpiCard icon={Building} color="cyan" value={activeClients} label="Clientes Ativos" onClick={() => navigate('/app/admin/clientes')} />
+        <KpiCard icon={UserPlus} color="emerald" value={newInPeriod} label="Novos Cadastros" onClick={() => navigate('/app/admin/solicitacoes')} />
+        <KpiCard icon={PackageCheck} color="blue" value={stats ? stats.ordersCount : '—'} label="Pedidos (todos os clientes)" />
+        <KpiCard icon={CircleDollarSign} color="amber" value={gmvLabel} label="GMV total (todos os clientes)" />
       </div>
 
       {/* Bloco 2 — Saúde das integrações */}
@@ -185,16 +183,18 @@ const colorMap = {
   amber: 'bg-accent-amber/10 text-accent-amber',
 } as const
 
-function KpiCard({ icon: Icon, color, value, label, example }: { icon: typeof Building; color: keyof typeof colorMap; value: number | string; label: string; example?: boolean }) {
+function KpiCard({ icon: Icon, color, value, label, onClick }: { icon: typeof Building; color: keyof typeof colorMap; value: number | string; label: string; onClick?: () => void }) {
   return (
-    <div className="glass-panel relative flex flex-col items-start gap-2 rounded-xl p-4 transition-all duration-200 hover:border-border-active hover:-translate-y-0.5">
-      {example && (
-        <span className="absolute right-3 top-3 rounded-full border border-border-subtle px-1.5 py-0.5 text-[8px] font-semibold uppercase text-text-muted" title="Ilustrativo — ainda sem sync real de pedidos/GMV">exemplo</span>
-      )}
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={`glass-panel flex flex-col items-start gap-2 rounded-xl p-4 text-left transition-all duration-200 hover:border-border-active hover:-translate-y-0.5 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+    >
       <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${colorMap[color]}`}><Icon className="h-4 w-4" /></span>
       <p className="text-2xl font-bold tabular-nums text-text-primary">{value}</p>
       <p className="text-[11px] text-text-muted">{label}</p>
-    </div>
+    </button>
   )
 }
 

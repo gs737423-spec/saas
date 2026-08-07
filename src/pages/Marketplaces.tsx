@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Shield, AlertTriangle, Store } from 'lucide-react'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
-import type { FinanceOverview, MarketplaceFinance } from '@/data/financeShapes'
+import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import { apiFetchJson } from '@/lib/apiFetch'
@@ -154,9 +154,7 @@ export default function Marketplaces() {
     )
   }
 
-  const rows = (data?.byMarketplace ?? []).filter((m) => m.grossRevenue > 0)
-
-  if (!data || !data.ok || rows.length === 0) {
+  if (!data || !data.ok || data.byMarketplace.length === 0) {
     return (
       <ConnectMarketplacePrompt
         icon={Store}
@@ -166,29 +164,24 @@ export default function Marketplaces() {
     )
   }
 
-  // KPIs "veredicto" e os 4 mini-rankings são comparativos entre canais —
-  // com 1 marketplace só conectado, os 6 cards e os 4 gráficos repetiam o
-  // mesmo canal em "Líder", "Melhor Ticket" etc., o que não é um ranking de
-  // verdade e confunde o cliente que só tem Mercado Livre conectado.
-  const hasMultipleChannels = rows.length > 1
+  // Sempre os 4 canais, na ordem canônica — canal sem pedido no período vem
+  // zerado, nunca some da tela (estrutura não muda por quantidade de
+  // marketplace conectado, ver decisão 2026-08-06).
+  const rows = fillAllMarketplaces(data.byMarketplace)
 
   return (
     <div className="space-y-2">
-      {hasMultipleChannels && (
-        <div className="motion-block-in">
-          <ChannelKPIVerdict rows={rows} />
-        </div>
-      )}
+      <div className="motion-block-in">
+        <ChannelKPIVerdict rows={rows} />
+      </div>
 
       <div className="motion-block-in motion-block-in-2">
         <RevenueByChannelChart />
       </div>
 
-      {hasMultipleChannels && (
-        <div className="motion-block-in motion-block-in-3">
-          <ChannelMiniCharts rows={rows} />
-        </div>
-      )}
+      <div className="motion-block-in motion-block-in-3">
+        <ChannelMiniCharts rows={rows} />
+      </div>
     </div>
   )
 }

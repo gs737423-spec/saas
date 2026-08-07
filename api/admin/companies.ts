@@ -4,7 +4,7 @@ import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 
 const DELETE_LIMIT = { max: 10, windowSeconds: 1800 }
-const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status, receita_data'
+const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status, receita_data, logo_url'
 const STATUSES = ['onboarding', 'ativo', 'em_risco', 'suspenso'] as const
 
 // Snapshot da Receita Federal — mesmo shape de CnpjInfo (api/cnpj-lookup.ts),
@@ -43,6 +43,7 @@ function mapCompany(c: {
   website: string | null
   status: string
   receita_data: ReceitaData | null
+  logo_url: string | null
   company_members?: { count: number }[]
 }) {
   return {
@@ -57,6 +58,7 @@ function mapCompany(c: {
     website: c.website,
     status: c.status,
     receitaData: c.receita_data,
+    logoUrl: c.logo_url,
     memberCount: Array.isArray(c.company_members) ? (c.company_members[0]?.count ?? 0) : 0,
   }
 }

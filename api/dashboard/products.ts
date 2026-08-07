@@ -162,31 +162,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const totalRevenue = [...currentByProduct.values()].reduce((s, v) => s + v.revenue, 0)
 
-    const items: DashboardProduct[] = products.map((p) => {
-      const key = productKey(p.connection_id, p.external_product_id)
-      const agg = currentByProduct.get(key) ?? { revenue: 0, units: 0 }
-      const prevAgg = previousByProduct.get(key)
-      const trend = prevAgg && prevAgg.revenue > 0 ? ((agg.revenue - prevAgg.revenue) / prevAgg.revenue) * 100 : null
-      const costPrice = p.cost_price === null || p.cost_price === undefined ? null : Number(p.cost_price)
-      const margin = costPrice !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null
-      const provider = providerByConnectionId.get(p.connection_id)
+    // provider desconhecido/não mapeado (conexão removida, canal futuro sem
+    // label ainda) nunca vira "Mercado Livre" por fallback — isso infla o
+    // canal errado com item de origem indeterminada. Fica de fora da lista.
+    const items: DashboardProduct[] = products
+      .map((p): DashboardProduct | null => {
+        const provider = providerByConnectionId.get(p.connection_id)
+        const marketplace = provider ? PROVIDER_LABEL[provider] : undefined
+        if (!marketplace) return null
 
-      return {
-        id: p.external_product_id,
-        sku: p.sku,
-        name: p.title,
-        marketplace: (provider && PROVIDER_LABEL[provider]) || 'Mercado Livre',
-        category: p.category_name,
-        price: Number(p.price ?? 0),
-        costPrice,
-        margin,
-        stock: stockByExternalId.get(key) ?? 0,
-        revenue: agg.revenue,
-        units: agg.units,
-        trend,
-        sharePct: totalRevenue > 0 ? (agg.revenue / totalRevenue) * 100 : 0,
-      }
-    })
+        const key = productKey(p.connection_id, p.external_product_id)
+        const agg = currentByProduct.get(key) ?? { revenue: 0, units: 0 }
+        const prevAgg = previousByProduct.get(key)
+        const trend = prevAgg && prevAgg.revenue > 0 ? ((agg.revenue - prevAgg.revenue) / prevAgg.revenue) * 100 : null
+        const costPrice = p.cost_price === null || p.cost_price === undefined ? null : Number(p.cost_price)
+        const margin = costPrice !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null
+
+        return {
+          id: p.external_product_id,
+          sku: p.sku,
+          name: p.title,
+          marketplace,
+          category: p.category_name,
+          price: Number(p.price ?? 0),
+          costPrice,
+          margin,
+          stock: stockByExternalId.get(key) ?? 0,
+          revenue: agg.revenue,
+          units: agg.units,
+          trend,
+          sharePct: totalRevenue > 0 ? (agg.revenue / totalRevenue) * 100 : 0,
+        }
+      })
+      .filter((p): p is DashboardProduct => p !== null)
 
     res.status(200).json({ ok: true, source: 'real', items } satisfies ProductsApiResponse)
   } catch (err) {

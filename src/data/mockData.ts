@@ -2,6 +2,14 @@ import { BASELINE_DAYS, type PeriodOption } from '@/lib/periods'
 
 export type Marketplace = 'Mercado Livre' | 'Shopee' | 'Amazon' | 'Loja Própria'
 
+/** Único lugar que precisa crescer ao adicionar um canal novo — todo
+ *  componente que itera sobre essa lista (em vez de sobre o dado que voltou
+ *  da API) ganha o canal automaticamente sem mudar estrutura. Ver decisão
+ *  docs/02-Decisions/2026-08-06 - Paridade estrutural Demonstracao e
+ *  cliente real.md: tela nunca varia por quantidade de marketplace
+ *  conectado, só o valor fica zerado. */
+export const ALL_MARKETPLACES: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
+
 export interface KPI {
   label: string
   value: string

@@ -11,6 +11,9 @@ type Card = {
   change?: number | null
   icon: typeof Boxes
   primary: string
+  /** tooltip com o valor completo — nome de produto real do ML pode ser
+   *  bem mais longo que o card comporta, `truncate` corta visualmente. */
+  title?: string
 }
 
 export default function ProductKPIs({ products }: { products: Product[] }) {
@@ -26,10 +29,14 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
 
   const cards: Card[] = [
     { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3A8DFF' },
-    { label: 'Mais Vendido', value: bestSeller.name.split(' ').slice(0, 2).join(' '), sub: `${bestSeller.units} un. · ${bestSeller.sku ?? bestSeller.id}`, change: bestSeller.trend, icon: Flame, primary: '#3BE38E' },
-    { label: 'Menor Giro', value: lowestTurn.name.split(' ').slice(0, 2).join(' '), sub: `${lowestTurn.units} un. · ${lowestTurn.sku ?? lowestTurn.id}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5E7D' },
+    { label: 'Mais Vendido', value: bestSeller.name, title: bestSeller.name, sub: `${bestSeller.units} un. · ${bestSeller.sku ?? bestSeller.id}`, change: bestSeller.trend, icon: Flame, primary: '#3BE38E' },
+    { label: 'Menor Giro', value: lowestTurn.name, title: lowestTurn.name, sub: `${lowestTurn.units} un. · ${lowestTurn.sku ?? lowestTurn.id}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5E7D' },
     { label: 'Margem Média', value: avgMargin ?? '—', format: avgMargin !== null ? (v) => `${Math.round(v)}%` : undefined, sub: avgMargin !== null ? 'todos os produtos' : 'defina o custo dos produtos', icon: Percent, primary: '#194B9B' },
-    { label: 'Ticket Médio', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'por unidade vendida', icon: Receipt, primary: '#46E5FF' },
+    // Rótulo explícito "por unidade" — em Dashboard/Financeiro/Marketplaces
+    // "Ticket Médio" é receita ÷ pedidos (aqui não temos contagem de pedido
+    // por produto, só receita ÷ unidades). Fórmula diferente, nome tem que
+    // deixar claro, senão parece divergência/bug entre telas.
+    { label: 'Ticket por Unidade', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'receita ÷ unidades vendidas', icon: Receipt, primary: '#46E5FF' },
   ]
 
   return (
@@ -46,7 +53,7 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
               </div>
             </div>
 
-            <div className="truncate font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">
+            <div className="truncate font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary" title={c.title}>
               {typeof c.value === 'number' && c.format ? <AnimatedNumber value={c.value} format={c.format} /> : c.value}
             </div>
 

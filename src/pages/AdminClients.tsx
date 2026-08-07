@@ -8,6 +8,10 @@ import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import { hueFor, initialsFor, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
 import MarketplaceRow from '@/components/admin/MarketplaceRow'
 import EmptyState from '@/components/admin/EmptyState'
+import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
+import SortableHeader from '@/components/common/SortableHeader'
+import PaginationBar from '@/components/common/PaginationBar'
+import { useSortedPaginatedRows } from '@/lib/useSortedPaginatedRows'
 
 interface Company {
   id: string
@@ -25,11 +29,11 @@ interface Company {
 
 type Feedback = { type: 'success' | 'error'; text: string } | null
 
-const statusLabel: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
-  ativo: { label: 'Ativo', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20' },
-  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20' },
-  suspenso: { label: 'Suspenso', color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20' },
+const statusLabel: Record<string, { label: string; variant: StatusBadgeVariant }> = {
+  onboarding: { label: 'Onboarding', variant: 'info' },
+  ativo: { label: 'Ativo', variant: 'success' },
+  em_risco: { label: 'Em risco', variant: 'warning' },
+  suspenso: { label: 'Suspenso', variant: 'danger' },
 }
 
 // CNPJ mockado, determinístico por empresa — só usado quando a empresa
@@ -145,6 +149,15 @@ export default function AdminClients() {
 
   const withoutAccess = companies.filter((c) => c.memberCount === 0)
 
+  const { sortKey, sortDir, handleSort, page, setPage, totalPages, pageRows, totalRows } = useSortedPaginatedRows<Company, 'name' | 'createdAt'>(
+    filtered,
+    {
+      name: (a, b) => a.name.localeCompare(b.name),
+      createdAt: (a, b) => a.createdAt.localeCompare(b.createdAt),
+    },
+    'createdAt'
+  )
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
@@ -227,23 +240,27 @@ export default function AdminClients() {
           subtitle={companies.length === 0 ? 'Cadastre a primeira empresa pelo botão "Nova Empresa".' : 'Nenhuma empresa bate com essa busca.'}
         />
       ) : (
-        <div className="glass-panel overflow-x-auto rounded-xl">
-          <table className="w-full min-w-[720px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">Contato</th>
-                <th className="px-4 py-3 font-semibold">Integrações</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {filtered.map((c) => (
-                <CompanyRow key={c.id} company={c} onToggleStatus={() => handleToggleStatus(c)} />
-              ))}
-            </tbody>
-          </table>
+        <div className="glass-panel overflow-hidden rounded-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                  <SortableHeader label="Empresa" sortKeyValue="name" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                  <th className="px-4 py-3 font-semibold">Contato</th>
+                  <th className="px-4 py-3 font-semibold">Integrações</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <SortableHeader label="Cadastro" sortKeyValue="createdAt" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                  <th className="px-4 py-3 font-semibold" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle">
+                {pageRows.map((c) => (
+                  <CompanyRow key={c.id} company={c} onToggleStatus={() => handleToggleStatus(c)} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <PaginationBar page={page} totalPages={totalPages} totalRows={totalRows} pageSize={10} onPageChange={setPage} />
         </div>
       )}
 
@@ -338,8 +355,15 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
     return () => { cancelled = true; window.clearTimeout(timer) }
   }, [form.cnpj, touchedRazao, touchedFantasia])
 
-  const cnpjDigitsValid = form.cnpj.replace(/\D/g, '').length === 0 || form.cnpj.replace(/\D/g, '').length === 14
-  const canSubmit = form.nomeFantasia.trim().length > 0 && cnpjDigitsValid
+  const cnpjDigits = form.cnpj.replace(/\D/g, '')
+  const cnpjDigitsValid = cnpjDigits.length === 0 || cnpjDigits.length === 14
+  // CNPJ preenchido precisa ter sido confirmado pela Receita Federal pra
+  // liberar o cadastro — mesma regra do formulário do site (nunca cria
+  // cliente com CNPJ errado/inexistente). Serviço fora do ar ('error') não
+  // trava, já que a culpa não é do CNPJ; 'checking' trava só enquanto a
+  // consulta ainda está em andamento.
+  const cnpjConfirmed = cnpjDigits.length === 0 || cnpjStatus === 'found' || cnpjStatus === 'error'
+  const canSubmit = form.nomeFantasia.trim().length > 0 && cnpjDigitsValid && cnpjConfirmed
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -409,7 +433,7 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
               </p>
             )}
             {!cnpjInvalid && cnpjStatus === 'notfound' && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-amber"><AlertCircle className="h-3 w-3" /> CNPJ não encontrado na Receita Federal. Confira o número — você ainda pode continuar.</p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-accent-rose"><AlertCircle className="h-3 w-3" /> CNPJ não encontrado na Receita Federal. Confira o número pra liberar o cadastro.</p>
             )}
             {!cnpjInvalid && cnpjStatus === 'error' && (
               <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-text-muted"><AlertCircle className="h-3 w-3" /> Não foi possível confirmar agora. Você pode continuar mesmo assim.</p>
@@ -509,8 +533,9 @@ function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleSta
         <MarketplaceRow active={connected ? ['mercadolivre'] : []} size="sm" />
       </td>
       <td className="px-4 py-3">
-        <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${st.color} ${st.bg} ${st.border}`}>{st.label}</span>
+        <StatusBadge variant={st.variant} label={st.label} dot={false} bordered className="px-2.5 py-1 text-[11px] font-medium normal-case" />
       </td>
+      <td className="px-4 py-3 text-[13px] text-text-muted">{new Date(company.createdAt).toLocaleDateString('pt-BR')}</td>
       <td className="px-4 py-3 text-right">
         <div ref={menuRef} className="relative inline-block">
           <button

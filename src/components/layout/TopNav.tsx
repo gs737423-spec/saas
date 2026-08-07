@@ -24,8 +24,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { useDemoMode } from '@/contexts/DemoModeContext'
+import { useViewAs } from '@/contexts/ViewAsContext'
 import { apiFetch } from '@/lib/apiFetch'
-import { MOCK_LEADS_COUNT } from '@/lib/mockLeads'
+import { useLeadsCount } from '@/lib/useLeadsCount'
 import Brand from '@/components/layout/Brand'
 import SearchMenu from '@/components/layout/SearchMenu'
 import NotificationsMenu from '@/components/layout/NotificationsMenu'
@@ -48,10 +49,10 @@ const navItems: Item[] = [
 // barra abaixo). "Clientes" é a lista real de empresas; os demais ainda
 // não têm tela própria e ficam desabilitados (link morto é pior que
 // ausência de link).
-function buildAdminNavItems(openTicketsCount: number): (Item | { icon: typeof Package; label: string; disabled: true })[] {
+function buildAdminNavItems(leadsCount: number, openTicketsCount: number): (Item | { icon: typeof Package; label: string; disabled: true })[] {
   return [
     { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
-    { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes', badge: MOCK_LEADS_COUNT },
+    { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes', badge: leadsCount || undefined },
     { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
     { icon: Headset, label: 'Suporte', to: '/app/admin/suporte', badge: openTicketsCount || undefined },
     { icon: Plug, label: 'Integrações', disabled: true },
@@ -80,11 +81,13 @@ export default function TopNav() {
   const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
   const { demoMode, enterDemoMode, exitDemoMode } = useDemoMode()
+  const { viewAs, exitViewAs } = useViewAs()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [openTicketsCount, setOpenTicketsCount] = useState(0)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdminArea = location.pathname.startsWith('/app/admin')
+  const leadsCount = useLeadsCount(isAdmin)
 
   function handleToggleDemo() {
     if (demoMode) {
@@ -147,7 +150,7 @@ export default function TopNav() {
       {isAdminArea ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <nav className="hide-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
-            {buildAdminNavItems(openTicketsCount).map((item) =>
+            {buildAdminNavItems(leadsCount, openTicketsCount).map((item) =>
               'disabled' in item ? (
                 <span
                   key={item.label}
@@ -161,9 +164,9 @@ export default function TopNav() {
                 <NavLink key={item.label} to={item.to} end title={item.label} className={linkClass}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
-                  {Boolean(item.badge) && (
+                  {Boolean(item.label === 'Solicitações' ? leadsCount : item.badge) && (
                     <span className="ml-1 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-accent-rose px-1 text-[9px] font-bold text-white">
-                      {item.badge}
+                      {item.label === 'Solicitações' ? leadsCount : item.badge}
                     </span>
                   )}
                 </NavLink>
@@ -190,9 +193,9 @@ export default function TopNav() {
 
       {/* Actions cluster */}
       <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
         {!isAdminArea && (
           <>
-            <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
             <SearchMenu />
             <NotificationsMenu />
           </>
@@ -227,6 +230,19 @@ export default function TopNav() {
           >
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Demonstração</span>
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {!isAdminArea && viewAs && (
+          <button
+            type="button"
+            onClick={() => { exitViewAs(); navigate(`/app/admin/empresa/${viewAs.companyId}`) }}
+            title={`Visualizando como ${viewAs.companyName} (dado real, somente leitura) — sair`}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-cyan"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Visualizando: {viewAs.companyName}</span>
             <X className="h-3.5 w-3.5" />
           </button>
         )}

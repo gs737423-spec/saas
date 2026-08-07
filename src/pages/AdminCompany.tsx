@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
-  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, Activity, PenLine,
-  UserCog, MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight, TrendingUp,
-  CheckCircle, AlertCircle, Link as LinkIcon, User, Building2, ExternalLink,
+  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
+  MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
+  ExternalLink, Lock,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { hueFor, initialsFor, timeAgo, maskCnpj, type CnpjInfo } from '@/lib/adminUi'
-import HealthScoreRing from '@/components/admin/HealthScoreRing'
+import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
+import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
+import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
+import CompanyAvatar from '@/components/common/CompanyAvatar'
+import { useViewAs } from '@/contexts/ViewAsContext'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 export type AdminCompanyTab = 'visao-geral' | 'acessos' | 'integracoes' | 'cobranca' | 'suporte' | 'configuracoes'
@@ -36,6 +39,7 @@ interface Company {
   website: string | null
   status: string
   receitaData: CnpjInfo | null
+  logoUrl: string | null
   memberCount: number
 }
 
@@ -46,41 +50,21 @@ const STATUS_OPTIONS = [
   { value: 'suspenso', label: 'Suspensa' },
 ]
 
-const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
-  onboarding: { label: 'Onboarding', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
-  ativo: { label: 'Ativa', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10' },
-  em_risco: { label: 'Em risco', color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
-  suspenso: { label: 'Suspensa', color: 'text-accent-rose', bg: 'bg-accent-rose/10' },
+const STATUS_STYLE: Record<string, { label: string; variant: StatusBadgeVariant }> = {
+  onboarding: { label: 'Onboarding', variant: 'info' },
+  ativo: { label: 'Ativa', variant: 'success' },
+  em_risco: { label: 'Em risco', variant: 'warning' },
+  suspenso: { label: 'Suspensa', variant: 'danger' },
 }
 
-// Só Mercado Livre tem integração real hoje — os outros 3 aparecem como "não
-// existe ainda" (verdade, não é mock) até virarem integrações de verdade.
-// Logos reais (src/site/logos.tsx), não ícone genérico.
-const OTHER_MARKETPLACES: { name: string; Logo: () => React.JSX.Element }[] = [
-  { name: 'Shopee', Logo: LogoShopee },
+// Mercado Livre e Shopee têm integração real (sync de verdade, ver
+// src/server/integrations/{mercadolivre,shopee}/**) — Amazon/Loja Própria
+// ainda não (verdade, não é mock) até virarem integrações de verdade.
+const NOT_YET_IMPLEMENTED: { name: string; Logo: () => React.JSX.Element }[] = [
   { name: 'Amazon', Logo: LogoAmazon },
   { name: 'Loja Própria', Logo: LogoLojaPropria },
 ]
 
-interface ActivityEntry {
-  id: string
-  companyId: string | null
-  provider: string
-  eventType: string
-  status: 'info' | 'success' | 'error'
-  message: string | null
-  createdAt: string
-}
-
-// Score derivado de sinais reais (integração conectada, tem acesso vinculado,
-// status da conta) — nunca um número solto. Ver HealthScoreRing.
-function computeHealthScore(company: Company, memberCount: number, connected: boolean): number {
-  let score = 35
-  if (connected) score += 35
-  if (memberCount > 0) score += 20
-  if (company.status === 'ativo') score += 10
-  return Math.min(100, score)
-}
 
 interface Member {
   userId: string
@@ -102,6 +86,7 @@ type Feedback = { type: 'success' | 'error'; text: string } | null
 export default function AdminCompany() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { enterViewAs } = useViewAs()
 
   const [company, setCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
@@ -114,6 +99,9 @@ export default function AdminCompany() {
   const [contactPhone, setContactPhone] = useState('')
   const [notes, setNotes] = useState('')
   const [cnpj, setCnpj] = useState('')
+  const [cnpjLocked, setCnpjLocked] = useState(true)
+  const [cnpjLookup, setCnpjLookup] = useState<'idle' | 'checking' | 'found' | 'notfound' | 'error'>('idle')
+  const [cnpjLookupInfo, setCnpjLookupInfo] = useState<CnpjInfo | null>(null)
   const [whatsapp, setWhatsapp] = useState('')
   const [website, setWebsite] = useState('')
   const [status, setStatus] = useState('ativo')
@@ -130,14 +118,13 @@ export default function AdminCompany() {
 
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null)
   const [loadingIntegration, setLoadingIntegration] = useState(true)
+  const [shopeeIntegration, setShopeeIntegration] = useState<IntegrationStatus | null>(null)
+  const [loadingShopee, setLoadingShopee] = useState(true)
 
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const [tab, setTab] = useState<AdminCompanyTab>('visao-geral')
-
-  const [activity, setActivity] = useState<ActivityEntry[]>([])
-  const [loadingActivity, setLoadingActivity] = useState(true)
   const [togglingStatus, setTogglingStatus] = useState(false)
 
   const loadCompany = useCallback(async () => {
@@ -188,20 +175,73 @@ export default function AdminCompany() {
     setLoadingIntegration(false)
   }, [id])
 
-  const loadActivity = useCallback(async () => {
+  const loadShopeeIntegration = useCallback(async () => {
     if (!id) return
-    setLoadingActivity(true)
-    const res = await apiFetchJson<{ ok: boolean; activity: ActivityEntry[] }>('/api/admin/activity?limit=50')
-    setActivity((res?.activity ?? []).filter((a) => a.companyId === id))
-    setLoadingActivity(false)
+    setLoadingShopee(true)
+    const res = await apiFetchJson<IntegrationStatus & { ok: boolean }>(`/api/integrations/status?company_id=${id}&provider=shopee`)
+    setShopeeIntegration(res?.ok ? res : null)
+    setLoadingShopee(false)
   }, [id])
 
   useEffect(() => {
     loadCompany()
     loadMembers()
     loadIntegration()
-    loadActivity()
-  }, [loadCompany, loadMembers, loadIntegration, loadActivity])
+    loadShopeeIntegration()
+  }, [loadCompany, loadMembers, loadIntegration, loadShopeeIntegration])
+
+  // CNPJ destrancado (botão "Editar") — consulta a Receita Federal de novo,
+  // mesma lógica do cadastro de cliente novo. Só entra no payload de save
+  // se de fato foi reaberto e reconfirmado, nunca sobrescreve o snapshot
+  // salvo por engano.
+  useEffect(() => {
+    if (cnpjLocked) return
+    const digits = cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) {
+      setCnpjLookup('idle')
+      setCnpjLookupInfo(null)
+      return
+    }
+    let cancelled = false
+    setCnpjLookup('checking')
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await apiFetchJson<{ ok: boolean; found: boolean | null } & Partial<CnpjInfo>>(`/api/cnpj-lookup?cnpj=${digits}`)
+        if (cancelled) return
+        if (res?.ok && res.found) {
+          setCnpjLookupInfo({
+            razaoSocial: res.razaoSocial ?? null,
+            nomeFantasia: res.nomeFantasia ?? null,
+            situacaoCadastral: res.situacaoCadastral ?? null,
+            dataSituacaoCadastral: res.dataSituacaoCadastral ?? null,
+            dataInicioAtividade: res.dataInicioAtividade ?? null,
+            atividadePrincipal: res.atividadePrincipal ?? null,
+            cnaeCodigo: res.cnaeCodigo ?? null,
+            cnaesSecundarios: res.cnaesSecundarios ?? [],
+            naturezaJuridica: res.naturezaJuridica ?? null,
+            porte: res.porte ?? null,
+            capitalSocial: res.capitalSocial ?? null,
+            telefone: res.telefone ?? null,
+            email: res.email ?? null,
+            endereco: res.endereco ?? null,
+            matrizFilial: res.matrizFilial ?? null,
+            simplesNacional: res.simplesNacional ?? null,
+            socios: res.socios ?? [],
+          })
+          setCnpjLookup('found')
+        } else if (res?.found === false) {
+          setCnpjLookup('notfound')
+          setCnpjLookupInfo(null)
+        } else {
+          setCnpjLookup('error')
+          setCnpjLookupInfo(null)
+        }
+      } catch {
+        if (!cancelled) { setCnpjLookup('error'); setCnpjLookupInfo(null) }
+      }
+    }, 500)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [cnpj, cnpjLocked])
 
   async function handleToggleStatus() {
     if (!id) return
@@ -225,16 +265,27 @@ export default function AdminCompany() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!id) return
+    // CNPJ destrancado precisa ter sido reconfirmado na Receita antes de
+    // salvar — nunca grava um CNPJ trocado sem validar (mesma regra do
+    // cadastro de cliente novo em AdminClients.tsx).
+    if (!cnpjLocked && cnpj.replace(/\D/g, '').length > 0 && cnpjLookup !== 'found' && cnpjLookup !== 'error') {
+      setSaveFeedback({ type: 'error', text: 'Confirme o CNPJ na Receita Federal antes de salvar (ou clique no cadeado pra cancelar a edição).' })
+      return
+    }
     setSaving(true)
     setSaveFeedback(null)
     try {
       const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status }),
+        body: JSON.stringify({
+          id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status,
+          ...(!cnpjLocked && cnpjLookupInfo ? { receitaData: cnpjLookupInfo } : {}),
+        }),
       })
       if (res?.ok) {
         setSaveFeedback({ type: 'success', text: 'Salvo.' })
+        setCnpjLocked(true)
         loadCompany()
       } else {
         setSaveFeedback({ type: 'error', text: res?.message ?? 'Erro ao salvar.' })
@@ -310,7 +361,7 @@ export default function AdminCompany() {
 
   if (configMissing) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
         <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas.</p>
@@ -320,7 +371,7 @@ export default function AdminCompany() {
 
   if (unauthorized) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-accent-rose" />
         <h2 className="text-base font-semibold text-text-primary">Acesso restrito</h2>
         <p className="mt-1.5 text-sm text-text-muted">Esta área é só para a equipe interna.</p>
@@ -330,7 +381,7 @@ export default function AdminCompany() {
 
   if (notFound || !company) {
     return (
-      <div className="glass-panel admin-card mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <p className="text-sm text-text-muted">Empresa não encontrada.</p>
         <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-cyan">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
@@ -340,8 +391,8 @@ export default function AdminCompany() {
   }
 
   const isConnected = integration?.status === 'connected'
-  const connectedCount = isConnected ? 1 : 0
-  const healthScore = computeHealthScore(company, members.length, isConnected)
+  const isShopeeConnected = shopeeIntegration?.status === 'connected'
+  const connectedCount = (isConnected ? 1 : 0) + (isShopeeConnected ? 1 : 0)
   const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
 
   return (
@@ -358,27 +409,25 @@ export default function AdminCompany() {
         </div>
 
         {/* Header — identidade, badges reais, ações que existem de verdade */}
-        <div className="glass-panel admin-card flex flex-col gap-4 rounded-xl p-6">
+        <div className="glass-panel flex flex-col gap-3 rounded-xl p-4">
           <div className="flex flex-wrap items-start gap-3">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-base font-bold" style={{ background: hueFor(company.id), color: '#081423' }}>
-              {initialsFor(company.name)}
-            </span>
+            <CompanyAvatar
+              companyId={company.id}
+              companyName={company.name}
+              logoUrl={company.logoUrl}
+              size="lg"
+              editable
+              onUploaded={(url) => setCompany((prev) => prev ? { ...prev, logoUrl: url } : prev)}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-xl font-bold tracking-tight text-text-primary">{company.name}</h1>
                 <button type="button" onClick={() => setTab('configuracoes')} title="Editar" className="text-text-muted transition-colors hover:text-text-primary">
                   <PenLine className="h-3.5 w-3.5" />
                 </button>
-                <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${st.color} ${st.bg}`}>
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" /> {st.label}
-                </span>
+                <StatusBadge variant={st.variant} label={st.label} />
               </div>
               <p className="mt-0.5 text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)} · ID #{company.id.slice(0, 8)}</p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-medium text-text-secondary">
-                <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{members.length} {members.length === 1 ? 'usuário' : 'usuários'}</span>
-                <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{connectedCount}/4 integrações</span>
-                {company.contactEmail && <span className="rounded-full bg-bg-primary/60 px-2.5 py-1">{company.contactEmail}</span>}
-              </div>
             </div>
 
             {/* Ação principal fica sempre visível e destacada — é a ferramenta
@@ -400,13 +449,48 @@ export default function AdminCompany() {
               </button>
               <button
                 type="button"
-                title="Ainda não implementado — depende de fluxo de personificação"
-                disabled
-                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] opacity-90 shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                title="Abre o dashboard real do cliente, somente leitura — pra usar em call de consultoria"
+                onClick={() => { enterViewAs(company.id, company.name); navigate('/app') }}
+                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <ExternalLink className="h-4 w-4" /> Acessar Painel do Lojista
               </button>
             </div>
+          </div>
+
+          {/* Atalhos pros dois blocos que mais importam — clicáveis, levam
+              direto pra aba correspondente. */}
+          <div className="grid grid-cols-1 gap-2 border-t border-border-subtle pt-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTab('acessos')}
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Users2 className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('integracoes')}
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Plug className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
+            </button>
+          </div>
+
+          {/* Dados cadastrais/fiscais — compacto, direto no header (nunca
+              mais em card separado lá embaixo). Vem do snapshot da Receita
+              Federal salvo no cadastro (company.receitaData). */}
+          <div>
+            <CompanyRegistrationInfo
+              name={company.name}
+              cnpj={company.cnpj}
+              receitaData={company.receitaData}
+              contactEmail={company.contactEmail}
+              contactPhone={company.contactPhone}
+              whatsapp={company.whatsapp}
+            />
           </div>
 
           {/* Tab bar interna — ocupa a largura toda agora que a sidebar saiu */}
@@ -429,137 +513,89 @@ export default function AdminCompany() {
         {tab === 'visao-geral' && (
           <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
             <div className="flex flex-col gap-4">
-              <div className="glass-panel admin-card flex items-center justify-between gap-4 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><TrendingUp className="h-4 w-4" /></span>
-                  <div>
-                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted">Receita (últimos 30 dias) <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span></p>
-                    <p className="text-3xl font-bold tabular-nums text-text-primary">R$ 1.870,45</p>
-                    <p className="text-[11px] font-medium text-accent-emerald">↑ 12% vs mês anterior</p>
-                  </div>
-                </div>
-                <svg width="96" height="32" viewBox="0 0 96 32" className="shrink-0 text-accent-emerald" aria-hidden="true">
-                  <polyline points="0,26 16,22 32,24 48,14 64,17 80,6 96,4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-                </svg>
-              </div>
-
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <button type="button" onClick={() => setTab('acessos')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{members.length}</p>
                   <p className="text-[11px] text-text-muted">acessos vinculados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Plug className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">produtos sincronizados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-blue/10 text-accent-blue"><Ticket className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">pedidos importados</p>
                 </button>
-                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel admin-card glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><Wifi className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
                   <p className="text-[11px] text-text-muted">integrações ativas</p>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-2">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
-                    <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
-                      Ver todas as integrações <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex flex-col divide-y divide-border-subtle">
-                    <div className="flex items-center justify-between py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
-                          <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
-                          {isConnected ? 'Operacional' : 'Não conectado'}
-                        </span>
-                        <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
-                      </div>
-                    </div>
-                    {OTHER_MARKETPLACES.map((mp) => (
-                      <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
-                          <p className="text-sm font-medium text-text-primary">{mp.name}</p>
-                        </div>
-                        <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="glass-panel rounded-xl p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
+                  <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
+                    Ver todas as integrações <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
-
-                <div className="glass-panel admin-card rounded-xl p-6 lg:col-span-1">
-                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                    <Activity className="h-3.5 w-3.5" /> Atividade recente
-                  </h3>
-                  {loadingActivity ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
-                  ) : activity.length === 0 ? (
-                    <p className="py-2 text-xs text-text-muted">Nenhuma atividade registrada ainda.</p>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {activity.slice(0, 8).map((a) => (
-                        <div key={a.id} className="flex items-start gap-2.5 rounded-lg px-1 py-1.5 text-xs">
-                          {a.status === 'success' ? (
-                            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-emerald" />
-                          ) : a.status === 'error' ? (
-                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-rose" />
-                          ) : (
-                            <LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-cyan" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-text-secondary">{a.message ?? a.eventType}</p>
-                            <p className="text-xs text-text-muted">{timeAgo(a.createdAt)}</p>
-                          </div>
-                        </div>
-                      ))}
+                <div className="flex flex-col divide-y divide-border-subtle">
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
+                        <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
                     </div>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Shopee</p>
+                        <p className="text-[11px] text-text-muted">{shopeeIntegration?.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isShopeeConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isShopeeConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  {NOT_YET_IMPLEMENTED.map((mp) => (
+                    <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                        <p className="text-sm font-medium text-text-primary">{mp.name}</p>
+                      </div>
+                      <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="glass-panel admin-card flex items-center gap-4 rounded-xl p-6">
-                <HealthScoreRing score={healthScore} />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde da conta</p>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {isConnected ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
-                    {isConnected ? 'Integração ok' : 'Sem integração'}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {members.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-rose" />}
-                    {members.length > 0 ? 'Usuários ativos' : 'Sem acesso vinculado'}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
-                    {status === 'ativo' ? <CheckCircle2 className="h-3.5 w-3.5 text-accent-emerald" /> : <XCircle className="h-3.5 w-3.5 text-accent-amber" />}
-                    Conta {st.label.toLowerCase()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="glass-panel admin-card rounded-xl p-6">
+              <div className="glass-panel rounded-xl p-6">
                 <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
                 </h3>
                 <div className="flex flex-col gap-2">
-                  {!isConnected && (
+                  {!isConnected && !isShopeeConnected && (
                     <div className="flex items-start justify-between gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5">
                       <div className="flex items-start gap-2">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
@@ -577,69 +613,16 @@ export default function AdminCompany() {
                       <button type="button" onClick={() => setTab('acessos')} className="shrink-0 rounded-md bg-accent-amber/15 px-2 py-1 text-[10px] font-semibold text-accent-amber">Resolver</button>
                     </div>
                   )}
-                  {isConnected && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
+                  {(isConnected || isShopeeConnected) && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
                 </div>
               </div>
 
-              {/* Dados Cadastrais e Fiscais — vem do snapshot da Receita
-                  Federal salvo no cadastro (company.receitaData). Campos que
-                  a Receita Federal não devolve (Inscrição Estadual/Municipal
-                  são cadastro estadual/municipal, fora do escopo do CNPJ)
-                  ficam marcados como indisponíveis, nunca inventados. */}
-              <div className="glass-panel admin-card rounded-xl p-6">
-                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <Building2 className="h-3.5 w-3.5" /> Dados Cadastrais e Fiscais
-                </h3>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-                  {[
-                    { label: 'Razão Social', value: company.receitaData?.razaoSocial ?? company.name, real: true },
-                    { label: 'Nome Fantasia', value: company.receitaData?.nomeFantasia ?? company.name, real: true },
-                    { label: 'CNPJ', value: maskCnpj(company.cnpj), real: Boolean(company.cnpj) },
-                    { label: 'Situação Cadastral', value: company.receitaData?.situacaoCadastral, real: Boolean(company.receitaData?.situacaoCadastral) },
-                    { label: 'Natureza Jurídica', value: company.receitaData?.naturezaJuridica, real: Boolean(company.receitaData?.naturezaJuridica) },
-                    { label: 'Capital Social', value: typeof company.receitaData?.capitalSocial === 'number' ? company.receitaData.capitalSocial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null, real: typeof company.receitaData?.capitalSocial === 'number' },
-                    { label: 'Data de Abertura', value: company.receitaData?.dataInicioAtividade, real: Boolean(company.receitaData?.dataInicioAtividade) },
-                    { label: 'Inscrição Estadual', value: 'indisponível via Receita Federal', real: false },
-                    { label: 'Inscrição Municipal', value: 'indisponível via Receita Federal', real: false },
-                    { label: 'CNAE Principal', value: company.receitaData?.cnaeCodigo ? `${company.receitaData.cnaeCodigo} — ${company.receitaData.atividadePrincipal ?? ''}` : null, real: Boolean(company.receitaData?.cnaeCodigo) },
-                    { label: 'Endereço', value: company.receitaData?.endereco, real: Boolean(company.receitaData?.endereco), span2: true },
-                    { label: 'Sócios / Administradores', value: company.receitaData?.socios && company.receitaData.socios.length > 0 ? company.receitaData.socios.join(', ') : null, real: Boolean(company.receitaData?.socios?.length), span2: true },
-                  ].map((f) => (
-                    <div key={f.label} className={`col-span-2 flex items-center justify-between gap-3 border-b border-border-subtle/50 py-1.5 last:border-0 ${f.span2 ? '' : 'sm:col-span-1'}`}>
-                      <span className="shrink-0 text-[11px] text-text-muted">{f.label}</span>
-                      <span className={`truncate text-[12.5px] font-medium ${f.real ? 'text-text-primary' : 'italic text-text-muted/70'}`}>
-                        {f.value ?? 'sem dado ainda'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="glass-panel admin-card rounded-xl p-6">
-                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <UserCog className="h-3.5 w-3.5" /> Contato Corporativo
-                </h3>
-                <div className="flex flex-col gap-2.5 text-[13px]">
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <User className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactEmail ? company.contactEmail.split('@')[0] : 'proprietário não cadastrado'}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactEmail ?? 'não cadastrado'}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-text-secondary">
-                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    {company.contactPhone ?? 'não cadastrado'}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
 
         {tab === 'acessos' && (
-          <div className="glass-panel admin-card rounded-xl p-6">
+          <div className="glass-panel rounded-xl p-6">
             <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
               <Users2 className="h-3.5 w-3.5" />
               Acessos ({members.length})
@@ -693,7 +676,7 @@ export default function AdminCompany() {
 
         {tab === 'integracoes' && (
           <div className="flex flex-col gap-4">
-            <div className="glass-panel admin-card rounded-xl p-6">
+            <div className="glass-panel rounded-xl p-6">
               <div className="mb-3 flex items-center gap-2.5">
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
                 <div>
@@ -726,10 +709,69 @@ export default function AdminCompany() {
               ) : (
                 <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
               )}
+              {!isConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com o Mercado Livre, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Mercado Livre". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
+              )}
             </div>
 
-            {OTHER_MARKETPLACES.map((mp) => (
-              <div key={mp.name} className="glass-panel admin-card flex items-center justify-between rounded-xl p-6 opacity-60">
+            <div className="glass-panel rounded-xl p-6">
+              <div className="mb-3 flex items-center gap-2.5">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Shopee</h3>
+                  <span className={`text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isShopeeConnected ? 'Operacional' : 'Não conectado'}</span>
+                </div>
+              </div>
+              {loadingShopee ? (
+                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              ) : shopeeIntegration ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-baseline gap-6">
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.productsCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.inventoryCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">estoque</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.ordersCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    {shopeeIntegration.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'Cliente ainda não conectou a Shopee.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+              )}
+              {!isShopeeConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com a Shopee, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Shopee". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
+              )}
+            </div>
+
+            {NOT_YET_IMPLEMENTED.map((mp) => (
+              <div key={mp.name} className="glass-panel flex items-center justify-between rounded-xl p-6 opacity-60">
                 <div className="flex items-center gap-2.5">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
                   <div>
@@ -744,7 +786,7 @@ export default function AdminCompany() {
         )}
 
         {tab === 'cobranca' && (
-          <div className="glass-panel admin-card flex flex-col items-center gap-2 rounded-xl p-10 text-center">
+          <div className="glass-panel flex flex-col items-center gap-2 rounded-xl p-10 text-center">
             <CreditCard className="h-6 w-6 text-text-muted" />
             <p className="text-sm font-medium text-text-primary">Cobrança ainda não está conectada</p>
             <p className="max-w-sm text-xs text-text-muted">Plano e valor ficam em "Observações" na aba Configurações por enquanto. Histórico de faturas depende de integrar um provedor de cobrança.</p>
@@ -760,7 +802,7 @@ export default function AdminCompany() {
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Clock3 className="h-3.5 w-3.5" /> Histórico de atendimento
                   </h3>
@@ -781,7 +823,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <Ticket className="h-3.5 w-3.5" /> Chamados
                   </h3>
@@ -800,7 +842,7 @@ export default function AdminCompany() {
                   </div>
                 </div>
 
-                <div className="glass-panel admin-card grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
+                <div className="glass-panel grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
                   {[
                     { icon: Clock3, label: 'tempo médio resposta', value: '—' },
                     { icon: Star, label: 'satisfação média', value: '—' },
@@ -816,11 +858,11 @@ export default function AdminCompany() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Observações internas</h3>
                   <p className="text-xs text-text-secondary">Cliente prefere atendimento via WhatsApp. Nenhuma observação real registrada ainda.</p>
                 </div>
-                <div className="glass-panel admin-card rounded-xl p-6">
+                <div className="glass-panel rounded-xl p-6">
                   <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                     <PhoneCall className="h-3.5 w-3.5" /> Atalhos rápidos
                   </h3>
@@ -847,7 +889,7 @@ export default function AdminCompany() {
 
         {tab === 'configuracoes' && (
           <>
-            <form onSubmit={handleSave} className="glass-panel admin-card flex flex-col gap-3 rounded-xl p-6">
+            <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
                 <select
@@ -866,11 +908,36 @@ export default function AdminCompany() {
                   <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-text-muted">CNPJ</label>
-                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                    <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                    CNPJ {cnpjLocked && <span className="text-text-muted/60" title="Vem da Receita Federal — clique em Editar pra corrigir">(imutável)</span>}
+                  </label>
+                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${cnpjLocked ? 'border-border-subtle/60 bg-bg-primary/20' : 'border-accent-cyan/40 bg-bg-primary/40'}`}>
+                    {cnpjLocked ? <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />}
+                    {cnpjLocked ? (
+                      <span className="min-w-0 flex-1 text-sm text-text-secondary">{cnpj || 'não cadastrado'}</span>
+                    ) : (
+                      <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!cnpjLocked) { setCnpj(company?.cnpj ?? ''); setCnpjLookup('idle'); setCnpjLookupInfo(null) }
+                        setCnpjLocked((l) => !l)
+                      }}
+                      className="shrink-0 text-[11px] font-medium text-accent-cyan hover:underline"
+                    >
+                      {cnpjLocked ? 'Editar' : 'Cancelar'}
+                    </button>
                   </div>
+                  {!cnpjLocked && cnpjLookup === 'checking' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted"><Loader2 className="h-3 w-3 animate-spin" /> Consultando Receita Federal...</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'found' && cnpjLookupInfo && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-emerald"><CheckCircle2 className="h-3 w-3" /> {cnpjLookupInfo.razaoSocial ?? cnpjLookupInfo.nomeFantasia}</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'notfound' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-rose"><AlertTriangle className="h-3 w-3" /> CNPJ não encontrado — corrija pra poder salvar.</p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[11px] text-text-muted">E-mail de contato</label>

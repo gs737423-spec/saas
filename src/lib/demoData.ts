@@ -7,15 +7,25 @@ import type { FinanceOverview, MarketplaceFinance, FinanceTransaction } from '@/
 // endpoints reais (source: 'demo', já previsto no contrato de tipos),
 // nunca usados fora do toggle explícito do admin. Ver DemoModeContext.tsx.
 
-export function demoDashboardSummary(): DashboardSummary {
+// Números base calibrados pra período de 30 dias — todo consumidor
+// (summary, finance/byMarketplace, KPICards) escala pela MESMA razão
+// days/30, senão o card do topo muda com o seletor de período e a lista de
+// marketplace embaixo não, ficando fora de sincronia (mesma tela, dois
+// números que não batem).
+function periodScale(days: number): number {
+  return days / 30
+}
+
+export function demoDashboardSummary(days = 30): DashboardSummary {
+  const scale = periodScale(days)
   return {
     source: 'demo',
-    grossRevenue: 187430.55,
-    ordersCount: 612,
+    grossRevenue: Math.round(187430.55 * scale * 100) / 100,
+    ordersCount: Math.round(612 * scale),
     averageTicket: 306.26,
-    feesTotal: 21384.12,
-    returnsCount: 14,
-    returnsAmount: 3120.4,
+    feesTotal: Math.round(21384.12 * scale * 100) / 100,
+    returnsCount: Math.round(14 * scale),
+    returnsAmount: Math.round(3120.4 * scale * 100) / 100,
     lastSyncAt: new Date().toISOString(),
     grossRevenueChangePct: 12.4,
     ordersCountChangePct: 8.1,
@@ -85,8 +95,8 @@ function demoFinanceByMarketplace(totalGross: number): MarketplaceFinance[] {
   })
 }
 
-export function demoFinanceOverview(): { overview: FinanceOverview; byMarketplace: MarketplaceFinance[] } {
-  const summary = demoDashboardSummary()
+export function demoFinanceOverview(days = 30): { overview: FinanceOverview; byMarketplace: MarketplaceFinance[] } {
+  const summary = demoDashboardSummary(days)
   const byMarketplace = demoFinanceByMarketplace(summary.grossRevenue)
   const overview: FinanceOverview = {
     grossRevenue: summary.grossRevenue,

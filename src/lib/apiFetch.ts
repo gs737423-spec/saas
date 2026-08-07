@@ -1,6 +1,25 @@
 import { supabase } from './supabaseClient'
 import { isDemoModeActive } from '@/contexts/DemoModeContext'
+import { getViewAsCompanyId } from '@/contexts/ViewAsContext'
 import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, demoFinanceOverview, demoFinanceTransactions, demoFinanceDaily } from './demoData'
+
+/** "Acessar Painel do Lojista" — só nas leituras de dashboard (GET), nunca
+ *  em escrita (POST/PATCH/DELETE seguem exigindo membership real do
+ *  próprio usuário, requireCompany.ts não muda isso). O backend já
+ *  autoriza platform_admin a passar ?company_id= explícito (migration 005
+ *  + requireCompany.ts) — aqui só anexamos o parâmetro quando o modo
+ *  "ver como" está ativo. */
+function withViewAsCompanyId(url: string, init?: RequestInit): string {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (method !== 'GET') return url
+  if (isDemoModeActive()) return url
+  if (!url.startsWith('/api/dashboard/')) return url
+  const companyId = getViewAsCompanyId()
+  if (!companyId) return url
+  const withParam = new URL(url, 'http://x')
+  withParam.searchParams.set('company_id', companyId)
+  return withParam.pathname + withParam.search
+}
 
 /** fetch() com o access_token do Supabase Auth no header Authorization —
  *  todo endpoint de api/** que exige sessão (requireUser/requireCompany/
@@ -12,7 +31,7 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(init?.headers ?? {}),
   }
-  return fetch(url, { ...init, headers })
+  return fetch(withViewAsCompanyId(url, init), { ...init, headers })
 }
 
 // Modo Demonstração — intercepta só os 4 endpoints de leitura do dashboard
@@ -25,15 +44,19 @@ function demoInterceptFor(url: string): unknown | null {
   if (!isDemoModeActive()) return null
   if (!url.startsWith('/api/dashboard/')) return null
 
-  if (url.startsWith('/api/dashboard/summary')) return demoDashboardSummary()
+  const days = Number(new URL(url, 'http://x').searchParams.get('days')) || 30
+
+  if (url.startsWith('/api/dashboard/summary')) return demoDashboardSummary(days)
   if (url.startsWith('/api/dashboard/products')) return demoDashboardProducts()
   if (url.startsWith('/api/dashboard/inventory')) return demoDashboardInventory()
   if (url.startsWith('/api/dashboard/finance-daily')) {
-    const days = Number(new URL(url, 'http://x').searchParams.get('days')) || 30
-    return { ok: true, source: 'demo', days: demoFinanceDaily(days * 2) }
+    return { ok: true, source: 'demo', days: demoFinanceDaily(days + Math.max(days, 30)) }
   }
   if (url.startsWith('/api/dashboard/finance')) {
-    const { overview, byMarketplace } = demoFinanceOverview()
+    // Mesmo days do summary — senão o card do topo (Dashboard/Relatórios)
+    // muda com o período e a lista de marketplace (Marketplaces/Financeiro)
+    // fica parada, dois números que não batem na mesma sessão de demo.
+    const { overview, byMarketplace } = demoFinanceOverview(days)
     return { ok: true, overview, byMarketplace, transactions: demoFinanceTransactions() }
   }
   return null

@@ -3,7 +3,7 @@ import { encryptSecret, decryptSecret } from '../crypto.js'
 import { logSyncEvent } from '../syncLog.js'
 import type { SyncSummary } from '../types.js'
 import type { MLOrder } from './types.js'
-import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError, MAX_ITEMS_FIRST_SYNC, MAX_ORDERS_FIRST_SYNC } from './client.js'
+import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError, MAX_ITEMS_FIRST_SYNC } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 
@@ -180,9 +180,10 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
 
     let orders: MLOrder[] = []
     try {
-      orders = await searchOrders(connection.seller_id!, accessToken)
-      if (orders.length >= MAX_ORDERS_FIRST_SYNC) {
-        errors.push(`Mais de ${MAX_ORDERS_FIRST_SYNC} pedidos no período — sync trouxe só os ${MAX_ORDERS_FIRST_SYNC} mais recentes, pedidos mais antigos não foram importados.`)
+      const result = await searchOrders(connection.seller_id!, accessToken)
+      orders = result.orders
+      if (result.truncated) {
+        errors.push(`Mais pedidos no último ano do que o sync conseguiu importar de uma vez (limite ${orders.length}) — histórico mais antigo pode estar incompleto, rode o sync de novo em breve.`)
       }
     } catch (searchErr) {
       const message = searchErr instanceof MercadoLivreApiError

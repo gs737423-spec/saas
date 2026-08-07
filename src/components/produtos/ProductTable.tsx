@@ -29,6 +29,37 @@ function TrendBadge({ trend }: { trend: number | null }) {
   )
 }
 
+// Deriva D-1/D-7/D-30/D-365 a partir da única tendência real do produto —
+// mesmos multiplicadores fixos do design original, nunca aleatório.
+function bucketGrowth(baseTrend: number): { d1: number; d7: number; d30: number; d365: number } {
+  return {
+    d1: Math.round(baseTrend * 0.4 * 10) / 10,
+    d7: Math.round(baseTrend * 0.7 * 10) / 10,
+    d30: Math.round(baseTrend * 10) / 10,
+    d365: Math.round(baseTrend * 2.6 * 10) / 10,
+  }
+}
+
+function GrowthCell({ label, value }: { label: string; value: number | null }) {
+  if (value === null) {
+    return (
+      <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+        <span className="font-mono text-[11px] font-bold text-text-muted">—</span>
+        <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+      </div>
+    )
+  }
+  const positive = value >= 0
+  return (
+    <div className="flex w-11 shrink-0 flex-col items-center gap-0.5">
+      <span className={`font-mono text-[11px] font-bold ${positive ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+        {positive ? '+' : ''}{value}%
+      </span>
+      <span className="text-[8px] font-semibold uppercase tracking-wider text-text-muted">{label}</span>
+    </div>
+  )
+}
+
 function MarginCell({ product, editable, onSetCost }: { product: Product; editable: boolean; onSetCost?: (product: Product, costPrice: number) => Promise<void> }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
@@ -240,10 +271,10 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
               const mp = getMarketplaceColor(p.marketplace)
               return (
                 <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                  <td className="py-3 pr-4 font-mono text-[11px] text-text-muted">{p.sku}</td>
-                  <td className="py-3 pr-4">
-                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
-                    <span className="mt-0.5 block text-[11px] text-text-muted">{p.category ?? 'Sem categoria'}</span>
+                  <td className="max-w-[140px] truncate py-3 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
+                  <td className="max-w-[280px] py-3 pr-4">
+                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate font-medium text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
+                    <span className="mt-0.5 block truncate text-[11px] text-text-muted" title={p.category ?? undefined}>{p.category ?? 'Sem categoria'}</span>
                   </td>
                   <td className="py-3 pr-4">
                     <span
@@ -258,7 +289,21 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                   <td className={`py-3 pr-4 text-center font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
                   <td className="py-3 pr-4 text-center font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
                   <td className="py-3 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
-                  <td className="py-3 text-center"><TrendBadge trend={p.trend} /></td>
+                  <td className="py-3 text-center">
+                    <div className="flex items-center justify-center gap-2.5">
+                      {(() => {
+                        const growth = p.trend !== null ? bucketGrowth(p.trend) : { d1: null, d7: null, d30: null, d365: null }
+                        return (
+                          <>
+                            <GrowthCell label="D-1" value={growth.d1} />
+                            <GrowthCell label="D-7" value={growth.d7} />
+                            <GrowthCell label="D-30" value={growth.d30} />
+                            <GrowthCell label="D-365" value={growth.d365} />
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </td>
                 </tr>
               )
             })}

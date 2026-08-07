@@ -132,28 +132,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     )
 
-    const items: DashboardInventoryItem[] = inventoryRows.map((row) => {
-      const key = productKey(row.connection_id, row.external_product_id)
-      const product = productByKey.get(key)
-      const provider = providerByConnectionId.get(row.connection_id)
-      const sales = salesByKey.get(key)
-      const soldQuantity = sales?.units ?? null
-      const turnoverRate = sales && row.available_quantity > 0 ? sales.units / row.available_quantity : null
+    // provider desconhecido/não mapeado nunca vira "Mercado Livre" por
+    // fallback — item de origem indeterminada fica de fora, não infla o
+    // canal errado (mesma regra de api/dashboard/products.ts).
+    const items: DashboardInventoryItem[] = inventoryRows
+      .map((row): DashboardInventoryItem | null => {
+        const provider = providerByConnectionId.get(row.connection_id)
+        const marketplace = provider ? PROVIDER_LABEL[provider] : undefined
+        if (!marketplace) return null
 
-      return {
-        sku: row.sku,
-        title: row.title,
-        marketplace: (provider && PROVIDER_LABEL[provider]) || 'Mercado Livre',
-        availableQuantity: row.available_quantity,
-        price: product?.price ?? null,
-        status: product?.status ?? null,
-        soldQuantity,
-        revenue30d: sales?.revenue ?? 0,
-        turnoverRate,
-        abcClass: abcByKey.get(key) ?? null,
-        lastSyncAt: row.last_sync_at,
-      }
-    })
+        const key = productKey(row.connection_id, row.external_product_id)
+        const product = productByKey.get(key)
+        const sales = salesByKey.get(key)
+        const soldQuantity = sales?.units ?? null
+        const turnoverRate = sales && row.available_quantity > 0 ? sales.units / row.available_quantity : null
+
+        return {
+          sku: row.sku,
+          title: row.title,
+          marketplace,
+          availableQuantity: row.available_quantity,
+          price: product?.price ?? null,
+          status: product?.status ?? null,
+          soldQuantity,
+          revenue30d: sales?.revenue ?? 0,
+          turnoverRate,
+          abcClass: abcByKey.get(key) ?? null,
+          lastSyncAt: row.last_sync_at,
+        }
+      })
+      .filter((i): i is DashboardInventoryItem => i !== null)
 
     const response: InventoryApiResponse = { ok: true, source: 'real', items, lastSyncAt }
     res.status(200).json(response)

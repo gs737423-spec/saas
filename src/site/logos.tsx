@@ -23,16 +23,17 @@ function Wrap({ children, title }: { children: React.ReactNode; title: string })
 }
 
 // Arquivos reais fornecidos pelo dono do produto (public/site/logos/), não
-// mais recriação em SVG. LogoImg cobre o tile inteiro (object-fit: cover)
-// pra manter o peso visual quadrado igual entre as marcas.
+// mais recriação em SVG. Preenche 100% do container do consumidor (nunca um
+// tamanho/raio fixo aqui) — quem usa decide o tamanho e se é redondo/
+// quadrado via className no wrapper (ex: rounded-full overflow-hidden).
+// Tamanho fixo aqui sobrescrevia esse wrapper e deixava a logo pequena e
+// deslocada dentro de um container maior.
 function LogoImg({ src, title }: { src: string; title: string }) {
   return (
     <img
       src={src}
       alt={title}
-      width={SIZE}
-      height={SIZE}
-      style={{ display: 'block', width: SIZE, height: SIZE, objectFit: 'cover', borderRadius: 8 }}
+      style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
     />
   )
 }
@@ -104,7 +105,7 @@ export function LogoWooCommerce() {
 
 export function LogoLojaPropria() {
   return (
-    <svg role="img" aria-label="Loja Própria" viewBox={`0 0 ${SIZE} ${SIZE}`} width={SIZE} height={SIZE} style={{ display: 'block' }}>
+    <svg role="img" aria-label="Loja Própria" viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" height="100%" style={{ display: 'block' }}>
       <title>Loja Própria</title>
       <defs>
         <linearGradient id="lojapropria-grad" x1="0" y1="0" x2="1" y2="1">

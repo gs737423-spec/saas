@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Crown, Loader2 } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
-import type { FinanceOverview, MarketplaceFinance } from '@/data/financeShapes'
+import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 
@@ -71,7 +71,7 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
       </div>
 
       <div className="w-24 shrink-0 text-right sm:w-28">
-        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.netValue)}</div>
+        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.grossRevenue)}</div>
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
@@ -136,9 +136,7 @@ export default function RealMarketplaceBreakdown() {
     )
   }
 
-  const rows = (data?.byMarketplace ?? []).filter((m) => m.grossRevenue > 0)
-
-  if (rows.length === 0) {
+  if ((data?.byMarketplace ?? []).length === 0) {
     return (
       <div className="glass-panel rounded-2xl p-6 text-center text-xs text-text-muted">
         Nenhum marketplace com pedido pago sincronizado ainda neste período.
@@ -146,10 +144,13 @@ export default function RealMarketplaceBreakdown() {
     )
   }
 
+  // Sempre os 4 canais, na ordem canônica — canal sem pedido no período vem
+  // zerado, nunca some da tela (ver decisão 2026-08-06).
+  const rows = fillAllMarketplaces(data!.byMarketplace)
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
 
   const sorted = [...rows].sort((a, b) => {
-    if (sort === 'netRevenue') return b.netValue - a.netValue
+    if (sort === 'netRevenue') return b.grossRevenue - a.grossRevenue
     if (sort === 'avgTicket') return b.averageTicket - a.averageTicket
     const feeA = a.grossRevenue > 0 ? a.fees / a.grossRevenue : 0
     const feeB = b.grossRevenue > 0 ? b.fees / b.grossRevenue : 0
