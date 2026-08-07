@@ -13,8 +13,16 @@ import {
 import { useConnections, getMarketplaceColor, type IntegrationStatus, type MercadoLivreStatus, type ShopeeStatus } from '@/contexts/ConnectionContext'
 import type { Marketplace } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Amazon', 'Loja Própria']
+
+const MARKETPLACE_LOGO: Record<Marketplace, React.ComponentType> = {
+  'Mercado Livre': LogoMercadoLivre,
+  'Shopee': LogoShopee,
+  'Amazon': LogoAmazon,
+  'Loja Própria': LogoLojaPropria,
+}
 
 function relativeTime(iso: string | null): string {
   if (!iso) return 'Nunca'
@@ -48,6 +56,7 @@ interface MarketplaceCardProps {
 function MarketplaceCard({ name, status, loading, syncing, connectError, onConnect, onSync }: MarketplaceCardProps) {
   const { backendUnreachable, statusErrorMessage } = useConnections()
   const color = getMarketplaceColor(name)
+  const Logo = MARKETPLACE_LOGO[name]
 
   if (loading) {
     return (
@@ -92,7 +101,9 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
       <div className="relative p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 10px 2px ${color}66` }} />
+            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-lg" style={{ boxShadow: `0 0 0 1px ${color}33` }}>
+              <Logo />
+            </span>
             <h3 className="text-sm font-semibold text-text-primary">{name}</h3>
           </div>
           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.color} ${cfg.bg} ${cfg.border}`}>
@@ -216,13 +227,16 @@ function ShopeeCard() {
 
 function NotImplementedCard({ marketplace }: { marketplace: Marketplace }) {
   const color = getMarketplaceColor(marketplace)
+  const Logo = MARKETPLACE_LOGO[marketplace]
   return (
     <div className="glass-panel relative overflow-hidden rounded-2xl opacity-70">
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
       <div className="relative p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-lg grayscale" style={{ boxShadow: `0 0 0 1px ${color}33` }}>
+              <Logo />
+            </span>
             <h3 className="text-sm font-semibold text-text-primary">{marketplace}</h3>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
@@ -280,23 +294,6 @@ export default function Importacoes() {
           </DataTableViewport>
         </div>
       )}
-
-      <div className="glass-panel rounded-2xl p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-violet/10 text-accent-violet">
-            <Info className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Como funciona a conexão real</p>
-            <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-              Os botões do Mercado Livre e da Shopee iniciam um fluxo OAuth real: você autoriza no site oficial de
-              cada marketplace, o token é trocado e armazenado com segurança no backend (nunca no navegador), e a
-              sincronização busca produtos, estoque e pedidos reais da sua conta. Amazon e Loja Própria ainda não têm
-              integração real — aparecem como "Em breve" até terem OAuth implementado.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
