@@ -1353,12 +1353,12 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 .marketplace-showcase {
   position: relative;
   background: linear-gradient(180deg, #07182F 0%, #0A2345 100%);
-  padding-top: 64px;
-  padding-bottom: 64px;
+  padding-top: 40px;
+  padding-bottom: 40px;
   color: #F7FAFF;
 }
 .marketplace-showcase__compat-anchor { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
-.marketplace-showcase__intro { margin-bottom: 36px; }
+.marketplace-showcase__intro { margin-bottom: 24px; }
 .marketplace-showcase__eyebrow {
   display: block;
   font-size: 12.5px;
@@ -1391,23 +1391,23 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
   max-width: 640px;
 }
 
-.marketplace-showcase__layout { display: grid; gap: 20px; grid-template-columns: 1fr; }
+.marketplace-showcase__layout { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 1024px) {
   .marketplace-showcase__layout {
     grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
-    gap: 28px;
+    gap: 22px;
     align-items: stretch;
   }
 }
 
 /* Coluna esquerda — seletores verticais, compactos */
-.marketplace-showcase__tabs { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.marketplace-showcase__tabs { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .marketplace-showcase__tab {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   text-align: left;
-  padding: 16px 18px;
+  padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid rgba(99, 199, 255, 0.16);
   background: #0D2748;
@@ -1496,10 +1496,10 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 }
 .marketplace-showcase__frame-body:focus-visible { outline: 2px solid #63C7FF; outline-offset: 2px; }
 @media (min-width: 768px) and (max-width: 1023px) {
-  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 330px; max-height: 330px; }
+  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 280px; max-height: 280px; }
 }
 @media (min-width: 1024px) {
-  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 400px; max-height: 430px; }
+  .marketplace-showcase__frame-body { aspect-ratio: auto; height: 320px; max-height: 340px; }
 }
 .marketplace-showcase__zoom-hint {
   position: absolute;
