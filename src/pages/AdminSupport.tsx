@@ -21,28 +21,48 @@ export default function AdminSupport() {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [unauthorized, setUnauthorized] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
   const [statusFilter, setStatusFilter] = useState<SupportTicketStatus | 'todos'>('todos')
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
 
-  const loadTickets = useCallback(async () => {
+  // 403 (not_admin) é o único caso que mostra "Acesso restrito" — erro de
+  // rede/cold start não pode virar essa mensagem pra um admin de verdade.
+  // 1 retry automático antes de desistir (mesmo padrão de Admin.tsx).
+  const loadTickets = useCallback(async (isRetry = false) => {
     const query = statusFilter === 'todos' ? '' : `?status=${statusFilter}`
     try {
       const res = await apiFetch(`/api/admin/support-tickets${query}`)
+      if (res.status === 403) {
+        setUnauthorized(true)
+        setLoadError(false)
+        setConfigMissing(false)
+        setLoading(false)
+        return
+      }
+      if (res.status === 503) {
+        setConfigMissing(true)
+        setLoading(false)
+        return
+      }
       const body = (await res.json().catch(() => null)) as { ok: boolean; tickets?: SupportTicket[] } | null
       if (res.ok && body?.ok) {
         setTickets(body.tickets ?? [])
         setUnauthorized(false)
+        setLoadError(false)
         setConfigMissing(false)
-      } else if (res.status === 503) {
-        setConfigMissing(true)
-      } else {
-        setUnauthorized(true)
+        setLoading(false)
+        return
       }
+      throw new Error('unexpected_response')
     } catch {
-      setUnauthorized(true)
+      if (!isRetry) {
+        await new Promise((r) => setTimeout(r, 800))
+        return loadTickets(true)
+      }
+      setLoadError(true)
+      setLoading(false)
     }
-    setLoading(false)
   }, [statusFilter])
 
   useEffect(() => { loadTickets() }, [loadTickets])
@@ -72,6 +92,23 @@ export default function AdminSupport() {
         <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-accent-rose" />
         <h2 className="text-base font-semibold text-text-primary">Acesso restrito</h2>
         <p className="mt-1.5 text-sm text-text-muted">Esta área é só para a equipe interna.</p>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+        <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
+        <h2 className="text-base font-semibold text-text-primary">Não foi possível carregar</h2>
+        <p className="mt-1.5 text-sm text-text-muted">Falha de conexão ao verificar seu acesso. Tente novamente.</p>
+        <button
+          type="button"
+          onClick={() => { setLoading(true); setLoadError(false); loadTickets() }}
+          className="mt-3 rounded-lg bg-accent-blue px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-blue-hover"
+        >
+          Tentar novamente
+        </button>
       </div>
     )
   }
