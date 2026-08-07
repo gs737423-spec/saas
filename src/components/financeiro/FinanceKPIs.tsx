@@ -1,4 +1,4 @@
-import { DollarSign, Percent, RotateCcw, Wallet } from 'lucide-react'
+import { DollarSign, RotateCcw, Wallet } from 'lucide-react'
 import type { FinanceOverview } from '@/data/financeShapes'
 import AnimatedNumber from '@/components/common/AnimatedNumber'
 
@@ -26,15 +26,6 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       tone: '#00E1FF',
     },
     {
-      key: 'fees',
-      label: 'Comissão',
-      raw: overview.fees,
-      format: (v) => `R$ ${brl(v)}`,
-      context: 'Retido pelos canais de venda',
-      icon: Percent,
-      tone: '#FFC95A',
-    },
-    {
       key: 'refunds',
       label: 'Estornos e Devoluções',
       raw: overview.refunds,
@@ -48,14 +39,14 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       label: 'Valor Líquido Estimado',
       raw: overview.netValue,
       format: (v) => `R$ ${brl(v)}`,
-      context: 'Bruto menos comissão e estornos',
+      context: 'Após deduções operacionais',
       icon: Wallet,
       tone: '#3BE38E',
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
       {cards.map((c) => {
         const Icon = c.icon
         return (

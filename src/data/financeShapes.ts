@@ -54,7 +54,7 @@ export function fillAllMarketplaces(rows: MarketplaceFinance[]): MarketplaceFina
   })
 }
 
-export type FinanceTransactionType = 'Venda' | 'Comissão' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'
+export type FinanceTransactionType = 'Venda' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'
 
 export interface FinanceTransaction {
   date: string

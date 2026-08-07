@@ -8,7 +8,6 @@ const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 const typeTone: Record<FinanceTransactionType, string> = {
   Venda: '#3BE38E',
-  Comissão: '#FFC95A',
   Tarifa: '#FFC95A',
   Estorno: '#FF5E7D',
   Devolução: '#FF5E7D',
@@ -20,7 +19,7 @@ function formatDate(dateStr: string): string {
   return `${d}/${m}/${y.slice(2)}`
 }
 
-const typeOptions: FinanceTransactionType[] = ['Venda', 'Comissão', 'Tarifa', 'Estorno', 'Devolução', 'Ajuste']
+const typeOptions: FinanceTransactionType[] = ['Venda', 'Tarifa', 'Estorno', 'Devolução', 'Ajuste']
 
 export default function TransactionsLedger({ transactions }: { transactions: FinanceTransaction[] }) {
   const [open, setOpen] = useState(false)
@@ -60,7 +59,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
           <p className="mt-0.5 text-xs text-text-muted">
-            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, comissão, estornos e ajustes
+            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, tarifas, estornos e ajustes
           </p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />

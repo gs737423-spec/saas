@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Shield, AlertTriangle, Store } from 'lucide-react'
+import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, AlertTriangle, Store } from 'lucide-react'
 import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
@@ -24,9 +24,6 @@ function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
   const byTicket = [...rows].sort((a, b) => b.averageTicket - a.averageTicket)
   const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount)
   const byGrowth = [...rows].sort((a, b) => (b.growth.d30 ?? -Infinity) - (a.growth.d30 ?? -Infinity))
-  const byFeeImpact = [...rows]
-    .map((r) => ({ r, pct: r.grossRevenue > 0 ? (r.fees / r.grossRevenue) * 100 : 0 }))
-    .sort((a, b) => b.pct - a.pct)
   const totalNet = rows.reduce((s, r) => s + r.netValue, 0)
   const worstGrowth = [...rows].filter((r) => r.growth.d30 !== null).sort((a, b) => (a.growth.d30 ?? 0) - (b.growth.d30 ?? 0))[0]
 
@@ -35,12 +32,11 @@ function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
     { label: 'Melhor Ticket', value: `R$ ${brl2(byTicket[0].averageTicket)}`, channel: byTicket[0].marketplace, sub: `${brl(byTicket[0].ordersCount)} pedidos`, icon: Receipt, tone: '#194B9B' },
     { label: 'Mais Pedidos', value: brl(byOrders[0].ordersCount), channel: byOrders[0].marketplace, sub: `ticket R$ ${brl2(byOrders[0].averageTicket)}`, icon: ShoppingCart, tone: '#3A8DFF' },
     { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#00E1FF' },
-    { label: 'Maior Impacto de Comissão', value: `${pct(byFeeImpact[0].pct)}%`, channel: byFeeImpact[0].r.marketplace, sub: `R$ ${brl(byFeeImpact[0].r.fees)} retidos`, icon: Shield, tone: '#FFC95A' },
     { label: 'Canal em Atenção', value: worstGrowth ? worstGrowth.marketplace : '—', channel: worstGrowth ? worstGrowth.marketplace : rows[0].marketplace, sub: worstGrowth ? `Atenção · ${pct(worstGrowth.growth.d30!)}%` : 'Nenhum canal em queda', icon: AlertTriangle, tone: '#FF5E7D' },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
       {verdicts.map((v) => {
         const brand = getMarketplaceColor(v.channel)
         return (
@@ -109,18 +105,13 @@ function ChannelMiniCharts({ rows }: { rows: MarketplaceFinance[] }) {
   const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount).map((m) => ({
     marketplace: m.marketplace, value: m.ordersCount, display: brl(m.ordersCount),
   }))
-  const byFees = [...rows]
-    .map((m) => ({ m, feePct: m.grossRevenue > 0 ? (m.fees / m.grossRevenue) * 100 : 0 }))
-    .sort((a, b) => b.feePct - a.feePct)
-    .map(({ m, feePct }) => ({ marketplace: m.marketplace, value: feePct, display: `${pct(feePct)}%` }))
 
   return (
     <div className="overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
-      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
         <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
         <MiniBarChart title="Ticket Médio" question="Quem tem o maior ticket médio?" data={byTicket} />
         <MiniBarChart title="Pedidos" question="Quem traz mais volume?" data={byOrders} />
-        <MiniBarChart title="Impacto de Comissão" question="Quem consome mais em comissão?" data={byFees} maxValue={25} />
       </div>
     </div>
   )
@@ -159,7 +150,7 @@ export default function Marketplaces() {
       <ConnectMarketplacePrompt
         icon={Store}
         title="Conecte um marketplace pra comparar canais"
-        description="Assim que houver pedido pago sincronizado de um marketplace, o comparativo de faturamento, comissão e ticket médio aparece aqui."
+        description="Assim que houver pedido pago sincronizado de um marketplace, o comparativo de faturamento e ticket médio aparece aqui."
       />
     )
   }

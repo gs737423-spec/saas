@@ -11,7 +11,7 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
     <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Comparativo por Marketplace</h3>
-        <p className="mt-0.5 text-xs text-text-muted">{sorted.length} {sorted.length === 1 ? 'canal' : 'canais'} · faturamento, comissão, estornos e valor líquido estimado</p>
+        <p className="mt-0.5 text-xs text-text-muted">{sorted.length} {sorted.length === 1 ? 'canal' : 'canais'} · faturamento, estornos e valor líquido estimado</p>
       </div>
 
       {/* Mobile: stacked cards */}
@@ -28,10 +28,6 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Bruto</p>
                   <p className="mt-0.5 font-mono text-[13px] font-semibold text-text-primary">R$ {brl(m.grossRevenue)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted">Comissão</p>
-                  <p className="mt-0.5 font-mono text-[13px] text-text-secondary">R$ {brl(m.fees)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Estornos</p>
@@ -55,7 +51,6 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
               <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 <th className="pb-3 pr-4 font-semibold">Marketplace</th>
                 <th className="pb-3 pr-4 text-center font-semibold">Faturamento bruto</th>
-                <th className="pb-3 pr-4 text-center font-semibold">Comissão</th>
                 <th className="pb-3 pr-4 text-center font-semibold">Estornos e devoluções</th>
                 <th className="pb-3 text-center font-semibold">Valor líquido estimado</th>
               </tr>
@@ -72,7 +67,6 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
                       </span>
                     </td>
                     <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
-                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.fees)}</td>
                     <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
                     <td className="py-3 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
                   </tr>

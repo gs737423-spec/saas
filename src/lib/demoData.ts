@@ -108,7 +108,7 @@ export function demoFinanceOverview(days = 30): { overview: FinanceOverview; byM
   return { overview, byMarketplace }
 }
 
-const TX_TYPES: FinanceTransaction['type'][] = ['Venda', 'Comissão', 'Tarifa', 'Estorno', 'Devolução']
+const TX_TYPES: FinanceTransaction['type'][] = ['Venda', 'Tarifa', 'Estorno', 'Devolução']
 
 function seededRandom(seed: number): number {
   const x = Math.sin(seed) * 10000
@@ -180,7 +180,7 @@ export function demoFinanceTransactions(): FinanceTransaction[] {
     const marketplace = MARKETPLACES[i % MARKETPLACES.length]
     const type = TX_TYPES[i % TX_TYPES.length]
     const gross = Math.round((80 + (i * 37) % 420) * 100) / 100
-    const discount = type === 'Comissão' || type === 'Tarifa' ? Math.round(gross * 0.11 * 100) / 100 : 0
+    const discount = type === 'Tarifa' ? Math.round(gross * 0.11 * 100) / 100 : 0
     const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)
     return { date, marketplace, type, identifier: `DEMO-${1000 + i}`, gross, discount, net: Math.round((gross - discount) * 100) / 100 }
   })

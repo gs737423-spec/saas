@@ -23,7 +23,6 @@ function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
     { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag, tone: 'cyan', hero: true },
     { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag, tone: 'blue' },
     { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag, tone: 'violet' },
-    { key: 'fees', label: 'Comissão', value: brl(s.feesTotal), raw: s.feesTotal, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.grossRevenue > 0 ? `${((s.feesTotal / s.grossRevenue) * 100).toFixed(1)}% do bruto` : '', tag, tone: 'amber' },
     { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag, tone: 'neutral' },
   ]
 }
@@ -93,13 +92,6 @@ export default function Relatorios() {
     if (topProduct) {
       lines.push({ text: `Produto que mais faturou: ${topProduct.name} (R$ ${brl(topProduct.revenue)}, ${topProduct.units} unidades).`, tone: 'neutral' })
     }
-    lines.push({
-      // feesTotal soma comissão de TODOS os marketplaces conectados (ver
-      // api/dashboard/summary.ts) — nunca nomear um canal específico aqui,
-      // senão o texto fica errado assim que um segundo provider conectar.
-      text: `Comissão dos marketplaces conectados consumiu ${summary.grossRevenue > 0 ? ((summary.feesTotal / summary.grossRevenue) * 100).toFixed(1) : '0'}% do bruto.`,
-      tone: 'warning',
-    })
     lines.push({
       text: `${lowStock.length} ${lowStock.length === 1 ? 'produto está' : 'produtos estão'} com estoque baixo (≤${LOW_STOCK_THRESHOLD} unidades).`,
       tone: lowStock.length > 0 ? 'danger' : 'positive',

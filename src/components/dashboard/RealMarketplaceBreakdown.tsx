@@ -11,12 +11,11 @@ interface FinanceApiResponse {
   byMarketplace: MarketplaceFinance[]
 }
 
-type SortKey = 'netRevenue' | 'avgTicket' | 'feePct'
+type SortKey = 'netRevenue' | 'avgTicket'
 
 const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'netRevenue', label: 'Faturamento' },
   { key: 'avgTicket', label: 'Ticket Médio' },
-  { key: 'feePct', label: 'Comissão' },
 ]
 
 const brl = (v: number) => v.toLocaleString('pt-BR')
@@ -57,7 +56,6 @@ function GrowthCell({ label, value }: { label: string; value: number | null }) {
 function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: number }) {
   const brand = getMarketplaceColor(m.marketplace)
   const isLeader = rank === 1
-  const feePct = m.grossRevenue > 0 ? (m.fees / m.grossRevenue) * 100 : 0
 
   return (
     <div className={`group flex flex-1 items-center gap-2.5 rounded-xl px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'}`}>
@@ -86,11 +84,6 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
         <div className="font-mono text-[14px] font-semibold text-text-secondary">R$ {brl2(m.averageTicket)}</div>
         <div className="text-[9.5px] uppercase tracking-wider text-text-muted">ticket médio</div>
       </div>
-      <div className="hidden w-14 shrink-0 text-right lg:block">
-        <div className="font-mono text-[14px] font-semibold text-accent-amber">{pct(feePct)}%</div>
-        <div className="text-[9.5px] uppercase tracking-wider text-text-muted">comissão</div>
-      </div>
-
       <div className="hidden shrink-0 items-center gap-2.5 xl:flex">
         <GrowthCell label="D-1" value={m.growth.d1} />
         <GrowthCell label="D-7" value={m.growth.d7} />
@@ -150,11 +143,8 @@ export default function RealMarketplaceBreakdown() {
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
 
   const sorted = [...rows].sort((a, b) => {
-    if (sort === 'netRevenue') return b.grossRevenue - a.grossRevenue
     if (sort === 'avgTicket') return b.averageTicket - a.averageTicket
-    const feeA = a.grossRevenue > 0 ? a.fees / a.grossRevenue : 0
-    const feeB = b.grossRevenue > 0 ? b.fees / b.grossRevenue : 0
-    return feeB - feeA
+    return b.grossRevenue - a.grossRevenue
   })
 
   return (

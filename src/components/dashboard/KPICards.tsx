@@ -96,12 +96,9 @@ function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
 
 function StatCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
-  const attention = kpi.key === 'fees'
-  const c = attention ? toneColor.amber : toneColor[kpi.tone]
+  const c = toneColor[kpi.tone]
   return (
     <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-xl p-2.5">
-      {/* thin left accent only for the attention (fees) card */}
-      {attention && <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: c }} />}
       <div className="mb-1.5 flex h-3.5 items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-muted">{kpi.label}</span>
         <Icon className="h-3.5 w-3.5" style={{ color: c }} />

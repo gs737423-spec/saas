@@ -606,7 +606,6 @@ export function scaleChannelOverview(items: ChannelOverview[], period: PeriodOpt
 /* --- KPIs globais da Visão Geral --------------------------------------- */
 
 const _ordersTotal = marketplaceMetrics.reduce((s, m) => s + m.orders, 0)
-const _feesTotal = _withNet.reduce((s, m) => s + m.fees, 0)
 const _avgTicket = _grossTotal / _ordersTotal
 /** Devoluções — estimativa de ~2.3% do bruto, consistente entre os canais. */
 const _returnsTotal = _grossTotal * 0.023
@@ -669,18 +668,6 @@ export const overviewKpis: OverviewKpi[] = [
     change: 3.8,
     context: 'Bruto por pedido',
     tone: 'violet',
-  },
-  {
-    key: 'fees',
-    label: 'Comissão',
-    value: _feesTotal.toLocaleString('pt-BR'),
-    raw: _feesTotal,
-    scalesWithPeriod: true,
-    prefix: 'R$',
-    change: 1.4,
-    context: `${Math.round((_feesTotal / _grossTotal) * 1000) / 10}% do bruto`,
-    tag: 'estimado',
-    tone: 'amber',
   },
   {
     key: 'returns',

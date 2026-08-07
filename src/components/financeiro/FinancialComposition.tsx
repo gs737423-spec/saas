@@ -23,11 +23,10 @@ interface FlowStep {
 }
 
 function buildFlow(overview: FinanceOverview): FlowStep[] {
-  const { grossRevenue, fees, refunds, netValue } = overview
+  const { grossRevenue, refunds, netValue } = overview
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
     { key: 'gross', label: 'Faturamento bruto', value: grossRevenue, sharePct: 100, color: '#00E1FF', isDeduction: false },
-    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC95A', isDeduction: true },
     { key: 'refunds', label: 'Estornos e devoluções', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5E7D', isDeduction: true },
     { key: 'net', label: 'Valor líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#3BE38E', isDeduction: false },
   ]
@@ -42,11 +41,10 @@ interface BarSegment {
 }
 
 function buildSegments(overview: FinanceOverview): BarSegment[] {
-  const { grossRevenue, fees, refunds, netValue } = overview
+  const { grossRevenue, refunds, netValue } = overview
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
     { key: 'net', label: 'Líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#3BE38E' },
-    { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC95A' },
     { key: 'refunds', label: 'Estornos', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5E7D' },
   ]
 }
@@ -80,7 +78,7 @@ export default function FinancialComposition({ overview }: { overview: FinanceOv
       <div className="mb-3">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Composição do valor líquido</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
-          Faturamento bruto menos comissão e estornos — leitura direta, sem precisar passar o mouse.
+          Faturamento bruto menos estornos — leitura direta, sem precisar passar o mouse.
         </p>
       </div>
 
