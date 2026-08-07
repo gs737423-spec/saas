@@ -15,7 +15,7 @@ export default function NumbersSection() {
   return (
     <section id="consultoria" className="vt-light numbers-section scroll-mt-24">
       <span id="sobre" aria-hidden="true" className="numbers-compat-anchor" />
-      <div className="site-container site-container--tight grid gap-14 py-14 md:py-[92px] lg:grid-cols-[40fr_56fr] lg:gap-24">
+      <div className="site-container site-container--tight grid gap-10 py-9 md:py-12 lg:grid-cols-[40fr_56fr] lg:gap-16">
         <Reveal>
           <span className="mb-3 inline-block text-[13px] font-bold uppercase" style={{ color: 'var(--vintec-blue-700)', letterSpacing: '0.12em' }}>
             {about.label}
@@ -23,7 +23,7 @@ export default function NumbersSection() {
           <h2 className="font-bold" style={{ color: 'var(--vintec-text)', fontSize: 'clamp(1.9rem, 3vw, 2.4rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
             {about.title}
           </h2>
-          <div className="mt-5 space-y-4" style={{ maxWidth: '58ch' }}>
+          <div className="mt-4 space-y-3" style={{ maxWidth: '58ch' }}>
             {about.paragraphs.map((p) => (
               <p key={p.slice(0, 24)} className="text-[16.5px]" style={{ color: 'var(--vintec-text-soft)', lineHeight: 1.65 }}>{p}</p>
             ))}
@@ -31,12 +31,12 @@ export default function NumbersSection() {
         </Reveal>
 
         <Reveal delay={80}>
-          <div className="mb-7 text-[13px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--vintec-blue-700)' }}>
+          <div className="mb-5 text-[13px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--vintec-blue-700)' }}>
             {institutionalMetricsTitle}
           </div>
           <AnimatedMetricGroup>
             {(inView) => (
-              <div className="grid grid-cols-2 gap-x-7 gap-y-8 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-7 gap-y-6 sm:grid-cols-3">
                 {siteMetrics.map((m, i) => {
                   const Icon = metricIcons[i]
                   return (

@@ -130,7 +130,7 @@ export default function KPICards({ period, kpis }: { period: PeriodOption; kpis?
   return (
     <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[1.15fr_2.4fr]">
       <HeroCard kpi={hero} />
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         {rest.map((kpi) => (
           <StatCard key={kpi.key} kpi={kpi} />
         ))}

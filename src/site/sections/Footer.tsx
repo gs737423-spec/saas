@@ -33,8 +33,8 @@ export default function Footer() {
 
   return (
     <footer id="privacidade-anchor" className="sec-footer-flat">
-      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 48, paddingBottom: 28 }}>
-        <div className="grid gap-10 lg:grid-cols-[30%_1fr]">
+      <div className="site-container site-container--tight" style={{ maxWidth: 1220, paddingTop: 32, paddingBottom: 20 }}>
+        <div className="grid gap-8 lg:grid-cols-[30%_1fr]">
           <div className="footer-main max-w-[320px]">
             <div className="flex items-center gap-2 mb-2">
               <MKTOnlineLogo mode="symbol" size="sm" />
@@ -58,7 +58,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="footer-cols grid grid-cols-1 gap-y-7 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
+          <div className="footer-cols grid grid-cols-1 gap-y-5 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4">
             <nav aria-label="Rodapé — soluções">
               <h3 className="footer-col-title">Soluções</h3>
               <ul className="footer-col-list">
