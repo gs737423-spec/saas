@@ -116,6 +116,12 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   // Nome de categoria é a mesma dúzia de valores repetida em todo o
   // catálogo — cacheia por sync em vez de 1 chamada de API por produto.
   const categoryNameCache = new Map<string, string | null>()
+  // /orders/search só devolve `seller_sku` do item, sem os `attributes[]`
+  // que o catálogo tem — se o vendedor cadastrou o SKU via atributo (não via
+  // campo customizado), o pedido não teria de onde puxar. Guarda o SKU já
+  // resolvido de cada produto no loop de itens (roda antes) pra reaproveitar
+  // no loop de pedidos, sem chamada nova à API do Mercado Livre.
+  const skuByProductId = new Map<string, string | null>()
 
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
@@ -133,6 +139,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         const detail = await getItemDetail(itemId, accessToken)
         const productRow = mapItemToProductRow(detail)
         const inventoryRow = mapItemToInventoryRow(detail)
+        skuByProductId.set(productRow.external_product_id, productRow.sku)
 
         let categoryName = categoryNameCache.get(productRow.category_id)
         if (categoryName === undefined) {
@@ -216,6 +223,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
           company_id: companyId,
           order_id: upsertedOrder.id,
           ...item,
+          sku: item.sku ?? skuByProductId.get(item.external_product_id) ?? null,
         }))
         if (itemRows.length > 0) {
           const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
