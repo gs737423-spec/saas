@@ -11,6 +11,7 @@ import {
   Link2,
   Settings,
   HelpCircle,
+  LifeBuoy,
   X,
 } from 'lucide-react'
 
@@ -27,6 +28,7 @@ const secondary = [
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
+  { icon: LifeBuoy, label: 'Suporte', to: '/app/suporte' },
   { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },
   { icon: HelpCircle, label: 'Ajuda', to: '/app/configuracoes' },
 ]

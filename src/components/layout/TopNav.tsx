@@ -19,6 +19,7 @@ import {
   Eye,
   Inbox,
   X,
+  LifeBuoy,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePeriod } from '@/contexts/PeriodContext'
@@ -40,20 +41,23 @@ const navItems: Item[] = [
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
+  { icon: LifeBuoy, label: 'Suporte', to: '/app/suporte' },
 ]
 
 // Nav do Painel Admin — vive na MESMA barra global (nunca uma segunda
 // barra abaixo). "Clientes" é a lista real de empresas; os demais ainda
 // não têm tela própria e ficam desabilitados (link morto é pior que
 // ausência de link).
-const adminNavItems: (Item | { icon: typeof Package; label: string; disabled: true })[] = [
-  { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
-  { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes', badge: MOCK_LEADS_COUNT },
-  { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
-  { icon: Plug, label: 'Integrações', disabled: true },
-  { icon: Headset, label: 'Consultoria', disabled: true },
-  { icon: Settings, label: 'Configurações', disabled: true },
-]
+function buildAdminNavItems(openTicketsCount: number): (Item | { icon: typeof Package; label: string; disabled: true })[] {
+  return [
+    { icon: LayoutDashboard, label: 'Visão Geral', to: '/app/admin' },
+    { icon: Inbox, label: 'Solicitações', to: '/app/admin/solicitacoes', badge: MOCK_LEADS_COUNT },
+    { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
+    { icon: Headset, label: 'Suporte', to: '/app/admin/suporte', badge: openTicketsCount || undefined },
+    { icon: Plug, label: 'Integrações', disabled: true },
+    { icon: Settings, label: 'Configurações', disabled: true },
+  ]
+}
 
 // Unified top navigation bar. Replaces the old fixed sidebar (SideRail) on
 // desktop, and the slim brand-only bar on mobile. Mobile section links still
@@ -78,6 +82,7 @@ export default function TopNav() {
   const { demoMode, enterDemoMode, exitDemoMode } = useDemoMode()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [openTicketsCount, setOpenTicketsCount] = useState(0)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdminArea = location.pathname.startsWith('/app/admin')
 
@@ -97,6 +102,14 @@ export default function TopNav() {
     // deploy, cada arquivo em api/** conta como uma. 200 = é admin.
     apiFetch('/api/admin/companies').then((res) => setIsAdmin(res.ok)).catch(() => setIsAdmin(false))
   }, [])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    apiFetch('/api/admin/support-tickets?status=aberto')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { ok: boolean; openCount?: number } | null) => setOpenTicketsCount(body?.ok ? (body.openCount ?? 0) : 0))
+      .catch(() => setOpenTicketsCount(0))
+  }, [isAdmin])
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -134,7 +147,7 @@ export default function TopNav() {
       {isAdminArea ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <nav className="hide-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
-            {adminNavItems.map((item) =>
+            {buildAdminNavItems(openTicketsCount).map((item) =>
               'disabled' in item ? (
                 <span
                   key={item.label}

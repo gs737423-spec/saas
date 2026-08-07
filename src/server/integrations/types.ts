@@ -152,3 +152,44 @@ export interface MarketplaceConnector {
   handleCallback(code: string): Promise<{ externalAccountId: string; accessToken: string; refreshToken: string; expiresInSeconds: number; scopes: string }>
   sync(connectionId: string): Promise<SyncSummary>
 }
+
+export type SupportTicketStatus = 'aberto' | 'em_andamento' | 'resolvido' | 'fechado'
+export type SupportTicketPriority = 'baixa' | 'normal' | 'alta' | 'urgente'
+export type SupportMessageAuthorRole = 'cliente' | 'admin'
+
+export interface SupportMessage {
+  id: string
+  ticketId: string
+  authorId: string
+  authorRole: SupportMessageAuthorRole
+  body: string
+  createdAt: string
+}
+
+export interface SupportTicket {
+  id: string
+  companyId: string
+  companyName?: string
+  subject: string
+  status: SupportTicketStatus
+  priority: SupportTicketPriority
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SupportTicketDetail extends SupportTicket {
+  messages: SupportMessage[]
+}
+
+export interface SupportTicketListResponse {
+  ok: boolean
+  tickets: SupportTicket[]
+  message?: string
+}
+
+export interface SupportTicketDetailResponse {
+  ok: boolean
+  ticket: SupportTicketDetail | null
+  message?: string
+}
