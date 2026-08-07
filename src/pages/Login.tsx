@@ -90,9 +90,26 @@ export default function Login() {
       if (!signInError) {
         attemptsRef.current = 0
         // Sem destino explícito (login direto, não deep-link): time interna
-        // cai direto no painel admin, cliente cai no dashboard normal.
+        // cai direto no painel admin, cliente cai no dashboard normal. Logo
+        // após o signIn a sessão pode ainda não estar 100% propagada (cold
+        // start da function) — 1 retry evita mandar admin de verdade pro
+        // painel de cliente por causa de uma falha transitória isolada.
         if (!explicitFrom) {
-          const isAdmin = await apiFetch('/api/admin/companies').then((r) => r.ok).catch(() => false)
+          async function checkIsAdmin(attempt = 0): Promise<boolean> {
+            try {
+              const res = await apiFetch('/api/admin/companies')
+              if (res.status === 403) return false
+              if (res.ok) return true
+              throw new Error('unexpected_status')
+            } catch {
+              if (attempt === 0) {
+                await new Promise((r) => setTimeout(r, 600))
+                return checkIsAdmin(1)
+              }
+              return false
+            }
+          }
+          const isAdmin = await checkIsAdmin()
           navigate(isAdmin ? '/app/admin' : '/app', { replace: true })
         } else {
           navigate(redirectTo, { replace: true })
