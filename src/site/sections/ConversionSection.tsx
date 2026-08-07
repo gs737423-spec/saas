@@ -193,7 +193,6 @@ export default function ConversionSection() {
     const e: Record<string, string> = {}
     if (!form.company.trim()) e.company = 'Informe o nome da empresa.'
     if (form.cnpj.replace(/\D/g, '').length !== 14) e.cnpj = 'Informe um CNPJ válido.'
-    else if (cnpjCheck.status === 'not_found') e.cnpj = 'Esse CNPJ não foi encontrado na Receita Federal.'
     else if (cnpjCheck.status === 'loading') e.cnpj = 'Aguarde a confirmação do CNPJ.'
     else if (cnpjCheck.status === 'mismatch') e.company = `O nome não bate com o CNPJ (Receita: ${cnpjCheck.info?.razaoSocial ?? cnpjCheck.info?.nomeFantasia}).`
     if (!form.name.trim()) e.name = 'Informe seu nome.'
@@ -293,7 +292,10 @@ export default function ConversionSection() {
                     <p className="mt-1 text-[11.5px] vt-muted">Não foi possível confirmar agora — você pode continuar.</p>
                   )}
                   {cnpjCheck.status === 'not_found' && !errors.cnpj && (
-                    <p className="mt-1 text-[11.5px]" style={{ color: '#FF8FA6' }}>CNPJ não encontrado na Receita Federal.</p>
+                    <p className="mt-1 text-[11.5px]" style={{ color: '#F0C572' }}>
+                      CNPJ não encontrado na Receita Federal (pode ser recém-aberto — a base às vezes demora a atualizar). Você pode enviar mesmo assim, ou{' '}
+                      <a href={waHref} target="_blank" rel="noopener noreferrer" style={{ color: '#78CAFF', textDecoration: 'underline' }}>falar com a gente pelo WhatsApp</a>.
+                    </p>
                   )}
                   {cnpjCheck.status === 'mismatch' && !errors.company && (
                     <p className="mt-1 text-[11.5px]" style={{ color: '#F0C572' }}>Nome não bate com a Receita: {cnpjCheck.info?.razaoSocial ?? cnpjCheck.info?.nomeFantasia}.</p>
