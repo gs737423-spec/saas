@@ -88,14 +88,14 @@ function ProdutoKPIs({ product, cov }: { product: DashboardProduct; cov: number 
   const avgTicket = product.units > 0 ? product.revenue / product.units : 0
 
   const cards = [
-    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'no período', icon: Receipt, primary: '#3A8DFF', secondary: '#46E5FF' },
-    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#46E5FF' },
+    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'no período', icon: Receipt, primary: '#3A8DFF', secondary: '#00E1FF' },
+    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#00E1FF' },
     { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#194B9B', secondary: '#3A8DFF' },
     { label: 'Margem', value: product.margin !== null ? `${product.margin.toFixed(0)}%` : '—', context: product.margin !== null ? 'sobre o faturamento' : 'defina o custo do produto', icon: Percent, primary: '#FFC95A', secondary: '#FFC95A' },
-    { label: 'Estoque Atual', value: String(product.stock), context: 'unidades disponíveis', icon: Boxes, primary: '#46E5FF', secondary: '#3A8DFF' },
+    { label: 'Estoque Atual', value: String(product.stock), context: 'unidades disponíveis', icon: Boxes, primary: '#00E1FF', secondary: '#3A8DFF' },
     { label: 'Cobertura', value: cov !== null ? `${Math.round(cov)} dias` : '—', context: 'no ritmo de venda do período', icon: Clock, primary: '#FF5E7D', secondary: '#FF5E7D' },
     { label: 'Tendência', value: product.trend !== null ? `${positive ? '+' : ''}${product.trend.toFixed(1)}%` : '—', context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#3BE38E' : '#FF5E7D', secondary: '#FFC95A' },
-    { label: 'Participação', value: `${product.sharePct.toFixed(1)}%`, context: 'do faturamento do catálogo', icon: PieChart, primary: '#194B9B', secondary: '#46E5FF' },
+    { label: 'Participação', value: `${product.sharePct.toFixed(1)}%`, context: 'do faturamento do catálogo', icon: PieChart, primary: '#194B9B', secondary: '#00E1FF' },
   ]
 
   return (

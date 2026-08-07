@@ -37,7 +37,7 @@ const iconByKey: Record<string, typeof DollarSign> = {
 const toneColor: Record<KpiTone, string> = {
   blue: '#3A8DFF',
   emerald: '#3BE38E',
-  cyan: '#46E5FF',
+  cyan: '#00E1FF',
   amber: '#FFC95A',
   violet: '#256EF7',
   neutral: '#9EB3C9',
@@ -62,7 +62,7 @@ function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c}66, transparent)` }} />
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-secondary">{kpi.label}</span>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c}16`, boxShadow: `inset 0 0 0 1px ${c}33` }}>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${c}29`, boxShadow: `inset 0 0 0 1.5px ${c}66` }}>
           <Icon className="icon-halo h-4 w-4" style={{ color: c }} />
         </div>
       </div>

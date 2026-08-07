@@ -23,7 +23,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Total vendido no período',
       icon: DollarSign,
-      tone: '#46E5FF',
+      tone: '#00E1FF',
     },
     {
       key: 'fees',

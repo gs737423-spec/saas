@@ -22,7 +22,7 @@ export function computeHealthBreakdown(trend: number | null, margin: number | nu
   const breakdown: Breakdown[] = [
     { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
     { label: 'Margem', score: Math.round(margemScore), color: '#FFC95A' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#46E5FF' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#00E1FF' },
   ]
   const score = Math.round(breakdown.reduce((s, b) => s + b.score, 0) / breakdown.length)
   return { score, breakdown }

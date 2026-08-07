@@ -58,12 +58,12 @@
 
   /* Ciano = só acento (hover/focus/links/ícones ativos/seleção/status) —
      nunca preenche área grande. Azul = gradiente #59B7FF→#3A8DFF→#256EF7,
-     nunca chapado. Ciano ganhou tom mais saturado/profundo (era #46E5FF,
+     nunca chapado. Ciano ganhou tom bem mais vívido/saturado (era #46E5FF,
      pastel demais, pouco contraste em fundo escuro) + variante -deep pra
      degradê próprio, mesmo padrão que o azul já usava. */
-  --color-accent-cyan: #12CBEA;
-  --color-accent-cyan-hover: #4FE0F5;
-  --color-accent-cyan-deep: #0891A8;
+  --color-accent-cyan: #00E1FF;
+  --color-accent-cyan-hover: #5CF3FF;
+  --color-accent-cyan-deep: #0089A8;
   --color-accent-blue: #3A8DFF;
   --color-accent-blue-hover: #59B7FF;
   --color-accent-blue-deep: #256EF7;
@@ -71,8 +71,8 @@
   --color-accent-amber: #FFC95A;
   --color-accent-warning: #FFC95A;
   --color-accent-rose: #FF5E7D;
-  --color-accent-info: #46E5FF;
-  --color-accent-violet: #46E5FF;
+  --color-accent-info: #00E1FF;
+  --color-accent-violet: #00E1FF;
 
   --color-ml-orange: #FFE600;
   --color-shopee-orange: #EE4D2D;

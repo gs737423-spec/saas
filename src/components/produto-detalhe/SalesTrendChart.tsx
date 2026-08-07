@@ -95,13 +95,13 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
         <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#46E5FF" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#46E5FF" stopOpacity="1" />
+              <stop offset="0%" stopColor="#00E1FF" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#00E1FF" stopOpacity="1" />
             </linearGradient>
           </defs>
           <path d={path} fill="none" stroke="url(#trendLine)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
           {hoverIdx !== null && (
-            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#46E5FF" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#00E1FF" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
           )}
         </svg>
 
@@ -113,7 +113,7 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
                   className="w-full rounded-t-md transition-all duration-300"
                   style={{
                     height: `${(d.units / maxUnits) * 100}%`,
-                    background: hoverIdx === i ? 'linear-gradient(180deg, #46E5FF, #3A8DFF60)' : 'linear-gradient(180deg, #3A8DFF, #3A8DFF30)',
+                    background: hoverIdx === i ? 'linear-gradient(180deg, #00E1FF, #3A8DFF60)' : 'linear-gradient(180deg, #3A8DFF, #3A8DFF30)',
                     boxShadow: hoverIdx === i ? '0 0 16px -2px #3A8DFFcc' : '0 0 10px -4px #3A8DFF99',
                   }}
                 />

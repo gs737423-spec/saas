@@ -36,7 +36,7 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
     // "Ticket Médio" é receita ÷ pedidos (aqui não temos contagem de pedido
     // por produto, só receita ÷ unidades). Fórmula diferente, nome tem que
     // deixar claro, senão parece divergência/bug entre telas.
-    { label: 'Ticket por Unidade', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'receita ÷ unidades vendidas', icon: Receipt, primary: '#46E5FF' },
+    { label: 'Ticket por Unidade', value: avgTicket, format: (v) => `R$ ${v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, sub: 'receita ÷ unidades vendidas', icon: Receipt, primary: '#00E1FF' },
   ]
 
   return (

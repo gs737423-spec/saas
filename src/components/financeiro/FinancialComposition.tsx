@@ -26,7 +26,7 @@ function buildFlow(overview: FinanceOverview): FlowStep[] {
   const { grossRevenue, fees, refunds, netValue } = overview
   const safeGross = grossRevenue > 0 ? grossRevenue : 1
   return [
-    { key: 'gross', label: 'Faturamento bruto', value: grossRevenue, sharePct: 100, color: '#46E5FF', isDeduction: false },
+    { key: 'gross', label: 'Faturamento bruto', value: grossRevenue, sharePct: 100, color: '#00E1FF', isDeduction: false },
     { key: 'fees', label: 'Comissões', value: fees, sharePct: (fees / safeGross) * 100, color: '#FFC95A', isDeduction: true },
     { key: 'refunds', label: 'Estornos e devoluções', value: refunds, sharePct: (refunds / safeGross) * 100, color: '#FF5E7D', isDeduction: true },
     { key: 'net', label: 'Valor líquido estimado', value: netValue, sharePct: (netValue / safeGross) * 100, color: '#3BE38E', isDeduction: false },

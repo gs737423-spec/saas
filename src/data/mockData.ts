@@ -507,7 +507,7 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
   const breakdown: HealthScoreBreakdown[] = [
     { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
     { label: 'Margem', score: Math.round(margem), color: '#FFC95A' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#46E5FF' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#00E1FF' },
     { label: 'Marketing', score: Math.round(marketing), color: '#194B9B' },
     { label: 'Reputação', score: Math.round(reputacao), color: '#3BE38E' },
   ]
@@ -1031,7 +1031,7 @@ export function getCoverageStatus(days: number): CoverageStatus {
   if (days <= 7) return { label: 'Crítico', color: '#FF5E7D' }
   if (days <= 20) return { label: 'Atenção', color: '#FFC95A' }
   if (days <= 45) return { label: 'Saudável', color: '#3BE38E' }
-  return { label: 'Excesso', color: '#46E5FF' }
+  return { label: 'Excesso', color: '#00E1FF' }
 }
 
 /** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */

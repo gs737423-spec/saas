@@ -52,7 +52,7 @@ function coverageLabel(cov: number | null): { color: string; label: string } {
   if (cov < 7) return { color: '#FF5E7D', label: 'Crítico' }
   if (cov < 15) return { color: '#FFC95A', label: 'Atenção' }
   if (cov < 45) return { color: '#3BE38E', label: 'Saudável' }
-  return { color: '#46E5FF', label: 'Excesso' }
+  return { color: '#00E1FF', label: 'Excesso' }
 }
 
 interface FilterState {
@@ -199,7 +199,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
 
   const kpis: { key: string; label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean }[] = [
-    { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#46E5FF' },
+    { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#00E1FF' },
     { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
     { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
     { key: 'turnover', label: 'Giro Médio', value: avgTurnover !== null ? `${avgTurnover.toFixed(1)}x` : '—', sub: 'vendas ÷ estoque médio', icon: RefreshCw, primary: '#FFC95A' },
@@ -225,9 +225,9 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
               </div>
               <div className="mt-1 truncate text-[10px] text-text-muted">crítico · ruptura</div>
             </button>
-            <button type="button" onClick={() => setFilters((f) => ({ ...defaultFilters, onlyExcess: !f.onlyExcess }))} className="cursor-pointer pl-2 text-left" style={filters.onlyExcess ? { boxShadow: 'inset 0 0 0 1.5px #46E5FF99' } : undefined}>
+            <button type="button" onClick={() => setFilters((f) => ({ ...defaultFilters, onlyExcess: !f.onlyExcess }))} className="cursor-pointer pl-2 text-left" style={filters.onlyExcess ? { boxShadow: 'inset 0 0 0 1.5px #00E1FF99' } : undefined}>
               <div className="flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5" style={{ color: '#46E5FF' }} />
+                <Layers className="h-3.5 w-3.5" style={{ color: '#00E1FF' }} />
                 <span className="font-mono text-[16px] font-bold leading-none text-text-primary">{excessCount}</span>
               </div>
               <div className="mt-1 truncate text-[10px] text-text-muted">excesso · &gt;45d</div>

@@ -1,4 +1,4 @@
-const AVATAR_HUES = ['#46E5FF', '#3BE38E', '#FFC95A', '#FF5E7D', '#3A8DFF']
+const AVATAR_HUES = ['#00E1FF', '#3BE38E', '#FFC95A', '#FF5E7D', '#3A8DFF']
 
 export function hueFor(seed: string): string {
   let h = 0
