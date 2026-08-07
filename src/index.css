@@ -58,9 +58,12 @@
 
   /* Ciano = só acento (hover/focus/links/ícones ativos/seleção/status) —
      nunca preenche área grande. Azul = gradiente #59B7FF→#3A8DFF→#256EF7,
-     nunca chapado. */
-  --color-accent-cyan: #46E5FF;
-  --color-accent-cyan-hover: #6FEBFF;
+     nunca chapado. Ciano ganhou tom mais saturado/profundo (era #46E5FF,
+     pastel demais, pouco contraste em fundo escuro) + variante -deep pra
+     degradê próprio, mesmo padrão que o azul já usava. */
+  --color-accent-cyan: #12CBEA;
+  --color-accent-cyan-hover: #4FE0F5;
+  --color-accent-cyan-deep: #0891A8;
   --color-accent-blue: #3A8DFF;
   --color-accent-blue-hover: #59B7FF;
   --color-accent-blue-deep: #256EF7;
@@ -133,6 +136,22 @@ html {
 
 .font-brand {
   font-family: var(--font-brand);
+}
+
+/* Degradê e brilho do ciano — pra uso pontual em destaque forte (CTA
+   principal, ícone/indicador ativo), nunca em área grande (mesma regra do
+   token: ciano é acento). .text-gradient-cyan pra headline curta. */
+.bg-gradient-cyan {
+  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-cyan-deep));
+}
+.text-gradient-cyan {
+  background: linear-gradient(135deg, var(--color-accent-cyan-hover), var(--color-accent-cyan-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.glow-cyan {
+  box-shadow: 0 0 24px -6px var(--color-accent-cyan);
 }
 
 body {
