@@ -250,14 +250,14 @@ export default function ConversionSection() {
   return (
     <section id="conversao" className="sec-conversion scroll-mt-24">
       <span id="faq" aria-hidden="true" className="conversion-compat-anchor" />
-      <div className="site-container py-8 md:py-10">
-        <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
+      <div className="site-container py-6 md:py-8">
+        <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-5">
-            <span className="site-label mb-2" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
-            <h2 className="vt-ink text-[26px] font-extrabold leading-tight tracking-tight md:text-[32px]">Vamos entender a operação do seu e‑commerce.</h2>
-            <p className="mt-2.5 text-[14px] leading-relaxed vt-muted">Conte um pouco sobre o seu cenário atual. Nossa equipe responde diretamente pelo WhatsApp.</p>
+            <span className="site-label mb-1.5" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
+            <h2 className="vt-ink text-[24px] font-extrabold leading-tight tracking-tight md:text-[28px]">Vamos entender a operação do seu e‑commerce.</h2>
+            <p className="mt-2 text-[14px] leading-relaxed vt-muted">Conte um pouco sobre o seu cenário atual. Nossa equipe responde diretamente pelo WhatsApp.</p>
 
-            <ul className="mt-5 flex flex-col gap-2.5">
+            <ul className="mt-3.5 flex flex-col gap-2">
               {VALUE_POINTS.map((point) => (
                 <li key={point} className="flex items-start gap-2 text-[13px] leading-snug vt-muted">
                   <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: '#78CAFF' }} />
@@ -267,16 +267,16 @@ export default function ConversionSection() {
             </ul>
 
             {waHref.startsWith('http') && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="mt-3.5 inline-flex items-center gap-2 text-[13.5px] font-semibold hover:underline" style={{ color: '#78CAFF' }}>
                 <MessageCircle className="h-4 w-4" /> Prefere falar direto? Envie uma mensagem no WhatsApp
               </a>
             )}
           </div>
 
-          <Reveal className="vt-card p-5 md:p-6 lg:col-span-7">
+          <Reveal className="vt-card p-4 md:p-5 lg:col-span-7">
             <h3 className="text-[15px] font-bold vt-ink">Fale com um especialista</h3>
-            <form onSubmit={onSubmit} noValidate className="mt-3">
-              <div className="grid gap-3 sm:grid-cols-2">
+            <form onSubmit={onSubmit} noValidate className="mt-2.5">
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 <Field label="Nome da empresa" error={errors.company} htmlFor="f-company">
                   <input id="f-company" className="vt-input" value={form.company} onChange={(e) => set('company', e.target.value)} aria-invalid={!!errors.company} autoComplete="organization" />
                 </Field>
@@ -309,8 +309,8 @@ export default function ConversionSection() {
                 </Field>
               </div>
 
-              <fieldset className="mt-3">
-                <legend className="mb-1.5 text-[13px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
+              <fieldset className="mt-2.5">
+                <legend className="mb-1 text-[13px] font-semibold vt-muted">Em quais marketplaces sua empresa vende?</legend>
                 <div className="flex flex-wrap gap-1.5">
                   {CHANNELS.map((c) => {
                     const on = form.marketplaces.includes(c.label)
@@ -332,10 +332,10 @@ export default function ConversionSection() {
                 </div>
               </fieldset>
 
-              <Field label="O que você gostaria de tratar com a equipe?" error={errors.message} htmlFor="f-message" className="mt-3">
+              <Field label="O que você gostaria de tratar com a equipe?" error={errors.message} htmlFor="f-message" className="mt-2.5">
                 <textarea
                   id="f-message"
-                  rows={2}
+                  rows={1}
                   maxLength={MESSAGE_MAX}
                   placeholder="Conte um pouco sobre sua operação e o que você está buscando."
                   className="vt-input resize-none"
@@ -345,7 +345,7 @@ export default function ConversionSection() {
                 />
               </Field>
 
-              <label className="mt-3 flex items-start gap-2.5 text-[12.5px] vt-muted">
+              <label className="mt-2.5 flex items-start gap-2.5 text-[12.5px] vt-muted">
                 <input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" aria-invalid={!!errors.consent} />
                 <span>Concordo em ser contatado e com o tratamento dos meus dados conforme a <Link to="/privacidade" style={{ color: '#78CAFF', textDecoration: 'underline' }}>Política de Privacidade</Link>.</span>
               </label>
@@ -363,10 +363,10 @@ export default function ConversionSection() {
                 </p>
               )}
 
-              <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-4 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
+              <button type="submit" disabled={status === 'loading'} className="btn btn-primary mt-3 w-full" style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
                 {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : ctaLabels.principal}
               </button>
-              <p className="mt-2.5 text-center text-[11.5px] vt-muted">Retorno da equipe MKTOnline • Conversa inicial sem compromisso</p>
+              <p className="mt-2 text-center text-[11.5px] vt-muted">Retorno da equipe MKTOnline • Conversa inicial sem compromisso</p>
             </form>
           </Reveal>
         </div>

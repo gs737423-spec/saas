@@ -1128,9 +1128,9 @@ html.site-active :is(section, div)[id] { scroll-margin-top: 96px; }
 /* Inputs escuros (formulário de conversão no dark) */
 .vt-input {
   width: 100%;
-  min-height: 50px;
+  min-height: 42px;
   border-radius: 12px;
-  padding: 0.75rem 0.95rem;
+  padding: 0.55rem 0.95rem;
   font-size: 14.5px;
   color: #F7FAFF;
   background: rgba(6, 18, 36, 0.55);
