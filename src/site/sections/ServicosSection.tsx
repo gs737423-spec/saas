@@ -1,5 +1,3 @@
-import { ctaLabels, specialistHref } from '@/site/content'
-
 interface Service {
   label: string
   text: string
@@ -17,8 +15,6 @@ const services: Service[] = [
 // uma seção-argumento própria. Painel único: título+texto à esquerda,
 // 4 serviços em grade 2×2 à direita, sem cards grandes/numeração/timeline.
 export default function ServicosSection() {
-  const waHref = specialistHref('Olá! Quero conversar sobre a minha operação com a MKTOnline.')
-
   return (
     <section id="servicos" className="sec-dark-flat servicos-section scroll-mt-24">
       <div className="site-container site-container--tight servicos-container" style={{ maxWidth: 1200 }}>
@@ -48,13 +44,6 @@ export default function ServicosSection() {
         <p className="servicos-closing">
           A tecnologia faz parte da entrega. O principal valor está na experiência aplicada às decisões da empresa.
         </p>
-
-        <div className="servicos-cta">
-          <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            {ctaLabels.contexto}
-          </a>
-          <span className="servicos-cta-note">Conversa inicial, sem compromisso.</span>
-        </div>
       </div>
     </section>
   )
