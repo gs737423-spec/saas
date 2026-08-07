@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { checkRateLimit } from '../src/server/auth/rateLimit.js'
+import { clientIp } from '../src/server/auth/clientIp.js'
 
 /**
  * Consulta CNPJ na Receita Federal via BrasilAPI (gratuita, sem chave) —
@@ -74,6 +76,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ ok: false, message: 'Método não permitido.' })
     return
   }
+
+  // Endpoint público, sem auth — sem isso vira proxy grátis pra BrasilAPI
+  // (enumeração de CNPJ, abuso de cota de terceiro, possível banimento do IP
+  // do servidor).
+  if (!(await checkRateLimit(res, `cnpj-lookup:${clientIp(req)}`, 30, 1800))) return
 
   const raw = typeof req.query.cnpj === 'string' ? req.query.cnpj : ''
   const digits = raw.replace(/\D/g, '')

@@ -36,6 +36,7 @@ function MarginCell({ product, editable, onSetCost }: { product: Product; editab
   const margin = product.margin
 
   async function save() {
+    if (saving) return
     const parsed = Number(value.replace(',', '.'))
     if (!Number.isFinite(parsed) || parsed < 0 || !onSetCost) return
     setSaving(true)

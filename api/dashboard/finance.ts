@@ -181,12 +181,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       .filter((row): row is MarketplaceFinance => row !== null)
 
+    // Mesmo filtro de byMarketplace acima — provider sem label mapeado
+    // (Amazon/Loja Própria, sem OAuth ainda) não vira transação em vez de
+    // cair num fallback silencioso pra "Mercado Livre" (atribuiria receita
+    // de um canal a outro assim que um terceiro provider começar a sincronizar).
     const transactions: FinanceTransaction[] = [
-      ...paid.map((o) => {
-        const marketplace = providerByConnectionId.get(o.connection_id)
+      ...paid.map((o): FinanceTransaction | null => {
+        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id) as Provider]
+        if (!marketplace) return null
         return {
           date: new Date(o.ordered_at).toISOString().split('T')[0],
-          marketplace: (PROVIDER_LABEL[marketplace!] ?? 'Mercado Livre') as Marketplace,
+          marketplace,
           type: 'Venda' as const,
           identifier: o.external_order_id,
           gross: Number(o.total_amount ?? 0),
@@ -194,11 +199,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           net: Number(o.total_amount ?? 0) - Number(o.fee_amount ?? 0),
         }
       }),
-      ...cancelled.map((o) => {
-        const marketplace = providerByConnectionId.get(o.connection_id)
+      ...cancelled.map((o): FinanceTransaction | null => {
+        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id) as Provider]
+        if (!marketplace) return null
         return {
           date: new Date(o.ordered_at).toISOString().split('T')[0],
-          marketplace: (PROVIDER_LABEL[marketplace!] ?? 'Mercado Livre') as Marketplace,
+          marketplace,
           type: 'Estorno' as const,
           identifier: o.external_order_id,
           gross: -Number(o.total_amount ?? 0),
@@ -206,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           net: -Number(o.total_amount ?? 0),
         }
       }),
-    ].sort((a, b) => (a.date < b.date ? 1 : -1))
+    ].filter((t): t is FinanceTransaction => t !== null).sort((a, b) => (a.date < b.date ? 1 : -1))
 
     res.status(200).json({ ok: true, overview, byMarketplace, transactions } satisfies FinanceApiResponse)
   } catch (err) {

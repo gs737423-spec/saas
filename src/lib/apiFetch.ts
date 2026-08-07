@@ -45,9 +45,18 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
 
   try {
     const res = await apiFetch(url, init)
-    if (!res.ok) return null
+    if (!res.ok) {
+      // Todo chamador trata `null` como "sem dado ainda" (ex: mostra prompt
+      // de conectar marketplace) — indistinguível de uma falha real (500,
+      // sessão expirada). Log aqui é o mínimo pra não esconder o incidente
+      // por completo; distinguir os dois estados na UI de cada página é uma
+      // mudança maior, por página, que não cabe nesta correção pontual.
+      console.error(`[apiFetchJson] ${res.status} ${url}`)
+      return null
+    }
     return (await res.json()) as T
-  } catch {
+  } catch (err) {
+    console.error(`[apiFetchJson] network error ${url}`, err)
     return null
   }
 }
