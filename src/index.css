@@ -658,9 +658,18 @@ body {
     filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.4));
   }
 
-  /* Topbar navy própria em ambos os temas. Os tokens locais mantêm textos e
-     controles legíveis sobre a superfície escura. */
+  /* No mobile, a barra superior permanece estrutural e full-width. No
+     desktop, o próprio header vira a única ilha flutuante da aplicação. */
   .topnav-surface {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 40;
+    display: flex;
+    width: 100%;
+    height: var(--app-header-height);
+    align-items: center;
+    gap: 6px;
+    padding-inline: 12px;
     background: linear-gradient(105deg, #081C2B 0%, #0B2537 50%, #091F30 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
@@ -684,62 +693,64 @@ body {
       0 8px 24px rgba(3, 18, 29, 0.12);
   }
 
-  /* Cápsula corporativa que envolve apenas a navegação, nunca a marca ou
-     os controles utilitários. Encolhe e preserva scroll em larguras menores. */
-  .topnav-navigation-shell {
-    flex: 0 1 auto;
-    width: max-content;
-    max-width: 100%;
-    padding: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    border-radius: 14px;
-    background: rgba(3, 15, 25, 0.6);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.025),
-      0 6px 18px rgba(0, 0, 0, 0.16);
-  }
-  :root[data-theme='light'] .topnav-navigation-shell {
-    background: rgba(7, 29, 45, 0.58);
-    border-color: rgba(255, 255, 255, 0.07);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.035),
-      0 6px 18px rgba(3, 18, 29, 0.12);
+  @media (min-width: 768px) {
+    .topnav-surface {
+      inset: 14px auto auto 50%;
+      width: max-content;
+      max-width: calc(100vw - 32px);
+      height: calc(var(--app-header-height) - 14px);
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(12, 40, 58, 0.84) 0%, rgba(8, 31, 47, 0.78) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.065),
+        0 12px 32px rgba(7, 25, 38, 0.2);
+      transform: translateX(-50%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    :root[data-theme='light'] .topnav-surface {
+      background: linear-gradient(180deg, rgba(12, 40, 58, 0.88) 0%, rgba(8, 31, 47, 0.82) 100%);
+      border-color: rgba(255, 255, 255, 0.11);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 12px 32px rgba(7, 25, 38, 0.18);
+    }
+    .topnav-group-divider {
+      width: 1px;
+      height: 24px;
+      flex: none;
+      margin-inline: 2px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .topnav-admin-navigation {
+      flex: 0 1 auto;
+      max-width: 100%;
+    }
   }
 
-  /* Dock de navegação do cliente: uma única superfície vítrea, com a placa
-     ativa deslizando por trás dos oito atalhos de tamanho uniforme. */
+  /* Navegação transparente dentro da ilha. Apenas a placa ativa cria uma
+     segunda camada visual, evitando três cápsulas independentes. */
   .topnav-dock {
     --dock-item-size: 40px;
     position: relative;
     grid-template-columns: repeat(8, var(--dock-item-size));
     gap: 4px;
-    padding: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 16px;
-    background: rgba(4, 19, 31, 0.52);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.045),
-      0 6px 18px rgba(0, 0, 0, 0.16);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  :root[data-theme='light'] .topnav-dock {
-    background: rgba(7, 29, 45, 0.46);
-    border-color: rgba(255, 255, 255, 0.11);
+    flex: none;
   }
   .topnav-dock-indicator {
     position: absolute;
-    top: 4px;
-    left: 4px;
+    inset: 0 auto auto 0;
     z-index: 0;
     width: var(--dock-item-size);
     height: var(--dock-item-size);
-    border: 1px solid rgba(114, 160, 245, 0.22);
+    border: 1px solid rgba(122, 170, 255, 0.26);
     border-radius: 11px;
-    background: linear-gradient(180deg, rgba(74, 130, 243, 0.22), rgba(47, 111, 237, 0.12));
+    background: linear-gradient(180deg, rgba(74, 130, 243, 0.24), rgba(47, 111, 237, 0.13));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 4px 12px rgba(20, 73, 160, 0.14);
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 4px 14px rgba(18, 65, 130, 0.14);
     opacity: 0;
     pointer-events: none;
     transform: translate3d(var(--dock-indicator-x), 0, 0);
@@ -747,6 +758,14 @@ body {
       transform var(--motion-duration-normal) var(--motion-ease-hover),
       opacity var(--motion-duration-fast) var(--motion-ease-hover);
   }
+  .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+  .topnav-dock[data-active-index='1'] { --dock-indicator-x: 44px; }
+  .topnav-dock[data-active-index='2'] { --dock-indicator-x: 88px; }
+  .topnav-dock[data-active-index='3'] { --dock-indicator-x: 132px; }
+  .topnav-dock[data-active-index='4'] { --dock-indicator-x: 176px; }
+  .topnav-dock[data-active-index='5'] { --dock-indicator-x: 220px; }
+  .topnav-dock[data-active-index='6'] { --dock-indicator-x: 264px; }
+  .topnav-dock[data-active-index='7'] { --dock-indicator-x: 308px; }
   .topnav-dock--has-active .topnav-dock-indicator {
     opacity: 1;
   }
@@ -759,7 +778,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 11px;
-    color: rgba(205, 220, 231, 0.68);
+    color: rgba(205, 220, 231, 0.65);
     outline: none;
     transition:
       color var(--motion-duration-fast) var(--motion-ease-hover),
@@ -768,13 +787,13 @@ body {
   }
   .topnav-dock-item:hover {
     color: #FFFFFF;
-    background: rgba(255, 255, 255, 0.075);
+    background: rgba(255, 255, 255, 0.055);
     transform: translateY(-1px);
   }
   .topnav-dock-item:focus-visible {
     color: #FFFFFF;
-    background: rgba(255, 255, 255, 0.075);
-    box-shadow: 0 0 0 2px rgba(114, 160, 245, 0.6);
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: 0 0 0 2px rgba(74, 130, 243, 0.34);
   }
   .topnav-dock-item:active {
     transform: scale(0.94);
@@ -792,8 +811,8 @@ body {
     padding: 6px 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 7px;
-    background: rgba(10, 28, 43, 0.96);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    background: rgba(8, 25, 38, 0.96);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
     color: #FFFFFF;
     font-size: 12px;
     font-weight: 500;
@@ -826,20 +845,98 @@ body {
     border-color: rgba(255, 255, 255, 0.14);
   }
 
-  /* Entrada em stagger dos itens de navegação ao montar a barra. */
-  .topnav-surface nav .rail-item {
-    animation: motion-block-in var(--motion-duration-normal, 200ms) var(--motion-ease-enter, ease-out) both;
+  .topnav-surface .topnav-popover {
+    background: rgba(8, 25, 38, 0.98);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32);
   }
-  .topnav-surface nav .rail-item:nth-child(1) { animation-delay: 0ms; }
-  .topnav-surface nav .rail-item:nth-child(2) { animation-delay: 30ms; }
-  .topnav-surface nav .rail-item:nth-child(3) { animation-delay: 60ms; }
-  .topnav-surface nav .rail-item:nth-child(4) { animation-delay: 90ms; }
-  .topnav-surface nav .rail-item:nth-child(5) { animation-delay: 120ms; }
-  .topnav-surface nav .rail-item:nth-child(6) { animation-delay: 150ms; }
-  .topnav-surface nav .rail-item:nth-child(7) { animation-delay: 180ms; }
-  .topnav-surface nav .rail-item:nth-child(8) { animation-delay: 210ms; }
+
+  @media (min-width: 768px) {
+    .topnav-surface .motion-header-control {
+      border-color: transparent;
+      background-color: transparent;
+    }
+    .topnav-status-control {
+      width: 36px;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+      border-radius: 10px;
+    }
+    .topnav-status-control .topnav-status-label,
+    .topnav-status-control .topnav-status-dismiss,
+    .topnav-status-control .topnav-status-switch {
+      display: none;
+    }
+    .topnav-status-control-active {
+      color: #FFFFFF;
+      background: rgba(74, 130, 243, 0.14) !important;
+      box-shadow: inset 0 0 0 1px rgba(122, 170, 255, 0.18);
+    }
+    .topnav-status-control > svg {
+      width: 18px;
+      height: 18px;
+    }
+    .topnav-status-control-active > svg {
+      color: #FFFFFF;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1279px) {
+    .topnav-surface {
+      padding: 7px 8px;
+    }
+    .topnav-dock {
+      --dock-item-size: 36px;
+      gap: 2px;
+    }
+    .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 38px; }
+    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 76px; }
+    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 114px; }
+    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 152px; }
+    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 190px; }
+    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 228px; }
+    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 266px; }
+    .topnav-utilities {
+      gap: 2px;
+    }
+    .topnav-surface .motion-header-control,
+    .topnav-status-control {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 899px) {
+    .topnav-surface {
+      gap: 4px;
+    }
+    .topnav-group-divider {
+      margin-inline: 0;
+    }
+    .topnav-dock {
+      gap: 1px;
+    }
+    .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 37px; }
+    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 74px; }
+    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 111px; }
+    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 148px; }
+    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 185px; }
+    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 222px; }
+    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 259px; }
+    .topnav-utilities {
+      gap: 1px;
+    }
+    .topnav-surface .motion-header-control,
+    .topnav-status-control {
+      width: 30px;
+      height: 30px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .topnav-surface nav .rail-item { animation: none; }
     .topnav-dock-indicator,
     .topnav-dock-item,
     .topnav-dock-tooltip {

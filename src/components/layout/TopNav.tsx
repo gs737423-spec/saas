@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type CSSProperties } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -49,15 +49,12 @@ const navItems: Item[] = [
 
 function DesktopNavigationDock({ pathname }: { pathname: string }) {
   const activeIndex = navItems.findIndex((item) => item.to === pathname)
-  const dockStyle = {
-    '--dock-indicator-x': `${Math.max(activeIndex, 0) * 44}px`,
-  } as CSSProperties
 
   return (
     <nav
       aria-label="Navegação principal"
-      className={`topnav-dock mr-auto hidden md:grid ${activeIndex >= 0 ? 'topnav-dock--has-active' : ''}`}
-      style={dockStyle}
+      className={`topnav-dock hidden md:grid ${activeIndex >= 0 ? 'topnav-dock--has-active' : ''}`}
+      data-active-index={activeIndex >= 0 ? activeIndex : undefined}
     >
       <span className="topnav-dock-indicator" aria-hidden="true" />
       {navItems.map((item) => {
@@ -97,9 +94,8 @@ function buildAdminNavItems(leadsCount: number, openTicketsCount: number): (Item
   ]
 }
 
-// Unified top navigation bar. Replaces the old fixed sidebar (SideRail) on
-// desktop, and the slim brand-only bar on mobile. Mobile section links still
-// live in BottomNav; here on mobile we only show brand + actions.
+// No desktop, o próprio header é uma ilha flutuante única com marca, rotas e
+// utilidades. No mobile, preserva a barra compacta; as rotas seguem no BottomNav.
 // Deriva um nome de exibição a partir do e-mail (Supabase User não tem campo
 // `name` por padrão — só metadados opcionais que ainda não configuramos).
 function displayNameFromEmail(email: string | undefined): string {
@@ -174,20 +170,17 @@ export default function TopNav() {
     }`
 
   return (
-    <header
-      className="topnav-surface fixed inset-x-0 top-0 z-40 flex items-center gap-1.5 border-b border-border-subtle px-3 md:px-4 lg:px-6"
-      style={{ height: 'var(--app-header-height)' }}
-    >
+    <header className="topnav-surface">
       <Brand />
 
-      <span className="mx-1 hidden h-6 w-px shrink-0 bg-border-subtle md:block" />
+      <span className="topnav-group-divider hidden md:block" aria-hidden="true" />
 
       {/* Área admin — nunca mostra a navegação de cliente (Marketplaces,
           Produtos etc. levam a dados ilustrativos, sem sentido aqui dentro).
           Só um indicador + volta pra plataforma. */}
       {isAdminArea ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <nav className="topnav-navigation-shell hide-scrollbar mr-auto flex min-w-0 items-center gap-0.5 overflow-x-auto">
+          <nav className="topnav-admin-navigation hide-scrollbar mr-auto flex min-w-0 items-center gap-0.5 overflow-x-auto">
             {buildAdminNavItems(leadsCount, openTicketsCount).map((item) =>
               'disabled' in item ? (
                 <span
@@ -222,8 +215,10 @@ export default function TopNav() {
         </>
       )}
 
+      <span className="topnav-group-divider hidden md:block" aria-hidden="true" />
+
       {/* Actions cluster */}
-      <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+      <div className="topnav-utilities flex shrink-0 items-center gap-1.5 md:gap-1">
         <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
         {!isAdminArea && (
           <>
@@ -237,18 +232,19 @@ export default function TopNav() {
             type="button"
             onClick={handleToggleDemo}
             title="Abre a plataforma do cliente com dados ilustrativos, pra demonstração"
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-2 py-1.5"
+            aria-label="Demonstração"
+            className={`topnav-status-control motion-header-control flex shrink-0 items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-2 py-1.5 ${demoMode ? 'topnav-status-control-active' : ''}`}
             aria-pressed={demoMode}
           >
             <Eye className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
-            <span className={`relative h-4.5 w-8 shrink-0 rounded-full transition-colors ${demoMode ? 'bg-accent-primary' : 'bg-border-subtle'}`}>
+            <span className={`topnav-status-switch relative h-4.5 w-8 shrink-0 rounded-full transition-colors ${demoMode ? 'bg-accent-primary' : 'bg-border-subtle'}`}>
               <span
                 className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform ${
                   demoMode ? 'translate-x-4' : 'translate-x-0.5'
                 }`}
               />
             </span>
-            <span className="hidden text-[11.5px] font-medium text-text-secondary lg:inline">Demonstração</span>
+            <span className="topnav-status-label hidden text-[11.5px] font-medium text-text-secondary lg:inline">Demonstração</span>
           </button>
         )}
 
@@ -257,11 +253,12 @@ export default function TopNav() {
             type="button"
             onClick={handleToggleDemo}
             title="Sair do modo demonstração e voltar pro painel admin"
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/60 px-2.5 py-1.5 text-[11.5px] font-medium text-text-muted"
+            aria-label="Sair da demonstração"
+            className="topnav-status-control topnav-status-control-active motion-header-control flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/60 px-2.5 py-1.5 text-[11.5px] font-medium text-text-muted"
           >
             <Eye className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Demonstração</span>
-            <X className="h-3.5 w-3.5" />
+            <span className="topnav-status-label hidden sm:inline">Demonstração</span>
+            <X className="topnav-status-dismiss h-3.5 w-3.5" />
           </button>
         )}
 
@@ -270,20 +267,22 @@ export default function TopNav() {
             type="button"
             onClick={() => { exitViewAs(); navigate(`/app/admin/empresa/${viewAs.companyId}`) }}
             title={`Visualizando como ${viewAs.companyName} (dado real, somente leitura) — sair`}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-primary/30 bg-accent-primary/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-primary"
+            aria-label={`Sair da visualização como ${viewAs.companyName}`}
+            className="topnav-status-control topnav-status-control-active motion-header-control flex shrink-0 items-center gap-1.5 rounded-full border border-accent-primary/30 bg-accent-primary/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-primary"
           >
             <Eye className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Visualizando: {viewAs.companyName}</span>
-            <X className="h-3.5 w-3.5" />
+            <span className="topnav-status-label hidden sm:inline">Visualizando: {viewAs.companyName}</span>
+            <X className="topnav-status-dismiss h-3.5 w-3.5" />
           </button>
         )}
 
-        <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
+        <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block md:hidden" />
 
         <button
           type="button"
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+          aria-label={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
           className="motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex"
         >
           {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
@@ -292,6 +291,7 @@ export default function TopNav() {
         <NavLink
           to="/app/configuracoes"
           title="Configurações"
+          aria-label="Configurações"
           className={({ isActive }) =>
             `motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex ${
               isActive ? 'text-accent-primary' : ''
@@ -305,12 +305,14 @@ export default function TopNav() {
           <button
             onClick={() => setShowUserMenu(v => !v)}
             title={displayName}
+            aria-label={`Abrir menu de ${displayName}`}
+            aria-expanded={showUserMenu}
             className="motion-header-control flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-blue/25 bg-bg-elevated text-xs font-bold text-accent-blue"
           >
             {initials}
           </button>
           {showUserMenu && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+            <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
               <div className="border-b border-border-subtle px-4 py-3">
                 <p className="truncate text-sm font-medium text-text-primary">{displayName}</p>
                 <p className="truncate text-[11px] text-text-muted">{user?.email}</p>

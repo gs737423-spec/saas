@@ -70,6 +70,8 @@ export default function NotificationsMenu() {
     <div ref={ref} className="relative">
       <button
         title="Notificações"
+        aria-label="Notificações"
+        aria-expanded={open}
         onClick={() => { setOpen((o) => !o); setRead(true) }}
         className="motion-header-control relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
@@ -80,7 +82,7 @@ export default function NotificationsMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">Notificações</p>
             <span className="text-[11px] text-text-muted">{alerts.length} alertas</span>

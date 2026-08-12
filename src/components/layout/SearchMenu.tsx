@@ -70,6 +70,8 @@ export default function SearchMenu() {
     <div ref={ref} className="relative">
       <button
         title="Buscar"
+        aria-label="Buscar"
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="motion-header-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
@@ -77,7 +79,7 @@ export default function SearchMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
             <Search className="h-4 w-4 shrink-0 text-text-muted" />
             <input
