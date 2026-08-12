@@ -6,7 +6,6 @@ import {
   Package,
   Boxes,
   Wallet,
-  Link2,
   FileBarChart2,
   Settings,
   LogOut,
@@ -43,7 +42,7 @@ const navItems: Item[] = [
   { icon: Package, label: 'Produtos', to: '/app/produtos' },
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
+  { icon: Plug, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
   { icon: LifeBuoy, label: 'Suporte', to: '/app/suporte' },
 ]
@@ -135,13 +134,13 @@ export default function TopNav() {
     .slice(0, 2) || 'US'
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[13px] tracking-[-0.01em] transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active font-bold text-accent-primary' : 'font-semibold text-text-muted hover:text-text-primary'
+    `rail-item topnav-item group relative flex h-9 shrink-0 items-center gap-1.5 rounded-[9px] px-2 text-[13px] font-semibold tracking-[-0.01em] ${
+      isActive ? 'topnav-item-active' : ''
     }`
 
   return (
     <header
-      className="topnav-surface fixed inset-x-0 top-0 z-40 flex items-center gap-1.5 border-b border-border-subtle px-3 backdrop-blur-2xl md:px-4 lg:px-6"
+      className="topnav-surface fixed inset-x-0 top-0 z-40 flex items-center gap-1.5 border-b border-border-subtle px-3 md:px-4 lg:px-6"
       style={{ height: 'var(--app-header-height)' }}
     >
       <Brand />
@@ -153,20 +152,20 @@ export default function TopNav() {
           Só um indicador + volta pra plataforma. */}
       {isAdminArea ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <nav className="hide-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto">
+          <nav className="topnav-navigation-shell hide-scrollbar mr-auto flex min-w-0 items-center gap-0.5 overflow-x-auto">
             {buildAdminNavItems(leadsCount, openTicketsCount).map((item) =>
               'disabled' in item ? (
                 <span
                   key={item.label}
                   title="Em breve"
-                  className="flex h-9 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-semibold text-text-muted/35 lg:gap-1.5 lg:px-2"
+                  className="topnav-item flex h-9 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-[9px] px-2 text-[13px] font-semibold opacity-35"
                 >
-                  <item.icon className="h-4 w-4 shrink-0" />
+                  <item.icon className="h-[15px] w-[15px] shrink-0" />
                   <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
                 </span>
               ) : (
                 <NavLink key={item.label} to={item.to} end title={item.label} className={linkClass}>
-                  <item.icon className="h-4 w-4 shrink-0" />
+                  <item.icon className="h-[15px] w-[15px] shrink-0" />
                   <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
                   {Boolean(item.label === 'Solicitações' ? leadsCount : item.badge) && (
                     <span className="ml-1 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-accent-rose px-1 text-[9px] font-bold text-white">
@@ -181,10 +180,10 @@ export default function TopNav() {
       ) : (
         <>
           {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
-          <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-0 overflow-x-auto md:flex">
+          <nav className="topnav-navigation-shell hide-scrollbar mr-auto hidden min-w-0 items-center gap-0.5 overflow-x-auto md:flex">
             {navItems.map((item) => (
               <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
-                <item.icon className="h-4 w-4 shrink-0" />
+                <item.icon className="h-[15px] w-[15px] shrink-0" />
                 <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
               </NavLink>
             ))}

@@ -40,55 +40,70 @@
      distintos; os GRADIENTES obrigatórios ficam nas classes de superfície:
      .overview-hero-card, .overview-glass*, .glass-panel, .topnav-surface).
      Namespace isolado do site institucional (--vintec-*). */
-  /* Paleta redesenhada (12/08, 3ª rodada) — rebrand completo: acento
-     principal saiu de ciano pra indigo, fundo realinhado pra família
-     slate-navy padrão de SaaS enterprise (era navy azulado puro). Estes
-     são os valores do tema ESCURO (padrão); o tema CLARO sobrescreve tudo
-     via `:root[data-theme="light"]` logo abaixo do fechamento deste bloco
-     — toggle em ThemeContext.tsx, botão no TopNav. Nunca editar só um dos
-     dois blocos sem checar o outro. */
-  --color-bg-primary: #0B0F19;
-  --color-bg-secondary: #0F1524;
-  --color-bg-card: #1E293B;
-  --color-bg-card-hover: #253449;
-  --color-bg-elevated: #2C3B52;
-  --color-bg-highlight: #34445F;
-  --color-bg-header: #0B0F19;
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-border-default: rgba(99, 102, 241, 0.2);
-  --color-border-active: rgba(99, 102, 241, 0.5);
-  /* Tom do acento bem dessaturado pra fundo sutil (headers de seção, KPI
-     em destaque) — nunca substitui o navy, só quebra a monotonia. */
-  --color-cyan-soft: rgba(99, 102, 241, 0.09);
+  /* Identidade navy do tema ESCURO (padrão). O tema claro sobrescreve os
+     mesmos tokens em :root[data-theme="light"], sem sistema paralelo. */
+  --color-bg-primary: #09131F;
+  --color-bg-secondary: #0E1B2A;
+  --color-bg-highlight: #132235;
+  --color-bg-card: #16283C;
+  --color-bg-card-hover: #1B3047;
+  --color-bg-elevated: #1B3047;
+  --color-bg-header: #0B2537;
 
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #94A3B8;
-  --color-text-tertiary: #64748B;
-  --color-text-disabled: #475569;
-  --color-border-strong: rgba(255, 255, 255, 0.14);
-  --color-chart-grid: rgba(255, 255, 255, 0.06);
-  --color-chart-axis: #64748B;
+  --color-border-subtle: #1C3044;
+  --color-border-default: #263B50;
+  --color-border-strong: #334B63;
+  --color-border-active: #274B79;
 
-  /* Indigo = acento principal (era ciano) — hover mais claro, deep mais
-     escuro pra degradê, mesmo padrão que o azul secundário já usava. */
-  --color-accent-primary: #6366F1;
-  --color-accent-primary-hover: #818CF8;
-  --color-accent-primary-deep: #4338CA;
-  --color-accent-blue: #3A8DFF;
-  --color-accent-blue-hover: #59B7FF;
-  --color-accent-blue-deep: #256EF7;
-  --color-accent-emerald: #10B981;
-  --color-accent-amber: #F59E0B;
-  --color-accent-warning: #F59E0B;
-  --color-accent-rose: #EF4444;
-  --color-accent-info: #6366F1;
-  --color-accent-violet: #6366F1;
+  --color-text-primary: #F3F7FA;
+  --color-text-secondary: #BBC7D4;
+  --color-text-tertiary: #8FA0B2;
+  --color-text-muted: #718399;
+  --color-text-disabled: #536579;
 
-  --color-ml-orange: #E3B900;
-  --color-shopee-orange: #EE5A3F;
-  --color-amazon-orange: #E98A15;
-  --color-loja-blue: #4285F4;
+  --color-primary-700: #4679DD;
+  --color-primary-600: #5B8DEF;
+  --color-primary-500: #72A0F5;
+  --color-primary-200: #274B79;
+  --color-primary-100: #1A3556;
+  --color-primary-50: #12283F;
+  --color-cyan-soft: var(--color-primary-50);
+
+  --color-success: #35B987;
+  --color-success-bg: #102E27;
+  --color-success-border: #1D5848;
+  --color-danger: #EB6B7C;
+  --color-danger-bg: #351A22;
+  --color-danger-border: #65303D;
+  --color-warning: #DFA64B;
+  --color-warning-bg: #332817;
+  --color-warning-border: #66502A;
+
+  /* Aliases compatíveis com as utilities já usadas pela plataforma. */
+  --color-accent-primary: var(--color-primary-600);
+  --color-accent-primary-hover: var(--color-primary-500);
+  --color-accent-primary-deep: var(--color-primary-700);
+  --color-accent-blue: var(--color-primary-500);
+  --color-accent-blue-hover: var(--color-primary-600);
+  --color-accent-blue-deep: var(--color-primary-700);
+  --color-accent-emerald: var(--color-success);
+  --color-accent-amber: var(--color-warning);
+  --color-accent-warning: var(--color-warning);
+  --color-accent-rose: var(--color-danger);
+  --color-accent-info: var(--color-primary-500);
+  --color-accent-violet: var(--color-primary-500);
+
+  --color-chart-grid: #1C3044;
+  --color-chart-axis: #718399;
+
+  --color-marketplace-mercadolivre: #E3B900;
+  --color-marketplace-shopee: #EE5A3F;
+  --color-marketplace-amazon: #E98A15;
+  --color-marketplace-own: #4285F4;
+  --color-ml-orange: var(--color-marketplace-mercadolivre);
+  --color-shopee-orange: var(--color-marketplace-shopee);
+  --color-amazon-orange: var(--color-marketplace-amazon);
+  --color-loja-blue: var(--color-marketplace-own);
 
   /* Border radius — só estes 5 valores na plataforma inteira (sobrescreve
      a escala padrão do Tailwind, então rounded-lg/xl/2xl etc já herdam sem
@@ -105,58 +120,46 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Paleta oficial modo claro — 3ª passada (13/08, fonte de verdade única:
-     hierarquia de superfície com 4 degraus reais — página → seção → card,
-     em vez do "quase tudo branco/quase tudo igual" das rodadas
-     anteriores). Dark mode INTOCADO — só este bloco muda. */
+  /* Paleta oficial do modo claro: app → seção → superfície suave → card. */
   --color-bg-primary: #EDF2F6;
   --color-bg-secondary: #F6F8FB;
-  --color-bg-card: #FFFFFF;
-  --color-bg-card-hover: #F3F6FA;
-  --color-bg-elevated: #FFFFFF;
   --color-bg-highlight: #F1F5F8;
+  --color-bg-card: #FFFFFF;
+  --color-bg-card-hover: #F1F5F8;
+  --color-bg-elevated: #FFFFFF;
   --color-bg-header: #12344D;
 
   --color-border-subtle: #E7ECF1;
   --color-border-default: #DCE3EA;
   --color-border-strong: #C9D3DD;
   --color-border-active: #B9D0FA;
-  --color-cyan-soft: #ECF3FF;
 
-  /* text-primary = títulos/KPIs/valores/nomes de produto. text-secondary =
-     texto comum/labels relevantes/valores secundários — mais escuro que a
-     1ª rodada de propósito, cinza claro demais lia como "desabilitado".
-     text-muted = subtítulo/info auxiliar/cabeçalho de tabela (é o token
-     que ~40 componentes já consomem via `text-text-muted` pra esse papel
-     exato — mantém #667085 igual à 1ª rodada, não pode clarear ou todo
-     cabeçalho de tabela/label da plataforma passa a ler "desabilitado").
-     text-tertiary = só metadado realmente secundário (papel novo, uso
-     pontual). disabled só pra campo desabilitado de verdade. */
   --color-text-primary: #162033;
   --color-text-secondary: #475467;
-  --color-text-muted: #667085;
-  --color-text-tertiary: #8993A4;
-  --color-text-disabled: #AEB6C2;
+  --color-text-tertiary: #667085;
+  --color-text-muted: #8793A3;
+  --color-text-disabled: #ADB6C2;
 
-  /* Azul institucional — menos elétrico que a 1ª rodada (era #2563EB puro
-     RGB, lia "azul neon"; agora uma família levemente mais sóbria). */
-  --color-accent-primary: #2F6FED;
-  --color-accent-primary-hover: #2459C4;
-  --color-accent-primary-deep: #1E3A8A;
-  --color-accent-blue: #4A82F3;
-  --color-accent-blue-hover: #2F6FED;
-  --color-accent-blue-deep: #2459C4;
-  --color-accent-emerald: #15966B;
-  --color-accent-amber: #C98218;
-  --color-accent-warning: #C98218;
-  --color-accent-rose: #D64D61;
-  --color-accent-info: #4A82F3;
-  /* Violeta/roxo eliminado da identidade — realinhado pro mesmo azul, sem
-     matiz roxa sobrando em nenhum canto do modo claro. */
-  --color-accent-violet: #4A82F3;
+  --color-primary-700: #2459C4;
+  --color-primary-600: #2F6FED;
+  --color-primary-500: #4A82F3;
+  --color-primary-200: #B9D0FA;
+  --color-primary-100: #DCE8FC;
+  --color-primary-50: #EEF4FF;
+  --color-cyan-soft: var(--color-primary-50);
+
+  --color-success: #15966B;
+  --color-success-bg: #EAF8F2;
+  --color-success-border: #BDE9D7;
+  --color-danger: #D64D61;
+  --color-danger-bg: #FDEEEF;
+  --color-danger-border: #F6CBD1;
+  --color-warning: #C98218;
+  --color-warning-bg: #FFF5E5;
+  --color-warning-border: #F2D7A6;
 
   --color-chart-grid: #E7EBF0;
-  --color-chart-axis: #7A8699;
+  --color-chart-axis: #8793A3;
 }
 
 * {
@@ -233,8 +236,8 @@ body {
   letter-spacing: -0.011em;
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(circle at 82% -8%, rgba(58, 95, 219, 0.14), transparent 32%),
-    radial-gradient(circle at 12% 105%, rgba(95, 194, 232, 0.07), transparent 34%),
+    radial-gradient(circle at 82% -8%, color-mix(in srgb, var(--color-primary-600) 14%, transparent), transparent 32%),
+    radial-gradient(circle at 12% 105%, color-mix(in srgb, var(--color-primary-500) 7%, transparent), transparent 34%),
     linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 48%, var(--color-bg-elevated) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -408,16 +411,16 @@ body {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(1300px 780px at 8% -8%, rgba(58, 95, 219, 0.16), transparent 62%),
-      radial-gradient(1100px 700px at 100% 0%, rgba(95, 194, 232, 0.1), transparent 60%);
+      radial-gradient(1300px 780px at 8% -8%, color-mix(in srgb, var(--color-primary-600) 14%, transparent), transparent 62%),
+      radial-gradient(1100px 700px at 100% 0%, color-mix(in srgb, var(--color-primary-500) 8%, transparent), transparent 60%);
   }
   .app-bg-subtle::after {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(95, 194, 232, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(95, 194, 232, 0.04) 1px, transparent 1px);
+      linear-gradient(color-mix(in srgb, var(--color-primary-500) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--color-primary-500) 4%, transparent) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
     -webkit-mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
     mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
@@ -432,21 +435,21 @@ body {
     height: 820px;
     top: -14%;
     left: -10%;
-    background: radial-gradient(circle, rgba(58, 95, 219, 0.2) 0%, rgba(58, 95, 219, 0.06) 45%, transparent 72%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-600) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary-600) 5%, transparent) 45%, transparent 72%);
   }
   .bg-glow-accent {
     width: 620px;
     height: 620px;
     bottom: -16%;
     left: 8%;
-    background: radial-gradient(circle, rgba(95, 194, 232, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-500) 8%, transparent) 0%, transparent 70%);
   }
   .bg-glow-moving {
     width: 780px;
     height: 780px;
     bottom: -18%;
     right: -10%;
-    background: radial-gradient(circle, rgba(95, 194, 232, 0.14) 0%, rgba(58, 95, 219, 0.06) 45%, transparent 72%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-500) 11%, transparent) 0%, color-mix(in srgb, var(--color-primary-600) 5%, transparent) 45%, transparent 72%);
     animation: bg-glow-drift 40s ease-in-out infinite;
   }
   @keyframes bg-glow-drift {
@@ -554,53 +557,42 @@ body {
     box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.25), inset 0 0 0 1px var(--color-border-subtle);
   }
 
-  /* ---- Sidebar premium ----------------------------------------------------
-     Item de navegação com hover vivo (glow + shift), ativo sofisticado, e
-     foco acessível — elimina o outline branco padrão do browser. */
+  /* Item de navegação compartilhado pela TopNav de cliente e admin. */
   .rail-item {
     position: relative;
     outline: none;
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-hover),
       color var(--motion-duration-fast) var(--motion-ease-hover),
-      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:hover {
-    background: rgba(58, 95, 219, 0.08);
+    background: rgba(255, 255, 255, 0.055);
+    color: #FFFFFF;
+    transform: translateY(-1px);
   }
   .rail-item:active {
-    transform: scale(0.985);
+    transform: scale(var(--motion-scale-active));
   }
   .rail-item :is(svg) {
-    transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
+    color: #91A6B7;
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:focus-visible {
-    box-shadow: 0 0 0 2px var(--color-border-active);
+    box-shadow: 0 0 0 2px rgba(114, 160, 245, 0.52);
   }
   .rail-item.topnav-item-active {
-    background: rgba(58, 95, 219, 0.06);
+    background: rgba(74, 130, 243, 0.14);
+    color: #FFFFFF;
+    box-shadow: inset 0 0 0 1px rgba(114, 160, 245, 0.12);
   }
-  /* Base do sublinhado ativo — sempre presente, opacity/scale animam a
-     entrada/saída ao trocar de página em vez de aparecer/sumir abrupto. */
-  .rail-item::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 9999px;
-    background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-blue));
-    box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8);
-    opacity: 0;
-    transform: scaleX(0.6);
-    transition: opacity var(--motion-duration-normal) var(--motion-ease-standard),
-                transform var(--motion-duration-normal) var(--motion-ease-standard);
+  .rail-item:hover :is(svg) {
+    color: #DCE8F0;
   }
-  .rail-item.topnav-item-active::after {
-    opacity: 1;
-    transform: scaleX(1);
+  .rail-item.topnav-item-active :is(svg) {
+    color: #72A0F5;
   }
   .rail-item-active {
     background:
@@ -652,84 +644,83 @@ body {
     inset: auto 0 0 0;
     height: 200px;
     pointer-events: none;
-    background: radial-gradient(120% 100% at 50% 120%, rgba(144, 97, 249, 0.08), transparent 74%);
+    background: radial-gradient(120% 100% at 50% 120%, rgba(91, 141, 239, 0.08), transparent 74%);
   }
 
-  /* Brand mark — transparent cutout icon, subtle ambient glow so it reads
-     as an integrated part of the topbar instead of a pasted square. */
+  /* Brand independente da cápsula, com sombra neutra e sem glow cromático. */
   .brand-mark {
-    filter:
-      drop-shadow(0 0 10px rgba(82, 115, 230, 0.4))
-      drop-shadow(0 0 22px rgba(96, 111, 249, 0.18))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.34));
   }
   .motion-brand-mark {
     transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .group:hover .brand-mark {
-    filter:
-      drop-shadow(0 0 14px rgba(82, 115, 230, 0.55))
-      drop-shadow(0 0 28px rgba(96, 111, 249, 0.28))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.4));
   }
 
-  /* ---- Top nav (substitui a sidebar) --------------------------------------
-     Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
-     horizontal e fixa no topo. */
-  /* Header — peça própria, apoiada sobre o ambiente, nunca a mesma cor do
-     conteúdo. Fica ESCURO em qualquer tema (pedido explícito: navy
-     institucional #102A43, item 16) — por isso repina as próprias
-     variáveis de texto/borda aqui dentro, sobrescrevendo o que o tema
-     claro define lá em cima. Sem isso, `text-text-muted` (que no claro
-     vira slate escuro #667085) ficaria ilegível sobre fundo navy sempre
-     escuro. Nenhum componente precisa mudar — herda por cascata. */
+  /* Topbar navy própria em ambos os temas. Os tokens locais mantêm textos e
+     controles legíveis sobre a superfície escura. */
   .topnav-surface {
-    background: linear-gradient(105deg, #102F47 0%, #123B56 48%, #113550 100%);
+    background: linear-gradient(105deg, #081C2B 0%, #0B2537 50%, #091F30 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
-      0 8px 24px rgba(13, 42, 64, 0.12);
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 8px 24px rgba(0, 0, 0, 0.16);
     --color-text-primary: #FFFFFF;
-    --color-text-secondary: #E8F1F8;
+    --color-text-secondary: #DCE8F0;
     --color-text-muted: #AFC0CF;
-    --color-border-subtle: rgba(255, 255, 255, 0.1);
-    --color-border-default: rgba(255, 255, 255, 0.1);
+    --color-border-subtle: rgba(255, 255, 255, 0.09);
+    --color-border-default: rgba(255, 255, 255, 0.14);
     --color-bg-card: rgba(255, 255, 255, 0.045);
-    --color-bg-card-hover: rgba(255, 255, 255, 0.09);
+    --color-bg-card-hover: rgba(255, 255, 255, 0.085);
     --color-bg-elevated: rgba(255, 255, 255, 0.045);
+    --color-accent-primary: #72A0F5;
+    --color-accent-blue: #72A0F5;
   }
-  .topnav-surface::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(circle at 20% 0%, rgba(74, 130, 243, 0.1), transparent 35%);
+  :root[data-theme='light'] .topnav-surface {
+    background: linear-gradient(105deg, #102F47 0%, #123B56 50%, #113550 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(3, 18, 29, 0.12);
   }
 
-  /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
-     acima, que já cobre o sublinhado com transição de entrada/saída. Aqui só
-     acrescenta um respiro de brilho contínuo (barra estava "sem vida"). */
-  .topnav-item-active::after {
-    animation: topnav-underline-pulse 2.6s ease-in-out infinite;
+  /* Cápsula corporativa que envolve apenas a navegação, nunca a marca ou
+     os controles utilitários. Encolhe e preserva scroll em larguras menores. */
+  .topnav-navigation-shell {
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: 100%;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 14px;
+    background: rgba(3, 15, 25, 0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.025),
+      0 6px 18px rgba(0, 0, 0, 0.16);
   }
-  @keyframes topnav-underline-pulse {
-    0%, 100% { box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8); }
-    50% { box-shadow: 0 0 16px 2px rgba(95, 194, 232, 0.95); }
+  :root[data-theme='light'] .topnav-navigation-shell {
+    background: rgba(7, 29, 45, 0.58);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 6px 18px rgba(3, 18, 29, 0.12);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .topnav-item-active::after { animation: none; }
-  }
-  /* Claro: sem pulsação contínua nem scale de ícone — pedido explícito
-     desta rodada ("nenhuma animação decorativa contínua", "não utilizar
-     scale no hover"). Dark mode mantém como estava, intocado. */
-  :root[data-theme='light'] .topnav-item-active::after {
-    animation: none;
-    box-shadow: 0 0 8px 0 rgba(74, 130, 243, 0.55);
-  }
-  :root[data-theme='light'] .rail-item:hover :is(svg) { transform: none; }
 
-  /* Ícone reage no hover — leve "vida" no item, sem mexer no layout (dark). */
-  .rail-item:hover :is(svg) { transform: scale(1.1); }
+  .topnav-item {
+    color: #AFC0CF;
+  }
+
+  /* Controles utilitários ficam abaixo da navegação na hierarquia. */
+  .topnav-surface .motion-header-control {
+    color: #AFC0CF;
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+  .topnav-surface .motion-header-control:hover {
+    color: #FFFFFF;
+    background-color: rgba(255, 255, 255, 0.085);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
 
   /* Entrada em stagger dos itens de navegação ao montar a barra. */
   .topnav-surface nav .rail-item {
@@ -742,6 +733,7 @@ body {
   .topnav-surface nav .rail-item:nth-child(5) { animation-delay: 120ms; }
   .topnav-surface nav .rail-item:nth-child(6) { animation-delay: 150ms; }
   .topnav-surface nav .rail-item:nth-child(7) { animation-delay: 180ms; }
+  .topnav-surface nav .rail-item:nth-child(8) { animation-delay: 210ms; }
   @media (prefers-reduced-motion: reduce) {
     .topnav-surface nav .rail-item { animation: none; }
   }

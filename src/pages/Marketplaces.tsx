@@ -30,7 +30,7 @@ function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
     { label: 'Líder em Líquido', value: `R$ ${brl(byNet[0].netValue)}`, channel: byNet[0].marketplace, sub: `${totalNet > 0 ? pct((byNet[0].netValue / totalNet) * 100) : '0,0'}% do líquido total`, icon: Crown, tone: '#3BE38E' },
     { label: 'Melhor Ticket', value: `R$ ${brl2(byTicket[0].averageTicket)}`, channel: byTicket[0].marketplace, sub: `${brl(byTicket[0].ordersCount)} pedidos`, icon: Receipt, tone: '#194B9B' },
     { label: 'Mais Pedidos', value: brl(byOrders[0].ordersCount), channel: byOrders[0].marketplace, sub: `ticket R$ ${brl2(byOrders[0].averageTicket)}`, icon: ShoppingCart, tone: '#3A8DFF' },
-    { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#6366F1' },
+    { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#5B8DEF' },
   ]
 
   return (
