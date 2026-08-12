@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronDown, Check, Boxes, PauseCircle, Crown, Wallet } from 'lucide-react'
-import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
+import { getMarketplaceColor, getMarketplaceBadge, type Marketplace } from '@/data/mockData'
 import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import { useTheme } from '@/contexts/ThemeContext'
 
 function relativeDate(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -52,7 +53,7 @@ function coverageLabel(cov: number | null): { color: string; label: string } {
   if (cov < 7) return { color: '#FF5E7D', label: 'Crítico' }
   if (cov < 15) return { color: '#FFC95A', label: 'Atenção' }
   if (cov < 45) return { color: '#3BE38E', label: 'Saudável' }
-  return { color: '#00E1FF', label: 'Excesso' }
+  return { color: '#6366F1', label: 'Excesso' }
 }
 
 interface FilterState {
@@ -146,6 +147,7 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
 }
 
 export default function RealInventoryTable({ items }: { items: DashboardInventoryItem[] }) {
+  const { theme } = useTheme()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [sort, setSort] = useState<'revenue' | 'stock' | 'units30d' | 'coverage'>('revenue')
 
@@ -194,7 +196,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
 
   const kpis: { key: string; label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean }[] = [
-    { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#00E1FF' },
+    { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#6366F1' },
     { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
     { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
     { key: 'curveA', label: 'Produtos Curva A', value: String(curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
@@ -279,7 +281,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                     <div className="mt-0.5 flex items-center gap-1.5">
                       <span className="font-mono text-[10px] text-text-muted">{item.sku ?? '—'}</span>
                       <span className="text-text-muted">·</span>
-                      <span className="text-[10px] font-medium" style={{ color: mp }}>{item.marketplace}</span>
+                      <span className="text-[10px] font-medium" style={{ color: getMarketplaceBadge(item.marketplace, theme).text }}>{item.marketplace}</span>
                     </div>
                   </div>
                   {item.abcClass && <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span>}

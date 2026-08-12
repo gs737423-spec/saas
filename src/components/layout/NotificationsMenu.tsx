@@ -14,7 +14,7 @@ const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
 const severityColor: Record<ExecutiveAlertSeverity, string> = {
   danger: '#FF5E7D',
   warning: '#FFC95A',
-  info: '#00E1FF',
+  info: '#6366F1',
 }
 
 const LOW_STOCK_THRESHOLD = 10

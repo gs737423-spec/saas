@@ -230,7 +230,7 @@ export default function AdminClients() {
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-primary px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-primary/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" /> Nova Empresa
         </button>
@@ -410,7 +410,7 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
   }
 
   const inputClass = (invalid?: boolean) =>
-    `w-full rounded-lg border bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none ${
+    `w-full rounded-lg border bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none ${
       invalid ? 'border-accent-rose/50' : 'border-border-subtle'
     }`
   const labelClass = 'mb-1.5 block text-[11px] font-medium text-text-muted'
@@ -494,7 +494,7 @@ function CreateClientModal({ onClose, onSubmit, submitting }: { onClose: () => v
           <button
             type="submit"
             disabled={submitting}
-            className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-accent-primary px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
             Criar Cliente

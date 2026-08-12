@@ -4,7 +4,7 @@ const VARIANT_STYLE: Record<StatusBadgeVariant, { color: string; bg: string; bor
   success: { color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20' },
   warning: { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20' },
   danger: { color: 'text-accent-rose', bg: 'bg-accent-rose/10', border: 'border-accent-rose/20' },
-  info: { color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
+  info: { color: 'text-accent-primary', bg: 'bg-accent-primary/10', border: 'border-accent-primary/20' },
   neutral: { color: 'text-text-muted', bg: 'bg-bg-primary/60', border: 'border-border-subtle' },
 }
 

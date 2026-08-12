@@ -82,7 +82,7 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
 
       <div className="mb-2 flex items-center gap-4 text-[11px] text-text-secondary">
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-accent-blue/60" />Unidades</span>
-        <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 rounded-full bg-accent-cyan" />Faturamento</span>
+        <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 rounded-full bg-accent-primary" />Faturamento</span>
       </div>
 
       <div className="relative h-44 sm:h-52" onMouseLeave={() => setHoverIdx(null)}>
@@ -95,13 +95,13 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
         <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#00E1FF" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#00E1FF" stopOpacity="1" />
+              <stop offset="0%" stopColor="#6366F1" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#6366F1" stopOpacity="1" />
             </linearGradient>
           </defs>
           <path d={path} fill="none" stroke="url(#trendLine)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
           {hoverIdx !== null && (
-            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#00E1FF" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+            <circle cx={linePoints[hoverIdx].x} cy={linePoints[hoverIdx].y} r="1.8" fill="#6366F1" stroke="#04101c" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
           )}
         </svg>
 
@@ -113,7 +113,7 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
                   className="w-full rounded-t-md transition-all duration-300"
                   style={{
                     height: `${(d.units / maxUnits) * 100}%`,
-                    background: hoverIdx === i ? 'linear-gradient(180deg, #00E1FF, #3A8DFF60)' : 'linear-gradient(180deg, #3A8DFF, #3A8DFF30)',
+                    background: hoverIdx === i ? 'linear-gradient(180deg, #6366F1, #3A8DFF60)' : 'linear-gradient(180deg, #3A8DFF, #3A8DFF30)',
                     boxShadow: hoverIdx === i ? '0 0 16px -2px #3A8DFFcc' : '0 0 10px -4px #3A8DFF99',
                   }}
                 />
@@ -124,7 +124,7 @@ export default function SalesTrendChart({ product, periodDays }: { product: Dash
                 <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[170px] -translate-x-1/2 rounded-lg border border-border-subtle bg-bg-card px-3 py-2 shadow-xl">
                   <p className="text-[10px] font-semibold text-text-muted">{active.label} · estimado</p>
                   <p className="mt-0.5 font-mono text-[12px] font-semibold text-accent-blue">{active.units} un.</p>
-                  <p className="font-mono text-[12px] font-semibold text-accent-cyan">R$ {active.revenue.toLocaleString('pt-BR')}</p>
+                  <p className="font-mono text-[12px] font-semibold text-accent-primary">R$ {active.revenue.toLocaleString('pt-BR')}</p>
                 </div>
               )}
             </div>

@@ -261,7 +261,7 @@ export default function Importacoes() {
     <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
-          <Link2 className="h-4 w-4 text-accent-cyan" />
+          <Link2 className="h-4 w-4 text-accent-primary" />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Conexões com Marketplaces</span>
         </div>
       </div>

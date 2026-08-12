@@ -114,7 +114,7 @@ export default function AdminLeads() {
                       <button
                         type="button"
                         onClick={() => setAnalyzing(lead)}
-                        className="ml-auto flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 px-3 py-1.5 text-[12px] font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/20"
+                        className="ml-auto flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-accent-primary/25 bg-accent-primary/10 px-3 py-1.5 text-[12px] font-semibold text-accent-primary transition-colors hover:bg-accent-primary/20"
                       >
                         <ClipboardCheck className="h-3.5 w-3.5" /> Analisar Cadastro
                       </button>
@@ -301,7 +301,7 @@ function LeadModal({ lead, onClose, onResolved }: { lead: Lead; onClose: () => v
             type="button"
             onClick={handleApprove}
             disabled={approving || rejecting}
-            className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center gap-1.5 rounded-lg bg-accent-primary px-5 py-2.5 text-[13.5px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {approving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
             Aprovar e Criar Login

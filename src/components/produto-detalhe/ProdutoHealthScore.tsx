@@ -22,7 +22,7 @@ export function computeHealthBreakdown(trend: number | null, margin: number | nu
   const breakdown: Breakdown[] = [
     { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
     { label: 'Margem', score: Math.round(margemScore), color: '#FFC95A' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#00E1FF' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#6366F1' },
   ]
   const score = Math.round(breakdown.reduce((s, b) => s + b.score, 0) / breakdown.length)
   return { score, breakdown }
@@ -87,7 +87,7 @@ export default function ProdutoHealthScore({ status, score, breakdown, coverageD
           <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
             <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Giro</p>
             <p className="mt-0.5 flex items-center gap-1 font-mono text-sm font-bold text-text-primary">
-              <Gauge className="h-3 w-3 text-accent-cyan" />
+              <Gauge className="h-3 w-3 text-accent-primary" />
               {turnover !== null ? `${turnover}x` : '—'}
             </p>
           </div>

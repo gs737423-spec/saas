@@ -2,7 +2,7 @@ import { Download, FileSpreadsheet, Upload, ShieldCheck, RefreshCw } from 'lucid
 
 const steps = [
   { icon: Download, label: 'Baixar modelo', color: '#3A8DFF' },
-  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#00E1FF' },
+  { icon: FileSpreadsheet, label: 'Preencher ou exportar dados', color: '#6366F1' },
   { icon: Upload, label: 'Enviar arquivo', color: '#194B9B' },
   { icon: ShieldCheck, label: 'Validar dados', color: '#FFC95A' },
   { icon: RefreshCw, label: 'Atualizar dashboard', color: '#3BE38E' },

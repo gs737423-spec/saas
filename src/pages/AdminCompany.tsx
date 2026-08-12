@@ -421,7 +421,7 @@ export default function AdminCompany() {
     return (
       <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <p className="text-sm text-text-muted">Empresa não encontrada.</p>
-        <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-cyan">
+        <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-primary">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
         </Link>
       </div>
@@ -489,7 +489,7 @@ export default function AdminCompany() {
                 type="button"
                 title="Abre o dashboard real do cliente, somente leitura — pra usar em call de consultoria"
                 onClick={() => { enterViewAs(company.id, company.name); navigate('/app') }}
-                className="flex items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-cyan/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center gap-1.5 rounded-lg bg-accent-primary px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-primary/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <ExternalLink className="h-4 w-4" /> Acessar Painel do Lojista
               </button>
@@ -504,7 +504,7 @@ export default function AdminCompany() {
               onClick={() => setTab('acessos')}
               className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
             >
-              <Users2 className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <Users2 className="h-3.5 w-3.5 shrink-0 text-accent-primary" />
               <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
             </button>
             <button
@@ -512,7 +512,7 @@ export default function AdminCompany() {
               onClick={() => setTab('integracoes')}
               className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
             >
-              <Plug className="h-3.5 w-3.5 shrink-0 text-accent-cyan" />
+              <Plug className="h-3.5 w-3.5 shrink-0 text-accent-primary" />
               <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
             </button>
           </div>
@@ -539,7 +539,7 @@ export default function AdminCompany() {
                 type="button"
                 onClick={() => setTab(t)}
                 className={`shrink-0 rounded-lg px-3 py-1.5 text-center text-[12.5px] font-semibold transition-colors sm:flex-1 ${
-                  tab === t ? 'bg-accent-cyan/15 text-accent-cyan' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+                  tab === t ? 'bg-accent-primary/15 text-accent-primary' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
                 }`}
               >
                 {TAB_LABEL[t]}
@@ -558,7 +558,7 @@ export default function AdminCompany() {
                   <p className="text-[11px] text-text-muted">acessos vinculados</p>
                 </button>
                 <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-cyan/10 text-accent-cyan"><Plug className="h-4 w-4" /></span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-primary/10 text-accent-primary"><Plug className="h-4 w-4" /></span>
                   <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
                   <p className="text-[11px] text-text-muted">produtos sincronizados</p>
                 </button>
@@ -577,7 +577,7 @@ export default function AdminCompany() {
               <div className="glass-panel rounded-xl p-6">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
-                  <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan hover:underline">
+                  <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-primary hover:underline">
                     Ver todas as integrações <ChevronRight className="h-3 w-3" />
                   </button>
                 </div>
@@ -696,9 +696,9 @@ export default function AdminCompany() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="email@cliente.com"
-                className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none"
               />
-              <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan/15 px-3 text-xs font-semibold text-accent-cyan transition-colors hover:bg-accent-cyan/25 disabled:opacity-40">
+              <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-primary/15 px-3 text-xs font-semibold text-accent-primary transition-colors hover:bg-accent-primary/25 disabled:opacity-40">
                 {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
                 Convidar
               </button>
@@ -851,7 +851,7 @@ export default function AdminCompany() {
                       { title: 'Enviado tutorial de integração', by: 'Gabriel Souza', desc: 'Tutorial enviado via WhatsApp sobre integração Shopee.' },
                     ].map((ev) => (
                       <div key={ev.title} className="flex items-start gap-2.5 border-b border-border-subtle/60 pb-2.5 last:border-0">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-cyan" />
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-primary" />
                         <div className="min-w-0">
                           <p className="text-text-primary">{ev.title} <span className="text-text-muted">— {ev.by}</span></p>
                           <p className="text-text-muted">{ev.desc}</p>
@@ -933,7 +933,7 @@ export default function AdminCompany() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-cyan/50 focus:outline-none"
+                  className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-primary/50 focus:outline-none"
                 >
                   {STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -943,13 +943,13 @@ export default function AdminCompany() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-[11px] text-text-muted">Nome</label>
-                  <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-cyan/50 focus:outline-none" />
+                  <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-primary/50 focus:outline-none" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
                     CNPJ {cnpjLocked && <span className="text-text-muted/60" title="Vem da Receita Federal — clique em Editar pra corrigir">(imutável)</span>}
                   </label>
-                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${cnpjLocked ? 'border-border-subtle/60 bg-bg-primary/20' : 'border-accent-cyan/40 bg-bg-primary/40'}`}>
+                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${cnpjLocked ? 'border-border-subtle/60 bg-bg-primary/20' : 'border-accent-primary/40 bg-bg-primary/40'}`}>
                     {cnpjLocked ? <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />}
                     {cnpjLocked ? (
                       <span className="min-w-0 flex-1 text-sm text-text-secondary">{cnpj || 'não cadastrado'}</span>
@@ -962,7 +962,7 @@ export default function AdminCompany() {
                         if (!cnpjLocked) { setCnpj(company?.cnpj ?? ''); setCnpjLookup('idle'); setCnpjLookupInfo(null) }
                         setCnpjLocked((l) => !l)
                       }}
-                      className="shrink-0 text-[11px] font-medium text-accent-cyan hover:underline"
+                      className="shrink-0 text-[11px] font-medium text-accent-primary hover:underline"
                     >
                       {cnpjLocked ? 'Editar' : 'Cancelar'}
                     </button>
@@ -1012,7 +1012,7 @@ export default function AdminCompany() {
                 </div>
                 <div className="flex flex-col gap-1 sm:col-span-2">
                   <label className="text-[11px] text-text-muted">Observações (plano, valor, data do contrato...)</label>
-                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none" />
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none" />
                 </div>
               </div>
               <div className="flex items-center gap-3">

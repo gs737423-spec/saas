@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { getMarketplaceColor } from '@/data/mockData'
+import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
 import type { DashboardProduct as Product } from '@/server/dashboardProducts'
 import ProductFilters, { type ProductFilterState } from './ProductFilters'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import { useTheme } from '@/contexts/ThemeContext'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
@@ -89,9 +90,9 @@ function MarginCell({ product, editable, onSetCost }: { product: Product; editab
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
           placeholder="custo"
-          className="w-16 rounded border border-border-subtle bg-bg-primary/60 px-1.5 py-0.5 text-[11px] text-text-primary focus:border-accent-cyan/50 focus:outline-none"
+          className="w-16 rounded border border-border-subtle bg-bg-primary/60 px-1.5 py-0.5 text-[11px] text-text-primary focus:border-accent-primary/50 focus:outline-none"
         />
-        <button type="button" onClick={save} disabled={saving} className="text-[11px] font-medium text-accent-cyan disabled:opacity-40">
+        <button type="button" onClick={save} disabled={saving} className="text-[11px] font-medium text-accent-primary disabled:opacity-40">
           {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : 'ok'}
         </button>
       </div>
@@ -101,7 +102,7 @@ function MarginCell({ product, editable, onSetCost }: { product: Product; editab
   if (margin === null) {
     if (!editable) return <span className="text-[11px] text-text-muted">sem custo</span>
     return (
-      <button type="button" onClick={() => setEditing(true)} className="text-[11px] font-medium text-accent-cyan hover:underline" title="Informar custo do produto pra calcular margem">
+      <button type="button" onClick={() => setEditing(true)} className="text-[11px] font-medium text-accent-primary hover:underline" title="Informar custo do produto pra calcular margem">
         definir custo
       </button>
     )
@@ -162,6 +163,7 @@ const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
 ]
 
 export default function ProductTable({ filteredProducts, filters, onFiltersChange, editable = false, onSetCost }: Props) {
+  const { theme } = useTheme()
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -213,11 +215,11 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
             <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                  <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[13px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                     <span className="text-text-muted">·</span>
-                    <span className="text-[10px] font-medium" style={{ color: mp }}>{p.marketplace}</span>
+                    <span className="text-[10px] font-medium" style={{ color: getMarketplaceBadge(p.marketplace, theme).text }}>{p.marketplace}</span>
                   </div>
                 </div>
                 <TrendBadge trend={p.trend} />
@@ -251,11 +253,11 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
         <DataTableViewport size="large" ariaLabel="Catálogo de produtos. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
         <table className="w-full min-w-[920px] text-sm">
           <thead>
-            <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            <tr className="border-b border-border-subtle bg-bg-secondary/60 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`group cursor-pointer pb-3 pr-4 font-semibold select-none transition-colors hover:text-text-secondary ${col.key === 'trend' ? 'pr-0' : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}
+                  className={`group cursor-pointer py-3 pr-4 font-semibold select-none transition-colors hover:text-text-secondary ${col.key === 'trend' ? 'pr-0' : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}
                   onClick={() => handleSort(col.key)}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -271,25 +273,25 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
               const mp = getMarketplaceColor(p.marketplace)
               return (
                 <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                  <td className="max-w-[140px] truncate py-3 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
-                  <td className="max-w-[280px] py-3 pr-4">
-                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate font-medium text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
+                  <td className="max-w-[140px] truncate py-3.5 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
+                  <td className="max-w-[280px] py-3.5 pr-4">
+                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[14px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
                     <span className="mt-0.5 block truncate text-[11px] text-text-muted" title={p.category ?? undefined}>{p.category ?? 'Sem categoria'}</span>
                   </td>
-                  <td className="py-3 pr-4">
+                  <td className="py-3.5 pr-4">
                     <span
                       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium"
-                      style={{ background: `${mp}15`, color: mp }}
+                      style={{ background: getMarketplaceBadge(p.marketplace, theme).bg, color: getMarketplaceBadge(p.marketplace, theme).text }}
                     >
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: mp }} />
                       {p.marketplace}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-center font-mono text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
-                  <td className={`py-3 pr-4 text-center font-mono ${stockTone(p.stock)}`}>{p.stock}</td>
-                  <td className="py-3 pr-4 text-center font-mono font-medium text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
-                  <td className="py-3 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
-                  <td className="py-3 text-center">
+                  <td className="py-3.5 pr-4 text-center font-mono text-[13px] font-medium text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
+                  <td className={`py-3.5 pr-4 text-center font-mono text-[13px] font-medium ${stockTone(p.stock)}`}>{p.stock}</td>
+                  <td className="py-3.5 pr-4 text-center font-mono text-[14px] font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
+                  <td className="py-3.5 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
+                  <td className="py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2.5">
                       {(() => {
                         const growth = p.trend !== null ? bucketGrowth(p.trend) : { d1: null, d7: null, d30: null, d365: null }

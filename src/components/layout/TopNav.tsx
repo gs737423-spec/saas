@@ -20,8 +20,11 @@ import {
   Inbox,
   X,
   LifeBuoy,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { useDemoMode } from '@/contexts/DemoModeContext'
 import { useViewAs } from '@/contexts/ViewAsContext'
@@ -77,6 +80,7 @@ function displayNameFromEmail(email: string | undefined): string {
 
 export default function TopNav() {
   const { user, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
   const { options, periodKey, setPeriodKey } = usePeriod()
@@ -132,7 +136,7 @@ export default function TopNav() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rail-item group relative flex h-9 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[13px] tracking-[-0.01em] transition-colors lg:gap-1.5 lg:px-2 ${
-      isActive ? 'topnav-item-active font-bold text-accent-cyan' : 'font-semibold text-text-muted hover:text-text-primary'
+      isActive ? 'topnav-item-active font-bold text-accent-primary' : 'font-semibold text-text-muted hover:text-text-primary'
     }`
 
   return (
@@ -210,7 +214,7 @@ export default function TopNav() {
             aria-pressed={demoMode}
           >
             <Eye className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
-            <span className={`relative h-4.5 w-8 shrink-0 rounded-full transition-colors ${demoMode ? 'bg-accent-cyan' : 'bg-border-subtle'}`}>
+            <span className={`relative h-4.5 w-8 shrink-0 rounded-full transition-colors ${demoMode ? 'bg-accent-primary' : 'bg-border-subtle'}`}>
               <span
                 className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform ${
                   demoMode ? 'translate-x-4' : 'translate-x-0.5'
@@ -239,7 +243,7 @@ export default function TopNav() {
             type="button"
             onClick={() => { exitViewAs(); navigate(`/app/admin/empresa/${viewAs.companyId}`) }}
             title={`Visualizando como ${viewAs.companyName} (dado real, somente leitura) — sair`}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-cyan"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-accent-primary/30 bg-accent-primary/10 px-2.5 py-1.5 text-[11.5px] font-medium text-accent-primary"
           >
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Visualizando: {viewAs.companyName}</span>
@@ -249,12 +253,21 @@ export default function TopNav() {
 
         <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
 
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+          className="motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex"
+        >
+          {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+        </button>
+
         <NavLink
           to="/app/configuracoes"
           title="Configurações"
           className={({ isActive }) =>
             `motion-header-control hidden h-9 w-9 items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary sm:flex ${
-              isActive ? 'text-accent-cyan' : ''
+              isActive ? 'text-accent-primary' : ''
             }`
           }
         >
@@ -265,7 +278,7 @@ export default function TopNav() {
           <button
             onClick={() => setShowUserMenu(v => !v)}
             title={displayName}
-            className="motion-header-control flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-violet/25 bg-bg-elevated text-xs font-bold text-accent-violet"
+            className="motion-header-control flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-accent-blue/25 bg-bg-elevated text-xs font-bold text-accent-blue"
           >
             {initials}
           </button>
@@ -289,7 +302,7 @@ export default function TopNav() {
                 <NavLink
                   to="/app/admin"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-accent-cyan transition-colors hover:bg-white/5"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium text-accent-primary transition-colors hover:bg-white/5"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Administração

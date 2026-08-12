@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { ConnectionProvider } from '@/contexts/ConnectionContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { PeriodProvider } from '@/contexts/PeriodContext'
 import { InventorySettingsProvider } from '@/contexts/InventorySettingsContext'
 import { DemoModeProvider } from '@/contexts/DemoModeContext'
@@ -36,6 +37,7 @@ export default function App() {
   useIdleLogout()
 
   return (
+    <ThemeProvider>
     <ToastProvider>
     <ViewAsProvider>
     <DemoModeProvider>
@@ -88,5 +90,6 @@ export default function App() {
     </DemoModeProvider>
     </ViewAsProvider>
     </ToastProvider>
+    </ThemeProvider>
   )
 }

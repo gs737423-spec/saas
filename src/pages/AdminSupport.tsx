@@ -5,7 +5,7 @@ import EmptyState from '@/components/admin/EmptyState'
 import type { SupportTicket, SupportTicketDetail, SupportTicketStatus } from '@/server/integrations/types'
 
 const statusLabel: Record<SupportTicketStatus, { label: string; color: string; bg: string; border: string }> = {
-  aberto: { label: 'Aberto', color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', border: 'border-accent-cyan/20' },
+  aberto: { label: 'Aberto', color: 'text-accent-primary', bg: 'bg-accent-primary/10', border: 'border-accent-primary/20' },
   em_andamento: { label: 'Em andamento', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/20' },
   resolvido: { label: 'Resolvido', color: 'text-accent-emerald', bg: 'bg-accent-emerald/10', border: 'border-accent-emerald/20' },
   fechado: { label: 'Fechado', color: 'text-text-muted', bg: 'bg-white/5', border: 'border-border-subtle' },
@@ -127,7 +127,7 @@ export default function AdminSupport() {
             type="button"
             onClick={() => setStatusFilter(s)}
             className={`rounded-lg border px-3 py-1.5 text-[12px] font-medium transition-colors ${
-              statusFilter === s ? 'border-accent-cyan/40 bg-accent-cyan/10 text-accent-cyan' : 'border-border-subtle text-text-secondary hover:bg-white/5'
+              statusFilter === s ? 'border-accent-primary/40 bg-accent-primary/10 text-accent-primary' : 'border-border-subtle text-text-secondary hover:bg-white/5'
             }`}
           >
             {s === 'todos' ? 'Todos' : statusLabel[s].label}
@@ -269,7 +269,7 @@ function TicketModal({ ticketId, onClose }: { ticketId: string; onClose: () => v
                 value={ticket.status}
                 disabled={updatingStatus}
                 onChange={(e) => handleStatusChange(e.target.value as SupportTicketStatus)}
-                className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-1.5 text-[12px] text-text-primary focus:border-accent-cyan/50 focus:outline-none"
+                className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-1.5 text-[12px] text-text-primary focus:border-accent-primary/50 focus:outline-none"
               >
                 {(Object.keys(statusLabel) as SupportTicketStatus[]).map((s) => (
                   <option key={s} value={s}>{statusLabel[s].label}</option>
@@ -281,7 +281,7 @@ function TicketModal({ ticketId, onClose }: { ticketId: string; onClose: () => v
               {ticket.messages.length === 0 && <p className="text-[13px] text-text-muted">Nenhuma mensagem ainda.</p>}
               {ticket.messages.map((m) => (
                 <div key={m.id} className={`flex ${m.authorRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-[13px] ${m.authorRole === 'admin' ? 'bg-accent-cyan/15 text-text-primary' : 'bg-white/5 text-text-primary'}`}>
+                  <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-[13px] ${m.authorRole === 'admin' ? 'bg-accent-primary/15 text-text-primary' : 'bg-white/5 text-text-primary'}`}>
                     <p className="whitespace-pre-wrap">{m.body}</p>
                     <p className="mt-1 text-[10.5px] text-text-muted">{m.authorRole === 'admin' ? 'Equipe' : 'Cliente'} · {formatDate(m.createdAt)}</p>
                   </div>
@@ -301,12 +301,12 @@ function TicketModal({ ticketId, onClose }: { ticketId: string; onClose: () => v
                   placeholder="Responder ao cliente..."
                   rows={2}
                   maxLength={10000}
-                  className="min-w-0 flex-1 resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-cyan/50 focus:outline-none"
+                  className="min-w-0 flex-1 resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={sending || !reply.trim()}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-4 py-2.5 text-[13px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-primary px-4 py-2.5 text-[13px] font-bold text-[#081423] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   Enviar

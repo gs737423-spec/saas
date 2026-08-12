@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, Loader2, Receipt, ShoppingCart, Tag, Percent, Boxes, Clock, TrendingUp, TrendingDown, PieChart,
 } from 'lucide-react'
-import { getMarketplaceColor } from '@/data/mockData'
+import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
+import { useTheme } from '@/contexts/ThemeContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
@@ -37,6 +38,7 @@ function classifyStatus(p: DashboardProduct, cov: number | null): ProductStatus 
 }
 
 function ProdutoHeader({ product, status, summary }: { product: DashboardProduct; status: ProductStatus; summary: string }) {
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const mp = getMarketplaceColor(product.marketplace)
   const cfg = statusConfig[status]
@@ -70,7 +72,7 @@ function ProdutoHeader({ product, status, summary }: { product: DashboardProduct
             <span>·</span>
             <span>{product.category ?? 'Sem categoria'}</span>
             <span>·</span>
-            <span className="flex items-center gap-1.5 font-medium" style={{ color: mp }}>
+            <span className="flex items-center gap-1.5 font-medium" style={{ color: getMarketplaceBadge(product.marketplace, theme).text }}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: mp }} />
               {product.marketplace}
             </span>
@@ -88,14 +90,14 @@ function ProdutoKPIs({ product, cov }: { product: DashboardProduct; cov: number 
   const avgTicket = product.units > 0 ? product.revenue / product.units : 0
 
   const cards = [
-    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'no período', icon: Receipt, primary: '#3A8DFF', secondary: '#00E1FF' },
-    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#00E1FF' },
+    { label: 'Faturamento', value: `R$ ${product.revenue.toLocaleString('pt-BR')}`, context: 'no período', icon: Receipt, primary: '#3A8DFF', secondary: '#6366F1' },
+    { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#6366F1' },
     { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#194B9B', secondary: '#3A8DFF' },
     { label: 'Margem', value: product.margin !== null ? `${product.margin.toFixed(0)}%` : '—', context: product.margin !== null ? 'sobre o faturamento' : 'defina o custo do produto', icon: Percent, primary: '#FFC95A', secondary: '#FFC95A' },
-    { label: 'Estoque Atual', value: String(product.stock), context: 'unidades disponíveis', icon: Boxes, primary: '#00E1FF', secondary: '#3A8DFF' },
+    { label: 'Estoque Atual', value: String(product.stock), context: 'unidades disponíveis', icon: Boxes, primary: '#6366F1', secondary: '#3A8DFF' },
     { label: 'Cobertura', value: cov !== null ? `${Math.round(cov)} dias` : '—', context: 'no ritmo de venda do período', icon: Clock, primary: '#FF5E7D', secondary: '#FF5E7D' },
     { label: 'Tendência', value: product.trend !== null ? `${positive ? '+' : ''}${product.trend.toFixed(1)}%` : '—', context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#3BE38E' : '#FF5E7D', secondary: '#FFC95A' },
-    { label: 'Participação', value: `${product.sharePct.toFixed(1)}%`, context: 'do faturamento do catálogo', icon: PieChart, primary: '#194B9B', secondary: '#00E1FF' },
+    { label: 'Participação', value: `${product.sharePct.toFixed(1)}%`, context: 'do faturamento do catálogo', icon: PieChart, primary: '#194B9B', secondary: '#6366F1' },
   ]
 
   return (

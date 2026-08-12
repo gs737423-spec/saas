@@ -176,7 +176,7 @@ export default function AdminSecurity() {
     <div className="mx-auto flex max-w-2xl flex-col gap-5 px-6 py-8">
       <div>
         <h1 className="flex items-center gap-2 text-lg font-bold text-text-primary">
-          <Settings className="h-5 w-5 text-accent-cyan" /> Segurança da conta
+          <Settings className="h-5 w-5 text-accent-primary" /> Segurança da conta
         </h1>
         <p className="mt-1 text-sm text-text-muted">Verificação em duas etapas (TOTP) pra contas da equipe interna. Opcional, mas recomendado.</p>
       </div>
@@ -220,7 +220,7 @@ export default function AdminSecurity() {
               <button
                 type="button"
                 onClick={startEnroll}
-                className="flex items-center gap-2 rounded-lg bg-accent-cyan px-4 py-2 text-sm font-semibold text-[#081423] transition-transform hover:scale-[1.02]"
+                className="flex items-center gap-2 rounded-lg bg-accent-primary px-4 py-2 text-sm font-semibold text-[#081423] transition-transform hover:scale-[1.02]"
               >
                 <ShieldPlus className="h-4 w-4" /> {factors.length > 0 ? 'Adicionar outro autenticador' : 'Ativar verificação em duas etapas'}
               </button>
@@ -250,7 +250,7 @@ export default function AdminSecurity() {
                   placeholder="000000"
                   value={verifyCode}
                   onChange={(e) => setVerifyCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                  className="mb-2 w-full rounded-lg border border-border-subtle bg-bg-primary/50 px-3 py-2 text-center text-lg tracking-[0.3em] text-text-primary outline-none focus:border-accent-cyan"
+                  className="mb-2 w-full rounded-lg border border-border-subtle bg-bg-primary/50 px-3 py-2 text-center text-lg tracking-[0.3em] text-text-primary outline-none focus:border-accent-primary"
                 />
 
                 {enrollError && <p className="mb-2 text-[12px] text-accent-rose">{enrollError}</p>}
@@ -260,7 +260,7 @@ export default function AdminSecurity() {
                     type="button"
                     onClick={confirmEnroll}
                     disabled={verifyLoading || verifyCode.length < 6}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent-cyan px-4 py-2 text-sm font-semibold text-[#081423] disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent-primary px-4 py-2 text-sm font-semibold text-[#081423] disabled:opacity-50"
                   >
                     {verifyLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Confirmar
                   </button>

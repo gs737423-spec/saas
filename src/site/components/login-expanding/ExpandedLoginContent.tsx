@@ -32,7 +32,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
       {b.view === 'mfa' ? (
         <>
           <div className="flex flex-col items-center gap-1.5 text-center">
-            <ShieldCheck className="h-5 w-5 text-accent-cyan" aria-hidden="true" />
+            <ShieldCheck className="h-5 w-5 text-accent-primary" aria-hidden="true" />
             <p className="lx-support">Digite o código de 6 dígitos do seu app autenticador.</p>
           </div>
 

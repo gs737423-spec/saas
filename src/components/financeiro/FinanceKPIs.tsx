@@ -23,7 +23,10 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Total vendido no período',
       icon: DollarSign,
-      tone: '#00E1FF',
+      // Neutro/azul institucional, não semântico — faturamento bruto não é
+      // "positivo" nem "negativo" por si, é o dado principal (spec: ícone
+      // decorativo usa azul institucional, não uma cor por KPI).
+      tone: '#2F6FED',
     },
     {
       key: 'refunds',

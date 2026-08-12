@@ -63,7 +63,7 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
       'Crítico': '#FF5E7D',
       'Atenção': '#FFC95A',
       'Saudável': '#3BE38E',
-      'Excesso': '#00E1FF',
+      'Excesso': '#6366F1',
     },
   },
   stock: {

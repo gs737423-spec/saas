@@ -507,7 +507,7 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
   const breakdown: HealthScoreBreakdown[] = [
     { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
     { label: 'Margem', score: Math.round(margem), color: '#FFC95A' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#00E1FF' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#6366F1' },
     { label: 'Marketing', score: Math.round(marketing), color: '#194B9B' },
     { label: 'Reputação', score: Math.round(reputacao), color: '#3BE38E' },
   ]
@@ -518,12 +518,44 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
 
 export function getMarketplaceColor(mp: Marketplace): string {
   const colors: Record<Marketplace, string> = {
-    'Mercado Livre': '#FFE600',
-    'Shopee': '#EE4D2D',
-    'Amazon': '#FF9900',
-    'Loja Própria': '#3B82F6',
+    'Mercado Livre': '#E3B900',
+    'Shopee': '#EE5A3F',
+    'Amazon': '#E98A15',
+    'Loja Própria': '#4285F4',
   }
   return colors[mp]
+}
+
+/** Variante de TEXTO (não a cor de marca) pro tema ESCURO — usada como
+ *  fallback fora de contexto de tema e por getMarketplaceBadge() abaixo. A
+ *  cor de marca de Mercado Livre (#FFE600, amarelo puro) só funciona como
+ *  acento pequeno (bolinha/ícone), nunca como texto. */
+export function getMarketplaceTextColor(mp: Marketplace): string {
+  const colors: Record<Marketplace, string> = {
+    'Mercado Livre': '#FFD84D',
+    'Shopee': '#FF7A59',
+    'Amazon': '#FFB84D',
+    'Loja Própria': '#60A5FA',
+  }
+  return colors[mp]
+}
+
+/** Badge (fundo + texto) do nome do marketplace, com par dedicado por tema
+ *  — fundo opaco suave + texto escuro de alto contraste no claro (pedido
+ *  explícito de acessibilidade), tinta translúcida + texto vívido no
+ *  escuro (mesma lógica de sempre, cor de marca "abafada" pra não cansar).
+ *  A bolinha/dot continua usando getMarketplaceColor (cor de marca crua). */
+export function getMarketplaceBadge(mp: Marketplace, theme: 'dark' | 'light'): { bg: string; text: string } {
+  if (theme === 'light') {
+    const light: Record<Marketplace, { bg: string; text: string }> = {
+      'Mercado Livre': { bg: '#FEF3C7', text: '#B45309' },
+      'Shopee': { bg: '#FEE2E2', text: '#DC2626' },
+      'Amazon': { bg: '#FFEDD5', text: '#C2410C' },
+      'Loja Própria': { bg: '#E0F2FE', text: '#0369A1' },
+    }
+    return light[mp]
+  }
+  return { bg: `${getMarketplaceColor(mp)}1A`, text: getMarketplaceTextColor(mp) }
 }
 
 /* ============================================================================
@@ -1018,7 +1050,7 @@ export function getCoverageStatus(days: number): CoverageStatus {
   if (days <= 7) return { label: 'Crítico', color: '#FF5E7D' }
   if (days <= 20) return { label: 'Atenção', color: '#FFC95A' }
   if (days <= 45) return { label: 'Saudável', color: '#3BE38E' }
-  return { label: 'Excesso', color: '#00E1FF' }
+  return { label: 'Excesso', color: '#6366F1' }
 }
 
 /** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */

@@ -6,7 +6,7 @@ const MARKETPLACES: { key: MarketplaceKey; name: string; Logo: () => React.JSX.E
   { key: 'mercadolivre', name: 'Mercado Livre', Logo: LogoMercadoLivre, ring: 'ring-[#FFE600]/70' },
   { key: 'shopee', name: 'Shopee', Logo: LogoShopee, ring: 'ring-[#EE4D2D]/70' },
   { key: 'amazon', name: 'Amazon', Logo: LogoAmazon, ring: 'ring-[#FF9900]/70' },
-  { key: 'lojapropria', name: 'Loja Própria', Logo: LogoLojaPropria, ring: 'ring-accent-cyan/70' },
+  { key: 'lojapropria', name: 'Loja Própria', Logo: LogoLojaPropria, ring: 'ring-accent-primary/70' },
 ]
 
 /**

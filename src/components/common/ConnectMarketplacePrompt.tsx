@@ -17,7 +17,7 @@ export default function ConnectMarketplacePrompt({
 }) {
   return (
     <div className="glass-panel flex flex-col items-center gap-3 rounded-2xl p-10 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-cyan/10 text-accent-cyan">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-primary/10 text-accent-primary">
         <Icon className="h-6 w-6" />
       </span>
       <div>

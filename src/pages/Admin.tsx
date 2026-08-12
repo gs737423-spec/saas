@@ -141,15 +141,15 @@ export default function Admin() {
       {leadsCount > 0 && (
         <Link
           to="/app/admin/solicitacoes"
-          className="group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-cyan/25 bg-gradient-to-r from-accent-cyan/15 to-accent-cyan/5 px-5 py-4 transition-colors hover:from-accent-cyan/20"
+          className="group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-primary/25 bg-gradient-to-r from-accent-primary/15 to-accent-primary/5 px-5 py-4 transition-colors hover:from-accent-primary/20"
         >
           <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-cyan/15 text-accent-cyan"><Inbox className="h-4.5 w-4.5" /></span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-primary/15 text-accent-primary"><Inbox className="h-4.5 w-4.5" /></span>
             <span className="text-[13.5px] font-medium text-text-primary">
-              Você tem <strong className="font-bold text-accent-cyan">{leadsCount} {leadsCount === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
+              Você tem <strong className="font-bold text-accent-primary">{leadsCount} {leadsCount === 1 ? 'nova solicitação' : 'novas solicitações'}</strong> de cadastro aguardando aprovação.
             </span>
           </span>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-cyan px-3.5 py-2 text-[12.5px] font-bold text-[#081423] transition-transform group-hover:scale-[1.02]">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-primary px-3.5 py-2 text-[12.5px] font-bold text-[#081423] transition-transform group-hover:scale-[1.02]">
             Ir para Solicitações <ArrowUpRight className="h-3.5 w-3.5" />
           </span>
         </Link>
@@ -191,7 +191,7 @@ export default function Admin() {
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-amber/15"><Link2Off className="h-3.5 w-3.5 text-accent-amber" /></span>
                 {withoutAccess} {withoutAccess === 1 ? 'cliente sem' : 'clientes sem'} acesso vinculado
               </span>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-accent-cyan">Ver <ArrowUpRight className="h-3 w-3" /></span>
+              <span className="flex items-center gap-1 text-[11px] font-medium text-accent-primary">Ver <ArrowUpRight className="h-3 w-3" /></span>
             </Link>
           )}
           <div className="flex items-center justify-between gap-3 py-2.5 opacity-60">
@@ -215,7 +215,7 @@ export default function Admin() {
 }
 
 const colorMap = {
-  cyan: 'bg-accent-cyan/10 text-accent-cyan',
+  cyan: 'bg-accent-primary/10 text-accent-primary',
   emerald: 'bg-accent-emerald/10 text-accent-emerald',
   violet: 'bg-accent-violet/10 text-accent-violet',
   blue: 'bg-accent-blue/10 text-accent-blue',

@@ -56,7 +56,7 @@ export default function StockHealth({ stock }: { stock: StockItem | undefined })
           <div className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3">
             <p className="text-[10px] uppercase tracking-wider text-text-muted">Giro</p>
             <p className="mt-1 flex items-center gap-1 font-mono text-lg font-bold text-text-primary">
-              <Gauge className="h-4 w-4 text-accent-cyan" />
+              <Gauge className="h-4 w-4 text-accent-primary" />
               {stock.turnover}x
             </p>
           </div>
