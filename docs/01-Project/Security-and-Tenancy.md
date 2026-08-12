@@ -1,14 +1,17 @@
 ---
 type: security
 project: SaaS E-commerce
-status: critical
-updated: 2026-07-15
+status: implemented-untested
+updated: 2026-08-12
 ---
 
 # Segurança e multiempresa
 
 ## Regra central
 Nenhum usuário, serviço, job, relatório ou integração pode acessar dados de outra empresa.
+
+## Estado real (auditado em 2026-08-12)
+Isolamento multiempresa está **implementado no código**, não é mais aspiracional. Ver `docs/01-Project/Current-State.md` seção "Multiempresa" pro detalhe técnico (`requireCompany.ts`, RLS por tabela, 25/25 endpoints auditados). Nenhum vazamento cross-tenant encontrado na auditoria estática. **Falta**: teste real com 2+ empresas simultâneas rodando (fica pra fase de testes) e MFA pros `platform_admins` (ainda não implementado).
 
 ## Verificações obrigatórias
 - autenticação;
