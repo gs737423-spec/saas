@@ -44,13 +44,21 @@
   --color-bg-primary: #081423;
   --color-bg-secondary: #0B1D30;
   --color-bg-card: #112944;
-  --color-bg-card-hover: #163556;
-  --color-bg-elevated: #163556;
-  --color-bg-highlight: #1A3D63;
+  --color-bg-card-hover: #1A4068;
+  /* -elevated/-highlight subiram ~8% de luminosidade (12/08, pedido do
+     dono: "muito escuro, cansa a vista") — clarear com mais ciano em vez
+     de branco/cinza, mantendo o tema escuro (nunca light mode). */
+  --color-bg-elevated: #1C4269;
+  --color-bg-highlight: #21507F;
   --color-bg-header: #0D2036;
   --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-default: rgba(110, 170, 255, 0.12);
-  --color-border-active: rgba(70, 229, 255, 0.4);
+  /* Borda padrão puxada mais pro ciano (era azul puro 110,170,255) — mesma
+     função, mais alinhada ao acento principal da marca. */
+  --color-border-default: rgba(70, 229, 255, 0.16);
+  --color-border-active: rgba(70, 229, 255, 0.45);
+  /* Tom de ciano bem dessaturado pra fundo sutil (headers de seção, KPI em
+     destaque) — nunca substitui o navy, só quebra a monotonia. */
+  --color-cyan-soft: rgba(0, 225, 255, 0.07);
 
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #DCE7F5;
@@ -242,7 +250,7 @@ body {
      usa gradiente, nunca cor sólida (ver docs/04-Audits). */
   .glass-panel {
     position: relative;
-    background: linear-gradient(180deg, #163556 0%, #112944 100%);
+    background: linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg-card) 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.28),
@@ -385,7 +393,7 @@ body {
   /* Nível 2 — painel estrutural. Gradiente oficial do card. */
   .overview-glass {
     position: relative;
-    background: linear-gradient(180deg, #163556 0%, #112944 100%);
+    background: linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg-card) 100%);
     border: 1px solid var(--color-border-subtle);
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.28),
@@ -395,7 +403,7 @@ body {
   /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
   .overview-glass-elevated {
     position: relative;
-    background: linear-gradient(160deg, #1A3D63 0%, #163556 55%, #112944 100%);
+    background: linear-gradient(160deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.28),
@@ -406,7 +414,7 @@ body {
      não de borda colorida. */
   .overview-hero-card {
     position: relative;
-    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
+    background: linear-gradient(135deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
       0 16px 40px rgba(0, 0, 0, 0.32),
@@ -433,7 +441,7 @@ body {
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    background-color: #163556;
+    background-color: var(--color-bg-elevated);
     border-color: var(--color-border-default);
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.32),
@@ -442,7 +450,7 @@ body {
   /* Canal Nº1 — dominante, mais corpo e luz, gradiente mais rico */
   .overview-marketplace-row-lead {
     position: relative;
-    background: linear-gradient(135deg, #1A3D63 0%, #163556 55%, #112944 100%);
+    background: linear-gradient(135deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
     border: 1px solid var(--color-border-default);
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.3),
