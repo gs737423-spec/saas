@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -46,6 +46,41 @@ const navItems: Item[] = [
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
   { icon: LifeBuoy, label: 'Suporte', to: '/app/suporte' },
 ]
+
+function DesktopNavigationDock({ pathname }: { pathname: string }) {
+  const activeIndex = navItems.findIndex((item) => item.to === pathname)
+  const dockStyle = {
+    '--dock-indicator-x': `${Math.max(activeIndex, 0) * 44}px`,
+  } as CSSProperties
+
+  return (
+    <nav
+      aria-label="Navegação principal"
+      className={`topnav-dock mr-auto hidden md:grid ${activeIndex >= 0 ? 'topnav-dock--has-active' : ''}`}
+      style={dockStyle}
+    >
+      <span className="topnav-dock-indicator" aria-hidden="true" />
+      {navItems.map((item) => {
+        const Icon = item.icon
+
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end
+            aria-label={item.label}
+            className={({ isActive }) => `topnav-dock-item ${isActive ? 'topnav-dock-item-active' : ''}`}
+          >
+            <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+            <span className="topnav-dock-tooltip" aria-hidden="true">
+              {item.label}
+            </span>
+          </NavLink>
+        )
+      })}
+    </nav>
+  )
+}
 
 // Nav do Painel Admin — vive na MESMA barra global (nunca uma segunda
 // barra abaixo). "Clientes" é a lista real de empresas; os demais ainda
@@ -180,14 +215,7 @@ export default function TopNav() {
       ) : (
         <>
           {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
-          <nav className="topnav-navigation-shell hide-scrollbar mr-auto hidden min-w-0 items-center gap-0.5 overflow-x-auto md:flex">
-            {navItems.map((item) => (
-              <NavLink key={item.label} to={item.to} end={item.to === '/app'} title={item.label} className={linkClass}>
-                <item.icon className="h-[15px] w-[15px] shrink-0" />
-                <span className="hidden whitespace-nowrap sm:inline">{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
+          <DesktopNavigationDock pathname={location.pathname} />
 
           {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
           <div className="min-w-0 flex-1 md:hidden" />

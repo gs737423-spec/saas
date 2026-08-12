@@ -706,6 +706,110 @@ body {
       0 6px 18px rgba(3, 18, 29, 0.12);
   }
 
+  /* Dock de navegação do cliente: uma única superfície vítrea, com a placa
+     ativa deslizando por trás dos oito atalhos de tamanho uniforme. */
+  .topnav-dock {
+    --dock-item-size: 40px;
+    position: relative;
+    grid-template-columns: repeat(8, var(--dock-item-size));
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    background: rgba(4, 19, 31, 0.52);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.045),
+      0 6px 18px rgba(0, 0, 0, 0.16);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  :root[data-theme='light'] .topnav-dock {
+    background: rgba(7, 29, 45, 0.46);
+    border-color: rgba(255, 255, 255, 0.11);
+  }
+  .topnav-dock-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 0;
+    width: var(--dock-item-size);
+    height: var(--dock-item-size);
+    border: 1px solid rgba(114, 160, 245, 0.22);
+    border-radius: 11px;
+    background: linear-gradient(180deg, rgba(74, 130, 243, 0.22), rgba(47, 111, 237, 0.12));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 12px rgba(20, 73, 160, 0.14);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(var(--dock-indicator-x), 0, 0);
+    transition:
+      transform var(--motion-duration-normal) var(--motion-ease-hover),
+      opacity var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .topnav-dock--has-active .topnav-dock-indicator {
+    opacity: 1;
+  }
+  .topnav-dock-item {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    width: var(--dock-item-size);
+    height: var(--dock-item-size);
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: rgba(205, 220, 231, 0.68);
+    outline: none;
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .topnav-dock-item:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.075);
+    transform: translateY(-1px);
+  }
+  .topnav-dock-item:focus-visible {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.075);
+    box-shadow: 0 0 0 2px rgba(114, 160, 245, 0.6);
+  }
+  .topnav-dock-item:active {
+    transform: scale(0.94);
+  }
+  .topnav-dock-item-active {
+    color: #FFFFFF;
+  }
+  .topnav-dock-tooltip {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 50%;
+    z-index: 2;
+    width: max-content;
+    max-width: 180px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    background: rgba(10, 28, 43, 0.96);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -3px);
+    transition:
+      opacity var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .topnav-dock-item:is(:hover, :focus-visible) .topnav-dock-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
   .topnav-item {
     color: #AFC0CF;
   }
@@ -736,6 +840,15 @@ body {
   .topnav-surface nav .rail-item:nth-child(8) { animation-delay: 210ms; }
   @media (prefers-reduced-motion: reduce) {
     .topnav-surface nav .rail-item { animation: none; }
+    .topnav-dock-indicator,
+    .topnav-dock-item,
+    .topnav-dock-tooltip {
+      transition: none;
+    }
+    .topnav-dock-item:hover,
+    .topnav-dock-item:active {
+      transform: none;
+    }
   }
 
   /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
