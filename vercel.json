@@ -4,6 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "crons": [{ "path": "/api/cron/sync-all", "schedule": "0 6 * * *" }],
   "headers": [
     {
       "source": "/(.*)",
