@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
+import { getSupabaseAdmin, findUserIdByEmail } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 
@@ -52,11 +52,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const alreadyExists = /already.*registered|already.*exists/i.test(inviteError.message)
       if (!alreadyExists) throw new Error(inviteError.message)
 
-      const { data: list, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
-      if (listError) throw new Error(listError.message)
-      const existing = list.users.find((u) => u.email?.toLowerCase() === email)
-      if (!existing) throw new Error('Usuário já registrado, mas não encontrado na listagem.')
-      userId = existing.id
+      const existingId = await findUserIdByEmail(supabase, email)
+      if (!existingId) throw new Error('Usuário já registrado, mas não encontrado na listagem.')
+      userId = existingId
     } else {
       userId = inviteData.user.id
     }

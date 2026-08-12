@@ -4,6 +4,9 @@
 -- tabelas tenant-scoped: toda leitura/escrita real passa por api/** com
 -- service_role + requireCompany/requireAdmin; RLS aqui é defesa em
 -- profundidade (ver 004_integration_rls_policies.sql).
+--
+-- Renumerada de 013 para 016 (colidia com 013_leads.sql — dois arquivos
+-- com o mesmo prefixo numérico). Conteúdo idêntico ao original.
 
 create table if not exists support_tickets (
   id uuid primary key default gen_random_uuid(),

@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/** Teto de segurança pra não paginar pra sempre se algo external ficar
+ *  devolvendo página cheia indefinidamente (bug do provedor, não deveria
+ *  acontecer) — 50k usuários é bem acima de qualquer volume real esperado. */
+const LIST_USERS_MAX_PAGES = 50
+
 /** Env vars required for ANY Supabase-backed integration operation. */
 export const CORE_ENV_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'] as const
 
@@ -56,4 +61,24 @@ export async function getSupabaseAdmin(): Promise<SupabaseClient> {
     auth: { persistSession: false, autoRefreshToken: false },
   })
   return cachedClient
+}
+
+/**
+ * Acha o id de um usuário já existente no Supabase Auth pelo e-mail,
+ * paginando `listUsers` até achar (ou até acabar as páginas). Antes disto,
+ * cada chamador buscava só a página 1 (1000 usuários) — plataforma com mais
+ * de 1000 usuários no total (não por empresa) fazia convite de e-mail já
+ * cadastrado falhar com "usuário não encontrado na listagem" mesmo ele
+ * existindo, só porque caiu numa página seguinte.
+ */
+export async function findUserIdByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {
+  const target = email.toLowerCase()
+  for (let page = 1; page <= LIST_USERS_MAX_PAGES; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 })
+    if (error) throw new Error(error.message)
+    const match = data.users.find((u) => u.email?.toLowerCase() === target)
+    if (match) return match.id
+    if (data.users.length < 1000) return null
+  }
+  return null
 }
