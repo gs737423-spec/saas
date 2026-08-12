@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabaseClient'
 import { apiFetch } from '@/lib/apiFetch'
 import { whatsappAccessHelpUrl } from '@/lib/whatsapp'
 import ExpandingLoginCard from '@/site/components/login-expanding/ExpandingLoginCard'
@@ -15,8 +16,6 @@ import '@/site/site.css'
 // erro 429 em signIn).
 const SOFT_ATTEMPT_LIMIT = 5
 const SOFT_COOLDOWN_MS = 30_000
-
-type View = 'login' | 'forgot'
 
 /**
  * Página /login — "MKTOnline Expanding Access". A lógica de autenticação
@@ -35,7 +34,7 @@ export default function Login() {
   const explicitFrom = (location.state as { from?: string } | null)?.from
   const redirectTo = explicitFrom || '/app'
 
-  const [view, setView] = useState<View>('login')
+  const [view, setView] = useState<'login' | 'forgot' | 'mfa'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [capsLock, setCapsLock] = useState(false)
@@ -45,6 +44,10 @@ export default function Login() {
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
+
+  const [mfaCode, setMfaCode] = useState('')
+  const [mfaError, setMfaError] = useState('')
+  const [mfaLoading, setMfaLoading] = useState(false)
 
   const attemptsRef = useRef(0)
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
@@ -79,6 +82,36 @@ export default function Login() {
 
   const inCooldown = cooldownUntil !== null && cooldownLeft > 0
 
+  // Sem destino explícito (login direto, não deep-link): time interna cai
+  // direto no painel admin, cliente cai no dashboard normal. Logo após o
+  // login a sessão pode ainda não estar 100% propagada (cold start da
+  // function) — 1 retry evita mandar admin de verdade pro painel de cliente
+  // por causa de uma falha transitória isolada. Compartilhado entre o login
+  // normal e o login que passa por verificação de MFA (mesmo destino final).
+  async function proceedAfterAuth() {
+    attemptsRef.current = 0
+    if (!explicitFrom) {
+      async function checkIsAdmin(attempt = 0): Promise<boolean> {
+        try {
+          const res = await apiFetch('/api/admin/companies')
+          if (res.status === 403) return false
+          if (res.ok) return true
+          throw new Error('unexpected_status')
+        } catch {
+          if (attempt === 0) {
+            await new Promise((r) => setTimeout(r, 600))
+            return checkIsAdmin(1)
+          }
+          return false
+        }
+      }
+      const isAdmin = await checkIsAdmin()
+      navigate(isAdmin ? '/app/admin' : '/app', { replace: true })
+    } else {
+      navigate(redirectTo, { replace: true })
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (loading || inCooldown) return
@@ -88,32 +121,19 @@ export default function Login() {
     try {
       const { error: signInError } = await signIn(email, password)
       if (!signInError) {
-        attemptsRef.current = 0
-        // Sem destino explícito (login direto, não deep-link): time interna
-        // cai direto no painel admin, cliente cai no dashboard normal. Logo
-        // após o signIn a sessão pode ainda não estar 100% propagada (cold
-        // start da function) — 1 retry evita mandar admin de verdade pro
-        // painel de cliente por causa de uma falha transitória isolada.
-        if (!explicitFrom) {
-          async function checkIsAdmin(attempt = 0): Promise<boolean> {
-            try {
-              const res = await apiFetch('/api/admin/companies')
-              if (res.status === 403) return false
-              if (res.ok) return true
-              throw new Error('unexpected_status')
-            } catch {
-              if (attempt === 0) {
-                await new Promise((r) => setTimeout(r, 600))
-                return checkIsAdmin(1)
-              }
-              return false
-            }
-          }
-          const isAdmin = await checkIsAdmin()
-          navigate(isAdmin ? '/app/admin' : '/app', { replace: true })
-        } else {
-          navigate(redirectTo, { replace: true })
+        // Senha certa mas a conta tem 2FA ativado (hoje, na prática, só
+        // platform_admins que ativaram em /app/admin/seguranca) — sessão já
+        // existe (AAL1), só falta o código do app autenticador pra chegar
+        // em AAL2. getAuthenticatorAssuranceLevel() é a forma oficial do
+        // Supabase Auth de saber isso sem adivinhar pelo e-mail.
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== aal.nextLevel) {
+          setMfaError('')
+          setMfaCode('')
+          setView('mfa')
+          return
         }
+        await proceedAfterAuth()
         return
       }
 
@@ -126,6 +146,37 @@ export default function Login() {
       passwordRef.current?.select()
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleMfaSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (mfaLoading) return
+    setMfaError('')
+    setMfaLoading(true)
+
+    try {
+      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors()
+      const totpFactor = factorsData?.totp[0]
+      if (factorsError || !totpFactor) {
+        setMfaError('Não foi possível localizar o fator de verificação. Fale com o suporte.')
+        return
+      }
+
+      const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: totpFactor.id,
+        code: mfaCode.trim(),
+      })
+      if (verifyError) {
+        setMfaError('Código inválido ou expirado. Confira o app autenticador e tente de novo.')
+        return
+      }
+
+      await proceedAfterAuth()
+    } catch {
+      setMfaError('Não foi possível concluir a verificação agora. Tente novamente.')
+    } finally {
+      setMfaLoading(false)
     }
   }
 
@@ -169,6 +220,11 @@ export default function Login() {
     forgotLoading,
     onForgotSubmit: handleForgotSubmit,
     accessHelpUrl,
+    mfaCode,
+    setMfaCode,
+    mfaError,
+    mfaLoading,
+    onMfaSubmit: handleMfaSubmit,
   }
 
   return (

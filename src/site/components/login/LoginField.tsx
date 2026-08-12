@@ -10,7 +10,7 @@ interface Props {
   onChange: (value: string) => void
   icon: LucideIcon
   autoComplete?: string
-  inputMode?: 'email' | 'text'
+  inputMode?: 'email' | 'text' | 'numeric'
   disabled?: boolean
   required?: boolean
   inputRef?: Ref<HTMLInputElement>

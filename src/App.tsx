@@ -22,6 +22,7 @@ import AdminLeads from '@/pages/AdminLeads'
 import AdminClients from '@/pages/AdminClients'
 import AdminCompany from '@/pages/AdminCompany'
 import AdminSupport from '@/pages/AdminSupport'
+import AdminSecurity from '@/pages/AdminSecurity'
 import { useIdleLogout } from '@/hooks/useIdleLogout'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 
@@ -72,6 +73,7 @@ export default function App() {
                 <Route path="admin/clientes" element={<AdminClients />} />
                 <Route path="admin/empresa/:id" element={<AdminCompany />} />
                 <Route path="admin/suporte" element={<AdminSupport />} />
+                <Route path="admin/seguranca" element={<AdminSecurity />} />
                 <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
             </ErrorBoundary>

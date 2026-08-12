@@ -18,8 +18,8 @@ export type LoginCardState = 'collapsed' | 'expanding' | 'expanded' | 'closing'
  * nenhuma regra sensível é reimplementada nos componentes visuais.
  */
 export interface LoginBridge {
-  view: 'login' | 'forgot'
-  setView: (v: 'login' | 'forgot') => void
+  view: 'login' | 'forgot' | 'mfa'
+  setView: (v: 'login' | 'forgot' | 'mfa') => void
 
   email: string
   setEmail: (v: string) => void
@@ -44,4 +44,13 @@ export interface LoginBridge {
 
   /** URL real de ajuda/suporte (WhatsApp) — `null` se não configurada. */
   accessHelpUrl: string | null
+
+  /** Verificação de MFA (TOTP) — só entra em jogo pra conta que ativou 2FA
+   *  em Configurações de Segurança (hoje, na prática, só platform_admins).
+   *  Senha já validada nesse ponto; falta só o código do app autenticador. */
+  mfaCode: string
+  setMfaCode: (v: string) => void
+  mfaError: string
+  mfaLoading: boolean
+  onMfaSubmit: (e: FormEvent) => void
 }

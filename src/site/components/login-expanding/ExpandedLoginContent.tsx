@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Lock, Loader2, MessageCircle, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { Mail, Lock, Loader2, MessageCircle, ArrowLeft, AlertTriangle, ShieldCheck } from 'lucide-react'
 import LoginField from '@/site/components/login/LoginField'
 import type { LoginBridge } from './expanding-login.types'
 
@@ -29,7 +29,46 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
   const inertProps: Record<string, unknown> = revealing ? {} : { inert: true }
   return (
     <div className="lx-expanded" id="lx-expanded" {...inertProps}>
-      {b.view === 'login' ? (
+      {b.view === 'mfa' ? (
+        <>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <ShieldCheck className="h-5 w-5 text-accent-cyan" aria-hidden="true" />
+            <p className="lx-support">Digite o código de 6 dígitos do seu app autenticador.</p>
+          </div>
+
+          <form onSubmit={b.onMfaSubmit} noValidate className="lx-form" data-error={b.mfaError ? 'true' : undefined}>
+            <LoginField
+              id="login-mfa-code"
+              label="Código de verificação"
+              type="text"
+              value={b.mfaCode}
+              onChange={(v) => b.setMfaCode(v.replace(/[^0-9]/g, '').slice(0, 6))}
+              icon={ShieldCheck}
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              disabled={b.mfaLoading}
+              required
+              invalid={!!b.mfaError}
+              describedById={b.mfaError ? 'login-mfa-error' : undefined}
+            />
+
+            <div aria-live="polite">
+              {b.mfaError && (
+                <div id="login-mfa-error" className="login-alert login-alert--error">{b.mfaError}</div>
+              )}
+            </div>
+
+            <button type="submit" disabled={b.mfaLoading || b.mfaCode.trim().length < 6} className="login-submit">
+              <span className="login-submit__label">{b.mfaLoading ? 'Verificando...' : 'Verificar'}</span>
+              {b.mfaLoading ? (
+                <Loader2 className="login-submit__icon h-4 w-4 animate-spin" />
+              ) : (
+                <span className="login-submit__icon" aria-hidden="true">→</span>
+              )}
+            </button>
+          </form>
+        </>
+      ) : b.view === 'login' ? (
         <>
           <form onSubmit={b.onSubmit} noValidate className="lx-form" data-error={b.error && !b.inCooldown ? 'true' : undefined}>
             <LoginField

@@ -56,7 +56,7 @@ function buildAdminNavItems(leadsCount: number, openTicketsCount: number): (Item
     { icon: Building2, label: 'Clientes', to: '/app/admin/clientes' },
     { icon: Headset, label: 'Suporte', to: '/app/admin/suporte', badge: openTicketsCount || undefined },
     { icon: Plug, label: 'Integrações', disabled: true },
-    { icon: Settings, label: 'Configurações', disabled: true },
+    { icon: ShieldCheck, label: 'Segurança', to: '/app/admin/seguranca' },
   ]
 }
 
