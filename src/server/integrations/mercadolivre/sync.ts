@@ -6,14 +6,9 @@ import type { MLOrder } from './types.js'
 import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError, MAX_ITEMS_FIRST_SYNC } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
+import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
 
 export class ConnectionMissingError extends Error {}
-export class SyncAlreadyRunningError extends Error {}
-
-// Se a function morrer no meio (timeout Vercel, cold start, rede), o lock
-// nunca seria liberado — trata lock mais velho que isso como abandonado e
-// deixa reclamar de novo, em vez de travar sync pra sempre.
-const STALE_LOCK_MINUTES = 10
 
 /** Roda `fn` pra cada item de `items` com no máximo `concurrency` em voo ao
  *  mesmo tempo. Catálogo grande (até 2000 itens) sequencial de 1 em 1
@@ -106,21 +101,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   const supabase = await getSupabaseAdmin()
   const connection = await loadConnection(companyId)
 
-  // Claim atômico: só passa se ninguém está sincronizando agora (ou o lock
-  // anterior está velho demais pra ser real). Update condicional evita a
-  // janela de corrida entre "checar" e "marcar" que um SELECT + UPDATE
-  // separados teriam.
-  const staleBefore = new Date(Date.now() - STALE_LOCK_MINUTES * 60 * 1000).toISOString()
-  const { data: claimed, error: claimError } = await supabase
-    .from('marketplace_connections')
-    .update({ sync_started_at: startedAt.toISOString() })
-    .eq('id', connection.id)
-    .or(`sync_started_at.is.null,sync_started_at.lt.${staleBefore}`)
-    .select('id')
-  if (claimError) throw new Error(`Failed to claim sync lock: ${claimError.message}`)
-  if (!claimed || claimed.length === 0) {
-    throw new SyncAlreadyRunningError('Já existe uma sincronização em andamento para esta empresa.')
-  }
+  await claimSyncLock(supabase, connection.id, startedAt)
 
   await logSyncEvent({
     companyId,
@@ -273,8 +254,9 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
 
     await supabase
       .from('marketplace_connections')
-      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary, sync_started_at: null })
+      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary })
       .eq('id', connection.id)
+    await releaseSyncLock(supabase, connection.id)
 
     await logSyncEvent({
       companyId,
@@ -293,7 +275,8 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const finishedAt = new Date()
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
-    await supabase.from('marketplace_connections').update({ status: 'error', last_error: message, sync_started_at: null }).eq('id', connection.id)
+    await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id)
+    await releaseSyncLock(supabase, connection.id)
 
     await logSyncEvent({
       companyId,

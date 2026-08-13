@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin, getMissingEnvVars, CORE_ENV_VARS } from '../integrations/supabaseAdmin.js'
 
+export function getBearerToken(req: VercelRequest): string | null {
+  const header = req.headers.authorization
+  return header?.startsWith('Bearer ') ? header.slice(7) : null
+}
+
 /**
  * Valida o Bearer token (access_token do Supabase Auth) enviado pelo client
  * e retorna o usuário autenticado, ou já responde 401 e retorna null.
@@ -17,8 +22,7 @@ export async function requireUser(req: VercelRequest, res: VercelResponse) {
     return null
   }
 
-  const header = req.headers.authorization
-  const token = header?.startsWith('Bearer ') ? header.slice(7) : null
+  const token = getBearerToken(req)
 
   if (!token) {
     res.status(401).json({ ok: false, error: 'unauthorized', message: 'Sessão ausente.' })

@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
-import { ConnectionMissingError, SyncAlreadyRunningError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
+import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
+import { SyncAlreadyRunningError, SyncLockUnavailableError } from '../../../src/server/integrations/syncLock.js'
 import { requireCompany } from '../../../src/server/auth/requireCompany.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
@@ -64,6 +65,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     if (err instanceof SyncAlreadyRunningError) {
       res.status(200).json({ ok: false, source: 'already_running', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
+      return
+    }
+    if (err instanceof SyncLockUnavailableError) {
+      res.status(503).json({ ok: false, source: 'migration_pending', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
       return
     }
     console.error('[mercadolivre/sync]', err)

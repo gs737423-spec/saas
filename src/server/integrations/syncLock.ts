@@ -1,0 +1,35 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export class SyncAlreadyRunningError extends Error {}
+export class SyncLockUnavailableError extends Error {}
+
+const STALE_LOCK_MINUTES = 10
+
+function isMissingLockColumn(error: { code?: string; message?: string }): boolean {
+  return error.code === '42703' || error.code === 'PGRST204' || /sync_started_at/i.test(error.message ?? '')
+}
+
+/** Claim atômico por conexão. A migration 015 é obrigatória: sem a coluna,
+ * bloqueamos o sync explicitamente em vez de voltar a aceitar escritas concorrentes. */
+export async function claimSyncLock(supabase: SupabaseClient, connectionId: string, startedAt: Date): Promise<void> {
+  const staleBefore = new Date(Date.now() - STALE_LOCK_MINUTES * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('marketplace_connections')
+    .update({ sync_started_at: startedAt.toISOString() })
+    .eq('id', connectionId)
+    .or(`sync_started_at.is.null,sync_started_at.lt.${staleBefore}`)
+    .select('id')
+
+  if (error) {
+    if (isMissingLockColumn(error)) {
+      throw new SyncLockUnavailableError('Atualização de banco pendente para habilitar a trava de sincronização.')
+    }
+    throw new Error(`Failed to claim sync lock: ${error.message}`)
+  }
+  if (!data || data.length === 0) throw new SyncAlreadyRunningError('Já existe uma sincronização em andamento para esta empresa.')
+}
+
+export async function releaseSyncLock(supabase: SupabaseClient, connectionId: string): Promise<void> {
+  const { error } = await supabase.from('marketplace_connections').update({ sync_started_at: null }).eq('id', connectionId)
+  if (error) console.error('[syncLock] Failed to release lock', error.message)
+}

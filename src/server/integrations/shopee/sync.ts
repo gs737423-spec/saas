@@ -6,6 +6,7 @@ import type { ShopeeOrder } from './types.js'
 import { getItemBaseInfoBatch, searchShopItemIds, searchOrders, ShopeeApiError } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
+import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
 
 export class ConnectionMissingError extends Error {}
 
@@ -83,6 +84,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
   const startedAt = new Date()
   const supabase = await getSupabaseAdmin()
   const connection = await loadConnection(companyId)
+  await claimSyncLock(supabase, connection.id, startedAt)
 
   await logSyncEvent({
     companyId,
@@ -182,6 +184,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
       .from('marketplace_connections')
       .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: errors[0] ?? null })
       .eq('id', connection.id)
+    await releaseSyncLock(supabase, connection.id)
 
     await logSyncEvent({
       companyId,
@@ -201,6 +204,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
     await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id)
+    await releaseSyncLock(supabase, connection.id)
 
     await logSyncEvent({
       companyId,

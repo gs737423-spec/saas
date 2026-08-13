@@ -76,7 +76,9 @@ export default function Login() {
   // redirecionar cedo demais (flash em qualquer uma das direções).
   if (authLoading) return null
 
-  if (isAuthenticated) {
+  // Após senha válida, o SDK já expõe uma sessão AAL1. Não pode redirecionar
+  // antes do desafio TOTP: o servidor também exige AAL2 nas APIs de admin.
+  if (isAuthenticated && view !== 'mfa') {
     return <Navigate to={redirectTo} replace />
   }
 

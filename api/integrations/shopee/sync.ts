@@ -3,6 +3,7 @@ import { getMissingEnvVars, SHOPEE_ENV_VARS } from '../../../src/server/integrat
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runShopeeSync } from '../../../src/server/integrations/shopee/sync.js'
+import { SyncAlreadyRunningError, SyncLockUnavailableError } from '../../../src/server/integrations/syncLock.js'
 import { requireCompany } from '../../../src/server/auth/requireCompany.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
@@ -55,6 +56,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message: err.message,
       })
       res.status(200).json({ ok: false, source: 'disconnected', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
+      return
+    }
+    if (err instanceof SyncAlreadyRunningError) {
+      res.status(200).json({ ok: false, source: 'already_running', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
+      return
+    }
+    if (err instanceof SyncLockUnavailableError) {
+      res.status(503).json({ ok: false, source: 'migration_pending', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
       return
     }
     console.error('[shopee/sync]', err)
