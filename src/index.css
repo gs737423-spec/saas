@@ -120,18 +120,18 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Paleta oficial do modo claro: app → seção → superfície suave → card. */
-  --color-bg-primary: #EDF2F6;
-  --color-bg-secondary: #F6F8FB;
-  --color-bg-highlight: #F1F5F8;
-  --color-bg-card: #FFFFFF;
-  --color-bg-card-hover: #F1F5F8;
-  --color-bg-elevated: #FFFFFF;
+  /* Anti-glare: app → seção → card → highlight, sem branco como padrão. */
+  --color-bg-primary: #E8EEF3;
+  --color-bg-secondary: #EEF3F7;
+  --color-bg-highlight: #F4F7FA;
+  --color-bg-card: #F8FAFC;
+  --color-bg-card-hover: #F0F4F8;
+  --color-bg-elevated: #FCFDFE;
   --color-bg-header: #12344D;
 
-  --color-border-subtle: #E7ECF1;
-  --color-border-default: #DCE3EA;
-  --color-border-strong: #C9D3DD;
+  --color-border-subtle: #DDE5EC;
+  --color-border-default: #D2DCE5;
+  --color-border-strong: #C1CED9;
   --color-border-active: #B9D0FA;
 
   --color-text-primary: #162033;
@@ -259,7 +259,8 @@ body {
    só formalizam isso, sem duplicar regra por página.
    ========================================================================== */
 :root {
-  --app-header-height: 72px;
+  /* 14px de respiro acima + ilha desktop de 64px. */
+  --app-header-height: 78px;
   --space-page-x: 24px;
   --space-page-y: 18px;
   --space-section: 18px;
@@ -269,7 +270,7 @@ body {
 }
 @media (max-width: 1279px) {
   :root {
-    --app-header-height: 66px;
+    --app-header-height: 78px;
     --space-page-x: 20px;
     --space-page-y: 16px;
     --space-section: 16px;
@@ -334,7 +335,7 @@ body {
      contraste de superfície é quem faz o trabalho no claro. */
   :root[data-theme='light'] .glass-panel {
     background: var(--color-bg-secondary);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.035);
+    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
   }
 
   /* Painel admin — tom mais escuro/flat que o .glass-panel padrão (que é
@@ -484,7 +485,7 @@ body {
      gradiente nem sombra pesada. */
   :root[data-theme='light'] .overview-glass {
     background: var(--color-bg-card);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.035);
+    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
   }
 
   /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
@@ -501,7 +502,7 @@ body {
      (linhas de marketplace, caixas de KPI) é que ficam brancos por cima. */
   :root[data-theme='light'] .overview-glass-elevated {
     background: var(--color-bg-secondary);
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
   }
 
   /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
@@ -549,6 +550,19 @@ body {
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
+  :root[data-theme='light'] .overview-marketplace-row,
+  :root[data-theme='light'] .overview-marketplace-row-lead {
+    background: var(--color-bg-card);
+    border-color: var(--color-border-subtle);
+    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
+  }
+  :root[data-theme='light'] .overview-marketplace-row:hover {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-border-default);
+    box-shadow: 0 10px 28px rgba(27, 45, 60, 0.08);
   }
 
   /* Trilho das barras de participação — o mais escuro da hierarquia */
@@ -685,44 +699,45 @@ body {
     --color-bg-elevated: rgba(255, 255, 255, 0.045);
     --color-accent-primary: #72A0F5;
     --color-accent-blue: #72A0F5;
+    transition: background 240ms cubic-bezier(.2, .8, .2, 1), border-color 240ms cubic-bezier(.2, .8, .2, 1), box-shadow 240ms cubic-bezier(.2, .8, .2, 1), color 240ms cubic-bezier(.2, .8, .2, 1);
   }
-  :root[data-theme='light'] .topnav-surface {
-    background: linear-gradient(105deg, #102F47 0%, #123B56 50%, #113550 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 8px 24px rgba(3, 18, 29, 0.12);
-  }
-
   @media (min-width: 768px) {
     .topnav-surface {
       inset: 14px auto auto 50%;
       width: max-content;
       max-width: calc(100vw - 32px);
       height: calc(var(--app-header-height) - 14px);
-      padding: 8px;
+      padding: 10px 16px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 18px;
-      background: linear-gradient(180deg, rgba(12, 40, 58, 0.84) 0%, rgba(8, 31, 47, 0.78) 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.065),
-        0 12px 32px rgba(7, 25, 38, 0.2);
+      background: linear-gradient(180deg, rgba(18, 48, 69, 0.9) 0%, rgba(10, 34, 52, 0.84) 100%);
+      border-color: rgba(165, 195, 216, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 36px rgba(0, 0, 0, 0.2);
       transform: translateX(-50%);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
     :root[data-theme='light'] .topnav-surface {
-      background: linear-gradient(180deg, rgba(12, 40, 58, 0.88) 0%, rgba(8, 31, 47, 0.82) 100%);
-      border-color: rgba(255, 255, 255, 0.11);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.07),
-        0 12px 32px rgba(7, 25, 38, 0.18);
+      --color-text-primary: #263E52;
+      --color-text-secondary: #587084;
+      --color-text-muted: #587084;
+      --color-border-subtle: rgba(62, 87, 108, 0.12);
+      --color-border-default: rgba(62, 87, 108, 0.16);
+      --color-bg-card: rgba(255, 255, 255, 0.32);
+      --color-bg-card-hover: rgba(255, 255, 255, 0.42);
+      --color-bg-elevated: rgba(216, 228, 237, 0.9);
+      --color-accent-primary: #1F5FC4;
+      --color-accent-blue: #1F5FC4;
+      background: linear-gradient(180deg, rgba(232, 240, 246, 0.88) 0%, rgba(218, 230, 239, 0.82) 100%);
+      border-color: rgba(65, 91, 112, 0.16);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 14px 36px rgba(38, 58, 74, 0.14);
     }
     .topnav-group-divider {
       width: 1px;
       height: 24px;
       flex: none;
       margin-inline: 2px;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(157, 190, 213, 0.14);
     }
     .topnav-admin-navigation {
       flex: 0 1 auto;
@@ -733,7 +748,7 @@ body {
   /* Navegação transparente dentro da ilha. Apenas a placa ativa cria uma
      segunda camada visual, evitando três cápsulas independentes. */
   .topnav-dock {
-    --dock-item-size: 40px;
+    --dock-item-size: 42px;
     position: relative;
     grid-template-columns: repeat(8, var(--dock-item-size));
     gap: 4px;
@@ -746,7 +761,7 @@ body {
     width: var(--dock-item-size);
     height: var(--dock-item-size);
     border: 1px solid rgba(122, 170, 255, 0.26);
-    border-radius: 11px;
+    border-radius: 12px;
     background: linear-gradient(180deg, rgba(74, 130, 243, 0.24), rgba(47, 111, 237, 0.13));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.09),
@@ -755,17 +770,17 @@ body {
     pointer-events: none;
     transform: translate3d(var(--dock-indicator-x), 0, 0);
     transition:
-      transform var(--motion-duration-normal) var(--motion-ease-hover),
+      transform 260ms cubic-bezier(.22, .8, .24, 1),
       opacity var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
-  .topnav-dock[data-active-index='1'] { --dock-indicator-x: 44px; }
-  .topnav-dock[data-active-index='2'] { --dock-indicator-x: 88px; }
-  .topnav-dock[data-active-index='3'] { --dock-indicator-x: 132px; }
-  .topnav-dock[data-active-index='4'] { --dock-indicator-x: 176px; }
-  .topnav-dock[data-active-index='5'] { --dock-indicator-x: 220px; }
-  .topnav-dock[data-active-index='6'] { --dock-indicator-x: 264px; }
-  .topnav-dock[data-active-index='7'] { --dock-indicator-x: 308px; }
+  .topnav-dock[data-active-index='1'] { --dock-indicator-x: 46px; }
+  .topnav-dock[data-active-index='2'] { --dock-indicator-x: 92px; }
+  .topnav-dock[data-active-index='3'] { --dock-indicator-x: 138px; }
+  .topnav-dock[data-active-index='4'] { --dock-indicator-x: 184px; }
+  .topnav-dock[data-active-index='5'] { --dock-indicator-x: 230px; }
+  .topnav-dock[data-active-index='6'] { --dock-indicator-x: 276px; }
+  .topnav-dock[data-active-index='7'] { --dock-indicator-x: 322px; }
   .topnav-dock--has-active .topnav-dock-indicator {
     opacity: 1;
   }
@@ -778,7 +793,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 11px;
-    color: rgba(205, 220, 231, 0.65);
+    color: #8FA6B8;
     outline: none;
     transition:
       color var(--motion-duration-fast) var(--motion-ease-hover),
@@ -786,7 +801,7 @@ body {
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .topnav-dock-item:hover {
-    color: #FFFFFF;
+    color: #D7E4ED;
     background: rgba(255, 255, 255, 0.055);
     transform: translateY(-1px);
   }
@@ -840,7 +855,7 @@ body {
     border-color: rgba(255, 255, 255, 0.09);
   }
   .topnav-surface .motion-header-control:hover {
-    color: #FFFFFF;
+    color: #D7E4ED;
     background-color: rgba(255, 255, 255, 0.085);
     border-color: rgba(255, 255, 255, 0.14);
   }
@@ -851,14 +866,43 @@ body {
     box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32);
   }
 
+  :root[data-theme='light'] .topnav-dock-indicator {
+    border-color: rgba(47, 111, 237, 0.24);
+    background: linear-gradient(180deg, rgba(47, 111, 237, 0.18), rgba(47, 111, 237, 0.1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 4px 12px rgba(47, 111, 237, 0.1);
+  }
+  :root[data-theme='light'] .topnav-dock-item { color: #587084; }
+  :root[data-theme='light'] .topnav-dock-item:hover,
+  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #263E52; background: rgba(255, 255, 255, 0.32); }
+  :root[data-theme='light'] .topnav-dock-item-active { color: #1F5FC4; }
+  :root[data-theme='light'] .topnav-dock-tooltip,
+  :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(216, 228, 237, 0.96); border-color: rgba(62, 87, 108, 0.16); box-shadow: 0 12px 28px rgba(38, 58, 74, 0.14); color: #263E52; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #587084; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #263E52; background-color: rgba(255, 255, 255, 0.32); border-color: rgba(62, 87, 108, 0.16); }
+  :root[data-theme='light'] .topnav-group-divider { background: rgba(62, 87, 108, 0.12); }
+
+  /* Mobile continua com a barra estrutural existente; a releitura frost é
+     exclusiva da island desktop. */
+  @media (max-width: 767px) {
+    :root[data-theme='light'] .topnav-surface .motion-header-control { color: #AFC0CF; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.09); }
+    :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #FFFFFF; background-color: rgba(255, 255, 255, 0.085); border-color: rgba(255, 255, 255, 0.14); }
+    :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(8, 25, 38, 0.98); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32); color: #FFFFFF; }
+  }
+
   @media (min-width: 768px) {
+    .topnav-brand-symbol {
+      width: 26px;
+      height: 26px;
+    }
     .topnav-surface .motion-header-control {
+      width: 40px;
+      height: 40px;
       border-color: transparent;
       background-color: transparent;
     }
     .topnav-status-control {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       justify-content: center;
       padding: 0;
       border-radius: 10px;
@@ -880,31 +924,33 @@ body {
     .topnav-status-control-active > svg {
       color: #FFFFFF;
     }
+    :root[data-theme='light'] .topnav-status-control-active { color: #1F5FC4; background: rgba(47, 111, 237, 0.1) !important; box-shadow: inset 0 0 0 1px rgba(47, 111, 237, 0.24); }
+    :root[data-theme='light'] .topnav-status-control-active > svg { color: #1F5FC4; }
   }
 
   @media (min-width: 768px) and (max-width: 1279px) {
     .topnav-surface {
-      padding: 7px 8px;
+      padding: 10px 12px;
     }
     .topnav-dock {
-      --dock-item-size: 36px;
+      --dock-item-size: 38px;
       gap: 2px;
     }
     .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
-    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 38px; }
-    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 76px; }
-    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 114px; }
-    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 152px; }
-    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 190px; }
-    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 228px; }
-    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 266px; }
+    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 40px; }
+    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 80px; }
+    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 120px; }
+    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 160px; }
+    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 200px; }
+    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 240px; }
+    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 280px; }
     .topnav-utilities {
       gap: 2px;
     }
     .topnav-surface .motion-header-control,
     .topnav-status-control {
-      width: 32px;
-      height: 32px;
+      width: 38px;
+      height: 38px;
     }
   }
 
@@ -916,6 +962,7 @@ body {
       margin-inline: 0;
     }
     .topnav-dock {
+      --dock-item-size: 36px;
       gap: 1px;
     }
     .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
@@ -931,8 +978,8 @@ body {
     }
     .topnav-surface .motion-header-control,
     .topnav-status-control {
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
     }
   }
 

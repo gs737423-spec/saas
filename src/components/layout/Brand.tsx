@@ -8,7 +8,7 @@ import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 export default function Brand() {
   return (
     <Link to="/app" className="flex shrink-0 items-center gap-2">
-      <MKTOnlineLogo mode="symbol" size="sm" />
+      <MKTOnlineLogo mode="symbol" size="sm" className="topnav-brand-symbol" />
       <span
         className="truncate font-brand text-[18px] leading-none sm:text-[20px]"
         style={{ letterSpacing: '-0.045em' }}
