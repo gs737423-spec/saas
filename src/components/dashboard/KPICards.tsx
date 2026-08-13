@@ -58,7 +58,7 @@ function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
   const c = toneColor[kpi.tone]
   return (
-    <div className="overview-hero-card overview-card-hover relative flex flex-col justify-between overflow-hidden rounded-md p-3.5">
+    <div className="workspace-kpi-card overview-hero-card overview-card-hover relative flex flex-col justify-between overflow-hidden rounded-md p-3.5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-secondary">{kpi.label}</span>
         <div
@@ -94,7 +94,7 @@ function StatCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
   const c = toneColor[kpi.tone]
   return (
-    <div className="overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-md p-2.5">
+    <div className="workspace-kpi-card overview-glass overview-card-hover relative flex h-full min-h-[112px] flex-col overflow-hidden rounded-md p-2.5">
       <div className="mb-1.5 flex h-3.5 items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-muted">{kpi.label}</span>
         <Icon className="h-3.5 w-3.5" style={{ color: c }} />
@@ -124,7 +124,7 @@ export default function KPICards({ period, kpis }: { period: PeriodOption; kpis?
   const hero = resolved.find((k) => k.hero)!
   const rest = resolved.filter((k) => !k.hero)
   return (
-    <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[1.15fr_2.4fr]">
+    <div className="workspace-kpi-grid grid grid-cols-1 gap-2.5 lg:grid-cols-[1.15fr_2.4fr]">
       <HeroCard kpi={hero} />
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         {rest.map((kpi) => (

@@ -754,7 +754,7 @@ body {
     --color-bg-elevated: rgba(255, 255, 255, 0.045);
     --color-accent-primary: #477CE7;
     --color-accent-blue: #477CE7;
-    background: linear-gradient(110deg, #1E211F 0%, #242825 34%, #2B302C 52%, #242825 70%, #1E211F 100%);
+    background: linear-gradient(110deg, #202120 0%, #272927 34%, #2D2F2D 52%, #272927 70%, #202120 100%);
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -816,7 +816,7 @@ body {
       --color-bg-elevated: rgba(255, 255, 255, 0.045);
       --color-accent-primary: #477CE7;
       --color-accent-blue: #477CE7;
-      background: linear-gradient(110deg, #1E211F 0%, #242825 34%, #2B302C 52%, #242825 70%, #1E211F 100%);
+      background: linear-gradient(110deg, #202120 0%, #272927 34%, #2D2F2D 52%, #272927 70%, #202120 100%);
       border-color: rgba(255, 255, 255, 0.08);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -1447,9 +1447,14 @@ body {
    layout boundary. Mobile keeps the document flow and BottomNav behavior. */
 @media (min-width: 768px) {
   :root {
-    --workspace-gap: clamp(8px, 1.25dvh, 12px);
-    --workspace-panel-padding-y: clamp(12px, 1.9dvh, 20px);
-    --workspace-kpi-padding-y: clamp(8px, 1.3dvh, 14px);
+    --workspace-gap: clamp(6px, 1dvh, 10px);
+    --workspace-panel-padding-y: clamp(8px, 1.55dvh, 16px);
+    --workspace-panel-padding-x: clamp(12px, 1.75dvw, 20px);
+    --workspace-kpi-min-height: clamp(76px, 10.5dvh, 98px);
+    --workspace-kpi-padding-y: clamp(7px, 1.15dvh, 11px);
+    --workspace-control-height: clamp(34px, 4.7dvh, 40px);
+    --workspace-table-row-padding-y: clamp(7px, 1.05dvh, 9px);
+    --workspace-table-header-padding-y: clamp(7px, 0.95dvh, 9px);
   }
 
   .app-shell--workspace {
@@ -1495,6 +1500,24 @@ body {
     flex: 0 0 auto;
   }
 
+  .workspace-kpi-grid {
+    gap: var(--workspace-gap);
+  }
+
+  .workspace-kpi-card {
+    min-height: var(--workspace-kpi-min-height) !important;
+    padding-top: var(--workspace-kpi-padding-y) !important;
+    padding-bottom: var(--workspace-kpi-padding-y) !important;
+  }
+
+  .workspace-kpi-card .mb-1\.5 {
+    margin-bottom: clamp(4px, 0.7dvh, 7px);
+  }
+
+  .workspace-kpi-card .mt-2\.5 {
+    margin-top: clamp(4px, 0.7dvh, 7px);
+  }
+
   .workspace-page > .workspace-primary-panel,
   .workspace-marketplace-analysis > .workspace-primary-panel {
     display: flex;
@@ -1522,8 +1545,8 @@ body {
 
   .workspace-gmv-rows > * {
     min-height: 54px;
-    padding-top: clamp(8px, 1.7dvh, 20px) !important;
-    padding-bottom: clamp(8px, 1.7dvh, 20px) !important;
+    padding-top: clamp(7px, 1.25dvh, 14px) !important;
+    padding-bottom: clamp(7px, 1.25dvh, 14px) !important;
   }
 
   .workspace-marketplace-analysis {
@@ -1552,8 +1575,8 @@ body {
 
   .workspace-chart-plot {
     height: auto !important;
-    min-height: clamp(124px, 18dvh, 180px);
-    max-height: clamp(160px, 28dvh, 250px);
+    min-height: clamp(132px, 18dvh, 180px);
+    max-height: clamp(170px, 27dvh, 250px);
     flex: 1 1 auto;
   }
 
@@ -1576,6 +1599,41 @@ body {
   .workspace-table-panel {
     padding-top: var(--workspace-panel-padding-y);
     padding-bottom: var(--workspace-panel-padding-y);
+    padding-inline: var(--workspace-panel-padding-x);
+  }
+
+  .workspace-panel-header {
+    margin-bottom: var(--workspace-gap) !important;
+    gap: var(--workspace-gap) !important;
+  }
+
+  .workspace-filter-slot,
+  .workspace-inventory-toolbar {
+    margin-bottom: var(--workspace-gap) !important;
+  }
+
+  .workspace-product-filters,
+  .workspace-inventory-toolbar {
+    padding-top: clamp(7px, 1.1dvh, 10px) !important;
+    padding-bottom: clamp(7px, 1.1dvh, 10px) !important;
+    gap: clamp(6px, 0.9dvh, 9px) !important;
+  }
+
+  .workspace-product-filters > div {
+    gap: clamp(7px, 1dvh, 10px) !important;
+  }
+
+  .workspace-product-filters .motion-input,
+  .workspace-product-filters button.motion-input,
+  .workspace-inventory-toolbar .motion-input {
+    height: var(--workspace-control-height) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .workspace-inventory-toolbar .motion-chip {
+    padding-top: clamp(4px, 0.65dvh, 6px) !important;
+    padding-bottom: clamp(4px, 0.65dvh, 6px) !important;
   }
 
   .workspace-table-area {
@@ -1590,6 +1648,21 @@ body {
     max-height: none;
     flex: 1 1 auto;
     overscroll-behavior: contain;
+  }
+
+  .workspace-data-table thead th {
+    padding-top: var(--workspace-table-header-padding-y) !important;
+    padding-bottom: var(--workspace-table-header-padding-y) !important;
+  }
+
+  .workspace-data-table tbody td {
+    padding-top: var(--workspace-table-row-padding-y) !important;
+    padding-bottom: var(--workspace-table-row-padding-y) !important;
+  }
+
+  .workspace-data-table tbody td :is(.py-1, .py-0\.5) {
+    padding-top: 2px;
+    padding-bottom: 2px;
   }
 }
 

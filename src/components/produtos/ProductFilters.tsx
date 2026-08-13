@@ -222,7 +222,7 @@ export default function ProductFilters({ filters, onChange }: Props) {
   const categoryOptions: string[] = [...productCategories]
 
   return (
-    <div className="enterprise-filter-surface overview-glass motion-panel rounded-xl p-3">
+    <div className="workspace-product-filters enterprise-filter-surface overview-glass motion-panel rounded-xl p-3">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_210px_170px]">
         <div className="motion-input group flex h-11 items-center gap-2.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 focus-within:border-accent-blue/50 focus-within:bg-bg-card">
           <Search className="h-4 w-4 shrink-0 text-text-muted transition-colors group-focus-within:text-accent-blue" />

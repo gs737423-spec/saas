@@ -187,7 +187,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
 
   return (
     <div className="glass-panel motion-panel workspace-table-panel workspace-product-table rounded-2xl p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="workspace-panel-header mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
           <p className="mt-0.5 text-xs text-text-muted">{filteredProducts.length} produtos · vendas, estoque, margem e tendencia</p>
@@ -203,7 +203,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
         </button>
       </div>
 
-      <div className="mb-3.5">
+      <div className="workspace-filter-slot mb-3.5">
         <ProductFilters filters={filters} onChange={onFiltersChange} />
       </div>
 
@@ -251,7 +251,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       {/* Desktop table */}
       <div className="workspace-table-area hidden md:block">
         <DataTableViewport size="large" ariaLabel="Catálogo de produtos. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-        <table className="enterprise-table w-full min-w-[920px] text-sm">
+        <table className="workspace-data-table enterprise-table w-full min-w-[920px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle bg-bg-secondary/60 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               {columns.map((col) => (

@@ -204,14 +204,14 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
   return (
     <div className="workspace-inventory flex flex-col gap-2.5">
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <div className="workspace-kpi-grid grid grid-cols-2 gap-2 lg:grid-cols-4">
         {kpis.map((c) => (
           <KpiCard key={c.key} c={c} />
         ))}
       </div>
 
       <div className="overview-glass-elevated motion-panel workspace-table-panel workspace-inventory-table flex flex-col rounded-2xl p-4 sm:p-5">
-        <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="workspace-panel-header mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
             <p className="mt-0.5 text-xs text-text-muted">{sorted.length} de {items.length} produtos · inclui Curva ABC</p>
@@ -236,7 +236,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           </div>
         </div>
 
-        <div className="enterprise-filter-surface mb-3.5 overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
+        <div className="workspace-inventory-toolbar enterprise-filter-surface mb-3.5 overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
           <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Curva</span>
           {(['A', 'B', 'C'] as const).map((c) => (
             <Chip key={c} active={filters.abc.has(c)} onClick={() => setFilters((f) => { const next = new Set(f.abc); if (next.has(c)) next.delete(c); else next.add(c); return { ...f, abc: next } })}>{c}</Chip>
@@ -301,7 +301,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         {/* Desktop: table com scroll próprio */}
         <div className="workspace-table-area hidden md:block">
           <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-            <table className="enterprise-table w-full min-w-[1040px] text-sm">
+            <table className="workspace-data-table enterprise-table w-full min-w-[1040px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
@@ -377,7 +377,7 @@ function KpiCard({ c }: { c: { label: string; value: string; sub: string; icon: 
       type="button"
       onClick={c.onClick}
       disabled={!clickable}
-      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`workspace-kpi-card overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
     >
       <div className="relative mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
         <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>

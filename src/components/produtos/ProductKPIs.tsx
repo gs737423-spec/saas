@@ -40,12 +40,12 @@ export default function ProductKPIs({ products }: { products: Product[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="workspace-kpi-grid grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((c) => {
         const Icon = c.icon
         const positive = (c.change ?? 0) >= 0
         return (
-          <div key={c.label} className="overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5">
+          <div key={c.label} className="workspace-kpi-card overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5">
             <div className="mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
               <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
