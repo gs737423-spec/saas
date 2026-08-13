@@ -18,7 +18,9 @@ export async function requireUser(req: VercelRequest, res: VercelResponse) {
   // status.ts/logs.ts/inventory.ts já fazem antes de tocar no Supabase.
   const missing = getMissingEnvVars(CORE_ENV_VARS)
   if (missing.length > 0) {
-    res.status(503).json({ ok: false, error: 'config_missing', message: 'Configuração do Supabase pendente no servidor.' })
+    // Nomes são seguros para um usuário autenticado e evitam uma mensagem
+    // genérica que leva o operador a procurar a variável errada na Vercel.
+    res.status(503).json({ ok: false, error: 'config_missing', missing, message: 'Configuração do Supabase pendente no servidor.' })
     return null
   }
 

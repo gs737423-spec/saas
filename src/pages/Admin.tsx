@@ -28,6 +28,7 @@ export default function Admin() {
   const [unauthorized, setUnauthorized] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
+  const [missingConfig, setMissingConfig] = useState<string[]>([])
   const [stats, setStats] = useState<{ ordersCount: number; totalGmv: number } | null>(null)
   const leadsCount = useLeadsCount()
   const { period } = usePeriod()
@@ -48,6 +49,8 @@ export default function Admin() {
         return
       }
       if (res.status === 503) {
+        const body = (await res.json().catch(() => null)) as { missing?: unknown } | null
+        setMissingConfig(Array.isArray(body?.missing) ? body.missing.filter((name): name is string => typeof name === 'string') : [])
         setConfigMissing(true)
         setLoading(false)
         return
@@ -96,7 +99,12 @@ export default function Admin() {
       <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
-        <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).</p>
+        <p className="mt-1.5 text-sm text-text-muted">
+          {missingConfig.length > 0
+            ? `O servidor não recebeu: ${missingConfig.join(' / ')}.`
+            : 'Não foi possível validar as variáveis do Supabase no servidor.'}
+        </p>
+        <p className="mt-2 text-xs text-text-muted">A service role deve ficar somente nas variáveis de produção da Vercel; valores nunca são exibidos aqui.</p>
       </div>
     )
   }

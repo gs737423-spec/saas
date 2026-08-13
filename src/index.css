@@ -1577,7 +1577,7 @@ body {
 
   .workspace-marketplace-chart {
     display: flex;
-    min-height: clamp(352px, 50dvh, 450px);
+    min-height: clamp(410px, 58dvh, 540px);
     height: auto;
     flex-direction: column;
     padding-top: var(--workspace-panel-padding-y);
@@ -1590,8 +1590,8 @@ body {
 
   .workspace-chart-plot {
     height: auto !important;
-    min-height: clamp(132px, 18dvh, 180px);
-    max-height: clamp(170px, 27dvh, 250px);
+    min-height: clamp(190px, 28dvh, 270px);
+    max-height: none;
     flex: 1 1 auto;
   }
 

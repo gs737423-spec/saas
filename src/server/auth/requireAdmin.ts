@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
+import { getServerEnv, getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
 import { getBearerToken, requireUser } from './requireUser.js'
 
 const UNDEFINED_TABLE = '42P01'
@@ -19,8 +19,8 @@ function getAssuranceLevel(token: string): 'aal1' | 'aal2' {
  * Assim que ele cadastra TOTP, toda API administrativa exige AAL2. A consulta
  * é server-side, filtrada pelo id do usuário já validado, e falha fechada. */
 async function hasVerifiedMfaFactor(userId: string): Promise<boolean> {
-  const baseUrl = process.env.SUPABASE_URL!
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const baseUrl = getServerEnv('SUPABASE_URL')!
+  const serviceRoleKey = getServerEnv('SUPABASE_SERVICE_ROLE_KEY')!
   const url = new URL('/rest/v1/auth/factors', baseUrl)
   url.searchParams.set('select', 'id')
   url.searchParams.set('user_id', `eq.${userId}`)

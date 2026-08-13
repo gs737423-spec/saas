@@ -8,6 +8,24 @@ const LIST_USERS_MAX_PAGES = 50
 /** Env vars required for ANY Supabase-backed integration operation. */
 export const CORE_ENV_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'] as const
 
+/**
+ * A URL do projeto não é segredo e já precisa existir no bundle do navegador
+ * como `VITE_SUPABASE_URL`. No servidor, preferimos o nome sem prefixo; o
+ * fallback evita que uma configuração Vercel válida para o cliente quebre as
+ * APIs apenas por usar o mesmo nome público. Nunca há fallback para a chave
+ * service_role: ela precisa permanecer exclusivamente server-side.
+ */
+export function getServerEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim()
+  if (value) return value
+
+  if (name === 'SUPABASE_URL') {
+    return process.env.VITE_SUPABASE_URL?.trim() || undefined
+  }
+
+  return undefined
+}
+
 /** Env vars additionally required for the Mercado Livre OAuth flow. */
 export const MERCADOLIVRE_ENV_VARS = [
   ...CORE_ENV_VARS,
@@ -32,7 +50,7 @@ export const SHOPEE_ENV_VARS = [
 
 /** Returns the subset of `names` that are missing/empty in `process.env`. */
 export function getMissingEnvVars(names: readonly string[]): string[] {
-  return names.filter((name) => !process.env[name] || process.env[name]!.trim() === '')
+  return names.filter((name) => !getServerEnv(name))
 }
 
 let cachedClient: SupabaseClient | null = null
@@ -57,7 +75,7 @@ export async function getSupabaseAdmin(): Promise<SupabaseClient> {
   }
 
   const { createClient } = await import('@supabase/supabase-js')
-  cachedClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  cachedClient = createClient(getServerEnv('SUPABASE_URL')!, getServerEnv('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
   return cachedClient

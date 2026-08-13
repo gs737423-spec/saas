@@ -9,11 +9,12 @@ status: completed
 
 ## Resultado
 
-Em desktop, a pagina Marketplaces agora rola dentro do shell quando a altura disponivel nao comporta todo o grafico e o resumo. O plot nao e mais comprimido ou encoberto.
+Em desktop, a pagina Marketplaces agora rola dentro do shell quando a altura disponivel nao comporta todo o grafico e o resumo. O plot recebeu altura maior; o tooltip nao e recortado e usa a superficie do tema ativo.
 
 ## Arquivos
 
 - `src/index.css`
+- `src/components/marketplaces/RevenueByChannelChart.tsx`
 - `docs/01-Project/Current-State.md`
 
 ## Validacao

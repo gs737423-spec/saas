@@ -58,7 +58,7 @@ function CustomTooltip({ active, payload, label, activeChannels, compareLabel }:
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
+    <div className="rounded-xl border border-border-subtle bg-bg-elevated/95 px-4 py-3 shadow-xl backdrop-blur-md">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label} · vs {compareLabel.toLowerCase()}</p>
       {activeChannels.map((c) => {
         const cur = payload.find((p) => p.dataKey === c.key)?.value
@@ -195,7 +195,7 @@ export default function RevenueByChannelChart() {
   }
 
   return (
-    <div className="overview-glass-elevated motion-panel workspace-marketplace-chart relative overflow-hidden rounded-2xl p-3.5 sm:p-4">
+    <div className="overview-glass-elevated motion-panel workspace-marketplace-chart relative z-10 overflow-visible rounded-2xl p-3.5 sm:p-4">
       <div className="workspace-chart-heading relative mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
@@ -270,7 +270,7 @@ export default function RevenueByChannelChart() {
             <Tooltip
               content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />}
               cursor={{ stroke: 'var(--color-border-default)', strokeDasharray: '4 4' }}
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 20 }}
               animationDuration={motionTokens.duration.ultrafast}
               animationEasing="ease-out"
             />
