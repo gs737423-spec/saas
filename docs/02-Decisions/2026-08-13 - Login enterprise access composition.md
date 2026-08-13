@@ -4,6 +4,8 @@
 
 **Status:** aprovado e implementado
 
+**Baseline visual:** aprovado e congelado após a lapidação final de 2026-08-13. Tarefas futuras não devem modificar `/login` sem escopo explicitamente destinado à tela de login.
+
 **Substitui:** direção visual “Vintec Expanding Access” de 2026-07-28
 
 ## Contexto

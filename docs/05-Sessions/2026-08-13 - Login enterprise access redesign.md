@@ -30,3 +30,11 @@ Nenhum handler de login, recuperação, MFA, cooldown, redirecionamento ou integ
 ## Próxima ação
 
 Validar login real e MFA com credenciais controladas quando houver autorização e conta de teste apropriada.
+
+## Lapidação final e freeze visual
+
+A baseline visual recebeu a última lapidação em 2026-08-13: card com presença moderadamente maior, tipografia neutra nos campos, links auxiliares legíveis, divisor mais discreto, linhas de fundo mais longas e radial reduzido. A composição, os fluxos e a arquitetura permaneceram inalterados.
+
+Resultado dos gates: typecheck, 58 testes gerais, 49 testes de segurança, service-role scan e build aprovados. A primeira execução dos testes gerais expôs uma intermitência preexistente no teste de adulteração OAuth da Shopee; a repetição sem mudanças passou integralmente.
+
+**Login visual baseline approved. Future tasks must not modify `/login` unless explicitly scoped to login.**
