@@ -1562,7 +1562,7 @@ body {
 
   .workspace-marketplace-chart {
     display: flex;
-    min-height: 0;
+    min-height: clamp(352px, 50dvh, 450px);
     height: 100%;
     flex-direction: column;
     padding-top: var(--workspace-panel-padding-y);

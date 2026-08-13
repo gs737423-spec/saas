@@ -15,10 +15,10 @@ import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo
 import CompanyAvatar from '@/components/common/CompanyAvatar'
 import type { CnpjInfo } from '@/lib/adminUi'
 
-const giroOrder: TurnoverStatus[] = ['Normal', 'Lento', 'Parado', 'Parado crítico']
+const giroOrder: TurnoverStatus[] = ['Normal', 'Baixo', 'Parado', 'Parado crítico']
 const giroHint: Record<TurnoverStatus, string> = {
   'Normal': 'Giro saudável',
-  'Lento': 'Giro abaixo do ideal',
+  'Baixo': 'Giro abaixo do ideal',
   'Parado': 'Sem giro relevante',
   'Parado crítico': 'Capital parado há muito tempo',
 }
@@ -407,7 +407,7 @@ export default function Configuracoes() {
       >
         <div className="grid grid-cols-1 gap-3 border-t border-border-subtle pt-4 sm:grid-cols-3">
           <NumberField label="Normal até" value={settings.giro.thresholds.normalMaxDays} min={1} max={settings.giro.thresholds.lentoMaxDays} onChange={(v) => updateGiroThreshold('normalMaxDays', Math.min(v, settings.giro.thresholds.lentoMaxDays))} />
-          <NumberField label="Lento até" value={settings.giro.thresholds.lentoMaxDays} min={settings.giro.thresholds.normalMaxDays} max={settings.giro.thresholds.paradoMaxDays} onChange={(v) => updateGiroThreshold('lentoMaxDays', Math.min(Math.max(v, settings.giro.thresholds.normalMaxDays), settings.giro.thresholds.paradoMaxDays))} />
+          <NumberField label="Baixo até" value={settings.giro.thresholds.lentoMaxDays} min={settings.giro.thresholds.normalMaxDays} max={settings.giro.thresholds.paradoMaxDays} onChange={(v) => updateGiroThreshold('lentoMaxDays', Math.min(Math.max(v, settings.giro.thresholds.normalMaxDays), settings.giro.thresholds.paradoMaxDays))} />
           <NumberField label="Parado até" value={settings.giro.thresholds.paradoMaxDays} min={settings.giro.thresholds.lentoMaxDays} onChange={(v) => updateGiroThreshold('paradoMaxDays', Math.max(v, settings.giro.thresholds.lentoMaxDays))} />
         </div>
         <p className="mt-2 text-[10px] text-text-muted">Acima de {settings.giro.thresholds.paradoMaxDays} dias sem girar = "Parado crítico".</p>

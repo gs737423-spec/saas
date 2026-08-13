@@ -982,7 +982,7 @@ export function getExecutiveHighlights(): ExecutiveHighlight[] {
  * margem ou lucro real. Essa página não trata de lucro.
  * ========================================================================= */
 
-export type TurnoverStatus = 'Normal' | 'Lento' | 'Parado' | 'Parado crítico'
+export type TurnoverStatus = 'Normal' | 'Baixo' | 'Parado' | 'Parado crítico'
 
 interface InventoryExtra {
   sku: string
@@ -1008,7 +1008,7 @@ const inventoryExtras: InventoryExtra[] = [
   { sku: 'GRF-INX-100', manufacturerCode: 'FAB-91023', lastEntryDate: '25/06/2026', lastEntryQty: 200, cost: 17.55, lastEntryCost: 17.55, previousEntryCost: 17.55, turnoverStatus: 'Normal' },
   { sku: 'DEC-DIG-070', manufacturerCode: 'FAB-13376', lastEntryDate: '10/06/2026', lastEntryQty: 100, cost: 52.83, lastEntryCost: 52.83, previousEntryCost: 52.83, turnoverStatus: 'Normal' },
   { sku: 'CAL-CMF-055', manufacturerCode: 'FAB-24689', lastEntryDate: '18/06/2026', lastEntryQty: 120, cost: 26.5, lastEntryCost: 26.5, previousEntryCost: 26.5, turnoverStatus: 'Normal' },
-  { sku: 'COZ-CER-018', manufacturerCode: 'FAB-35542', lastEntryDate: '20/05/2026', lastEntryQty: 90, cost: 25.61, lastEntryCost: 27.9, previousEntryCost: 25.61, turnoverStatus: 'Lento' },
+  { sku: 'COZ-CER-018', manufacturerCode: 'FAB-35542', lastEntryDate: '20/05/2026', lastEntryQty: 90, cost: 25.61, lastEntryCost: 27.9, previousEntryCost: 25.61, turnoverStatus: 'Baixo' },
 ]
 
 export interface InventoryItem {
@@ -1056,7 +1056,7 @@ export function getCoverageStatus(days: number): CoverageStatus {
 /** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */
 export const turnoverStatusStyle: Record<TurnoverStatus, { color: string; bg: string }> = {
   'Normal': { color: '#3BE38E', bg: 'rgba(43,214,160,0.12)' },
-  'Lento': { color: '#FFC95A', bg: 'rgba(255,200,87,0.12)' },
+  'Baixo': { color: '#EB6B7C', bg: 'rgba(235,107,124,0.12)' },
   'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.12)' },
   'Parado crítico': { color: '#8B2942', bg: 'rgba(139,41,66,0.18)' },
 }

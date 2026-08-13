@@ -29,21 +29,21 @@ function coverageDays(item: DashboardInventoryItem): number | null {
   return dailyRate > 0 ? item.availableQuantity / dailyRate : null
 }
 
-type GiroStatus = 'Saudável' | 'Normal' | 'Lento' | 'Parado' | 'Parado crítico'
+type GiroStatus = 'Bom' | 'Normal' | 'Baixo' | 'Parado' | 'Parado crítico'
 
 function classifyGiro(item: DashboardInventoryItem, cov: number | null): GiroStatus {
   if ((item.soldQuantity ?? 0) === 0) return item.availableQuantity > 0 ? 'Parado crítico' : 'Parado'
   if (cov === null) return 'Normal'
-  if (cov < 7) return 'Saudável'
+  if (cov < 7) return 'Bom'
   if (cov < 20) return 'Normal'
-  if (cov < 45) return 'Lento'
+  if (cov < 45) return 'Baixo'
   return 'Parado'
 }
 
 const GIRO_STYLE: Record<GiroStatus, { color: string; bg: string }> = {
-  'Saudável': { color: '#3BE38E', bg: 'rgba(43,214,160,0.14)' },
+  'Bom': { color: '#3BE38E', bg: 'rgba(43,214,160,0.14)' },
   'Normal': { color: '#3A8DFF', bg: 'rgba(47,107,255,0.14)' },
-  'Lento': { color: '#FFC95A', bg: 'rgba(255,201,90,0.14)' },
+  'Baixo': { color: '#EB6B7C', bg: 'rgba(235,107,124,0.14)' },
   'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.14)' },
   'Parado crítico': { color: '#FF5E7D', bg: 'rgba(255,94,125,0.14)' },
 }

@@ -46,8 +46,10 @@ export default function SearchMenu() {
 
   const q = query.trim().toLowerCase()
 
-  // Sem conexão/sync ainda, busca de produto fica vazia — nunca mock.
-  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name'>[] = real?.source === 'real' ? real.items : []
+  // O modo demonstração é explícito e usa o mesmo contrato do catálogo;
+  // nele a pesquisa deve continuar útil, sem inventar uma fonte paralela.
+  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name' | 'category' | 'marketplace'>[] =
+    real?.source === 'real' || real?.source === 'demo' ? real.items : []
 
   const matchedPages = useMemo(
     () => (q ? pages.filter((p) => p.label.toLowerCase().includes(q)) : pages),
@@ -56,7 +58,7 @@ export default function SearchMenu() {
   const matchedProducts = useMemo(
     () =>
       q
-        ? searchableProducts.filter((p) => p.name.toLowerCase().includes(q) || (p.sku ?? '').toLowerCase().includes(q)).slice(0, 6)
+        ? searchableProducts.filter((p) => [p.name, p.sku, p.category, p.marketplace].some((value) => value?.toLowerCase().includes(q))).slice(0, 6)
         : [],
     [q, searchableProducts]
   )
@@ -87,7 +89,7 @@ export default function SearchMenu() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-              placeholder="Buscar páginas, produtos, SKU..."
+              placeholder="Buscar SKU, produto, categoria ou marketplace..."
               className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
             />
             {query && (
@@ -126,7 +128,9 @@ export default function SearchMenu() {
                     <Package className="h-4 w-4 shrink-0 text-text-muted" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-text-primary">{p.name}</span>
-                      <span className="block truncate font-mono text-[10px] text-text-muted">{p.sku ?? p.id}</span>
+                      <span className="block truncate font-mono text-[10px] text-text-muted">
+                        {[p.sku ?? p.id, p.category, p.marketplace].filter(Boolean).join(' · ')}
+                      </span>
                     </span>
                   </button>
                 ))}
