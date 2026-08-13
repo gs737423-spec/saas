@@ -173,6 +173,7 @@ export default function TopNav() {
     <header className="topnav-surface">
       <div className="topnav-brand-zone">
         <Brand />
+        <span className="topnav-group-divider" aria-hidden="true" />
       </div>
 
       <div className="topnav-navigation-zone">
@@ -211,6 +212,7 @@ export default function TopNav() {
 
       {/* Actions cluster */}
       <div className="topnav-utilities flex shrink-0 items-center gap-1.5 md:gap-1">
+        <span className="topnav-group-divider" aria-hidden="true" />
         <PeriodDropdown options={options} selectedKey={periodKey} onChange={setPeriodKey} variant="icon" />
         {!isAdminArea && (
           <>
