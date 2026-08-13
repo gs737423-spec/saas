@@ -120,24 +120,39 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Anti-glare: app → seção → card → highlight, sem branco como padrão. */
-  --color-bg-primary: #E8EEF3;
-  --color-bg-secondary: #EEF3F7;
-  --color-bg-highlight: #F4F7FA;
-  --color-bg-card: #F8FAFC;
-  --color-bg-card-hover: #F0F4F8;
-  --color-bg-elevated: #FCFDFE;
+  /* Escala estrutural monocromática blue-gray. */
+  --mono-950: #172A3A;
+  --mono-900: #1D3446;
+  --mono-850: #254155;
+  --mono-800: #2E4C61;
+  --mono-600: #60798B;
+  --mono-500: #7890A1;
+  --mono-300: #B7C6D1;
+  --mono-250: #C8D4DD;
+  --mono-200: #D5DEE6;
+  --mono-150: #DEE6EC;
+  --mono-100: #E7EDF2;
+  --mono-75: #EDF2F5;
+  --mono-50: #F3F6F8;
+
+  /* App → section → card → elevated: não há branco como padrão. */
+  --color-bg-primary: #DDE5EB;
+  --color-bg-secondary: #E7EDF2;
+  --color-bg-highlight: #EDF2F5;
+  --color-bg-card: #F3F6F8;
+  --color-bg-card-hover: #EDF2F5;
+  --color-bg-elevated: #F7F9FA;
   --color-bg-header: #12344D;
 
-  --color-border-subtle: #DDE5EC;
-  --color-border-default: #D2DCE5;
-  --color-border-strong: #C1CED9;
+  --color-border-subtle: #CCD7DF;
+  --color-border-default: #BDC9D3;
+  --color-border-strong: #AAB9C5;
   --color-border-active: #B9D0FA;
 
-  --color-text-primary: #162033;
-  --color-text-secondary: #475467;
-  --color-text-tertiary: #667085;
-  --color-text-muted: #8793A3;
+  --color-text-primary: #172633;
+  --color-text-secondary: #405463;
+  --color-text-tertiary: #647A8A;
+  --color-text-muted: #8193A1;
   --color-text-disabled: #ADB6C2;
 
   --color-primary-700: #2459C4;
@@ -246,7 +261,7 @@ body {
    topo — o gradiente colorido/diagonal do escuro (acima) NÃO se aplica
    aqui, era chamativo demais pro pedido de "sofisticado, não gamer". */
 :root[data-theme='light'] body {
-  background-image: radial-gradient(circle at 50% -10%, rgba(47, 111, 237, 0.055), transparent 33%);
+  background-image: none;
 }
 
 /* ==========================================================================
@@ -267,6 +282,7 @@ body {
   --space-panel: 16px;
   --space-card: 14px;
   --space-grid: 12px;
+  --app-content-max-width: 1600px;
 }
 @media (max-width: 1279px) {
   :root {
@@ -406,6 +422,9 @@ body {
     pointer-events: none;
     overflow: hidden;
   }
+  :root[data-theme='light'] .app-bg-subtle {
+    display: none;
+  }
   /* Glows ambiente — família azul institucional (sem roxo, sem ciano neon). */
   .app-bg-subtle::before {
     content: '';
@@ -502,7 +521,7 @@ body {
      (linhas de marketplace, caixas de KPI) é que ficam brancos por cima. */
   :root[data-theme='light'] .overview-glass-elevated {
     background: var(--color-bg-secondary);
-    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
+    box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05);
   }
 
   /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
@@ -551,18 +570,23 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
+  :root[data-theme='light'] .overview-hero-card {
+    background: var(--color-bg-card);
+    border-color: #C9D5DE;
+    box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05) !important;
+  }
 
   /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
   :root[data-theme='light'] .overview-marketplace-row,
   :root[data-theme='light'] .overview-marketplace-row-lead {
     background: var(--color-bg-card);
     border-color: var(--color-border-subtle);
-    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
+    box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05);
   }
   :root[data-theme='light'] .overview-marketplace-row:hover {
     background: var(--color-bg-elevated);
     border-color: var(--color-border-default);
-    box-shadow: 0 10px 28px rgba(27, 45, 60, 0.08);
+    box-shadow: 0 10px 30px rgba(28, 45, 58, 0.1);
   }
 
   /* Trilho das barras de participação — o mais escuro da hierarquia */
@@ -704,41 +728,40 @@ body {
   @media (min-width: 768px) {
     .topnav-surface {
       inset: 14px auto auto 50%;
-      width: max-content;
-      max-width: calc(100vw - 32px);
+      width: min(var(--app-content-max-width), calc(100vw - (var(--space-page-x) * 2)));
+      max-width: none;
       height: calc(var(--app-header-height) - 14px);
-      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 12px;
+      padding: 10px 18px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 18px;
-      background: linear-gradient(180deg, rgba(18, 48, 69, 0.9) 0%, rgba(10, 34, 52, 0.84) 100%);
+      background: linear-gradient(180deg, rgba(19, 48, 68, 0.94) 0%, rgba(11, 31, 47, 0.94) 100%);
       border-color: rgba(165, 195, 216, 0.14);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 36px rgba(0, 0, 0, 0.2);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 32px rgba(25, 43, 56, 0.18);
       transform: translateX(-50%);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
     :root[data-theme='light'] .topnav-surface {
-      --color-text-primary: #263E52;
-      --color-text-secondary: #587084;
-      --color-text-muted: #587084;
-      --color-border-subtle: rgba(62, 87, 108, 0.12);
-      --color-border-default: rgba(62, 87, 108, 0.16);
-      --color-bg-card: rgba(255, 255, 255, 0.32);
-      --color-bg-card-hover: rgba(255, 255, 255, 0.42);
-      --color-bg-elevated: rgba(216, 228, 237, 0.9);
-      --color-accent-primary: #1F5FC4;
-      --color-accent-blue: #1F5FC4;
-      background: linear-gradient(180deg, rgba(232, 240, 246, 0.88) 0%, rgba(218, 230, 239, 0.82) 100%);
-      border-color: rgba(65, 91, 112, 0.16);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 14px 36px rgba(38, 58, 74, 0.14);
+      --color-text-primary: #FFFFFF;
+      --color-text-secondary: #C9D7E0;
+      --color-text-muted: #9DB0BE;
+      --color-border-subtle: rgba(199, 216, 227, 0.16);
+      --color-border-default: rgba(202, 219, 230, 0.18);
+      --color-bg-card: rgba(255, 255, 255, 0.045);
+      --color-bg-card-hover: rgba(255, 255, 255, 0.085);
+      --color-bg-elevated: rgba(255, 255, 255, 0.045);
+      --color-accent-primary: #FFFFFF;
+      --color-accent-blue: #FFFFFF;
+      background: linear-gradient(180deg, rgba(38, 66, 85, 0.94) 0%, rgba(23, 43, 58, 0.92) 100%);
+      border-color: rgba(202, 219, 230, 0.16);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 14px 32px rgba(25, 43, 56, 0.18);
     }
-    .topnav-group-divider {
-      width: 1px;
-      height: 24px;
-      flex: none;
-      margin-inline: 2px;
-      background: rgba(157, 190, 213, 0.14);
-    }
+    .topnav-brand-zone { min-width: 0; justify-self: start; }
+    .topnav-navigation-zone { min-width: 0; justify-self: center; }
+    .topnav-utilities { min-width: 0; justify-self: end; }
     .topnav-admin-navigation {
       flex: 0 1 auto;
       max-width: 100%;
@@ -867,19 +890,18 @@ body {
   }
 
   :root[data-theme='light'] .topnav-dock-indicator {
-    border-color: rgba(47, 111, 237, 0.24);
-    background: linear-gradient(180deg, rgba(47, 111, 237, 0.18), rgba(47, 111, 237, 0.1));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 4px 12px rgba(47, 111, 237, 0.1);
+    border-color: rgba(130, 178, 247, 0.28);
+    background: linear-gradient(180deg, rgba(83, 139, 226, 0.3), rgba(59, 112, 198, 0.2));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(22, 64, 125, 0.18);
   }
-  :root[data-theme='light'] .topnav-dock-item { color: #587084; }
+  :root[data-theme='light'] .topnav-dock-item { color: #9DB0BE; }
   :root[data-theme='light'] .topnav-dock-item:hover,
-  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #263E52; background: rgba(255, 255, 255, 0.32); }
-  :root[data-theme='light'] .topnav-dock-item-active { color: #1F5FC4; }
+  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #E4ECF1; background: rgba(255, 255, 255, 0.055); }
+  :root[data-theme='light'] .topnav-dock-item-active { color: #FFFFFF; }
   :root[data-theme='light'] .topnav-dock-tooltip,
-  :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(216, 228, 237, 0.96); border-color: rgba(62, 87, 108, 0.16); box-shadow: 0 12px 28px rgba(38, 58, 74, 0.14); color: #263E52; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #587084; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #263E52; background-color: rgba(255, 255, 255, 0.32); border-color: rgba(62, 87, 108, 0.16); }
-  :root[data-theme='light'] .topnav-group-divider { background: rgba(62, 87, 108, 0.12); }
+  :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(23, 42, 58, 0.98); border-color: rgba(202, 219, 230, 0.16); box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32); color: #FFFFFF; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #9DB0BE; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #E4ECF1; background-color: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.14); }
 
   /* Mobile continua com a barra estrutural existente; a releitura frost é
      exclusiva da island desktop. */
@@ -924,8 +946,8 @@ body {
     .topnav-status-control-active > svg {
       color: #FFFFFF;
     }
-    :root[data-theme='light'] .topnav-status-control-active { color: #1F5FC4; background: rgba(47, 111, 237, 0.1) !important; box-shadow: inset 0 0 0 1px rgba(47, 111, 237, 0.24); }
-    :root[data-theme='light'] .topnav-status-control-active > svg { color: #1F5FC4; }
+    :root[data-theme='light'] .topnav-status-control-active { color: #FFFFFF; background: rgba(83, 139, 226, 0.2) !important; box-shadow: inset 0 0 0 1px rgba(130, 178, 247, 0.28); }
+    :root[data-theme='light'] .topnav-status-control-active > svg { color: #FFFFFF; }
   }
 
   @media (min-width: 768px) and (max-width: 1279px) {

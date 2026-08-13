@@ -171,16 +171,16 @@ export default function TopNav() {
 
   return (
     <header className="topnav-surface">
-      <Brand />
+      <div className="topnav-brand-zone">
+        <Brand />
+      </div>
 
-      <span className="topnav-group-divider hidden md:block" aria-hidden="true" />
-
-      {/* Área admin — nunca mostra a navegação de cliente (Marketplaces,
-          Produtos etc. levam a dados ilustrativos, sem sentido aqui dentro).
-          Só um indicador + volta pra plataforma. */}
-      {isAdminArea ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <nav className="topnav-admin-navigation hide-scrollbar mr-auto flex min-w-0 items-center gap-0.5 overflow-x-auto">
+      <div className="topnav-navigation-zone">
+        {/* Área admin — nunca mostra a navegação de cliente (Marketplaces,
+            Produtos etc. levam a dados ilustrativos, sem sentido aqui dentro).
+            Só um indicador + volta pra plataforma. */}
+        {isAdminArea ? (
+          <nav className="topnav-admin-navigation hide-scrollbar flex min-w-0 items-center gap-0.5 overflow-x-auto">
             {buildAdminNavItems(leadsCount, openTicketsCount).map((item) =>
               'disabled' in item ? (
                 <span
@@ -204,18 +204,10 @@ export default function TopNav() {
               ),
             )}
           </nav>
-        </div>
-      ) : (
-        <>
-          {/* Section nav — desktop only, all items on one line, no horizontal scroll */}
+        ) : (
           <DesktopNavigationDock pathname={location.pathname} />
-
-          {/* Spacer keeps actions pinned right on mobile, where nav is hidden */}
-          <div className="min-w-0 flex-1 md:hidden" />
-        </>
-      )}
-
-      <span className="topnav-group-divider hidden md:block" aria-hidden="true" />
+        )}
+      </div>
 
       {/* Actions cluster */}
       <div className="topnav-utilities flex shrink-0 items-center gap-1.5 md:gap-1">
