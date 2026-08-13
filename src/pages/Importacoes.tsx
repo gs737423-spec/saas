@@ -54,7 +54,7 @@ interface MarketplaceCardProps {
 }
 
 function MarketplaceCard({ name, status, loading, syncing, connectError, onConnect, onSync }: MarketplaceCardProps) {
-  const { backendUnreachable, statusErrorMessage } = useConnections()
+  const { backendUnreachable } = useConnections()
   const color = getMarketplaceColor(name)
   const Logo = MARKETPLACE_LOGO[name]
 
@@ -71,18 +71,13 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
 
   if (backendUnreachable || !status) {
     return (
-      <div className="glass-panel relative overflow-hidden rounded-2xl p-4 sm:p-5">
-        <div className="flex items-start gap-2 text-xs text-accent-rose">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {statusErrorMessage ? (
-            <span>{statusErrorMessage}</span>
-          ) : (
-            <span>
-              Backend indisponível — não foi possível consultar o status da conexão. Isso é esperado ao rodar
-              apenas <code className="font-mono">vite dev</code> localmente; use <code className="font-mono">vercel dev</code> ou
-              acesse o deploy na Vercel.
-            </span>
-          )}
+      <div className="connection-card glass-panel relative overflow-hidden rounded-md p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-lg"><Logo /></span>
+            <div><h3 className="text-sm font-semibold text-text-primary">{name}</h3><p className="text-[11px] text-text-muted">Status temporariamente indisponível</p></div>
+          </div>
+          <span className="rounded-full border border-border-subtle bg-bg-highlight px-2 py-1 text-[10px] font-semibold text-text-secondary">Requer atenção</span>
         </div>
       </div>
     )
@@ -113,7 +108,7 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
         {isConfigMissing && (
           <p className="mt-3 flex items-start gap-2 text-[12px] leading-relaxed text-text-secondary">
             <Settings className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
-            Configuração pendente — adicione as credenciais de {name} na Vercel para ativar a conexão real.
+            A integração ainda precisa ser configurada pela equipe responsável.
           </p>
         )}
 
@@ -150,14 +145,14 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
         {connectError && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-rose/25 bg-accent-rose/10 p-2.5 text-[11px] text-accent-rose">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span className="break-words">{connectError}</span>
+            <span>Não foi possível concluir a conexão. Tente novamente em alguns instantes.</span>
           </div>
         )}
 
         {status.lastError && (
           <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-rose/25 bg-accent-rose/10 p-2.5 text-[11px] text-accent-rose">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span className="break-words">{status.lastError}</span>
+            <span>A última sincronização não foi concluída. Tente sincronizar novamente.</span>
           </div>
         )}
 
@@ -240,28 +235,28 @@ function NotImplementedCard({ marketplace }: { marketplace: Marketplace }) {
             Em breve
           </span>
         </div>
-        <p className="mt-3 text-[12px] leading-relaxed text-text-secondary">
-          Integração ainda não implementada — sem OAuth real neste marketplace por enquanto.
-        </p>
-        <button disabled className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/40 px-3 py-2 text-xs font-semibold text-text-muted">
-          Em breve
-        </button>
+        <p className="mt-3 text-[12px] leading-relaxed text-text-secondary">Esta conexão ficará disponível em uma próxima etapa.</p>
       </div>
     </div>
   )
 }
 
 export default function Importacoes() {
-  const { logs } = useConnections()
+  const { logs, backendUnreachable } = useConnections()
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-2">
-          <Link2 className="h-4 w-4 text-accent-primary" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Conexões com Marketplaces</span>
-        </div>
+    <div className="enterprise-page">
+      <div className="flex items-end justify-between gap-2">
+        <div><h1 className="text-lg font-semibold text-text-primary">Conexões</h1><p className="mt-0.5 text-[12.5px] text-text-secondary">Gerencie os canais que alimentam sua operação.</p></div>
+        <Link2 className="h-4 w-4 text-accent-primary" />
       </div>
+
+      {backendUnreachable && (
+        <div className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-bg px-3 py-2.5 text-[12.5px] text-text-secondary" role="status">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-rose" />
+          <div><p className="font-semibold text-text-primary">Não foi possível verificar o status das conexões.</p><p className="mt-0.5 text-[11.5px] text-text-muted">Tente novamente em alguns instantes.</p></div>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MercadoLivreCard />

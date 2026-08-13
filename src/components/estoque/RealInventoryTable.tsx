@@ -210,13 +210,13 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           </div>
         </div>
 
-        <div className="workspace-inventory-toolbar enterprise-filter-surface mb-3.5 overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
+        <div className="workspace-inventory-toolbar enterprise-filter-surface mb-3.5 flex flex-wrap items-center gap-2 rounded-lg border border-border-subtle px-3 py-2">
           <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Curva</span>
           {(['A', 'B', 'C'] as const).map((c) => (
             <Chip key={c} active={filters.abc.has(c)} onClick={() => setFilters((f) => { const next = new Set(f.abc); if (next.has(c)) next.delete(c); else next.add(c); return { ...f, abc: next } })}>{c}</Chip>
           ))}
           <span className="mx-1 h-4 w-px bg-border-subtle" />
-          <Chip active={filters.onlyCritical} onClick={() => setFilters((f) => ({ ...f, onlyCritical: !f.onlyCritical }))}>Crítico</Chip>
+          <Chip active={filters.onlyCritical} onClick={() => setFilters((f) => ({ ...f, onlyCritical: !f.onlyCritical }))}>Cobertura muito baixa</Chip>
           <Chip active={filters.onlyStalled} onClick={() => setFilters((f) => ({ ...f, onlyStalled: !f.onlyStalled }))}>Parado</Chip>
           <Chip active={filters.onlyLowCoverage} onClick={() => setFilters((f) => ({ ...f, onlyLowCoverage: !f.onlyLowCoverage }))}>Cobertura baixa</Chip>
           <Chip active={filters.onlyExcess} onClick={() => setFilters((f) => ({ ...f, onlyExcess: !f.onlyExcess }))}>Excesso</Chip>
@@ -263,7 +263,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                 <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-border-subtle/50 pt-2.5 text-[11px]">
                   <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity}</p></div>
                   <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{item.soldQuantity ?? '—'}</p></div>
-                  <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d` : '—'}</p></div>
+                  <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}</p></div>
                   <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl((item.price ?? 0) * item.availableQuantity)}</p></div>
                   <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: giro.color }}>{giro.label}</p></div>
                 </div>

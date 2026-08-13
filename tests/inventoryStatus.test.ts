@@ -3,9 +3,11 @@ import { coveragePresentation, giroPresentation } from '../src/lib/inventoryStat
 
 describe('coverage presentation', () => {
   it.each([
-    [1, 'Crítico', 'danger'],
-    [10, 'Excesso', 'danger'],
+    [1, 'Baixa', 'danger'],
+    [14.9, 'Baixa', 'danger'],
+    [15, 'Saudável', 'good'],
     [17, 'Saudável', 'good'],
+    [44.9, 'Saudável', 'good'],
     [45, 'Excesso', 'danger'],
   ] as const)('maps %s days to %s', (days, label, tone) => {
     expect(coveragePresentation(days)).toMatchObject({ label, tone })
@@ -14,8 +16,8 @@ describe('coverage presentation', () => {
 
 describe('giro presentation', () => {
   it.each([
-    [5, 'Alto', 'danger'],
-    [10, 'Normal', 'good'],
+    [5, 'Alto', 'good'],
+    [10, 'Normal', 'neutral'],
     [25, 'Baixo', 'danger'],
     [45, 'Parado', 'danger'],
   ] as const)('maps %s coverage days to %s', (days, label, tone) => {

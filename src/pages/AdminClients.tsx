@@ -36,14 +36,6 @@ const statusLabel: Record<string, { label: string; variant: StatusBadgeVariant }
   suspenso: { label: 'Suspenso', variant: 'danger' },
 }
 
-// CNPJ mockado, determinístico por empresa — só usado quando a empresa
-// ainda não tem CNPJ real cadastrado, pra não mostrar um traço vazio.
-function mockCnpjDigits(seed: string): string {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  return String(h).padStart(14, '0').slice(0, 14)
-}
-
 // Aba "Clientes" — única tela com gestão de empresas (tabela, busca, criação).
 // A Dashboard (Admin.tsx) não mostra mais nada disso.
 export default function AdminClients() {
@@ -192,7 +184,7 @@ export default function AdminClients() {
       <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
-        <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).</p>
+        <p className="mt-1.5 text-sm text-text-muted">A configuração de dados administrativos ainda não está disponível.</p>
       </div>
     )
   }
@@ -225,8 +217,17 @@ export default function AdminClients() {
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
-      <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6">
+      <div className="enterprise-toolbar flex flex-wrap items-center gap-2 rounded-lg border border-border-subtle p-2">
+        <div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+          <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar empresa..."
+            className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-text-primary placeholder:text-text-secondary focus:outline-none"
+          />
+        </div>
         <button
           type="button"
           onClick={() => setShowCreate(true)}
@@ -260,16 +261,6 @@ export default function AdminClients() {
         </div>
       )}
 
-      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 sm:max-w-xs">
-        <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar empresa..."
-          className="min-w-0 flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-muted/45 focus:outline-none"
-        />
-      </div>
-
       {filtered.length === 0 ? (
         <EmptyState
           icon={Users2}
@@ -279,7 +270,7 @@ export default function AdminClients() {
       ) : (
         <div className="glass-panel overflow-hidden rounded-xl">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="enterprise-table w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-border-subtle text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                   <SortableHeader label="Empresa" sortKeyValue="name" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
@@ -538,7 +529,7 @@ function CompanyRow({ company, onToggleStatus }: { company: Company; onToggleSta
   }, [menuOpen])
 
   const st = statusLabel[company.status] ?? statusLabel.ativo
-  const cnpjDisplay = company.cnpj ? maskCnpj(company.cnpj) : maskCnpj(mockCnpjDigits(company.id))
+  const cnpjDisplay = company.cnpj ? maskCnpj(company.cnpj) : 'CNPJ não informado'
 
   return (
     <tr className="transition-colors hover:bg-white/[0.03]">

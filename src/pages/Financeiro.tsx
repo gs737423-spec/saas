@@ -64,7 +64,7 @@ export default function Financeiro() {
   }
 
   return (
-    <div className="space-y-2 sm:space-y-2.5">
+    <div className="enterprise-page">
       <FinanceHeader
         marketplaceFilter={marketplaceFilter}
         onMarketplaceFilterChange={setMarketplaceFilter}
@@ -75,10 +75,6 @@ export default function Financeiro() {
       <div className="motion-block-in">
         <FinanceKPIs overview={real.overview} />
       </div>
-
-      <p className="text-[11px] text-text-muted">
-        Valor após os descontos dos canais de venda. Não representa lucro e não inclui impostos próprios, folha, aluguel, mídia, logística interna ou demais despesas da empresa.
-      </p>
 
       <div className="motion-block-in motion-block-in-2">
         <FinancialComposition overview={real.overview} />

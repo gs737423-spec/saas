@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
-  Settings, ShieldCheck, Loader2, Building, UserPlus, AlertTriangle, KeyRound, Link2Off, ArrowUpRight,
+  Settings, ShieldCheck, Loader2, Building, UserPlus, AlertTriangle, Link2Off, ArrowUpRight,
   PackageCheck, CircleDollarSign, Inbox,
 } from 'lucide-react'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
-import { LogoMercadoLivre, LogoShopee, LogoAmazon } from '@/site/logos'
 import { useLeadsCount } from '@/lib/useLeadsCount'
 import { usePeriod } from '@/contexts/PeriodContext'
 
@@ -17,10 +16,9 @@ interface Company {
   status: string
 }
 
-// Dashboard estratégico do Painel Admin. Bloco 1 é 100% dado real (mesma
-// fonte que a aba Clientes). Blocos 2 e 3 ainda não têm telemetria de API
-// nem alertas automáticos no banco — ficam com badge "exemplo" explícito
-// em vez de fingir ser real (ver CORE-RULES #3 evidência antes de afirmação).
+// Dashboard estratégico do Painel Admin. Os indicadores numéricos usam dados
+// reais. Recursos ainda sem telemetria são declarados como indisponíveis e
+// nunca recebem valores simulados.
 export default function Admin() {
   const navigate = useNavigate()
   const [companies, setCompanies] = useState<Company[]>([])
@@ -28,7 +26,6 @@ export default function Admin() {
   const [unauthorized, setUnauthorized] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [configMissing, setConfigMissing] = useState(false)
-  const [missingConfig, setMissingConfig] = useState<string[]>([])
   const [stats, setStats] = useState<{ ordersCount: number; totalGmv: number } | null>(null)
   const leadsCount = useLeadsCount()
   const { period } = usePeriod()
@@ -49,9 +46,8 @@ export default function Admin() {
         return
       }
       if (res.status === 503) {
-        const body = (await res.json().catch(() => null)) as { error?: unknown; missing?: unknown } | null
+        const body = (await res.json().catch(() => null)) as { error?: unknown } | null
         if (body?.error === 'config_missing') {
-          setMissingConfig(Array.isArray(body.missing) ? body.missing.filter((name): name is string => typeof name === 'string') : [])
           setConfigMissing(true)
         } else {
           setLoadError(true)
@@ -103,12 +99,8 @@ export default function Admin() {
       <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
         <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
         <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
-        <p className="mt-1.5 text-sm text-text-muted">
-          {missingConfig.length > 0
-            ? `O servidor não recebeu: ${missingConfig.join(' / ')}.`
-            : 'Não foi possível validar as variáveis do Supabase no servidor.'}
-        </p>
-        <p className="mt-2 text-xs text-text-muted">A service role deve ficar somente nas variáveis de produção da Vercel; valores nunca são exibidos aqui.</p>
+        <p className="mt-1.5 text-sm text-text-muted">A configuração de dados administrativos ainda não está disponível.</p>
+        <p className="mt-2 text-xs text-text-muted">Procure o responsável pela implantação para concluir esta etapa.</p>
       </div>
     )
   }
@@ -147,7 +139,7 @@ export default function Admin() {
   const gmvLabel = stats ? `R$ ${stats.totalGmv.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` : '—'
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8">
+    <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6">
       {/* Banner do funil comercial — leva pra Solicitações, contagem real
           da tabela `leads` (ver migration 013). */}
       {leadsCount > 0 && (
@@ -177,24 +169,16 @@ export default function Admin() {
         <KpiCard icon={CircleDollarSign} color="amber" value={gmvLabel} label="GMV total (todos os clientes)" />
       </div>
 
-      {/* Bloco 2 — Saúde das integrações */}
+      {/* Sem telemetria consolidada, o painel explicita a ausência em vez de simular status. */}
       <div className="glass-panel rounded-xl p-5 transition-all duration-200 hover:border-border-active">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde das Integrações</h3>
-          <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[9px] font-semibold uppercase text-text-muted" title="Ainda não existe telemetria real de API no banco">exemplo</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <IntegrationHealth Logo={LogoMercadoLivre} name="Mercado Livre" status="online" />
-          <IntegrationHealth Logo={LogoShopee} name="Shopee" status="online" />
-          <IntegrationHealth Logo={LogoAmazon} name="Amazon" status="instavel" />
-        </div>
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Saúde das Integrações</h3>
+        <p className="mt-2 text-sm text-text-secondary">A telemetria consolidada das integrações ainda não está disponível.</p>
       </div>
 
       {/* Bloco 3 — Alertas operacionais */}
       <div className="glass-panel rounded-xl p-5 transition-all duration-200 hover:border-border-active">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Alertas Operacionais</h3>
-          <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[9px] font-semibold uppercase text-text-muted" title="Combina 1 alerta real com exemplos de alertas que ainda não existem no banco">real + exemplo</span>
         </div>
         <div className="flex flex-col divide-y divide-border-subtle">
           {withoutAccess > 0 && (
@@ -206,20 +190,7 @@ export default function Admin() {
               <span className="flex items-center gap-1 text-[11px] font-medium text-accent-primary">Ver <ArrowUpRight className="h-3 w-3" /></span>
             </Link>
           )}
-          <div className="flex items-center justify-between gap-3 py-2.5 opacity-60">
-            <span className="flex items-center gap-2.5 text-[13px] text-text-secondary">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-amber/15"><KeyRound className="h-3.5 w-3.5 text-accent-amber" /></span>
-              3 clientes com tokens expirados
-            </span>
-            <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 py-2.5 opacity-60">
-            <span className="flex items-center gap-2.5 text-[13px] text-text-secondary">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-amber/15"><AlertTriangle className="h-3.5 w-3.5 text-accent-amber" /></span>
-              2 clientes sem marketplace vinculado
-            </span>
-            <span className="rounded-full border border-border-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-muted">exemplo</span>
-          </div>
+          {withoutAccess === 0 && <p className="py-2 text-sm text-text-secondary">Nenhuma pendência operacional disponível.</p>}
         </div>
       </div>
     </div>
@@ -240,36 +211,11 @@ function KpiCard({ icon: Icon, color, value, label, onClick }: { icon: typeof Bu
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={`glass-panel flex flex-col items-start gap-2 rounded-xl p-4 text-left transition-all duration-200 hover:border-border-active hover:-translate-y-0.5 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`enterprise-kpi flex flex-col items-start gap-1.5 rounded-lg p-3 text-left transition-colors hover:border-border-active ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
     >
       <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${colorMap[color]}`}><Icon className="h-4 w-4" /></span>
-      <p className="text-2xl font-bold tabular-nums text-text-primary">{value}</p>
+      <p className="text-xl font-bold tabular-nums text-text-primary">{value}</p>
       <p className="text-[11px] text-text-muted">{label}</p>
     </button>
-  )
-}
-
-const healthStyle = {
-  online: { label: 'Online', color: 'text-accent-emerald', dot: 'bg-accent-emerald' },
-  instavel: { label: 'Instável', color: 'text-accent-amber', dot: 'bg-accent-amber' },
-  offline: { label: 'Offline', color: 'text-accent-rose', dot: 'bg-accent-rose' },
-} as const
-
-function IntegrationHealth({ Logo, name, status }: { Logo: () => React.JSX.Element; name: string; status: keyof typeof healthStyle }) {
-  const st = healthStyle[status]
-  return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-bg-primary/30 p-3.5">
-      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full [&>img]:h-9 [&>img]:w-9 [&>svg]:h-9 [&>svg]:w-9"><Logo /></div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-text-primary">{name}</p>
-        <span className={`flex items-center gap-1.5 text-[11px] font-medium ${st.color}`}>
-          <span className="relative flex h-1.5 w-1.5">
-            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${st.dot} opacity-60`} />
-            <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${st.dot}`} />
-          </span>
-          {st.label}
-        </span>
-      </div>
-    </div>
   )
 }

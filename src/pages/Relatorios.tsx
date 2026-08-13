@@ -1,223 +1,167 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Printer, Loader2, FileBarChart2 } from 'lucide-react'
+import { Boxes, FileBarChart2, LayoutDashboard, Loader2, PackageSearch, Printer } from 'lucide-react'
 import { usePeriod } from '@/contexts/PeriodContext'
-import type { ExecutiveSummaryLine, ExecutiveAlert } from '@/data/mockData'
-import KPICards from '@/components/dashboard/KPICards'
-import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
-import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
+import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardSummary } from '@/server/integrations/types'
-import type { DashboardProductsResponse } from '@/server/dashboardProducts'
-import type { OverviewKpi } from '@/data/mockData'
+import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
 
-const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+type ReportType = 'executive' | 'products' | 'inventory'
 
-// Selo "dado real" só quando é real de verdade — em Modo Demonstração
-// (source: 'demo') fica sem selo, igual Dashboard.tsx faz (ver comentário
-// lá: marcar demo como "dado real" seria mentira pro cliente que exportar
-// esse relatório).
-function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
-  const tag = s.source === 'real' ? 'dado real' : undefined
-  return [
-    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag, tone: 'cyan', hero: true },
-    { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag, tone: 'blue' },
-    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag, tone: 'violet' },
-    { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag, tone: 'neutral' },
-  ]
-}
+const reportTypes: { key: ReportType; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: 'executive', label: 'Visão executiva', icon: LayoutDashboard },
+  { key: 'products', label: 'Produtos', icon: PackageSearch },
+  { key: 'inventory', label: 'Estoque', icon: Boxes },
+]
 
+const brl = (value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const LOW_STOCK_THRESHOLD = 10
-
-const toneColor: Record<string, string> = {
-  neutral: '#9EB3C9',
-  positive: '#3BE38E',
-  warning: '#FFC95A',
-  danger: '#FF5E7D',
-}
-
-function SlideShell({ children, index, total }: { children: React.ReactNode; index: number; total: number }) {
-  return (
-    <div className="report-slide glass-panel relative flex min-h-[520px] w-full flex-col rounded-2xl p-6 sm:p-10">
-      {children}
-      <span className="report-slide__page absolute bottom-4 right-6 text-[11px] text-text-muted">
-        {index + 1} / {total}
-      </span>
-    </div>
-  )
-}
 
 export default function Relatorios() {
   const { period } = usePeriod()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [products, setProducts] = useState<DashboardProductsResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [slide, setSlide] = useState(0)
+  const [loadError, setLoadError] = useState(false)
+  const [reportType, setReportType] = useState<ReportType>('executive')
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setLoadError(false)
     Promise.all([
       apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`),
       apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`),
-    ]).then(([s, p]) => {
-      if (!cancelled) {
-        setSummary(s)
-        setProducts(p)
-        setLoading(false)
-      }
+    ]).then(([summaryResponse, productsResponse]) => {
+      if (cancelled) return
+      setSummary(summaryResponse)
+      setProducts(productsResponse)
+      setLoadError(!summaryResponse || !productsResponse)
+      setLoading(false)
     })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [period.days])
 
-  const isReal = summary?.source === 'real' || summary?.source === 'demo'
-  const kpis = isReal ? buildRealKpis(summary!) : undefined
-
-  const executiveLines: ExecutiveSummaryLine[] = useMemo(() => {
-    if (!isReal || !summary) return []
-    const items = products?.items ?? []
-    const lowStock = items.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
-    const topProduct = [...items].sort((a, b) => b.revenue - a.revenue)[0]
-    const withoutCost = items.filter((p) => p.costPrice === null).length
-
-    const lines: ExecutiveSummaryLine[] = []
-    lines.push({
-      text: summary.grossRevenueChangePct !== null
-        ? `Faturamento pago no período: R$ ${brl(summary.grossRevenue)}, ${summary.grossRevenueChangePct >= 0 ? 'crescimento' : 'queda'} de ${Math.abs(summary.grossRevenueChangePct).toFixed(1)}% vs período anterior.`
-        : `Faturamento pago no período: R$ ${brl(summary.grossRevenue)} (sem período anterior pra comparar ainda).`,
-      tone: summary.grossRevenueChangePct !== null && summary.grossRevenueChangePct < 0 ? 'warning' : 'neutral',
-    })
-    if (topProduct) {
-      lines.push({ text: `Produto que mais faturou: ${topProduct.name} (R$ ${brl(topProduct.revenue)}, ${topProduct.units} unidades).`, tone: 'neutral' })
-    }
-    lines.push({
-      text: `${lowStock.length} ${lowStock.length === 1 ? 'produto está' : 'produtos estão'} com estoque baixo (≤${LOW_STOCK_THRESHOLD} unidades).`,
-      tone: lowStock.length > 0 ? 'danger' : 'positive',
-    })
-    if (withoutCost > 0) {
-      lines.push({ text: `${withoutCost} ${withoutCost === 1 ? 'produto sem' : 'produtos sem'} custo cadastrado — margem incompleta em Produtos.`, tone: 'neutral' })
-    }
-    return lines
-  }, [isReal, summary, products])
-
-  const executiveAlerts: ExecutiveAlert[] = useMemo(() => {
-    if (!isReal) return []
-    const items = products?.items ?? []
-    const alerts: ExecutiveAlert[] = []
-    items
-      .filter((p) => p.stock === 0)
-      .slice(0, 4)
-      .forEach((p) => alerts.push({ id: `stock-${p.id}`, rule: 'Estoque zerado', message: `${p.name} está sem estoque disponível.`, severity: 'danger', sku: p.sku ?? p.id }))
-    items
-      .filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
-      .slice(0, 4)
-      .forEach((p) => alerts.push({ id: `low-${p.id}`, rule: 'Estoque baixo', message: `${p.name} tem só ${p.stock} unidade(s) disponíveis.`, severity: 'warning', sku: p.sku ?? p.id }))
-    return alerts.slice(0, 6)
-  }, [isReal, products])
-
-  const summaryLines = executiveLines
-  const alerts = executiveAlerts
+  const productItems = useMemo(() => products?.items ?? [], [products])
+  const topProducts = useMemo(
+    () => [...productItems].sort((a, b) => b.revenue - a.revenue).slice(0, 8),
+    [productItems],
+  )
+  const lowStockProducts = useMemo(
+    () => productItems.filter((product) => product.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock),
+    [productItems],
+  )
 
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Carregando...
+        <Loader2 className="h-4 w-4 animate-spin" /> Carregando relatórios...
       </div>
     )
   }
 
-  if (!isReal) {
-    return <ConnectMarketplacePrompt icon={FileBarChart2} title="Conecte um marketplace pra gerar o relatório" description="O relatório executivo usa faturamento, produtos e estoque reais — conecte e sincronize o Mercado Livre primeiro." />
+  const hasSupportedData = summary && (summary.source === 'real' || summary.source === 'demo')
+  if (!hasSupportedData) {
+    return <ConnectMarketplacePrompt icon={FileBarChart2} title="Conecte um marketplace pra gerar relatórios" description="Os relatórios usam somente faturamento, produtos e estoque disponíveis na plataforma." />
   }
 
-  const slides = [
-    <SlideShell key="cover" index={0} total={5}>
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <MKTOnlineLogo mode="symbol" size="lg" />
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary">Relatório executivo</h1>
-        <p className="text-sm text-text-secondary">Período: {period.label}</p>
-        <p className="text-xs text-text-muted">Gerado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-      </div>
-    </SlideShell>,
-
-    <SlideShell key="kpis" index={1} total={5}>
-      <h2 className="mb-4 text-lg font-semibold text-text-primary">Indicadores do período</h2>
-      <KPICards period={period} kpis={kpis} />
-    </SlideShell>,
-
-    <SlideShell key="gmv" index={2} total={5}>
-      <h2 className="mb-4 text-lg font-semibold text-text-primary">Faturamento por marketplace</h2>
-      <RealMarketplaceBreakdown />
-    </SlideShell>,
-
-    <SlideShell key="summary" index={3} total={5}>
-      <h2 className="mb-4 text-lg font-semibold text-text-primary">Resumo executivo</h2>
-      <ul className="flex flex-col gap-3">
-        {summaryLines.map((line, i) => (
-          <li key={i} className="flex items-start gap-2.5 text-sm text-text-secondary">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: toneColor[line.tone] }} />
-            {line.text}
-          </li>
-        ))}
-      </ul>
-    </SlideShell>,
-
-    <SlideShell key="alerts" index={4} total={5}>
-      <h2 className="mb-4 text-lg font-semibold text-text-primary">Alertas prioritários</h2>
-      <ul className="flex flex-col gap-3">
-        {alerts.map((a) => (
-          <li key={a.id} className="rounded-lg border border-border-subtle px-3 py-2.5">
-            <p className="text-[13px] font-medium text-text-primary">{a.rule}</p>
-            <p className="mt-0.5 text-xs text-text-muted">{a.message}</p>
-          </li>
-        ))}
-        {alerts.length === 0 && <p className="text-sm text-text-muted">Nenhum alerta no momento.</p>}
-      </ul>
-    </SlideShell>,
-  ]
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight') setSlide((s) => Math.min(s + 1, slides.length - 1))
-      if (e.key === 'ArrowLeft') setSlide((s) => Math.max(s - 1, 0))
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [slides.length])
-
   return (
-    <div className="report-viewer">
-      <div className="report-toolbar mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSlide((s) => Math.max(s - 1, 0))}
-            disabled={slide === 0}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle text-text-secondary hover:text-text-primary disabled:opacity-30"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs text-text-muted">Slide {slide + 1} de {slides.length}</span>
-          <button
-            onClick={() => setSlide((s) => Math.min(s + 1, slides.length - 1))}
-            disabled={slide === slides.length - 1}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle text-text-secondary hover:text-text-primary disabled:opacity-30"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+    <div className="report-center">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-text-primary">Relatórios</h1>
+          <p className="mt-0.5 text-[13px] text-text-secondary">Consolide resultados, compare períodos e analise sua operação.</p>
         </div>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-1.5 rounded-lg border border-border-default bg-accent-blue/10 px-3 py-1.5 text-xs font-medium text-accent-blue hover:bg-accent-blue/20"
-        >
-          <Printer className="h-3.5 w-3.5" /> Imprimir / exportar PDF
+        <button type="button" onClick={() => window.print()} className="report-toolbar control-inactive motion-chip inline-flex h-9 items-center gap-1.5 self-start rounded-lg border px-3 text-xs font-semibold sm:self-auto">
+          <Printer className="h-3.5 w-3.5" /> Imprimir relatório
         </button>
+      </header>
+
+      <div className="enterprise-toolbar enterprise-filter-surface rounded-lg border border-border-subtle" aria-label="Tipos de relatório">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Relatório</span>
+        {reportTypes.map(({ key, label, icon: Icon }) => (
+          <button key={key} type="button" onClick={() => setReportType(key)} className={`motion-chip inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-[11.5px] font-semibold ${reportType === key ? 'control-active' : 'control-inactive'}`} aria-pressed={reportType === key}>
+            <Icon className="h-3.5 w-3.5" /> {label}
+          </button>
+        ))}
+        <span className="ml-auto text-[11px] text-text-muted">Período: <strong className="font-semibold text-text-secondary">{period.label}</strong></span>
       </div>
 
-      <div className="report-onscreen">{slides[slide]}</div>
-      <div className="report-print">{slides}</div>
+      {loadError && (
+        <div className="rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-[12px] text-text-secondary">
+          Parte das informações não pôde ser atualizada. Os blocos disponíveis continuam abaixo.
+        </div>
+      )}
+
+      {reportType === 'executive' && <ExecutiveReport summary={summary} productItems={productItems} periodLabel={period.label} />}
+      {reportType === 'products' && <ProductsReport products={topProducts} />}
+      {reportType === 'inventory' && <InventoryReport products={lowStockProducts} />}
     </div>
   )
+}
+
+function ExecutiveReport({ summary, productItems, periodLabel }: { summary: DashboardSummary; productItems: DashboardProduct[]; periodLabel: string }) {
+  const lowStock = productItems.filter((product) => product.stock <= LOW_STOCK_THRESHOLD).length
+  const withoutCost = productItems.filter((product) => product.costPrice === null).length
+  const metrics = [
+    ['Faturamento bruto', `R$ ${brl(summary.grossRevenue)}`],
+    ['Pedidos', summary.ordersCount.toLocaleString('pt-BR')],
+    ['Ticket médio', `R$ ${brl(summary.averageTicket)}`],
+    ['Produtos com estoque baixo', lowStock.toLocaleString('pt-BR')],
+  ]
+  return (
+    <>
+      <section className="report-center__section app-panel-section enterprise-section rounded-xl">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-text-primary">Visão executiva</h2>
+            <p className="text-[11px] text-text-muted">{periodLabel} · fonte {summary.source === 'real' ? 'sincronizada' : 'de demonstração'}</p>
+          </div>
+        </div>
+        <div className="report-center__metric-grid">
+          {metrics.map(([label, value]) => <Metric key={label} label={label} value={value} />)}
+        </div>
+        {withoutCost > 0 && <p className="mt-3 text-[11.5px] text-text-secondary">{withoutCost} {withoutCost === 1 ? 'produto está sem custo cadastrado' : 'produtos estão sem custo cadastrado'}; análises de margem podem ficar incompletas.</p>}
+      </section>
+      <section className="report-center__section">
+        <RealMarketplaceBreakdown />
+      </section>
+    </>
+  )
+}
+
+function ProductsReport({ products }: { products: DashboardProduct[] }) {
+  return (
+    <ReportTableSection title="Produtos por faturamento" subtitle="Dados disponíveis no período selecionado." products={products} empty="Nenhum produto disponível para este período." />
+  )
+}
+
+function InventoryReport({ products }: { products: DashboardProduct[] }) {
+  return (
+    <ReportTableSection title="Estoque prioritário" subtitle={`Produtos com até ${LOW_STOCK_THRESHOLD} unidades disponíveis.`} products={products} empty="Nenhum produto com estoque baixo no período." />
+  )
+}
+
+function ReportTableSection({ title, subtitle, products, empty }: { title: string; subtitle: string; products: DashboardProduct[]; empty: string }) {
+  return (
+    <section className="report-center__section glass-panel enterprise-section rounded-xl">
+      <div className="mb-3">
+        <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+        <p className="text-[11.5px] text-text-muted">{subtitle}</p>
+      </div>
+      {products.length === 0 ? <p className="py-8 text-center text-sm text-text-muted">{empty}</p> : (
+        <div className="overflow-x-auto rounded-lg border border-border-subtle">
+          <table className="enterprise-table w-full min-w-[640px] text-left text-sm">
+            <thead><tr className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary"><th className="px-3 py-2">Produto</th><th className="px-3 py-2">SKU</th><th className="px-3 py-2">Marketplace</th><th className="px-3 py-2 text-right">Faturamento</th><th className="px-3 py-2 text-right">Estoque</th></tr></thead>
+            <tbody>{products.map((product) => <tr key={product.id} className="border-t border-border-subtle"><td className="max-w-[320px] truncate px-3 py-2 font-medium text-text-primary">{product.name}</td><td className="px-3 py-2 font-mono text-[11px] text-text-muted">{product.sku ?? '—'}</td><td className="px-3 py-2 text-text-secondary">{product.marketplace}</td><td className="px-3 py-2 text-right font-mono text-text-primary">R$ {brl(product.revenue)}</td><td className="px-3 py-2 text-right font-mono text-text-secondary">{product.stock}</td></tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-lg border border-border-subtle bg-bg-card px-3 py-2.5"><p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{label}</p><p className="mt-1 font-mono text-lg font-bold text-text-primary">{value}</p></div>
 }

@@ -8,8 +8,8 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
   const sorted = [...items].sort((a, b) => b.netValue - a.netValue)
 
   return (
-    <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
-      <div className="mb-4">
+    <div className="glass-panel motion-panel enterprise-section rounded-2xl">
+      <div className="mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Comparativo por Marketplace</h3>
         <p className="mt-0.5 text-xs text-text-muted">{sorted.length} {sorted.length === 1 ? 'canal' : 'canais'} · faturamento, estornos e valor líquido estimado</p>
       </div>
@@ -49,10 +49,10 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
           <table className="enterprise-table w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-                <th className="pb-3 pr-4 font-semibold">Marketplace</th>
-                <th className="pb-3 pr-4 text-center font-semibold">Faturamento bruto</th>
-                <th className="pb-3 pr-4 text-center font-semibold">Estornos e devoluções</th>
-                <th className="pb-3 text-center font-semibold">Valor líquido estimado</th>
+                <th className="pb-2 pr-4 font-semibold">Marketplace</th>
+                <th className="pb-2 pr-4 text-center font-semibold">Faturamento bruto</th>
+                <th className="pb-2 pr-4 text-center font-semibold">Estornos e devoluções</th>
+                <th className="pb-2 text-center font-semibold">Valor líquido estimado</th>
               </tr>
             </thead>
             <tbody>
@@ -60,15 +60,15 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
                 const brand = getMarketplaceColor(m.marketplace)
                 return (
                   <tr key={m.marketplace} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
-                    <td className="py-3 pr-4">
+                    <td className="py-2 pr-4">
                       <span className="inline-flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full" style={{ background: brand }} />
                         <span className="font-medium text-text-primary">{m.marketplace}</span>
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
-                    <td className="py-3 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
-                    <td className="py-3 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
+                    <td className="py-2 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
+                    <td className="py-2 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
+                    <td className="py-2 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
                   </tr>
                 )
               })}

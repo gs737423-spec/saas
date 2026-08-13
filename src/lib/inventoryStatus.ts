@@ -7,13 +7,13 @@ export interface InventoryStatusPresentation<TLabel extends string> {
   background: string
 }
 
-export type CoveragePresentationLabel = 'Crítico' | 'Excesso' | 'Saudável' | 'Sem venda'
+export type CoveragePresentationLabel = 'Baixa' | 'Excesso' | 'Saudável' | 'Sem venda'
 export type GiroPresentationLabel = 'Alto' | 'Normal' | 'Baixo' | 'Parado' | 'Parado crítico'
 
 const PRESENTATION = {
-  good: { color: 'var(--color-success)', background: 'var(--color-success-bg)' },
-  danger: { color: 'var(--color-danger)', background: 'var(--color-danger-bg)' },
-  neutral: { color: 'var(--color-text-tertiary)', background: 'var(--color-bg-highlight)' },
+  good: { color: 'var(--status-good-text)', background: 'var(--status-good-bg)' },
+  danger: { color: 'var(--status-danger-text)', background: 'var(--status-danger-bg)' },
+  neutral: { color: 'var(--status-neutral-text)', background: 'var(--status-neutral-bg)' },
 } as const
 
 function status<TLabel extends string>(label: TLabel, tone: InventoryTone): InventoryStatusPresentation<TLabel> {
@@ -24,8 +24,7 @@ function status<TLabel extends string>(label: TLabel, tone: InventoryTone): Inve
 // a apresentação: verde = faixa boa; vermelho = risco ou capital parado.
 export function coveragePresentation(coverageDays: number | null): InventoryStatusPresentation<CoveragePresentationLabel> {
   if (coverageDays === null) return status('Sem venda', 'neutral')
-  if (coverageDays < 7) return status('Crítico', 'danger')
-  if (coverageDays < 15) return status('Excesso', 'danger')
+  if (coverageDays < 15) return status('Baixa', 'danger')
   if (coverageDays < 45) return status('Saudável', 'good')
   return status('Excesso', 'danger')
 }
@@ -38,9 +37,9 @@ export function giroPresentation(
   if (!soldQuantity || soldQuantity <= 0) {
     return status(availableQuantity > 0 ? 'Parado crítico' : 'Parado', 'danger')
   }
-  if (coverageDays === null) return status('Normal', 'good')
-  if (coverageDays < 7) return status('Alto', 'danger')
-  if (coverageDays < 20) return status('Normal', 'good')
+  if (coverageDays === null) return status('Normal', 'neutral')
+  if (coverageDays < 7) return status('Alto', 'good')
+  if (coverageDays < 20) return status('Normal', 'neutral')
   if (coverageDays < 45) return status('Baixo', 'danger')
   return status('Parado', 'danger')
 }

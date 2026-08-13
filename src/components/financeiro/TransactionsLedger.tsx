@@ -50,7 +50,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
   }, [transactions, activeTypes, query])
 
   return (
-    <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
+    <div className="glass-panel motion-panel enterprise-section rounded-2xl">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -66,8 +66,8 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
       </button>
 
       {open && (
-        <div className="mt-4">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
@@ -75,8 +75,8 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                 className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
-                    ? { background: '#3A8DFF18', color: '#3A8DFF' }
-                    : { background: 'transparent', color: 'var(--text-muted)' }
+                    ? { background: 'var(--light-charcoal, var(--color-primary-600))', color: 'var(--light-on-charcoal, white)' }
+                    : { background: 'var(--color-bg-highlight)', color: 'var(--color-text-secondary)' }
                 }
               >
                 Todos
@@ -89,8 +89,8 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                   className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                   style={
                     activeTypes.has(type)
-                      ? { background: `${typeTone[type]}18`, color: typeTone[type] }
-                      : { background: 'transparent', color: 'var(--text-muted)' }
+                      ? { background: 'var(--light-charcoal, var(--color-primary-600))', color: 'var(--light-on-charcoal, white)' }
+                      : { background: 'var(--color-bg-highlight)', color: 'var(--color-text-secondary)' }
                   }
                 >
                   {type}
