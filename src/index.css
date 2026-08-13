@@ -120,13 +120,14 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Enterprise neutral: sistema único do light mode. */
-  --light-bg-app: #E9EDF2;
-  --light-surface-section: #F3F5F7;
-  --light-surface-card: #FAFBFC;
+  /* Soft slate: profundidade por rampa tonal, sem branco como base. */
+  --light-bg-app: #E3E8EE;
+  --light-surface-section: #EEF2F6;
+  --light-surface-card: #F7F9FB;
   --light-surface-raised: #FFFFFF;
-  --light-surface-muted: #E3E8ED;
-  --light-surface-hover: #F6F8FA;
+  --light-surface-muted: #E8EDF2;
+  --light-surface-subtle: #F2F5F8;
+  --light-surface-hover: #F2F5F8;
   --light-surface-selected: #EEF3FC;
 
   /* App → section → card → row → elevated: branco nunca é o padrão. */
@@ -138,18 +139,18 @@
   --color-bg-elevated: var(--light-surface-raised);
   --color-bg-header: #232B34;
 
-  --light-border-subtle: #DCE2E7;
-  --light-border-default: #D0D7DE;
-  --light-border-strong: #BCC6CF;
+  --light-border-subtle: #CDD5DE;
+  --light-border-default: #BEC8D2;
+  --light-border-strong: #BEC8D2;
   --color-border-subtle: var(--light-border-subtle);
   --color-border-default: var(--light-border-default);
   --color-border-strong: var(--light-border-strong);
   --color-border-active: #B8CAF2;
 
-  --color-text-primary: #17202A;
-  --color-text-secondary: #465463;
-  --color-text-tertiary: #6B7785;
-  --color-text-muted: #8B96A1;
+  --color-text-primary: #18212B;
+  --color-text-secondary: #556473;
+  --color-text-tertiary: #687786;
+  --color-text-muted: #7C8997;
   --color-text-disabled: #ADB6C2;
 
   --color-primary-700: #2458C7;
@@ -170,11 +171,11 @@
   --color-warning-bg: #FFF5E5;
   --color-warning-border: #F2D7A6;
 
-  --color-chart-grid: #CFCAC3;
-  --color-chart-axis: #737C84;
+  --color-chart-grid: #CDD5DE;
+  --color-chart-axis: #7C8997;
 
   --shadow-none: none;
-  --shadow-sm: 0 1px 2px rgba(20, 30, 40, 0.035);
+  --shadow-sm: 0 1px 2px rgba(24, 33, 43, 0.03);
   --shadow-floating: 0 8px 24px rgba(18, 24, 31, 0.13);
 }
 
@@ -584,7 +585,7 @@ body {
   /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
   :root[data-theme='light'] .overview-marketplace-row,
   :root[data-theme='light'] .overview-marketplace-row-lead {
-    background: var(--light-surface-raised);
+    background: var(--color-bg-card);
     border-color: var(--color-border-subtle);
     box-shadow: var(--shadow-none);
   }
@@ -747,11 +748,11 @@ body {
       isolation: isolate;
       border: 1px solid rgba(151, 177, 198, 0.14);
       border-radius: 14px;
-      background: linear-gradient(110deg, #141D26 0%, #1A2632 46%, #17212B 72%, #141D26 100%);
+      background: linear-gradient(115deg, #111A23 0%, #16212C 42%, #1A2733 58%, #111A23 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.065),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.14),
-        0 10px 28px rgba(24, 34, 44, 0.14);
+        inset 0 1px 0 rgba(255, 255, 255, 0.075),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        0 8px 20px rgba(18, 30, 41, 0.16);
       transform: translateX(-50%);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -762,7 +763,10 @@ body {
       z-index: 0;
       content: '';
       pointer-events: none;
-      background: radial-gradient(circle at 35% -50%, rgba(120, 166, 220, 0.13), transparent 46%);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 36%),
+        radial-gradient(circle at 30% -55%, rgba(139, 176, 214, 0.15), transparent 46%),
+        radial-gradient(circle at 92% 130%, rgba(0, 0, 0, 0.15), transparent 55%);
     }
     .topnav-surface::after {
       position: absolute;
@@ -786,7 +790,7 @@ body {
       --color-bg-elevated: rgba(255, 255, 255, 0.045);
       --color-accent-primary: #FFFFFF;
       --color-accent-blue: #FFFFFF;
-      background: linear-gradient(110deg, #1B2530 0%, #253441 46%, #202C38 72%, #1B2530 100%);
+      background: linear-gradient(115deg, #1A2430 0%, #223241 42%, #263747 58%, #1C2733 100%);
     }
     .topnav-brand-zone,
     .topnav-navigation-zone,
@@ -794,7 +798,7 @@ body {
     .topnav-brand-zone { display: flex; min-width: 0; align-items: center; gap: 12px; justify-self: start; }
     .topnav-navigation-zone { min-width: 0; justify-self: center; }
     .topnav-utilities { min-width: 0; justify-self: end; }
-    .topnav-surface .topnav-group-divider { display: block; width: 1px; height: 24px; flex: none; background: rgba(255, 255, 255, 0.07); }
+    .topnav-surface .topnav-group-divider { display: block; width: 1px; height: 24px; flex: none; background: rgba(255, 255, 255, 0.065); }
     .topnav-admin-navigation {
       flex: 0 1 auto;
       max-width: 100%;
@@ -1326,6 +1330,9 @@ body {
     background: var(--color-bg-elevated);
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
+  :root[data-theme='light'] .data-table-viewport--sticky thead th {
+    background: var(--light-surface-muted);
+  }
 
   /* Enterprise neutral: controles definidos, tabelas sem cardception. */
   :root[data-theme='light'] .app-shell .motion-input {
@@ -1359,7 +1366,7 @@ body {
     color: var(--color-primary-700);
   }
   :root[data-theme='light'] .enterprise-filter-surface {
-    background: var(--light-surface-raised);
+    background: var(--color-bg-card);
     border-color: var(--color-border-subtle);
     box-shadow: var(--shadow-none);
   }
@@ -1372,7 +1379,7 @@ body {
     background: transparent;
   }
   :root[data-theme='light'] .enterprise-table tbody tr:hover {
-    background: #F7F9FA !important;
+    background: var(--light-surface-subtle) !important;
   }
   :root[data-theme='light'] .connection-card {
     background: var(--color-bg-card);
