@@ -84,7 +84,7 @@ function MultiMarketplaceDropdown({
             type="button"
             onClick={() => { onChange(new Set()); setOpen(false) }}
             className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-              selected.size === 0 ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+              selected.size === 0 ? 'control-active bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
             }`}
           >
             Todos os marketplaces
@@ -100,7 +100,7 @@ function MultiMarketplaceDropdown({
                 type="button"
                 onClick={() => toggle(mp)}
                 className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-                  active ? 'bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                  active ? 'control-active bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -188,7 +188,7 @@ function MultiCategoryDropdown({
             type="button"
             onClick={() => { onChange(new Set()); setOpen(false) }}
             className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-              selected.size === 0 ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+              selected.size === 0 ? 'control-active bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
             }`}
           >
             Todas as categorias
@@ -204,7 +204,7 @@ function MultiCategoryDropdown({
                 onClick={() => toggle(category)}
                 title={category}
                 className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-                  active ? 'bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                  active ? 'control-active bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
                 }`}
               >
                 <span className="truncate">{category}</span>
@@ -231,7 +231,7 @@ export default function ProductFilters({ filters, onChange }: Props) {
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
             placeholder="Buscar por produto, SKU ou categoria..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary outline-none placeholder:font-medium placeholder:text-text-secondary"
           />
         </div>
         <MultiMarketplaceDropdown

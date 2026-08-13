@@ -121,14 +121,18 @@
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
   /* Neutral editorial: profundidade por rampa tonal, sem branco como base. */
-  --light-app-bg: #DADCD9;
-  --light-section-bg: #E6E8E5;
-  --light-card-bg: #F2F3F1;
-  --light-raised-bg: #FAFAF8;
-  --light-muted-bg: #D0D3CF;
-  --light-table-header: #D7DAD6;
-  --light-hover-bg: #F6F7F5;
+  --light-app-bg: #D1D4D0;
+  --light-section-bg: #DDE0DC;
+  --light-card-bg: #EEF0ED;
+  --light-raised-bg: #F7F8F6;
+  --light-muted-bg: #CACEC9;
+  --light-table-header: #CACEC9;
+  --light-hover-bg: #E4E7E3;
   --light-primary-soft: #E3EAF9;
+  --light-charcoal: #272927;
+  --light-charcoal-hover: #323532;
+  --light-charcoal-active: #202120;
+  --light-on-charcoal: #F7F8F6;
   --light-bg-app: var(--light-app-bg);
   --light-surface-section: var(--light-section-bg);
   --light-surface-card: var(--light-card-bg);
@@ -136,7 +140,7 @@
   --light-surface-muted: var(--light-muted-bg);
   --light-surface-subtle: var(--light-hover-bg);
   --light-surface-hover: var(--light-hover-bg);
-  --light-surface-selected: var(--light-primary-soft);
+  --light-surface-selected: var(--light-charcoal);
 
   /* App → section → card → row → elevated: branco nunca é o padrão. */
   --color-bg-primary: var(--light-app-bg);
@@ -147,9 +151,9 @@
   --color-bg-elevated: var(--light-raised-bg);
   --color-bg-header: var(--light-table-header);
 
-  --light-border-subtle: #CED2CD;
-  --light-border-default: #C3C8C2;
-  --light-border-strong: #B3BAB3;
+  --light-border-subtle: #BFC4BE;
+  --light-border-default: #B2B8B1;
+  --light-border-strong: #9DA59E;
   --color-border-subtle: var(--light-border-subtle);
   --color-border-default: var(--light-border-default);
   --color-border-strong: var(--light-border-strong);
@@ -158,8 +162,8 @@
   --color-text-primary: #171917;
   --color-text-secondary: #505650;
   --color-text-tertiary: #767D76;
-  --color-text-muted: #929891;
-  --color-text-disabled: #B3BAB3;
+  --color-text-muted: #747B74;
+  --color-text-disabled: #929991;
 
   --color-primary-700: #2558C9;
   --color-primary-600: #326BE0;
@@ -976,6 +980,33 @@ body {
   :root[data-theme='light'] .topnav-dock-item-active { color: #FFFFFF; }
   :root[data-theme='light'] .topnav-dock-tooltip,
   :root[data-theme='light'] .topnav-surface .topnav-popover { background: var(--light-raised-bg); border-color: var(--light-border-default); box-shadow: 0 16px 38px rgba(23, 25, 23, 0.20); color: #171917; }
+  :root[data-theme='light'] .topnav-surface .search-menu-panel {
+    --color-text-primary: #171917;
+    --color-text-secondary: #505650;
+    --color-text-tertiary: #767D76;
+    --color-text-muted: #747B74;
+    --color-border-subtle: var(--light-border-default);
+    --color-bg-card: var(--light-raised-bg);
+    --color-bg-card-hover: var(--light-hover-bg);
+    color: var(--color-text-primary);
+    background: var(--light-raised-bg);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-input {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    caret-color: var(--color-text-primary);
+    -webkit-text-fill-color: var(--color-text-primary);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-input::placeholder {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    opacity: 1;
+    -webkit-text-fill-color: var(--color-text-secondary);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-item:hover {
+    color: var(--color-text-primary);
+    background: var(--light-hover-bg);
+  }
   :root[data-theme='light'] .topnav-surface .motion-header-control { color: #A9B0AA; }
   :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #ECEFEC; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.08); }
 
@@ -1389,6 +1420,11 @@ body {
     border-color: var(--color-border-default);
     color: var(--color-text-primary);
   }
+  :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea)::placeholder {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    opacity: 1;
+  }
   :root[data-theme='light'] .app-shell .motion-input input {
     background-color: transparent;
     border-color: transparent;
@@ -1398,11 +1434,28 @@ body {
     border-color: var(--color-primary-600);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-600) 10%, transparent);
   }
+  :root[data-theme='light'] .control-active,
   :root[data-theme='light'] .motion-chip[class*='bg-accent-blue'] {
     border-radius: var(--radius-sm);
-    background-color: var(--light-surface-selected);
-    border-color: var(--color-primary-200);
-    color: var(--color-primary-700);
+    background-color: var(--light-charcoal);
+    border-color: var(--light-charcoal);
+    color: var(--light-on-charcoal);
+  }
+  :root[data-theme='light'] .control-active:hover,
+  :root[data-theme='light'] .motion-chip[class*='bg-accent-blue']:hover {
+    background-color: var(--light-charcoal-hover);
+    border-color: var(--light-charcoal-hover);
+    color: #FFFFFF;
+  }
+  :root[data-theme='light'] .control-inactive {
+    background-color: var(--light-muted-bg);
+    border-color: var(--light-border-default);
+    color: var(--color-text-secondary);
+  }
+  :root[data-theme='light'] .control-inactive:hover {
+    background-color: var(--light-hover-bg);
+    border-color: var(--light-border-strong);
+    color: var(--color-text-primary);
   }
   :root[data-theme='light'] .enterprise-filter-surface {
     background: var(--color-bg-card);

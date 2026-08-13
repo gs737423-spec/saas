@@ -5,6 +5,7 @@ import { getMarketplaceColor, getMarketplaceBadge, type Marketplace } from '@/da
 import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
 import DataTableViewport from '@/components/common/DataTableViewport'
 import { useTheme } from '@/contexts/ThemeContext'
+import { coveragePresentation, giroPresentation } from '@/lib/inventoryStatus'
 
 function relativeDate(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -27,33 +28,6 @@ function coverageDays(item: DashboardInventoryItem): number | null {
   if (!item.soldQuantity || item.soldQuantity <= 0) return null
   const dailyRate = item.soldQuantity / 30
   return dailyRate > 0 ? item.availableQuantity / dailyRate : null
-}
-
-type GiroStatus = 'Bom' | 'Normal' | 'Baixo' | 'Parado' | 'Parado crítico'
-
-function classifyGiro(item: DashboardInventoryItem, cov: number | null): GiroStatus {
-  if ((item.soldQuantity ?? 0) === 0) return item.availableQuantity > 0 ? 'Parado crítico' : 'Parado'
-  if (cov === null) return 'Normal'
-  if (cov < 7) return 'Bom'
-  if (cov < 20) return 'Normal'
-  if (cov < 45) return 'Baixo'
-  return 'Parado'
-}
-
-const GIRO_STYLE: Record<GiroStatus, { color: string; bg: string }> = {
-  'Bom': { color: '#3BE38E', bg: 'rgba(43,214,160,0.14)' },
-  'Normal': { color: '#3A8DFF', bg: 'rgba(47,107,255,0.14)' },
-  'Baixo': { color: '#EB6B7C', bg: 'rgba(235,107,124,0.14)' },
-  'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.14)' },
-  'Parado crítico': { color: '#FF5E7D', bg: 'rgba(255,94,125,0.14)' },
-}
-
-function coverageLabel(cov: number | null): { color: string; label: string } {
-  if (cov === null) return { color: '#6F829B', label: 'sem venda' }
-  if (cov < 7) return { color: '#FF5E7D', label: 'Crítico' }
-  if (cov < 15) return { color: '#FFC95A', label: 'Atenção' }
-  if (cov < 45) return { color: '#3BE38E', label: 'Saudável' }
-  return { color: '#6366F1', label: 'Excesso' }
 }
 
 interface FilterState {
@@ -88,7 +62,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       className={`motion-chip cursor-pointer rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
-        active ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-secondary'
+        active ? 'control-active border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'control-inactive border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-secondary'
       }`}
     >
       {children}
@@ -119,7 +93,7 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={`motion-chip flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
-          open ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'border-border-subtle bg-bg-primary/40 text-text-secondary hover:text-text-primary'
+          open ? 'control-active border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'control-inactive border-border-subtle bg-bg-primary/40 text-text-secondary hover:text-text-primary'
         }`}
       >
         {optionLabel(value)}
@@ -133,7 +107,7 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
               type="button"
               onClick={() => { onChange(opt); setOpen(false) }}
               className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2 text-left text-[12px] font-medium transition-colors ${
-                value === opt ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                value === opt ? 'control-active bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
               }`}
             >
               {optionLabel(opt)}
@@ -153,7 +127,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
   const enriched = useMemo(() => items.map((item) => {
     const cov = coverageDays(item)
-    const giro = classifyGiro(item, cov)
+    const giro = giroPresentation(item.soldQuantity, item.availableQuantity, cov)
     return { item, cov, giro }
   }), [items])
 
@@ -167,14 +141,14 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     [items]
   )
 
-  const stalledCount = enriched.filter((e) => e.giro === 'Parado' || e.giro === 'Parado crítico').length
+  const stalledCount = enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
   const curvaA = items.filter((i) => i.abcClass === 'A')
   const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * i.availableQuantity, 0)
 
   const filtered = enriched.filter(({ item, cov, giro }) => {
     if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
     if (filters.onlyCritical && !(cov !== null && cov < 7)) return false
-    if (filters.onlyStalled && !(giro === 'Parado' || giro === 'Parado crítico')) return false
+    if (filters.onlyStalled && !(giro.label === 'Parado' || giro.label === 'Parado crítico')) return false
     if (filters.marketplace !== 'all' && item.marketplace !== filters.marketplace) return false
     if (filters.manufacturerSearch && !(item.manufacturerCode ?? '').toLowerCase().includes(filters.manufacturerSearch.toLowerCase())) return false
     if (filters.onlyLowCoverage && !(cov !== null && cov < 15)) return false
@@ -228,7 +202,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                 key={o.key}
                 type="button"
                 onClick={() => setSort(o.key)}
-                className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${sort === o.key ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${sort === o.key ? 'control-active bg-accent-blue/15 text-accent-blue' : 'control-inactive text-text-muted hover:text-text-secondary'}`}
               >
                 {o.label}
               </button>
@@ -258,7 +232,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                 value={filters.manufacturerSearch}
                 onChange={(e) => setFilters((f) => ({ ...f, manufacturerSearch: e.target.value }))}
                 placeholder="Código fabricante..."
-                className="w-full bg-transparent text-[11.5px] text-text-secondary placeholder:text-text-muted focus:outline-none"
+                className="w-full bg-transparent text-[11.5px] font-semibold text-text-primary placeholder:font-medium placeholder:text-text-secondary focus:outline-none"
               />
             </div>
           )}
@@ -268,7 +242,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         <div className="space-y-2.5 md:hidden">
           {sorted.map(({ item, cov, giro }) => {
             const mp = getMarketplaceColor(item.marketplace)
-            const covStyle = coverageLabel(cov)
+            const covStyle = coveragePresentation(cov)
             return (
               <div key={`${item.marketplace}-${item.sku ?? item.title}`} className="overview-glass relative overflow-hidden rounded-xl p-3.5" style={{ boxShadow: `inset 3px 0 0 ${covStyle.color}` }}>
                 <div className="mb-2 flex items-start justify-between gap-2">
@@ -291,7 +265,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                   <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{item.soldQuantity ?? '—'}</p></div>
                   <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d` : '—'}</p></div>
                   <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl((item.price ?? 0) * item.availableQuantity)}</p></div>
-                  <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: GIRO_STYLE[giro].color }}>{giro}</p></div>
+                  <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: giro.color }}>{giro.label}</p></div>
                 </div>
               </div>
             )
@@ -323,7 +297,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
               </thead>
               <tbody>
                 {sorted.map(({ item, cov, giro }) => {
-                  const covStyle = coverageLabel(cov)
+                  const covStyle = coveragePresentation(cov)
                   const stockValue = (item.price ?? 0) * item.availableQuantity
                   const avgTicket = item.soldQuantity && item.soldQuantity > 0 ? item.revenue30d / item.soldQuantity : 0
                   const share = totalRevenue > 0 ? (item.revenue30d / totalRevenue) * 100 : 0
@@ -341,7 +315,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
                       <td className="py-3 pr-2 text-center">
-                        <span className="rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold" style={{ color: covStyle.color, background: `${covStyle.color}1F` }}>
+                        <span className="rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold" style={{ color: covStyle.color, background: covStyle.background }}>
                           {cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}
                         </span>
                       </td>
@@ -356,7 +330,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                         {item.abcClass ? <span className="rounded-md px-2 py-0.5 text-[11px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span> : <span className="text-text-muted">—</span>}
                       </td>
                       <td className="py-3 pr-2 text-center">
-                        <span className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: GIRO_STYLE[giro].color, background: GIRO_STYLE[giro].bg }}>{giro}</span>
+                        <span className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: giro.color, background: giro.background }}>{giro.label}</span>
                       </td>
                     </tr>
                   )

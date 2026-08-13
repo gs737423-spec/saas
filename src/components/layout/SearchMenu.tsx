@@ -81,7 +81,7 @@ export default function SearchMenu() {
       </button>
 
       {open && (
-        <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover search-menu-panel absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
             <Search className="h-4 w-4 shrink-0 text-text-muted" />
             <input
@@ -90,7 +90,7 @@ export default function SearchMenu() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
               placeholder="Buscar SKU, produto, categoria ou marketplace..."
-              className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+              className="search-menu-input min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary outline-none placeholder:text-text-secondary"
             />
             {query && (
               <button onClick={() => setQuery('')} className="cursor-pointer text-text-muted hover:text-text-primary">
@@ -107,7 +107,7 @@ export default function SearchMenu() {
                   <button
                     key={p.to}
                     onClick={() => go(p.to)}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                    className="search-menu-item flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-semibold text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
                   >
                     <p.icon className="h-4 w-4 text-text-muted" />
                     {p.label}
@@ -123,7 +123,7 @@ export default function SearchMenu() {
                   <button
                     key={p.id}
                     onClick={() => go(`/app/produto/${p.sku ?? p.id}`)}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
+                    className="search-menu-item flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
                   >
                     <Package className="h-4 w-4 shrink-0 text-text-muted" />
                     <span className="min-w-0 flex-1">
