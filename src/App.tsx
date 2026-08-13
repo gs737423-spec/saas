@@ -34,6 +34,7 @@ import ErrorBoundary from '@/components/common/ErrorBoundary'
 // base `/app`.
 export default function App() {
   const location = useLocation()
+  const isDesktopWorkspaceRoute = ['/app', '/app/marketplaces', '/app/produtos', '/app/estoque'].includes(location.pathname)
   useIdleLogout()
 
   return (
@@ -44,7 +45,7 @@ export default function App() {
     <ConnectionProvider>
     <PeriodProvider>
     <InventorySettingsProvider>
-    <div className="app-bg app-shell overflow-x-hidden">
+    <div className={`app-bg app-shell overflow-x-hidden ${isDesktopWorkspaceRoute ? 'app-shell--workspace' : ''}`}>
       {/* Fundo ambiente — 1 base estática + 1 grid estático + 3 glows (só 1 anima). Ver index.css .app-bg-subtle. */}
       <div className="app-bg-subtle" aria-hidden="true">
         <div className="bg-glow bg-glow-static" />
@@ -56,8 +57,8 @@ export default function App() {
           TopNav (mesmo token dos dois lados), nunca um valor fixo duplicado
           por página. Ver §21: header height token. */}
       <main className="app-main" style={{ paddingTop: 'var(--app-header-height)' }}>
-        <div className="app-page-container pb-24 pt-2.5 md:pb-6 md:pt-3">
-          <div key={location.pathname} className="page-transition">
+        <div className={`app-page-container pb-24 pt-2.5 md:pb-6 md:pt-3 ${isDesktopWorkspaceRoute ? 'app-page-container--workspace' : ''}`}>
+          <div key={location.pathname} className={`page-transition ${isDesktopWorkspaceRoute ? 'page-transition--workspace' : ''}`}>
             <ErrorBoundary key={location.pathname}>
               <Routes location={location}>
                 <Route index element={<Dashboard />} />

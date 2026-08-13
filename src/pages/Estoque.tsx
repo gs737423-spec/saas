@@ -36,7 +36,7 @@ export default function Estoque() {
   }
 
   return (
-    <div className="space-y-2 sm:space-y-2.5">
+    <div className="workspace-page workspace-page--inventory">
       <RealInventoryTable items={inventory.items} />
     </div>
   )

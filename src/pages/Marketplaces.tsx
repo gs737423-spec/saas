@@ -105,7 +105,7 @@ function ChannelMiniCharts({ rows }: { rows: MarketplaceFinance[] }) {
   }))
 
   return (
-    <div className="overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
+    <div className="workspace-channel-summary overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
       <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
         <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
         <MiniBarChart title="Ticket Médio" question="Quem tem o maior ticket médio?" data={byTicket} />
@@ -159,17 +159,19 @@ export default function Marketplaces() {
   const rows = fillAllMarketplaces(data.byMarketplace)
 
   return (
-    <div className="space-y-2">
+    <div className="workspace-page workspace-page--marketplaces">
       <div className="motion-block-in">
         <ChannelKPIVerdict rows={rows} />
       </div>
 
-      <div className="motion-block-in motion-block-in-2">
-        <RevenueByChannelChart />
-      </div>
+      <div className="workspace-marketplace-analysis">
+        <div className="motion-block-in motion-block-in-2 workspace-primary-panel">
+          <RevenueByChannelChart />
+        </div>
 
-      <div className="motion-block-in motion-block-in-3">
-        <ChannelMiniCharts rows={rows} />
+        <div className="motion-block-in motion-block-in-3 workspace-marketplace-summary">
+          <ChannelMiniCharts rows={rows} />
+        </div>
       </div>
     </div>
   )

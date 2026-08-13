@@ -195,8 +195,8 @@ export default function RevenueByChannelChart() {
   }
 
   return (
-    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-2xl p-3.5 sm:p-4">
-      <div className="relative mb-2.5">
+    <div className="overview-glass-elevated motion-panel workspace-marketplace-chart relative overflow-hidden rounded-2xl p-3.5 sm:p-4">
+      <div className="workspace-chart-heading relative mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
           {period.label} · Total: <span className="font-mono font-semibold text-text-primary">R$ {brl(totalRevenue)}</span>
@@ -206,7 +206,7 @@ export default function RevenueByChannelChart() {
         </p>
       </div>
 
-      <div className="relative mb-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="workspace-channel-cards relative mb-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {channelSummary.map((c, idx) => {
           const brand = getMarketplaceColor(c.label)
           const positive = c.growth > 0.5
@@ -249,7 +249,7 @@ export default function RevenueByChannelChart() {
         })}
       </div>
 
-      <div className="h-44 sm:h-52">
+      <div className="workspace-chart-plot h-44 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>

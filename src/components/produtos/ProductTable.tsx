@@ -186,7 +186,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
   const sortLabel = columns.find((c) => c.key === sortKey)?.label ?? ''
 
   return (
-    <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
+    <div className="glass-panel motion-panel workspace-table-panel workspace-product-table rounded-2xl p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
@@ -249,7 +249,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block">
+      <div className="workspace-table-area hidden md:block">
         <DataTableViewport size="large" ariaLabel="Catálogo de produtos. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
         <table className="enterprise-table w-full min-w-[920px] text-sm">
           <thead>

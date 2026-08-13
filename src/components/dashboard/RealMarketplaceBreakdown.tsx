@@ -148,7 +148,7 @@ export default function RealMarketplaceBreakdown() {
   })
 
   return (
-    <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-3.5 sm:p-4">
+    <div className="overview-glass-elevated motion-panel workspace-gmv-panel flex flex-col rounded-2xl p-3.5 sm:p-4">
       <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">GMV</h3>
@@ -171,7 +171,7 @@ export default function RealMarketplaceBreakdown() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2.5 sm:gap-3">
+      <div className="workspace-gmv-rows flex flex-1 flex-col gap-2.5 sm:gap-3">
         {sorted.map((m, i) => (
           <Row key={m.marketplace} m={m} rank={i + 1} share={totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0} />
         ))}

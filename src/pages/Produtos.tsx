@@ -72,12 +72,12 @@ export default function Produtos() {
   }
 
   return (
-    <div className="space-y-2 sm:space-y-2.5">
+    <div className="workspace-page workspace-page--products">
       <div className="motion-block-in">
         <ProductKPIs products={filteredProducts} />
       </div>
 
-      <div className="motion-block-in motion-block-in-2">
+      <div className="motion-block-in motion-block-in-2 workspace-primary-panel">
         <ProductTable filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} editable onSetCost={handleSetCost} />
       </div>
     </div>

@@ -67,13 +67,13 @@ export default function Dashboard() {
   const kpis = buildRealKpis(summary)
 
   return (
-    <div className="space-y-2">
+    <div className="workspace-page workspace-page--overview">
       {/* KPIs com hierarquia: hero Bruto + secundários */}
       <div className="motion-block-in">
         <KPICards period={period} kpis={kpis} />
       </div>
 
-      <div className="motion-block-in motion-block-in-2">
+      <div className="motion-block-in motion-block-in-2 workspace-primary-panel">
         <RealMarketplaceBreakdown />
       </div>
     </div>

@@ -203,14 +203,14 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   ]
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="workspace-inventory flex flex-col gap-2.5">
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {kpis.map((c) => (
           <KpiCard key={c.key} c={c} />
         ))}
       </div>
 
-      <div className="overview-glass-elevated motion-panel flex flex-col rounded-2xl p-4 sm:p-5">
+      <div className="overview-glass-elevated motion-panel workspace-table-panel workspace-inventory-table flex flex-col rounded-2xl p-4 sm:p-5">
         <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
@@ -299,7 +299,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         </div>
 
         {/* Desktop: table com scroll próprio */}
-        <div className="hidden md:block">
+        <div className="workspace-table-area hidden md:block">
           <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
             <table className="enterprise-table w-full min-w-[1040px] text-sm">
               <thead>
