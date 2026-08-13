@@ -27,3 +27,7 @@ Validar o deploy em light mode nas rotas `/app`, `/app/produtos` e `/app/estoque
 ## Complemento — semântica de Cobertura e Giro
 
 O usuário corrigiu a interpretação dos indicadores: verde representa a faixa boa; vermelho representa risco ou dinheiro parado. A apresentação foi centralizada sem mudar thresholds. `Atenção` passou a `Excesso` vermelho, `Bom` passou a `Alto` vermelho, `Normal` passou a verde e todos os estados ruins usam a mesma família danger.
+
+## Complemento — controles remanescentes
+
+Ordenação e dropdowns de Produtos e o seletor de comparação do gráfico de Marketplaces foram incorporados ao padrão comum: ativo/aplicado em charcoal; inativo em cinza estrutural.

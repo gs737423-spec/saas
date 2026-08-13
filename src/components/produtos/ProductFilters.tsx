@@ -61,7 +61,7 @@ function MultiMarketplaceDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50"
+        className={`motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50 ${open || selected.size > 0 ? 'control-active' : 'control-inactive'}`}
       >
         <span className="flex min-w-0 items-center gap-1.5 truncate">
           {selected.size > 0 && selected.size <= 2 ? (
@@ -177,7 +177,7 @@ function MultiCategoryDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50"
+        className={`motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50 ${open || selected.size > 0 ? 'control-active' : 'control-inactive'}`}
       >
         <span className="truncate">{label}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />

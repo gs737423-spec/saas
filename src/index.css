@@ -1434,25 +1434,28 @@ body {
     border-color: var(--color-primary-600);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-600) 10%, transparent);
   }
-  :root[data-theme='light'] .control-active,
+  :root[data-theme='light'] .app-shell .control-active,
   :root[data-theme='light'] .motion-chip[class*='bg-accent-blue'] {
     border-radius: var(--radius-sm);
     background-color: var(--light-charcoal);
     border-color: var(--light-charcoal);
     color: var(--light-on-charcoal);
   }
-  :root[data-theme='light'] .control-active:hover,
+  :root[data-theme='light'] .app-shell .control-active:hover,
   :root[data-theme='light'] .motion-chip[class*='bg-accent-blue']:hover {
     background-color: var(--light-charcoal-hover);
     border-color: var(--light-charcoal-hover);
     color: #FFFFFF;
   }
-  :root[data-theme='light'] .control-inactive {
+  :root[data-theme='light'] .app-shell .control-active > svg {
+    color: var(--light-on-charcoal);
+  }
+  :root[data-theme='light'] .app-shell .control-inactive {
     background-color: var(--light-muted-bg);
     border-color: var(--light-border-default);
     color: var(--color-text-secondary);
   }
-  :root[data-theme='light'] .control-inactive:hover {
+  :root[data-theme='light'] .app-shell .control-inactive:hover {
     background-color: var(--light-hover-bg);
     border-color: var(--light-border-strong);
     color: var(--color-text-primary);

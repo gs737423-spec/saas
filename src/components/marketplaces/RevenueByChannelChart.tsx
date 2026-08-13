@@ -323,8 +323,8 @@ export default function RevenueByChannelChart() {
               key={o.key}
               type="button"
               onClick={() => setCompareKey(o.key)}
-              className={`cursor-pointer rounded-sm border px-3 py-1.5 text-[11px] font-medium transition-colors duration-200 ${
-                compareKey === o.key ? 'border-accent-blue/30 bg-accent-blue/10 text-accent-blue' : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
+              className={`motion-chip cursor-pointer rounded-sm border px-3 py-1.5 text-[11px] font-medium transition-colors duration-200 ${
+                compareKey === o.key ? 'control-active border-accent-blue/30 bg-accent-blue/10 text-accent-blue' : 'control-inactive border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
               {o.label}

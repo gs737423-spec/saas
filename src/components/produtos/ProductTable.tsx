@@ -196,7 +196,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
           type="button"
           onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
           title="Inverter ordem"
-          className="motion-chip hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary hover:border-border-default hover:text-text-primary sm:inline-flex"
+          className="control-active motion-chip hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary hover:border-border-default hover:text-text-primary sm:inline-flex"
         >
           Ordenado por {sortLabel} {sortDir === 'asc' ? '(crescente)' : '(decrescente)'}
           {sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
