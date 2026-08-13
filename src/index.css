@@ -1560,10 +1560,25 @@ body {
     scrollbar-gutter: stable;
   }
 
+  /* Marketplaces prioriza a leitura integral do gráfico. Em telas baixas,
+     a página rola dentro do shell em vez de encolher ou encobrir o plot com
+     o resumo abaixo. */
+  .workspace-page--marketplaces {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .workspace-page--marketplaces .workspace-marketplace-analysis,
+  .workspace-page--marketplaces .workspace-primary-panel {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
   .workspace-marketplace-chart {
     display: flex;
     min-height: clamp(352px, 50dvh, 450px);
-    height: 100%;
+    height: auto;
     flex-direction: column;
     padding-top: var(--workspace-panel-padding-y);
     padding-bottom: var(--workspace-panel-padding-y);
