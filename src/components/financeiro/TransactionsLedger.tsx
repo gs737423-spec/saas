@@ -72,7 +72,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
               <button
                 type="button"
                 onClick={() => setActiveTypes(new Set())}
-                className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
+                className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
                     ? { background: '#3A8DFF18', color: '#3A8DFF' }
@@ -86,7 +86,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                   key={type}
                   type="button"
                   onClick={() => toggleType(type)}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
+                  className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                   style={
                     activeTypes.has(type)
                       ? { background: `${typeTone[type]}18`, color: typeTone[type] }
@@ -109,7 +109,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
             </div>
           </div>
           <DataTableViewport size="large" ariaLabel="Movimentações financeiras. Use as setas ou role para visualizar mais registros." className="-mx-1 rounded-xl px-1">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="enterprise-table w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-4 font-semibold">Data</th>

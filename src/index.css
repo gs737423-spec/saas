@@ -120,47 +120,48 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Mineral / graphite: sistema único do light mode. */
-  --light-bg-app: #DFDDD8;
-  --light-surface-section: #E9E6E1;
-  --light-surface-card: #F2EFEB;
-  --light-surface-row: #F7F5F2;
-  --light-surface-elevated: #FBFAF8;
-  --light-surface-muted: #D6D2CC;
+  /* Enterprise neutral: sistema único do light mode. */
+  --light-bg-app: #E9EDF2;
+  --light-surface-section: #F3F5F7;
+  --light-surface-card: #FAFBFC;
+  --light-surface-raised: #FFFFFF;
+  --light-surface-muted: #E3E8ED;
+  --light-surface-hover: #F6F8FA;
+  --light-surface-selected: #EEF3FC;
 
   /* App → section → card → row → elevated: branco nunca é o padrão. */
   --color-bg-primary: var(--light-bg-app);
   --color-bg-secondary: var(--light-surface-section);
-  --color-bg-highlight: var(--light-surface-row);
+  --color-bg-highlight: var(--light-surface-hover);
   --color-bg-card: var(--light-surface-card);
-  --color-bg-card-hover: var(--light-surface-row);
-  --color-bg-elevated: var(--light-surface-elevated);
-  --color-bg-header: #33373B;
+  --color-bg-card-hover: var(--light-surface-hover);
+  --color-bg-elevated: var(--light-surface-raised);
+  --color-bg-header: #232B34;
 
-  --light-border-subtle: #D3CEC7;
-  --light-border-default: #C7C2BB;
-  --light-border-strong: #B6B0A7;
+  --light-border-subtle: #DCE2E7;
+  --light-border-default: #D0D7DE;
+  --light-border-strong: #BCC6CF;
   --color-border-subtle: var(--light-border-subtle);
   --color-border-default: var(--light-border-default);
   --color-border-strong: var(--light-border-strong);
-  --color-border-active: #AFC2EF;
+  --color-border-active: #B8CAF2;
 
-  --color-text-primary: #20262C;
-  --color-text-secondary: #4D565F;
-  --color-text-tertiary: #737C84;
-  --color-text-muted: #90979D;
+  --color-text-primary: #17202A;
+  --color-text-secondary: #465463;
+  --color-text-tertiary: #6B7785;
+  --color-text-muted: #8B96A1;
   --color-text-disabled: #ADB6C2;
 
-  --color-primary-700: #244FC2;
-  --color-primary-600: #315FDC;
-  --color-primary-500: #4775E5;
-  --color-primary-200: #AFC2EF;
-  --color-primary-100: #DCE5FA;
+  --color-primary-700: #2458C7;
+  --color-primary-600: #356FE8;
+  --color-primary-500: #4C82ED;
+  --color-primary-200: #B8CAF2;
+  --color-primary-100: #DFE8FB;
   --color-primary-50: #EFF3FD;
   --color-cyan-soft: var(--color-primary-50);
 
-  --color-success: #15966B;
-  --color-success-bg: #EAF8F2;
+  --color-success: #138A63;
+  --color-success-bg: #E9F6F1;
   --color-success-border: #BDE9D7;
   --color-danger: #D64D61;
   --color-danger-bg: #FDEEEF;
@@ -171,6 +172,22 @@
 
   --color-chart-grid: #CFCAC3;
   --color-chart-axis: #737C84;
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(20, 30, 40, 0.035);
+  --shadow-floating: 0 8px 24px rgba(18, 24, 31, 0.13);
+}
+
+/* A escala compacta é exclusiva do conteúdo do light mode. TopNav e
+   BottomNav mantêm os seus valores próprios já aprovados. */
+:root[data-theme='light'] .app-main {
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
 }
 
 * {
@@ -340,10 +357,10 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Claro: painel estrutural mineral, sem glassmorphism. */
+  /* Claro: painel estrutural neutro, sem glassmorphism. */
   :root[data-theme='light'] .glass-panel {
     background: var(--color-bg-secondary);
-    box-shadow: 0 4px 14px rgba(34, 30, 27, 0.035);
+    box-shadow: var(--shadow-none);
   }
 
   /* Painel admin — tom mais escuro/flat que o .glass-panel padrão (que é
@@ -491,10 +508,10 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Claro: card mineral separado da seção por surface e borda. */
+  /* Claro: card separado da seção por surface e borda. */
   :root[data-theme='light'] .overview-glass {
     background: var(--color-bg-card);
-    box-shadow: 0 1px 2px rgba(34, 30, 27, 0.035), 0 5px 14px rgba(34, 30, 27, 0.045);
+    box-shadow: var(--shadow-none);
   }
 
   /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
@@ -509,7 +526,7 @@ body {
   /* Claro: grandes containers usam a seção e deixam as linhas mais claras. */
   :root[data-theme='light'] .overview-glass-elevated {
     background: var(--color-bg-secondary);
-    box-shadow: 0 4px 14px rgba(34, 30, 27, 0.035);
+    box-shadow: var(--shadow-none);
   }
 
   /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
@@ -561,20 +578,20 @@ body {
   :root[data-theme='light'] .overview-hero-card {
     background: var(--color-bg-card);
     border-color: var(--color-border-default);
-    box-shadow: 0 1px 2px rgba(34, 30, 27, 0.035), 0 5px 14px rgba(34, 30, 27, 0.045) !important;
+    box-shadow: var(--shadow-none) !important;
   }
 
   /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
   :root[data-theme='light'] .overview-marketplace-row,
   :root[data-theme='light'] .overview-marketplace-row-lead {
-    background: var(--color-bg-card-hover);
+    background: var(--light-surface-raised);
     border-color: var(--color-border-subtle);
-    box-shadow: 0 1px 2px rgba(34, 30, 27, 0.035), 0 5px 14px rgba(34, 30, 27, 0.045);
+    box-shadow: var(--shadow-none);
   }
   :root[data-theme='light'] .overview-marketplace-row:hover {
-    background: #F8F6F3;
+    background: var(--color-bg-card-hover);
     border-color: var(--color-border-default);
-    box-shadow: 0 5px 14px rgba(34, 30, 27, 0.06);
+    box-shadow: var(--shadow-none);
   }
 
   /* Trilho das barras de participação — o mais escuro da hierarquia */
@@ -680,6 +697,10 @@ body {
   .motion-brand-mark {
     transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
+  :root[data-theme='light'] .overview-track {
+    background: var(--light-surface-muted);
+    box-shadow: none;
+  }
   .group:hover .brand-mark {
     filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.4));
   }
@@ -696,7 +717,7 @@ body {
     align-items: center;
     gap: 6px;
     padding-inline: 12px;
-    background: linear-gradient(105deg, #20262D 0%, #1A2026 50%, #151A20 100%);
+    background: #151C24;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.035),
@@ -724,18 +745,18 @@ body {
       gap: 12px;
       padding: 10px 18px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(32, 38, 45, 0.97) 0%, rgba(21, 26, 32, 0.97) 100%);
+      border-radius: 14px;
+      background: rgba(21, 28, 36, 0.96);
       border-color: rgba(255, 255, 255, 0.075);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 34px rgba(24, 35, 47, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(18, 24, 31, 0.13);
       transform: translateX(-50%);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
     :root[data-theme='light'] .topnav-surface {
       --color-text-primary: #FFFFFF;
-      --color-text-secondary: #F0F2F3;
-      --color-text-muted: #AEB4B9;
+      --color-text-secondary: #E7ECF0;
+      --color-text-muted: #96A2AE;
       --color-border-subtle: rgba(255, 255, 255, 0.09);
       --color-border-default: rgba(255, 255, 255, 0.1);
       --color-bg-card: rgba(255, 255, 255, 0.045);
@@ -743,9 +764,9 @@ body {
       --color-bg-elevated: rgba(255, 255, 255, 0.045);
       --color-accent-primary: #FFFFFF;
       --color-accent-blue: #FFFFFF;
-      background: linear-gradient(180deg, rgba(51, 55, 59, 0.97) 0%, rgba(39, 43, 47, 0.97) 100%);
-      border-color: rgba(255, 255, 255, 0.09);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(24, 27, 30, 0.18);
+      background: rgba(35, 43, 52, 0.94);
+      border-color: rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow-floating);
     }
     .topnav-brand-zone { min-width: 0; justify-self: start; }
     .topnav-navigation-zone { min-width: 0; justify-self: center; }
@@ -771,12 +792,10 @@ body {
     z-index: 0;
     width: var(--dock-item-size);
     height: var(--dock-item-size);
-    border: 1px solid rgba(92, 132, 232, 0.4);
+    border: 1px solid rgba(89, 137, 238, 0.3);
     border-radius: 12px;
-    background: linear-gradient(180deg, rgba(49, 95, 220, 0.38), rgba(49, 95, 220, 0.24));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 5px 14px rgba(32, 68, 160, 0.18);
+    background: rgba(53, 111, 232, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
     opacity: 0;
     pointer-events: none;
     transform: translate3d(var(--dock-indicator-x), 0, 0);
@@ -804,7 +823,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 11px;
-    color: #AEB4B9;
+    color: #96A2AE;
     outline: none;
     transition:
       color var(--motion-duration-fast) var(--motion-ease-hover),
@@ -812,7 +831,7 @@ body {
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .topnav-dock-item:hover {
-    color: #F0F2F3;
+    color: #DDE4E9;
     background: rgba(255, 255, 255, 0.055);
     transform: translateY(-1px);
   }
@@ -856,17 +875,17 @@ body {
   }
 
   .topnav-item {
-    color: #AEB4B9;
+    color: #96A2AE;
   }
 
   /* Controles utilitários ficam abaixo da navegação na hierarquia. */
   .topnav-surface .motion-header-control {
-    color: #AEB4B9;
+    color: #96A2AE;
     background-color: rgba(255, 255, 255, 0.045);
     border-color: rgba(255, 255, 255, 0.09);
   }
   .topnav-surface .motion-header-control:hover {
-    color: #F0F2F3;
+    color: #DDE4E9;
     background-color: rgba(255, 255, 255, 0.085);
     border-color: rgba(255, 255, 255, 0.14);
   }
@@ -878,18 +897,18 @@ body {
   }
 
   :root[data-theme='light'] .topnav-dock-indicator {
-    border-color: rgba(92, 132, 232, 0.4);
-    background: linear-gradient(180deg, rgba(49, 95, 220, 0.38), rgba(49, 95, 220, 0.24));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 5px 14px rgba(32, 68, 160, 0.18);
+    border-color: rgba(89, 137, 238, 0.3);
+    background: rgba(53, 111, 232, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
-  :root[data-theme='light'] .topnav-dock-item { color: #AEB4B9; }
+  :root[data-theme='light'] .topnav-dock-item { color: #96A2AE; }
   :root[data-theme='light'] .topnav-dock-item:hover,
-  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #F0F2F3; background: rgba(255, 255, 255, 0.055); }
+  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #DDE4E9; background: rgba(255, 255, 255, 0.055); }
   :root[data-theme='light'] .topnav-dock-item-active { color: #FFFFFF; }
   :root[data-theme='light'] .topnav-dock-tooltip,
   :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(39, 43, 47, 0.98); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 16px 38px rgba(24, 27, 30, 0.32); color: #FFFFFF; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #AEB4B9; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #F0F2F3; background-color: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.14); }
+  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #96A2AE; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #DDE4E9; background-color: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.14); }
 
   /* Mobile continua com a barra estrutural existente; a releitura frost é
      exclusiva da island desktop. */
@@ -1054,9 +1073,10 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
   :root[data-theme='light'] .overview-card-hover:hover {
-    background-color: var(--color-bg-card-hover);
+    transform: none;
+    background-color: var(--color-bg-card);
     border-color: var(--color-border-default);
-    box-shadow: 0 1px 2px rgba(34, 30, 27, 0.035), 0 5px 14px rgba(34, 30, 27, 0.06);
+    box-shadow: var(--shadow-none);
   }
   /* Card principal (Faturamento Líquido) já tem gradiente próprio — no
      hover só intensifica a borda (sem rim colorido, sem trocar de fundo). */
@@ -1104,6 +1124,11 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.22),
       inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
+  :root[data-theme='light'] .glass-panel-hover.motion-card-tight:hover {
+    transform: none;
+    background-color: var(--color-bg-card);
+    box-shadow: var(--shadow-none);
+  }
 
   /* Big panels (GMV, Receita por Marketplace, Catálogo, Estoque, filtros) —
      border + shadow only, no translate: they must read as solid, not floaty. */
@@ -1117,6 +1142,9 @@ body {
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  :root[data-theme='light'] .motion-panel:hover {
+    box-shadow: var(--shadow-none);
   }
 
   /* Table rows — background/border only, never transform */
@@ -1273,18 +1301,19 @@ body {
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
 
-  /* Hard reset mineral: inputs e filtros se destacam por superfície/borda,
-     enquanto a tabela ganha um header inequívoco e linhas legíveis. */
+  /* Enterprise neutral: controles definidos, tabelas sem cardception. */
   :root[data-theme='light'] .app-shell .motion-input {
-    background-color: var(--color-bg-card-hover);
+    border-radius: var(--radius-sm);
+    background-color: var(--light-surface-raised);
     border-color: var(--color-border-default);
   }
   :root[data-theme='light'] .app-shell .motion-input:focus-within {
-    border-color: var(--color-primary-600);
-    box-shadow: 0 0 0 3px rgba(49, 95, 220, 0.12);
+    border-color: #7198EE;
+    box-shadow: 0 0 0 3px rgba(53, 111, 232, 0.1);
   }
   :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
-    background-color: var(--color-bg-card-hover);
+    border-radius: var(--radius-sm);
+    background-color: var(--light-surface-raised);
     border-color: var(--color-border-default);
     color: var(--color-text-primary);
   }
@@ -1294,28 +1323,40 @@ body {
     box-shadow: none;
   }
   :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea, select):focus {
-    border-color: var(--color-primary-600);
-    box-shadow: 0 0 0 3px rgba(49, 95, 220, 0.12);
+    border-color: #7198EE;
+    box-shadow: 0 0 0 3px rgba(53, 111, 232, 0.1);
   }
   :root[data-theme='light'] .motion-chip[class*='bg-accent-blue'] {
-    background-color: var(--color-primary-100);
-    border-color: var(--color-primary-200);
+    border-radius: var(--radius-sm);
+    background-color: var(--light-surface-selected);
+    border-color: #B8CAF2;
     color: var(--color-primary-700);
   }
-  :root[data-theme='light'] .table-mineral thead th {
-    background: #D9D4CD;
-    box-shadow: 0 1px 0 0 var(--color-border-strong);
+  :root[data-theme='light'] .enterprise-filter-surface {
+    background: var(--light-surface-raised);
+    border-color: var(--color-border-subtle);
+    box-shadow: var(--shadow-none);
   }
-  :root[data-theme='light'] .table-mineral tbody tr {
-    background: var(--color-bg-card);
+  :root[data-theme='light'] .enterprise-table thead th {
+    background: var(--light-surface-muted);
+    color: #596675;
+    box-shadow: 0 1px 0 0 var(--color-border-subtle);
   }
-  :root[data-theme='light'] .table-mineral tbody tr:hover {
-    background: #F8F6F3 !important;
+  :root[data-theme='light'] .enterprise-table tbody tr {
+    background: transparent;
+  }
+  :root[data-theme='light'] .enterprise-table tbody tr:hover {
+    background: #F7F9FA !important;
   }
   :root[data-theme='light'] .connection-card {
     background: var(--color-bg-card);
     border-color: var(--color-border-default);
-    box-shadow: 0 1px 2px rgba(34, 30, 27, 0.035), 0 5px 14px rgba(34, 30, 27, 0.045);
+    box-shadow: var(--shadow-none);
+  }
+  :root[data-theme='light'] .connection-card--disabled {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-subtle);
+    color: #7B8792;
   }
 }
 

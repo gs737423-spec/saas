@@ -183,7 +183,7 @@ export default function RevenueByChannelChart() {
 
   if (loading) {
     return (
-      <div className="overview-glass-elevated flex items-center gap-2 rounded-[22px] p-4 text-xs text-text-muted">
+      <div className="overview-glass-elevated flex items-center gap-2 rounded-2xl p-4 text-xs text-text-muted">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         Carregando receita diária...
       </div>
@@ -195,7 +195,7 @@ export default function RevenueByChannelChart() {
   }
 
   return (
-    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-3.5 sm:p-4">
+    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-2xl p-3.5 sm:p-4">
       <div className="relative mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
@@ -218,19 +218,14 @@ export default function RevenueByChannelChart() {
               type="button"
               onClick={() => toggleChannel(c.key)}
               title="Clique para mostrar/ocultar este canal no gráfico"
-              className={`group relative cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
-                isVisible ? 'border-white/[0.08] bg-white/[0.03]' : 'border-white/[0.04] bg-white/[0.01] opacity-50'
+              className={`group relative cursor-pointer overflow-hidden rounded-sm border text-left transition-colors duration-200 ${
+                isVisible ? 'border-border-default bg-bg-card' : 'border-border-subtle bg-transparent'
               }`}
-              style={{ boxShadow: isVisible ? `0 4px 24px -4px ${brand}15, inset 0 1px 0 ${brand}10` : 'none' }}
             >
-              <div
-                className="absolute inset-x-0 top-0 h-[2px] transition-opacity duration-300"
-                style={{ background: `linear-gradient(90deg, transparent, ${brand}, transparent)`, opacity: isVisible ? 0.8 : 0.2 }}
-              />
               <div className="px-3.5 py-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full transition-all duration-300" style={{ background: brand, boxShadow: isVisible ? `0 0 8px ${brand}88` : 'none' }} />
+                    <span className="h-2 w-2 rounded-full" style={{ background: brand }} />
                     <span className="text-[11px] font-semibold text-text-secondary">{c.label}</span>
                   </div>
                   {idx === 0 && isVisible && (
@@ -245,8 +240,8 @@ export default function RevenueByChannelChart() {
                   </div>
                   <span className="text-[10px] font-medium text-text-muted">{pct(c.share)}% do total</span>
                 </div>
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${c.share}%`, background: `linear-gradient(90deg, ${brand}, ${brand}88)`, boxShadow: `0 0 8px ${brand}44` }} />
+                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-border-subtle">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${c.share}%`, background: brand }} />
                 </div>
               </div>
             </button>
@@ -269,12 +264,12 @@ export default function RevenueByChannelChart() {
                 )
               })}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: '#6B7A9E', fontSize: 10 }} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} tickLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fill: '#6B7A9E', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} width={40} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: 'var(--color-chart-axis)', fontSize: 10 }} axisLine={{ stroke: 'var(--color-border-subtle)' }} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fill: 'var(--color-chart-axis)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} width={40} />
             <Tooltip
               content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />}
-              cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }}
+              cursor={{ stroke: 'var(--color-border-default)', strokeDasharray: '4 4' }}
               wrapperStyle={{ outline: 'none' }}
               animationDuration={motionTokens.duration.ultrafast}
               animationEasing="ease-out"
@@ -292,7 +287,7 @@ export default function RevenueByChannelChart() {
                   strokeOpacity={0.55}
                   strokeDasharray="5 4"
                   dot={false}
-                  activeDot={{ r: 3, fill: color, stroke: '#0d1225', strokeWidth: 1.5, fillOpacity: 0.7 }}
+                  activeDot={{ r: 3, fill: color, stroke: 'var(--color-bg-card)', strokeWidth: 1.5, fillOpacity: 0.7 }}
                   animationDuration={chartDuration}
                   animationEasing="ease-out"
                 />
@@ -310,7 +305,7 @@ export default function RevenueByChannelChart() {
                   strokeWidth={2.5}
                   fill={`url(#fill-${c.key})`}
                   dot={false}
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: '#0d1225', fill: color, style: { filter: `drop-shadow(0 0 4px ${color}88)` } }}
+                  activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--color-bg-card)', fill: color }}
                   animationDuration={chartDuration}
                   animationEasing="ease-out"
                 />
@@ -328,8 +323,8 @@ export default function RevenueByChannelChart() {
               key={o.key}
               type="button"
               onClick={() => setCompareKey(o.key)}
-              className={`cursor-pointer rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
-                compareKey === o.key ? 'border-white/20 bg-white/[0.08] text-text-primary' : 'border-white/5 bg-transparent text-text-muted hover:opacity-80'
+              className={`cursor-pointer rounded-sm border px-3 py-1.5 text-[11px] font-medium transition-colors duration-200 ${
+                compareKey === o.key ? 'border-accent-blue/30 bg-accent-blue/10 text-accent-blue' : 'border-border-subtle bg-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
               {o.label}

@@ -26,7 +26,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       // Neutro/azul institucional, não semântico — faturamento bruto não é
       // "positivo" nem "negativo" por si, é o dado principal (spec: ícone
       // decorativo usa azul institucional, não uma cor por KPI).
-      tone: '#2F6FED',
+      tone: '#356FE8',
     },
     {
       key: 'refunds',
@@ -44,7 +44,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Após deduções operacionais',
       icon: Wallet,
-      tone: '#3BE38E',
+      tone: '#138A63',
     },
   ]
 
@@ -53,8 +53,7 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.key} className="overview-glass overview-card-hover relative flex h-full min-h-[128px] flex-col overflow-hidden rounded-2xl p-3.5">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c.tone}66, transparent)` }} />
+          <div key={c.key} className="overview-glass overview-card-hover relative flex h-full min-h-[128px] flex-col overflow-hidden rounded-md p-3.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{c.label}</span>
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${c.tone}16`, boxShadow: `inset 0 0 0 1px ${c.tone}33` }}>

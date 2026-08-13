@@ -94,9 +94,7 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
   const needsReconnect = status.status === 'error' || status.status === 'expired' || status.status === 'disconnected'
 
   return (
-    <div className="connection-card glass-panel glass-panel-hover motion-card-tight group relative overflow-hidden rounded-2xl">
-      <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-      <div className="absolute inset-x-0 top-0 h-10 opacity-25" style={{ background: `linear-gradient(to bottom, ${color}22, transparent)` }} />
+    <div className="connection-card glass-panel glass-panel-hover motion-card-tight group relative overflow-hidden rounded-md">
 
       <div className="relative p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
@@ -229,8 +227,7 @@ function NotImplementedCard({ marketplace }: { marketplace: Marketplace }) {
   const color = getMarketplaceColor(marketplace)
   const Logo = MARKETPLACE_LOGO[marketplace]
   return (
-    <div className="connection-card glass-panel relative overflow-hidden rounded-2xl opacity-70">
-      <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
+    <div className="connection-card connection-card--disabled glass-panel relative overflow-hidden rounded-md">
       <div className="relative p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">

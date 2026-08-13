@@ -74,7 +74,7 @@ export default function FinancialComposition({ overview }: { overview: FinanceOv
   const segments = buildSegments(overview)
 
   return (
-    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-4 sm:p-5">
+    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-2xl p-4 sm:p-5">
       <div className="mb-3">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Composição do valor líquido</h3>
         <p className="mt-0.5 text-[13px] text-text-secondary">
@@ -93,7 +93,7 @@ export default function FinancialComposition({ overview }: { overview: FinanceOv
             {flow.map((s, i) => (
               <div key={s.key} className="flex items-stretch sm:min-w-0 sm:flex-1">
                 <div
-                  className="min-w-0 flex-1 rounded-xl border border-border-subtle/60 bg-bg-primary/30 px-3 py-2.5 transition-[opacity,transform] duration-500 ease-out"
+                  className="min-w-0 flex-1 rounded-sm border border-border-subtle/60 bg-transparent px-3 py-2.5 transition-[opacity,transform] duration-500 ease-out"
                   style={{
                     opacity: entered ? 1 : 0,
                     transform: entered ? 'translateY(0)' : 'translateY(4px)',

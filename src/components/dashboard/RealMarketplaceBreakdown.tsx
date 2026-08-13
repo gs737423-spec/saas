@@ -58,13 +58,13 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
   const isLeader = rank === 1
 
   return (
-    <div className={`group flex flex-1 items-center gap-2.5 rounded-xl px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'}`}>
+    <div className={`group flex flex-1 items-center gap-2.5 rounded-sm px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'}`}>
       <span className="flex w-5 shrink-0 items-center justify-center">
         {isLeader ? <Crown className="h-4 w-4" style={{ color: brand }} /> : <span className="font-mono text-sm font-bold text-text-muted">{rank}</span>}
       </span>
 
       <div className="flex w-24 shrink-0 items-center gap-2 sm:w-32">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: brand, boxShadow: `0 0 8px ${brand}88` }} />
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: brand }} />
         <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
       </div>
 

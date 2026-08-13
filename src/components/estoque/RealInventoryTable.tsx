@@ -87,7 +87,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className={`motion-chip cursor-pointer rounded-full border px-3 py-1.5 text-[11.5px] font-medium ${
+      className={`motion-chip cursor-pointer rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
         active ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-secondary'
       }`}
     >
@@ -118,7 +118,7 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`motion-chip flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-medium ${
+        className={`motion-chip flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
           open ? 'border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'border-border-subtle bg-bg-primary/40 text-text-secondary hover:text-text-primary'
         }`}
       >
@@ -236,7 +236,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           </div>
         </div>
 
-        <div className="mb-3.5 overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
+        <div className="enterprise-filter-surface mb-3.5 overview-glass motion-panel flex flex-wrap items-center gap-2 rounded-xl px-3.5 py-3">
           <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Curva</span>
           {(['A', 'B', 'C'] as const).map((c) => (
             <Chip key={c} active={filters.abc.has(c)} onClick={() => setFilters((f) => { const next = new Set(f.abc); if (next.has(c)) next.delete(c); else next.add(c); return { ...f, abc: next } })}>{c}</Chip>
@@ -252,7 +252,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           <span className="mx-1 h-4 w-px bg-border-subtle" />
           <MarketplaceDropdown value={filters.marketplace} onChange={(v) => setFilters((f) => ({ ...f, marketplace: v }))} />
           {hasSupplierData && (
-            <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-full border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
+            <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-sm border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
               <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
               <input
                 value={filters.manufacturerSearch}
@@ -301,7 +301,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         {/* Desktop: table com scroll próprio */}
         <div className="hidden md:block">
           <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-            <table className="table-mineral w-full min-w-[1040px] text-sm">
+            <table className="enterprise-table w-full min-w-[1040px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
@@ -377,10 +377,8 @@ function KpiCard({ c }: { c: { label: string; value: string; sub: string; icon: 
       type="button"
       onClick={c.onClick}
       disabled={!clickable}
-      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-2xl p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
-      style={c.active ? { boxShadow: `inset 0 0 0 1.5px ${c.primary}99, 0 0 20px -6px ${c.primary}66` } : undefined}
+      className={`overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
     >
-      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-50 blur-2xl" style={{ background: `radial-gradient(circle, ${c.primary}33, transparent 68%)` }} />
       <div className="relative mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
         <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
