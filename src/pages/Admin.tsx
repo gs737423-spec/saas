@@ -49,9 +49,13 @@ export default function Admin() {
         return
       }
       if (res.status === 503) {
-        const body = (await res.json().catch(() => null)) as { missing?: unknown } | null
-        setMissingConfig(Array.isArray(body?.missing) ? body.missing.filter((name): name is string => typeof name === 'string') : [])
-        setConfigMissing(true)
+        const body = (await res.json().catch(() => null)) as { error?: unknown; missing?: unknown } | null
+        if (body?.error === 'config_missing') {
+          setMissingConfig(Array.isArray(body.missing) ? body.missing.filter((name): name is string => typeof name === 'string') : [])
+          setConfigMissing(true)
+        } else {
+          setLoadError(true)
+        }
         setLoading(false)
         return
       }

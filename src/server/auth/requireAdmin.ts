@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getServerEnv, getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
+import { getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
 import { getBearerToken, requireUser } from './requireUser.js'
 
 const UNDEFINED_TABLE = '42P01'
@@ -19,20 +19,13 @@ function getAssuranceLevel(token: string): 'aal1' | 'aal2' {
  * Assim que ele cadastra TOTP, toda API administrativa exige AAL2. A consulta
  * é server-side, filtrada pelo id do usuário já validado, e falha fechada. */
 async function hasVerifiedMfaFactor(userId: string): Promise<boolean> {
-  const baseUrl = getServerEnv('SUPABASE_URL')!
-  const serviceRoleKey = getServerEnv('SUPABASE_SERVICE_ROLE_KEY')!
-  const url = new URL('/rest/v1/auth/factors', baseUrl)
-  url.searchParams.set('select', 'id')
-  url.searchParams.set('user_id', `eq.${userId}`)
-  url.searchParams.set('status', 'eq.verified')
-  url.searchParams.set('limit', '1')
-
-  const response = await fetch(url, {
-    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
-  })
-  if (!response.ok) throw new Error(`MFA factor lookup failed: ${response.status}`)
-  const factors = await response.json() as Array<{ id?: string }>
-  return factors.length > 0
+  const supabase = await getSupabaseAdmin()
+  // API administrativa oficial: usa /auth/v1/admin/users/:id/factors e
+  // funciona com as novas `sb_secret_...`; a rota PostgREST em `auth` não é
+  // uma interface pública estável para esse propósito.
+  const { data, error } = await supabase.auth.admin.mfa.listFactors({ userId })
+  if (error) throw new Error(`MFA factor lookup failed: ${error.message}`)
+  return (data?.factors ?? []).some((factor) => factor.status === 'verified')
 }
 
 /**
