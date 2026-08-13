@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, SHOPEE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
 import { getAuthorizationUrl, signState } from '../../../src/server/integrations/shopee/auth.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
-import { requireCompany } from '../../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
 // Mesmo padrão do Mercado Livre: retorna a URL como JSON (não redirect 302
@@ -16,10 +16,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.manage')
     if (!auth) return
 
-    if (!(await checkRateLimit(res, `shopee-authorize:${auth.companyId}`, 10, 1800))) return
+    if (!(await checkRateLimit(res, `shopee-authorize:${auth.companyId}`, 10, 1800, { req, route: '/api/integrations/shopee/authorize', policy: 'critical' }))) return
 
     const state = signState(auth.companyId)
     await logSyncEvent({

@@ -11,12 +11,13 @@ function isMissingLockColumn(error: { code?: string; message?: string }): boolea
 
 /** Claim atômico por conexão. A migration 015 é obrigatória: sem a coluna,
  * bloqueamos o sync explicitamente em vez de voltar a aceitar escritas concorrentes. */
-export async function claimSyncLock(supabase: SupabaseClient, connectionId: string, startedAt: Date): Promise<void> {
+export async function claimSyncLock(supabase: SupabaseClient, companyId: string, connectionId: string, startedAt: Date): Promise<void> {
   const staleBefore = new Date(Date.now() - STALE_LOCK_MINUTES * 60 * 1000).toISOString()
   const { data, error } = await supabase
     .from('marketplace_connections')
     .update({ sync_started_at: startedAt.toISOString() })
     .eq('id', connectionId)
+    .eq('company_id', companyId)
     .or(`sync_started_at.is.null,sync_started_at.lt.${staleBefore}`)
     .select('id')
 
@@ -29,7 +30,7 @@ export async function claimSyncLock(supabase: SupabaseClient, connectionId: stri
   if (!data || data.length === 0) throw new SyncAlreadyRunningError('Já existe uma sincronização em andamento para esta empresa.')
 }
 
-export async function releaseSyncLock(supabase: SupabaseClient, connectionId: string): Promise<void> {
-  const { error } = await supabase.from('marketplace_connections').update({ sync_started_at: null }).eq('id', connectionId)
+export async function releaseSyncLock(supabase: SupabaseClient, companyId: string, connectionId: string): Promise<void> {
+  const { error } = await supabase.from('marketplace_connections').update({ sync_started_at: null }).eq('id', connectionId).eq('company_id', companyId)
   if (error) console.error('[syncLock] Failed to release lock', error.message)
 }

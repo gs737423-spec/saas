@@ -78,6 +78,7 @@ async function ensureValidAccessToken(connection: ConnectionRow, companyId: stri
       last_error: null,
     })
     .eq('id', connection.id)
+    .eq('company_id', companyId)
 
   await logSyncEvent({
     companyId,
@@ -101,7 +102,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   const supabase = await getSupabaseAdmin()
   const connection = await loadConnection(companyId)
 
-  await claimSyncLock(supabase, connection.id, startedAt)
+  await claimSyncLock(supabase, companyId, connection.id, startedAt)
 
   await logSyncEvent({
     companyId,
@@ -221,7 +222,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         // Substitui os itens do pedido a cada sync (nunca acumula duplicado se
         // o pedido já existia) — pedido não muda item depois de fechado, mas
         // reprocessar é seguro e mais simples que diffar item a item.
-        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id)
+        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id).eq('company_id', companyId)
         const itemRows = mapOrderItems(order).map((item) => ({
           company_id: companyId,
           order_id: upsertedOrder.id,
@@ -256,7 +257,8 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       .from('marketplace_connections')
       .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary })
       .eq('id', connection.id)
-    await releaseSyncLock(supabase, connection.id)
+      .eq('company_id', companyId)
+    await releaseSyncLock(supabase, companyId, connection.id)
 
     await logSyncEvent({
       companyId,
@@ -275,8 +277,8 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const finishedAt = new Date()
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
-    await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id)
-    await releaseSyncLock(supabase, connection.id)
+    await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id).eq('company_id', companyId)
+    await releaseSyncLock(supabase, companyId, connection.id)
 
     await logSyncEvent({
       companyId,

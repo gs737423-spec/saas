@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS, SHOPEE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import type { Provider, SanitizedConnectionStatusResponse } from '../../src/server/integrations/types.js'
-import { requireCompany } from '../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../src/server/auth/authorization.js'
 
 type StatusResponse = SanitizedConnectionStatusResponse & { ok: boolean; source: string; message?: string }
 
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.read')
     if (!auth) return
 
     const supabase = await getSupabaseAdmin()
@@ -91,9 +91,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isExpired = connection.status === 'connected' && connection.token_expires_at && new Date(connection.token_expires_at) < new Date()
 
     const [{ count: productsCount }, { count: inventoryCount }, { count: ordersCount }] = await Promise.all([
-      supabase.from('marketplace_products').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
-      supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
-      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id),
+      supabase.from('marketplace_products').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
+      supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
     ])
 
     const finalStatus = isExpired ? 'expired' : connection.status

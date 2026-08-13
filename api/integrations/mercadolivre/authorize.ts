@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/integrations/supabaseAdmin.js'
 import { getAuthorizationUrl, signState } from '../../../src/server/integrations/mercadolivre/auth.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
-import { requireCompany } from '../../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
 // Retorna a URL de autorização como JSON (em vez de redirect 302 direto) pra
@@ -18,12 +18,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.manage')
     if (!auth) return
 
     // 10 tentativas de conectar por 30min por empresa — cobre reconectar
     // várias vezes de propósito sem abrir brecha pra spam automatizado.
-    if (!(await checkRateLimit(res, `ml-authorize:${auth.companyId}`, 10, 1800))) return
+    if (!(await checkRateLimit(res, `ml-authorize:${auth.companyId}`, 10, 1800, { req, route: '/api/integrations/mercadolivre/authorize', policy: 'critical' }))) return
 
     const state = signState(auth.companyId)
     await logSyncEvent({

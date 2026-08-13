@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
-import { requireCompany } from '../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../src/server/auth/authorization.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 import type { SupportTicket, SupportMessage, SupportTicketStatus, SupportTicketPriority } from '../../src/server/integrations/types.js'
 
@@ -65,7 +65,7 @@ function mapMessage(m: MessageRow): SupportMessage {
  * ticket do tenant B).
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const auth = await requireCompany(req, res)
+  const auth = await requireCapability(req, res, req.method === 'GET' ? 'support.read' : 'support.write')
   if (!auth) return
 
   const supabase = await getSupabaseAdmin()
@@ -115,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
-    if (!(await checkRateLimit(res, `support-create:${auth.user.id}`, 20, 1800))) return
+    if (!(await checkRateLimit(res, `support-create:${auth.user.id}`, 20, 1800, { req, route: '/api/support/tickets', policy: 'critical' }))) return
 
     try {
       const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim() : ''
@@ -157,7 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // com um chamado vazio (o cliente não tinha como saber que precisava
         // reenviar). Se o rollback também falhar, ainda assim reporta erro real
         // ao cliente (nunca 200/ok:true numa escrita que não completou).
-        const { error: rollbackError } = await supabase.from('support_tickets').delete().eq('id', ticket.id)
+        const { error: rollbackError } = await supabase.from('support_tickets').delete().eq('id', ticket.id).eq('company_id', auth.companyId)
         console.error('[api/support/tickets:POST] falha ao criar mensagem inicial', messageError, rollbackError ? { rollbackError } : undefined)
         res.status(500).json({ ok: false, message: 'Erro ao abrir chamado — tente novamente.' })
         return
@@ -172,7 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'PATCH') {
-    if (!(await checkRateLimit(res, `support-reply:${auth.user.id}`, 30, 1800))) return
+    if (!(await checkRateLimit(res, `support-reply:${auth.user.id}`, 30, 1800, { req, route: '/api/support/tickets', policy: 'critical' }))) return
 
     try {
       const ticketId = typeof req.body?.ticketId === 'string' ? req.body.ticketId : ''

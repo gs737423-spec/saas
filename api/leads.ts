@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Endpoint público, sem auth — sem isso, um script pode gerar centenas de
   // e-mails reais pra caixa comercial (custo de cota SMTP + flood da caixa).
-  if (!(await checkRateLimit(res, `leads:${clientIp(req)}`, 5, 1800))) return
+  if (!(await checkRateLimit(res, `leads:${clientIp(req)}`, 5, 1800, { req, route: '/api/leads', policy: 'critical' }))) return
 
   const body = (req.body ?? {}) as LeadPayload
 

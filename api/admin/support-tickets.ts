@@ -105,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'PATCH') {
-    if (!(await checkRateLimit(res, `support-admin-reply:${admin.user.id}`, 60, 1800))) return
+    if (!(await checkRateLimit(res, `support-admin-reply:${admin.user.id}`, 60, 1800, { req, route: '/api/admin/support-tickets', policy: 'critical' }))) return
 
     try {
       const action = typeof req.body?.action === 'string' ? req.body.action : ''

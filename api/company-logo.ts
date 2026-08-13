@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../src/server/integrations/supabaseAdmin.js'
-import { requireCompany } from '../src/server/auth/requireCompany.js'
+import { requireCapability } from '../src/server/auth/authorization.js'
 import { checkRateLimit } from '../src/server/auth/rateLimit.js'
 
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB — imagem já vem recortada/redimensionada pelo browser antes de chegar aqui
@@ -17,10 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const auth = await requireCompany(req, res)
+  const auth = await requireCapability(req, res, 'company.settings.manage')
   if (!auth) return
 
-  if (!(await checkRateLimit(res, `company-logo:${auth.companyId}`, 10, 1800))) return
+  if (!(await checkRateLimit(res, `company-logo:${auth.companyId}`, 10, 1800, { req, route: '/api/company-logo', policy: 'critical' }))) return
 
   try {
     const dataUrl = typeof req.body?.image === 'string' ? req.body.image : ''

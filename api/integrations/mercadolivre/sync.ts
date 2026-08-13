@@ -4,7 +4,7 @@ import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
 import { SyncAlreadyRunningError, SyncLockUnavailableError } from '../../../src/server/integrations/syncLock.js'
-import { requireCompany } from '../../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
 // Catálogo grande com concorrência 8 pode passar de 1-2min em conta real —
@@ -42,12 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.manage')
     if (!auth) return
 
     // 5 syncs por 30min por empresa — cada sync bate na API do Mercado
     // Livre em loop (todo o catálogo), não é operação pra rodar em loop.
-    if (!(await checkRateLimit(res, `ml-sync:${auth.companyId}`, 5, 1800))) return
+    if (!(await checkRateLimit(res, `ml-sync:${auth.companyId}`, 5, 1800, { req, route: '/api/integrations/mercadolivre/sync', policy: 'critical' }))) return
 
     const summary = await runMercadoLivreSync(auth.companyId)
     res.status(200).json({ ok: true, ...summary })

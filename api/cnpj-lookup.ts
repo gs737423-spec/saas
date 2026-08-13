@@ -80,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Endpoint público, sem auth — sem isso vira proxy grátis pra BrasilAPI
   // (enumeração de CNPJ, abuso de cota de terceiro, possível banimento do IP
   // do servidor).
-  if (!(await checkRateLimit(res, `cnpj-lookup:${clientIp(req)}`, 30, 1800))) return
+  if (!(await checkRateLimit(res, `cnpj-lookup:${clientIp(req)}`, 30, 1800, { req, route: '/api/cnpj-lookup', policy: 'critical' }))) return
 
   const raw = typeof req.query.cnpj === 'string' ? req.query.cnpj : ''
   const digits = raw.replace(/\D/g, '')

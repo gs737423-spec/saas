@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
+import { getRequestId } from '../../src/server/security/requestContext.js'
 
 const DELETE_LIMIT = { max: 10, windowSeconds: 1800 }
 const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status, receita_data, logo_url'
@@ -64,6 +65,7 @@ function mapCompany(c: {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const requestId = getRequestId(req, res)
   const admin = await requireAdmin(req, res)
   if (!admin) return
 
@@ -88,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'POST') {
     // 20 empresas criadas por 30min por admin — bem acima do uso real
     // (contrato novo é evento raro), só trava abuso automatizado.
-    if (!(await checkRateLimit(res, `create-company:${admin.user.id}`, 20, 1800))) return
+    if (!(await checkRateLimit(res, `create-company:${admin.user.id}`, 20, 1800, { req, route: '/api/admin/companies', policy: 'critical' }))) return
 
     try {
       const name = typeof req.body?.name === 'string' ? req.body.name.trim() : ''
@@ -161,7 +163,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'DELETE') {
-    if (!(await checkRateLimit(res, `delete-company:${admin.user.id}`, DELETE_LIMIT.max, DELETE_LIMIT.windowSeconds))) return
+    if (!(await checkRateLimit(res, `delete-company:${admin.user.id}`, DELETE_LIMIT.max, DELETE_LIMIT.windowSeconds, { req, route: '/api/admin/companies', policy: 'critical' }))) return
 
     try {
       const id = typeof req.query.id === 'string' ? req.query.id : typeof req.body?.id === 'string' ? req.body.id : ''
@@ -176,10 +178,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // e apagar histórico de pedidos/faturamento de um cliente é operação
       // destrutiva demais pra acontecer sozinha junto de "excluir empresa" —
       // fica órfão mas inacessível (RLS já bloqueia sem membership).
-      const { error } = await supabase.from('companies').delete().eq('id', id)
-      if (error) throw new Error(error.message)
-
-      res.status(200).json({ ok: true })
+      const { data, error } = await supabase.rpc('delete_company_if_empty', { p_company_id: id, p_actor_user_id: admin.user.id, p_request_id: requestId })
+      if (error) {
+        if (error.code === '42883') {
+          res.status(503).json({ ok: false, error: { code: 'SECURITY_MIGRATION_REQUIRED', message: 'Exclus\u00e3o bloqueada at\u00e9 a migration de seguran\u00e7a ser aplicada.' }, requestId })
+          return
+        }
+        throw new Error(error.message)
+      }
+      const result = data as { status?: string; dependencies?: Record<string, number> } | null
+      if (result?.status === 'blocked') {
+        res.status(409).json({ ok: false, error: { code: 'COMPANY_HAS_DEPENDENT_DATA', message: 'A empresa possui dados vinculados e n\u00e3o pode ser exclu\u00edda.', dependencies: result.dependencies ?? {} }, requestId })
+        return
+      }
+      if (result?.status === 'not_found') {
+        res.status(404).json({ ok: false, error: { code: 'COMPANY_NOT_FOUND', message: 'Empresa n\u00e3o encontrada.' }, requestId })
+        return
+      }
+      res.status(200).json({ ok: true, requestId })
     } catch (err) {
       console.error('[api/admin/companies:DELETE]', err)
       res.status(500).json({ ok: false, message: 'Erro ao excluir empresa.' })

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import type { SanitizedSyncLogEntry } from '../../src/server/integrations/types.js'
-import { requireCompany } from '../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../src/server/auth/authorization.js'
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.read')
     if (!auth) return
 
     const limit = Math.min(MAX_LIMIT, Math.max(1, Number(req.query.limit) || DEFAULT_LIMIT))

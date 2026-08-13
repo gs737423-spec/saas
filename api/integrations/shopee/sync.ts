@@ -4,7 +4,7 @@ import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runShopeeSync } from '../../../src/server/integrations/shopee/sync.js'
 import { SyncAlreadyRunningError, SyncLockUnavailableError } from '../../../src/server/integrations/syncLock.js'
-import { requireCompany } from '../../../src/server/auth/requireCompany.js'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
 import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
 
 export const config = { maxDuration: 300 }
@@ -39,10 +39,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const auth = await requireCompany(req, res)
+    const auth = await requireCapability(req, res, 'marketplaces.manage')
     if (!auth) return
 
-    if (!(await checkRateLimit(res, `shopee-sync:${auth.companyId}`, 5, 1800))) return
+    if (!(await checkRateLimit(res, `shopee-sync:${auth.companyId}`, 5, 1800, { req, route: '/api/integrations/shopee/sync', policy: 'critical' }))) return
 
     const summary = await runShopeeSync(auth.companyId)
     res.status(200).json({ ok: true, ...summary })

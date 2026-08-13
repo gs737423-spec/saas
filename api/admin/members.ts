@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
+import { normalizeCompanyRole } from '../../src/server/auth/requireCompany.js'
 
 // Lista/remove membros de uma empresa. E-mail não fica em company_members
 // (só user_id) — precisa cruzar com auth.admin.listUsers(), não dá pra ler
@@ -51,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'DELETE') {
-    if (!(await checkRateLimit(res, `remove-member:${admin.user.id}`, 20, 1800))) return
+    if (!(await checkRateLimit(res, `remove-member:${admin.user.id}`, 20, 1800, { req, route: '/api/admin/members', policy: 'critical' }))) return
 
     try {
       const userId = typeof req.query.userId === 'string' ? req.query.userId : typeof req.body?.userId === 'string' ? req.body.userId : ''
@@ -61,6 +62,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return
       }
 
+      const { data: target, error: targetError } = await supabase.from('company_members').select('role').eq('user_id', userId).eq('company_id', companyId).maybeSingle()
+      if (targetError) throw new Error(targetError.message)
+      if (!target) {
+        res.status(404).json({ ok: false, error: 'member_not_found' })
+        return
+      }
+      const targetRole = normalizeCompanyRole(target.role)
+      if (targetRole === 'owner' || targetRole === 'unknown') {
+        res.status(403).json({ ok: false, error: 'protected_membership', message: 'Este acesso n\u00e3o pode ser removido pelo endpoint gen\u00e9rico.' })
+        return
+      }
       const { error } = await supabase.from('company_members').delete().eq('user_id', userId).eq('company_id', companyId)
       if (error) throw new Error(error.message)
 

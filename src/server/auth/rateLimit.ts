@@ -1,31 +1,68 @@
-import type { VercelResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { randomUUID } from 'node:crypto'
 import { getSupabaseAdmin } from '../integrations/supabaseAdmin.js'
+import { securityLog } from '../security/logger.js'
+import { getRequestId } from '../security/requestContext.js'
 
-const UNDEFINED_FUNCTION = '42883'
+export type RateLimitResult =
+  | { status: 'allowed' }
+  | { status: 'limited'; retryAfter: number }
+  | { status: 'unavailable'; reason: string }
 
-/**
- * Limite real, atômico, guardado no Postgres (ver 006_rate_limits.sql) —
- * sobrevive entre invocações de função serverless (memória local não
- * serviria, cada invocação é um processo novo). `key` deve identificar
- * quem/o quê está sendo limitado (ex: `invite:${userId}`, `ml-sync:${companyId}`).
- *
- * Se a migration 006 ainda não rodou, deixa passar (fail-open) em vez de
- * quebrar a rota inteira — mesma lógica de tolerância das outras migrations.
- */
-export async function checkRateLimit(res: VercelResponse, key: string, max: number, windowSeconds: number): Promise<boolean> {
-  const supabase = await getSupabaseAdmin()
-  const { data, error } = await supabase.rpc('check_rate_limit', { p_key: key, p_max: max, p_window_seconds: windowSeconds })
+interface RpcResult { data: unknown; error: { code?: string; message?: string } | null }
 
-  if (error) {
-    if (error.code === UNDEFINED_FUNCTION) return true
-    console.error('[rate_limit] check failed:', error.message)
-    return true
+export async function evaluateRateLimit(
+  key: string,
+  max: number,
+  windowSeconds: number,
+  invoke?: (args: { p_key: string; p_max: number; p_window_seconds: number }) => Promise<RpcResult>,
+): Promise<RateLimitResult> {
+  try {
+    const rpc = invoke ?? (async (args) => {
+      const supabase = await getSupabaseAdmin()
+      return await supabase.rpc('check_rate_limit', args) as RpcResult
+    })
+    const { data, error } = await rpc({ p_key: key, p_max: max, p_window_seconds: windowSeconds })
+    if (error) return { status: 'unavailable', reason: error.code ?? 'rpc_error' }
+    return data ? { status: 'allowed' } : { status: 'limited', retryAfter: windowSeconds }
+  } catch {
+    return { status: 'unavailable', reason: 'rpc_exception' }
   }
+}
 
-  if (!data) {
-    res.status(429).json({ ok: false, error: 'rate_limited', message: `Muitas tentativas — aguarde e tente novamente em até ${Math.ceil(windowSeconds / 60)} min.` })
+export interface RateLimitPolicy {
+  req?: VercelRequest
+  route?: string
+  policy?: 'critical' | 'low-risk'
+  evaluate?: () => Promise<RateLimitResult>
+}
+
+export async function checkRateLimit(
+  res: VercelResponse,
+  key: string,
+  max: number,
+  windowSeconds: number,
+  policy: RateLimitPolicy = {},
+): Promise<boolean> {
+  const result = policy.evaluate ? await policy.evaluate() : await evaluateRateLimit(key, max, windowSeconds)
+  if (result.status === 'allowed') return true
+
+  if (result.status === 'limited') {
+    res.setHeader('Retry-After', String(result.retryAfter))
+    res.status(429).json({ ok: false, error: 'rate_limited', message: 'Muitas tentativas. Aguarde antes de tentar novamente.' })
     return false
   }
 
-  return true
+  const requestId = policy.req ? getRequestId(policy.req, res) : randomUUID()
+  res.setHeader('X-Request-Id', requestId)
+  securityLog('error', 'rate_limit_unavailable', {
+    requestId,
+    route: policy.route ?? policy.req?.url,
+    status: 'unavailable',
+    reason: `${policy.policy ?? 'critical'}:${result.reason}`,
+  })
+  if (policy.policy === 'low-risk') return true
+  res.setHeader('Retry-After', '30')
+  res.status(503).json({ ok: false, error: { code: 'RATE_LIMIT_UNAVAILABLE', message: 'Prote\u00e7\u00e3o temporariamente indispon\u00edvel.' }, requestId })
+  return false
 }

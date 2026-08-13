@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin } from '../src/server/integrations/supabaseAdmin.js'
-import { requireCompany } from '../src/server/auth/requireCompany.js'
+import { requireCapability } from '../src/server/auth/authorization.js'
 
 // Dados cadastrais da PRÓPRIA empresa do usuário logado (nunca de outra —
 // requireCompany já resolve isso via company_members, sem aceitar
@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const auth = await requireCompany(req, res)
+  const auth = await requireCapability(req, res, 'company.read')
   if (!auth) return
 
   try {
