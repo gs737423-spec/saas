@@ -35,11 +35,11 @@ const iconByKey: Record<string, typeof DollarSign> = {
 }
 
 const toneColor: Record<KpiTone, string> = {
-  blue: '#3A8DFF',
+  blue: '#356FE8',
   emerald: '#3BE38E',
-  cyan: '#5B8DEF',
+  cyan: '#4A7FEA',
   amber: '#FFC95A',
-  violet: '#256EF7',
+  violet: '#356FE8',
   neutral: '#9EB3C9',
 }
 
@@ -57,19 +57,15 @@ function Delta({ change }: { change: number | null }) {
 function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
   const Icon = iconByKey[kpi.key] ?? DollarSign
   const c = toneColor[kpi.tone]
-  const isCyan = kpi.tone === 'cyan'
   return (
-    <div className="overview-hero-card overview-card-hover relative flex flex-col justify-between overflow-hidden rounded-2xl p-3.5" style={isCyan ? { boxShadow: `0 0 0 1px ${c}40, 0 8px 28px -10px ${c}59` } : undefined}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${c}, transparent)` }} />
+    <div className="overview-hero-card overview-card-hover relative flex flex-col justify-between overflow-hidden rounded-2xl p-3.5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-[0.025em] text-text-secondary">{kpi.label}</span>
         <div
           className="flex h-8 w-8 items-center justify-center rounded-lg"
-          style={isCyan
-            ? { background: `linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-primary-deep))`, boxShadow: `0 0 16px -2px ${c}B3` }
-            : { background: `${c}29`, boxShadow: `inset 0 0 0 1.5px ${c}66` }}
+          style={{ background: `${c}1F`, boxShadow: `inset 0 0 0 1px ${c}4D` }}
         >
-          <Icon className="icon-halo h-4 w-4" style={{ color: isCyan ? '#04101c' : c }} />
+          <Icon className="h-4 w-4" style={{ color: c }} />
         </div>
       </div>
       <div>

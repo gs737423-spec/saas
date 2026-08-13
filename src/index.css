@@ -48,7 +48,7 @@
   --color-bg-card: #16283C;
   --color-bg-card-hover: #1B3047;
   --color-bg-elevated: #1B3047;
-  --color-bg-header: #0B2537;
+  --color-bg-header: #162230;
 
   --color-border-subtle: #1C3044;
   --color-border-default: #263B50;
@@ -61,9 +61,9 @@
   --color-text-muted: #718399;
   --color-text-disabled: #536579;
 
-  --color-primary-700: #4679DD;
-  --color-primary-600: #5B8DEF;
-  --color-primary-500: #72A0F5;
+  --color-primary-700: #285FCC;
+  --color-primary-600: #356FE8;
+  --color-primary-500: #4A7FEA;
   --color-primary-200: #274B79;
   --color-primary-100: #1A3556;
   --color-primary-50: #12283F;
@@ -120,44 +120,38 @@
    declaração base sem precisar de !important. Site institucional
    (--vintec-*) fica de fora, não usa nenhum destes tokens. */
 :root[data-theme='light'] {
-  /* Escala estrutural monocromática blue-gray. */
-  --mono-950: #172A3A;
-  --mono-900: #1D3446;
-  --mono-850: #254155;
-  --mono-800: #2E4C61;
-  --mono-600: #60798B;
-  --mono-500: #7890A1;
-  --mono-300: #B7C6D1;
-  --mono-250: #C8D4DD;
-  --mono-200: #D5DEE6;
-  --mono-150: #DEE6EC;
-  --mono-100: #E7EDF2;
-  --mono-75: #EDF2F5;
-  --mono-50: #F3F6F8;
+  /* Escala estrutural monocromática graphite / blue-gray. */
+  --graphite-950: #101923;
+  --graphite-900: #182431;
+  --graphite-850: #202D3A;
+  --graphite-800: #293846;
+  --graphite-700: #3B4D5C;
+  --graphite-600: #546878;
+  --graphite-500: #718594;
 
-  /* App → section → card → elevated: não há branco como padrão. */
-  --color-bg-primary: #DDE5EB;
-  --color-bg-secondary: #E7EDF2;
-  --color-bg-highlight: #EDF2F5;
-  --color-bg-card: #F3F6F8;
-  --color-bg-card-hover: #EDF2F5;
-  --color-bg-elevated: #F7F9FA;
-  --color-bg-header: #12344D;
+  /* App → section → card → row → elevated: branco nunca é o padrão. */
+  --color-bg-primary: #CDD6DF;
+  --color-bg-secondary: #DCE3E9;
+  --color-bg-highlight: #E9EEF2;
+  --color-bg-card: #E9EEF2;
+  --color-bg-card-hover: #F1F4F6;
+  --color-bg-elevated: #F6F8F9;
+  --color-bg-header: #202B38;
 
-  --color-border-subtle: #CCD7DF;
-  --color-border-default: #BDC9D3;
-  --color-border-strong: #AAB9C5;
+  --color-border-subtle: #CBD4DC;
+  --color-border-default: #B9C5CF;
+  --color-border-strong: #A7B5C1;
   --color-border-active: #B9D0FA;
 
-  --color-text-primary: #172633;
-  --color-text-secondary: #405463;
-  --color-text-tertiary: #647A8A;
-  --color-text-muted: #8193A1;
+  --color-text-primary: #182431;
+  --color-text-secondary: #40515F;
+  --color-text-tertiary: #667887;
+  --color-text-muted: #8292A0;
   --color-text-disabled: #ADB6C2;
 
-  --color-primary-700: #2459C4;
-  --color-primary-600: #2F6FED;
-  --color-primary-500: #4A82F3;
+  --color-primary-700: #285FCC;
+  --color-primary-600: #356FE8;
+  --color-primary-500: #4A7FEA;
   --color-primary-200: #B9D0FA;
   --color-primary-100: #DCE8FC;
   --color-primary-50: #EEF4FF;
@@ -499,12 +493,10 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Claro: usado pra caixa/card individual (ex.: os 3 KPIs de
-     Faturamento/Estornos/Líquido) — fica branco chapado (nível 3), sem
-     gradiente nem sombra pesada. */
+  /* Claro: card recebe o nível blue-gray acima da seção, sem gradiente. */
   :root[data-theme='light'] .overview-glass {
     background: var(--color-bg-card);
-    box-shadow: 0 1px 2px rgba(27, 45, 60, 0.04), 0 6px 18px rgba(27, 45, 60, 0.055);
+    box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05);
   }
 
   /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
@@ -516,9 +508,7 @@ body {
       0 12px 32px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
-  /* Claro: usado como CONTAINER grande (bloco GMV, Composição do valor
-     líquido) — fica plano no nível 1 (#F6F8FB), os elementos internos
-     (linhas de marketplace, caixas de KPI) é que ficam brancos por cima. */
+  /* Claro: grandes containers usam a seção e deixam as linhas mais claras. */
   :root[data-theme='light'] .overview-glass-elevated {
     background: var(--color-bg-secondary);
     box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05);
@@ -572,14 +562,14 @@ body {
   }
   :root[data-theme='light'] .overview-hero-card {
     background: var(--color-bg-card);
-    border-color: #C9D5DE;
+    border-color: var(--color-border-default);
     box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05) !important;
   }
 
   /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
   :root[data-theme='light'] .overview-marketplace-row,
   :root[data-theme='light'] .overview-marketplace-row-lead {
-    background: var(--color-bg-card);
+    background: var(--color-bg-card-hover);
     border-color: var(--color-border-subtle);
     box-shadow: 0 1px 2px rgba(28, 45, 58, 0.04), 0 5px 14px rgba(28, 45, 58, 0.05);
   }
@@ -622,15 +612,15 @@ body {
     box-shadow: 0 0 0 2px rgba(114, 160, 245, 0.52);
   }
   .rail-item.topnav-item-active {
-    background: rgba(74, 130, 243, 0.14);
+    background: rgba(53, 111, 232, 0.14);
     color: #FFFFFF;
-    box-shadow: inset 0 0 0 1px rgba(114, 160, 245, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(101, 149, 245, 0.16);
   }
   .rail-item:hover :is(svg) {
     color: #DCE8F0;
   }
   .rail-item.topnav-item-active :is(svg) {
-    color: #72A0F5;
+    color: #4A7FEA;
   }
   .rail-item-active {
     background:
@@ -708,7 +698,7 @@ body {
     align-items: center;
     gap: 6px;
     padding-inline: 12px;
-    background: linear-gradient(105deg, #081C2B 0%, #0B2537 50%, #091F30 100%);
+    background: linear-gradient(105deg, #162230 0%, #182431 50%, #101A25 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.035),
@@ -737,27 +727,27 @@ body {
       padding: 10px 18px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 18px;
-      background: linear-gradient(180deg, rgba(19, 48, 68, 0.94) 0%, rgba(11, 31, 47, 0.94) 100%);
-      border-color: rgba(165, 195, 216, 0.14);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 32px rgba(25, 43, 56, 0.18);
+      background: linear-gradient(180deg, rgba(22, 34, 48, 0.97) 0%, rgba(16, 26, 37, 0.97) 100%);
+      border-color: rgba(255, 255, 255, 0.075);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 34px rgba(24, 35, 47, 0.18);
       transform: translateX(-50%);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     :root[data-theme='light'] .topnav-surface {
       --color-text-primary: #FFFFFF;
-      --color-text-secondary: #C9D7E0;
-      --color-text-muted: #9DB0BE;
-      --color-border-subtle: rgba(199, 216, 227, 0.16);
-      --color-border-default: rgba(202, 219, 230, 0.18);
+      --color-text-secondary: #DCE5ED;
+      --color-text-muted: #92A1B1;
+      --color-border-subtle: rgba(255, 255, 255, 0.09);
+      --color-border-default: rgba(255, 255, 255, 0.1);
       --color-bg-card: rgba(255, 255, 255, 0.045);
       --color-bg-card-hover: rgba(255, 255, 255, 0.085);
       --color-bg-elevated: rgba(255, 255, 255, 0.045);
       --color-accent-primary: #FFFFFF;
       --color-accent-blue: #FFFFFF;
-      background: linear-gradient(180deg, rgba(38, 66, 85, 0.94) 0%, rgba(23, 43, 58, 0.92) 100%);
-      border-color: rgba(202, 219, 230, 0.16);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 14px 32px rgba(25, 43, 56, 0.18);
+      background: linear-gradient(180deg, rgba(32, 43, 56, 0.97) 0%, rgba(24, 35, 47, 0.96) 100%);
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 14px 34px rgba(24, 35, 47, 0.18);
     }
     .topnav-brand-zone { min-width: 0; justify-self: start; }
     .topnav-navigation-zone { min-width: 0; justify-self: center; }
@@ -783,12 +773,12 @@ body {
     z-index: 0;
     width: var(--dock-item-size);
     height: var(--dock-item-size);
-    border: 1px solid rgba(122, 170, 255, 0.26);
+    border: 1px solid rgba(101, 149, 245, 0.28);
     border-radius: 12px;
-    background: linear-gradient(180deg, rgba(74, 130, 243, 0.24), rgba(47, 111, 237, 0.13));
+    background: linear-gradient(180deg, rgba(53, 111, 232, 0.3), rgba(53, 111, 232, 0.18));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.09),
-      0 4px 14px rgba(18, 65, 130, 0.14);
+      inset 0 1px 0 rgba(220, 229, 237, 0.12),
+      0 6px 16px rgba(25, 74, 170, 0.16);
     opacity: 0;
     pointer-events: none;
     transform: translate3d(var(--dock-indicator-x), 0, 0);
@@ -816,7 +806,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 11px;
-    color: #8FA6B8;
+    color: #8598A8;
     outline: none;
     transition:
       color var(--motion-duration-fast) var(--motion-ease-hover),
@@ -824,14 +814,14 @@ body {
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .topnav-dock-item:hover {
-    color: #D7E4ED;
+    color: #D5E1EA;
     background: rgba(255, 255, 255, 0.055);
     transform: translateY(-1px);
   }
   .topnav-dock-item:focus-visible {
     color: #FFFFFF;
     background: rgba(255, 255, 255, 0.055);
-    box-shadow: 0 0 0 2px rgba(74, 130, 243, 0.34);
+    box-shadow: 0 0 0 2px rgba(53, 111, 232, 0.45);
   }
   .topnav-dock-item:active {
     transform: scale(0.94);
@@ -849,7 +839,7 @@ body {
     padding: 6px 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 7px;
-    background: rgba(8, 25, 38, 0.96);
+    background: rgba(16, 25, 35, 0.98);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
     color: #FFFFFF;
     font-size: 12px;
@@ -868,47 +858,47 @@ body {
   }
 
   .topnav-item {
-    color: #AFC0CF;
+    color: #8598A8;
   }
 
   /* Controles utilitários ficam abaixo da navegação na hierarquia. */
   .topnav-surface .motion-header-control {
-    color: #AFC0CF;
+    color: #8598A8;
     background-color: rgba(255, 255, 255, 0.045);
     border-color: rgba(255, 255, 255, 0.09);
   }
   .topnav-surface .motion-header-control:hover {
-    color: #D7E4ED;
+    color: #D5E1EA;
     background-color: rgba(255, 255, 255, 0.085);
     border-color: rgba(255, 255, 255, 0.14);
   }
 
   .topnav-surface .topnav-popover {
-    background: rgba(8, 25, 38, 0.98);
+    background: rgba(16, 25, 35, 0.98);
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32);
   }
 
   :root[data-theme='light'] .topnav-dock-indicator {
-    border-color: rgba(130, 178, 247, 0.28);
-    background: linear-gradient(180deg, rgba(83, 139, 226, 0.3), rgba(59, 112, 198, 0.2));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(22, 64, 125, 0.18);
+    border-color: rgba(101, 149, 245, 0.32);
+    background: linear-gradient(180deg, rgba(53, 111, 232, 0.34), rgba(53, 111, 232, 0.2));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(25, 74, 170, 0.16);
   }
-  :root[data-theme='light'] .topnav-dock-item { color: #9DB0BE; }
+  :root[data-theme='light'] .topnav-dock-item { color: #92A1B1; }
   :root[data-theme='light'] .topnav-dock-item:hover,
-  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #E4ECF1; background: rgba(255, 255, 255, 0.055); }
+  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #DCE5ED; background: rgba(255, 255, 255, 0.055); }
   :root[data-theme='light'] .topnav-dock-item-active { color: #FFFFFF; }
   :root[data-theme='light'] .topnav-dock-tooltip,
   :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(23, 42, 58, 0.98); border-color: rgba(202, 219, 230, 0.16); box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32); color: #FFFFFF; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #9DB0BE; }
-  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #E4ECF1; background-color: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.14); }
+  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #92A1B1; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #DCE5ED; background-color: rgba(255, 255, 255, 0.055); border-color: rgba(255, 255, 255, 0.14); }
 
   /* Mobile continua com a barra estrutural existente; a releitura frost é
      exclusiva da island desktop. */
   @media (max-width: 767px) {
-    :root[data-theme='light'] .topnav-surface .motion-header-control { color: #AFC0CF; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.09); }
+    :root[data-theme='light'] .topnav-surface .motion-header-control { color: #8598A8; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.09); }
     :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #FFFFFF; background-color: rgba(255, 255, 255, 0.085); border-color: rgba(255, 255, 255, 0.14); }
-    :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(8, 25, 38, 0.98); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32); color: #FFFFFF; }
+    :root[data-theme='light'] .topnav-surface .topnav-popover { background: rgba(16, 25, 35, 0.98); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32); color: #FFFFFF; }
   }
 
   @media (min-width: 768px) {
@@ -936,8 +926,8 @@ body {
     }
     .topnav-status-control-active {
       color: #FFFFFF;
-      background: rgba(74, 130, 243, 0.14) !important;
-      box-shadow: inset 0 0 0 1px rgba(122, 170, 255, 0.18);
+      background: rgba(53, 111, 232, 0.14) !important;
+      box-shadow: inset 0 0 0 1px rgba(101, 149, 245, 0.2);
     }
     .topnav-status-control > svg {
       width: 18px;
@@ -946,7 +936,7 @@ body {
     .topnav-status-control-active > svg {
       color: #FFFFFF;
     }
-    :root[data-theme='light'] .topnav-status-control-active { color: #FFFFFF; background: rgba(83, 139, 226, 0.2) !important; box-shadow: inset 0 0 0 1px rgba(130, 178, 247, 0.28); }
+    :root[data-theme='light'] .topnav-status-control-active { color: #FFFFFF; background: rgba(53, 111, 232, 0.2) !important; box-shadow: inset 0 0 0 1px rgba(101, 149, 245, 0.32); }
     :root[data-theme='light'] .topnav-status-control-active > svg { color: #FFFFFF; }
   }
 
