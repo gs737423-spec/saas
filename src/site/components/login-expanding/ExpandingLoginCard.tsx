@@ -18,18 +18,20 @@ export default function ExpandingLoginCard({ bridge }: Props) {
   const emailRef = useRef<HTMLInputElement>(null)
 
   return (
-    <div className="lx-stage">
+    <>
       <LoginAtmosphereBackground />
-      <div className="lx-card lx-card--static" data-state="expanded">
-        <div className="lx-card__inner">
-          <div className="flex flex-col items-center gap-2">
+      <main className="access-stage">
+        <section className="access-card" aria-label="Acesso ao MKTOnline">
+          <div className="access-card__inner">
+            <div className="access-brand">
             <MKTOnlineLogo mode="symbol" size="lg" />
-            <p className="lx-brand lx-brand--centered">MKTOnline</p>
-          </div>
+              <p className="access-brand__name">MKTOnline</p>
+            </div>
 
-          <ExpandedLoginContent bridge={bridge} emailRef={emailRef} revealing />
-        </div>
-      </div>
-    </div>
+            <ExpandedLoginContent bridge={bridge} emailRef={emailRef} revealing />
+          </div>
+        </section>
+      </main>
+    </>
   )
 }

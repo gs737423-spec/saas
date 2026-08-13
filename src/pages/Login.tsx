@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CircleHelp } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { apiFetch } from '@/lib/apiFetch'
 import { whatsappAccessHelpUrl } from '@/lib/whatsapp'
 import ExpandingLoginCard from '@/site/components/login-expanding/ExpandingLoginCard'
 import type { LoginBridge } from '@/site/components/login-expanding/expanding-login.types'
+import { contact } from '@/site/content'
 import '@/site/site.css'
+import '@/site/login-enterprise.css'
 
 // Limite de tentativas ANTES de um cooldown local. Isto é só fricção de UX
 // contra reenvio acidental/repetido no mesmo dispositivo (reseta ao
@@ -200,6 +202,7 @@ export default function Login() {
   }
 
   const accessHelpUrl = whatsappAccessHelpUrl()
+  const helpUrl = accessHelpUrl ?? `mailto:${contact.email}`
 
   const bridge: LoginBridge = {
     view,
@@ -230,16 +233,19 @@ export default function Login() {
   }
 
   return (
-    <div className="lx-page">
-      <div className="lx-topbar">
-        <Link to="/" className="lx-back">
+    <div className="access-page">
+      <div className="access-utilities">
+        <Link to="/" className="access-utility-link">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao site
         </Link>
-        {accessHelpUrl && (
-          <a href={accessHelpUrl} target="_blank" rel="noopener noreferrer" className="lx-help">
-            Ajuda
-          </a>
-        )}
+        <a
+          href={helpUrl}
+          target={accessHelpUrl ? '_blank' : undefined}
+          rel={accessHelpUrl ? 'noopener noreferrer' : undefined}
+          className="access-utility-link"
+        >
+          <CircleHelp className="h-3.5 w-3.5" /> Ajuda
+        </a>
       </div>
 
       <ExpandingLoginCard bridge={bridge} />
