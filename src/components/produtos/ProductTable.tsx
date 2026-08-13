@@ -251,7 +251,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       {/* Desktop table */}
       <div className="hidden md:block">
         <DataTableViewport size="large" ariaLabel="Catálogo de produtos. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-        <table className="w-full min-w-[920px] text-sm">
+        <table className="table-mineral w-full min-w-[920px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle bg-bg-secondary/60 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               {columns.map((col) => (

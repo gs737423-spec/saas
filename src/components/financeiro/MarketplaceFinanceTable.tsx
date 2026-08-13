@@ -46,7 +46,7 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
       {/* Desktop table */}
       <div className="hidden md:block">
         <DataTableViewport size="small" ariaLabel="Comparativo por marketplace. Role para visualizar mais canais." className="-mx-1 rounded-xl px-1">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="table-mineral w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 <th className="pb-3 pr-4 font-semibold">Marketplace</th>

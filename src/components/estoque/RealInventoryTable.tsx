@@ -301,7 +301,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         {/* Desktop: table com scroll próprio */}
         <div className="hidden md:block">
           <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-            <table className="w-full min-w-[1040px] text-sm">
+            <table className="table-mineral w-full min-w-[1040px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
