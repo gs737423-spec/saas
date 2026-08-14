@@ -96,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: productRows } = await supabase
       .from('marketplace_products')
-      .select('connection_id, external_product_id, price, status')
+      .select('connection_id, external_product_id, price, status, category_id, category_name')
       .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
 
@@ -151,6 +151,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sku: row.sku,
           title: row.title,
           marketplace,
+          categoryId: product?.category_id ?? null,
+          categoryName: product?.category_name ?? null,
           availableQuantity: row.available_quantity,
           price: product?.price ?? null,
           status: product?.status ?? null,

@@ -8,6 +8,8 @@ import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplaceProm
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
+import { categoryItemFromProduct } from '@/lib/categoryAdapters'
+import { getCategoryOptions, matchesCategoryFilter } from '@/lib/categoryAnalytics'
 
 export default function Produtos() {
   const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
@@ -44,7 +46,7 @@ export default function Produtos() {
     const items = real?.items ?? []
     return items.filter((p) => {
       if (filters.marketplaces.size > 0 && !filters.marketplaces.has(p.marketplace)) return false
-      if (filters.categories.size > 0 && (!p.category || !filters.categories.has(p.category))) return false
+      if (!matchesCategoryFilter(categoryItemFromProduct(p), filters.categories)) return false
       if (filters.search) {
         const q = filters.search.toLowerCase()
         if (
@@ -56,6 +58,8 @@ export default function Produtos() {
       return true
     })
   }, [real, filters])
+
+  const categoryOptions = useMemo(() => getCategoryOptions((real?.items ?? []).map(categoryItemFromProduct)), [real])
 
   if (loading) {
     return (
@@ -78,7 +82,7 @@ export default function Produtos() {
       </div>
 
       <div className="motion-block-in motion-block-in-2 workspace-primary-panel">
-        <ProductTable filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} editable onSetCost={handleSetCost} />
+        <ProductTable allProducts={real.items} filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} categoryOptions={categoryOptions} editable onSetCost={handleSetCost} />
       </div>
     </div>
   )

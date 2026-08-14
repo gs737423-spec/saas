@@ -5,6 +5,8 @@ export interface DashboardProduct {
   sku: string | null
   name: string
   marketplace: Marketplace
+  /** Identidade oficial recebida do marketplace, quando disponível. */
+  categoryId: string | null
   category: string | null
   price: number
   costPrice: number | null

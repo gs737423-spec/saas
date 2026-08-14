@@ -1,11 +1,15 @@
-import { useState } from 'react'
-import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
 import type { DashboardProduct as Product } from '@/server/dashboardProducts'
 import ProductFilters, { type ProductFilterState } from './ProductFilters'
 import DataTableViewport from '@/components/common/DataTableViewport'
 import { useTheme } from '@/contexts/ThemeContext'
+import CategoryDrawer from '@/components/category/CategoryDrawer'
+import type { CategoryOption } from '@/lib/categoryAnalytics'
+import { categoryKey, categoryLabel } from '@/lib/categoryAnalytics'
+import { categoryItemFromProduct } from '@/lib/categoryAdapters'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
@@ -142,9 +146,11 @@ function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[
 }
 
 interface Props {
+  allProducts: Product[]
   filteredProducts: Product[]
   filters: ProductFilterState
   onFiltersChange: (next: ProductFilterState) => void
+  categoryOptions: CategoryOption[]
   /** Edição de custo só faz sentido quando há produto real por trás (linha
    *  em marketplace_products) — no demo não tem o que salvar. */
   editable?: boolean
@@ -162,10 +168,13 @@ const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
   { key: 'trend', label: 'Tendência', align: 'center' },
 ]
 
-export default function ProductTable({ filteredProducts, filters, onFiltersChange, editable = false, onSetCost }: Props) {
+export default function ProductTable({ allProducts, filteredProducts, filters, onFiltersChange, categoryOptions, editable = false, onSetCost }: Props) {
   const { theme } = useTheme()
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
+  const categoryProducts = useMemo(() => allProducts.map(categoryItemFromProduct), [allProducts])
+  const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -204,7 +213,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       </div>
 
       <div className="workspace-filter-slot mb-3.5">
-        <ProductFilters filters={filters} onChange={onFiltersChange} />
+        <ProductFilters filters={filters} onChange={onFiltersChange} categoryOptions={categoryOptions} />
       </div>
 
       {/* Mobile: stacked cards */}
@@ -221,6 +230,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                     <span className="text-text-muted">·</span>
                     <span className="text-[10px] font-medium" style={{ color: getMarketplaceBadge(p.marketplace, theme).text }}>{p.marketplace}</span>
                   </div>
+                  <CategoryTrigger product={p} onOpen={setSelectedCategoryKey} className="mt-1" />
                 </div>
                 <TrendBadge trend={p.trend} />
               </div>
@@ -276,7 +286,7 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
                   <td className="max-w-[140px] truncate py-3.5 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
                   <td className="max-w-[280px] py-3.5 pr-4">
                     <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[14px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
-                    <span className="mt-0.5 block truncate text-[11px] text-text-muted" title={p.category ?? undefined}>{p.category ?? 'Sem categoria'}</span>
+                    <CategoryTrigger product={p} onOpen={setSelectedCategoryKey} className="mt-0.5" />
                   </td>
                   <td className="py-3.5 pr-4">
                     <span
@@ -317,6 +327,16 @@ export default function ProductTable({ filteredProducts, filters, onFiltersChang
       {sorted.length === 0 && (
         <div className="py-12 text-center text-sm text-text-muted">Nenhum produto encontrado com os filtros aplicados.</div>
       )}
+      <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>
+  )
+}
+
+function CategoryTrigger({ product, onOpen, className = '' }: { product: Product; onOpen: (key: string) => void; className?: string }) {
+  const source = categoryItemFromProduct(product)
+  return (
+    <button type="button" onClick={() => onOpen(categoryKey(source))} className={`${className} group/category flex max-w-full items-center gap-0.5 truncate text-[10.5px] font-medium text-text-muted hover:text-text-primary hover:underline`} title={`Analisar categoria ${categoryLabel(source)}`}>
+      <span className="truncate">{categoryLabel(source)}</span><ChevronRight className="h-3 w-3 shrink-0 opacity-60 transition-transform group-hover/category:translate-x-0.5" />
+    </button>
   )
 }

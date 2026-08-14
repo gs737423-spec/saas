@@ -77,6 +77,9 @@ export interface DashboardInventoryItem {
   sku: string | null
   title: string
   marketplace: Marketplace
+  /** Metadados oficiais do produto persistido em marketplace_products. */
+  categoryId: string | null
+  categoryName: string | null
   availableQuantity: number
   price: number | null
   status: string | null

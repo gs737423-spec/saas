@@ -35,12 +35,12 @@ export function demoDashboardSummary(days = 30): DashboardSummary {
 // margin/trend/sharePct são percentuais 0-100 (mesma convenção da API real,
 // ver api/dashboard/products.ts), não fração 0-1.
 const DEMO_PRODUCTS: DashboardProduct[] = [
-  { id: 'demo-1', sku: 'TEN-0231', name: 'Tênis Runner Pro Azul', marketplace: 'Mercado Livre', category: 'Calçados', price: 289.9, costPrice: 145, margin: 50, stock: 42, revenue: 24350, units: 84, trend: 14, sharePct: 19 },
-  { id: 'demo-2', sku: 'MOC-1187', name: 'Mochila Urbana 20L', marketplace: 'Shopee', category: 'Acessórios', price: 159.9, costPrice: 78, margin: 51, stock: 118, units: 210, revenue: 33579, trend: 22, sharePct: 26 },
-  { id: 'demo-3', sku: 'CAM-0552', name: 'Camiseta Dry-Fit Preta', marketplace: 'Amazon', category: 'Vestuário', price: 69.9, costPrice: 28, margin: 60, stock: 260, units: 340, revenue: 23766, trend: -5, sharePct: 19 },
-  { id: 'demo-4', sku: 'GAR-0098', name: 'Garrafa Térmica 1L', marketplace: 'Loja Própria', category: 'Utilidades', price: 89.9, costPrice: 41, margin: 54, stock: 76, units: 96, revenue: 8630, trend: 8, sharePct: 7 },
-  { id: 'demo-5', sku: 'RLG-0405', name: 'Relógio Smartwatch Lite', marketplace: 'Mercado Livre', category: 'Eletrônicos', price: 349.9, costPrice: 190, margin: 46, stock: 19, units: 58, revenue: 20294, trend: 31, sharePct: 16 },
-  { id: 'demo-6', sku: 'BON-0271', name: 'Boné Trucker Bordado', marketplace: 'Shopee', category: 'Acessórios', price: 49.9, costPrice: 19, margin: 62, stock: 5, units: 140, revenue: 6986, trend: -2, sharePct: 6 },
+  { id: 'demo-1', sku: 'TEN-0231', name: 'Tênis Runner Pro Azul', marketplace: 'Mercado Livre', categoryId: null, category: 'Calçados', price: 289.9, costPrice: 145, margin: 50, stock: 42, revenue: 24350, units: 84, trend: 14, sharePct: 19 },
+  { id: 'demo-2', sku: 'MOC-1187', name: 'Mochila Urbana 20L', marketplace: 'Shopee', categoryId: null, category: 'Acessórios', price: 159.9, costPrice: 78, margin: 51, stock: 118, units: 210, revenue: 33579, trend: 22, sharePct: 26 },
+  { id: 'demo-3', sku: 'CAM-0552', name: 'Camiseta Dry-Fit Preta', marketplace: 'Amazon', categoryId: null, category: 'Vestuário', price: 69.9, costPrice: 28, margin: 60, stock: 260, units: 340, revenue: 23766, trend: -5, sharePct: 19 },
+  { id: 'demo-4', sku: 'GAR-0098', name: 'Garrafa Térmica 1L', marketplace: 'Loja Própria', categoryId: null, category: 'Utilidades', price: 89.9, costPrice: 41, margin: 54, stock: 76, units: 96, revenue: 8630, trend: 8, sharePct: 7 },
+  { id: 'demo-5', sku: 'RLG-0405', name: 'Relógio Smartwatch Lite', marketplace: 'Mercado Livre', categoryId: null, category: 'Eletrônicos', price: 349.9, costPrice: 190, margin: 46, stock: 19, units: 58, revenue: 20294, trend: 31, sharePct: 16 },
+  { id: 'demo-6', sku: 'BON-0271', name: 'Boné Trucker Bordado', marketplace: 'Shopee', categoryId: null, category: 'Acessórios', price: 49.9, costPrice: 19, margin: 62, stock: 5, units: 140, revenue: 6986, trend: -2, sharePct: 6 },
 ]
 
 export function demoDashboardProducts(): DashboardProductsResponse {
@@ -51,6 +51,8 @@ const DEMO_INVENTORY: DashboardInventoryItem[] = DEMO_PRODUCTS.map((p, i) => ({
   sku: p.sku,
   title: p.name,
   marketplace: p.marketplace,
+  categoryId: p.categoryId,
+  categoryName: p.category,
   availableQuantity: p.stock,
   price: p.price,
   status: p.stock < 10 ? 'baixo' : 'ativo',

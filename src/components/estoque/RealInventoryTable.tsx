@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, ChevronDown, Check, Boxes, PauseCircle, Crown, Wallet } from 'lucide-react'
+import { Search, ChevronDown, ChevronRight, Check, Boxes, PauseCircle, Crown, Wallet } from 'lucide-react'
 import { getMarketplaceColor, getMarketplaceBadge, type Marketplace } from '@/data/mockData'
 import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
 import DataTableViewport from '@/components/common/DataTableViewport'
 import { useTheme } from '@/contexts/ThemeContext'
 import { coveragePresentation, giroPresentation } from '@/lib/inventoryStatus'
+import CategoryDrawer from '@/components/category/CategoryDrawer'
+import CategoryFilterDropdown from '@/components/category/CategoryFilterDropdown'
+import { categoryKey, categoryLabel, getCategoryOptions, getTopCategory, matchesCategoryFilter } from '@/lib/categoryAnalytics'
+import { categoryItemFromInventory } from '@/lib/categoryAdapters'
 
 function relativeDate(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -35,6 +39,7 @@ interface FilterState {
   onlyCritical: boolean
   onlyStalled: boolean
   marketplace: Marketplace | 'all'
+  categories: Set<string>
   manufacturerSearch: string
   onlyLowCoverage: boolean
   onlyExcess: boolean
@@ -46,6 +51,7 @@ const defaultFilters: FilterState = {
   onlyCritical: false,
   onlyStalled: false,
   marketplace: 'all',
+  categories: new Set(),
   manufacturerSearch: '',
   onlyLowCoverage: false,
   onlyExcess: false,
@@ -53,7 +59,7 @@ const defaultFilters: FilterState = {
 }
 
 function isDefault(f: FilterState): boolean {
-  return f.abc.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch
+  return f.abc.size === 0 && f.categories.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch
 }
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -124,6 +130,11 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const { theme } = useTheme()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [sort, setSort] = useState<'revenue' | 'stock' | 'units30d' | 'coverage'>('revenue')
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
+  const categoryProducts = useMemo(() => items.map(categoryItemFromInventory), [items])
+  const categoryOptions = useMemo(() => getCategoryOptions(categoryProducts), [categoryProducts])
+  const topCategory = useMemo(() => getTopCategory(categoryProducts), [categoryProducts])
+  const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
 
   const enriched = useMemo(() => items.map((item) => {
     const cov = coverageDays(item)
@@ -150,6 +161,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     if (filters.onlyCritical && !(cov !== null && cov < 7)) return false
     if (filters.onlyStalled && !(giro.label === 'Parado' || giro.label === 'Parado crítico')) return false
     if (filters.marketplace !== 'all' && item.marketplace !== filters.marketplace) return false
+    if (!matchesCategoryFilter(categoryItemFromInventory(item), filters.categories)) return false
     if (filters.manufacturerSearch && !(item.manufacturerCode ?? '').toLowerCase().includes(filters.manufacturerSearch.toLowerCase())) return false
     if (filters.onlyLowCoverage && !(cov !== null && cov < 15)) return false
     if (filters.onlyExcess && !(cov !== null && cov > 45)) return false
@@ -189,6 +201,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           <div>
             <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
             <p className="mt-0.5 text-xs text-text-muted">{sorted.length} de {items.length} produtos · inclui Curva ABC</p>
+            {topCategory && <button type="button" onClick={() => setSelectedCategoryKey(topCategory.key)} className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-text-secondary hover:text-text-primary hover:underline" title="Maior faturamento no período">Categoria líder <strong className="text-text-primary">{topCategory.label} · R$ {brl(topCategory.revenue)}</strong><ChevronRight className="h-3 w-3" /></button>}
           </div>
           <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-0.5">
             <span className="px-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted">Ordenar</span>
@@ -225,6 +238,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           )}
           <span className="mx-1 h-4 w-px bg-border-subtle" />
           <MarketplaceDropdown value={filters.marketplace} onChange={(v) => setFilters((f) => ({ ...f, marketplace: v }))} />
+          <CategoryFilterDropdown compact options={categoryOptions} selected={filters.categories} onChange={(categories) => setFilters((f) => ({ ...f, categories }))} />
           {hasSupplierData && (
             <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-sm border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
               <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
@@ -257,6 +271,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                       <span className="text-text-muted">·</span>
                       <span className="text-[10px] font-medium" style={{ color: getMarketplaceBadge(item.marketplace, theme).text }}>{item.marketplace}</span>
                     </div>
+                    <InventoryCategoryTrigger item={item} onOpen={setSelectedCategoryKey} className="mt-1" />
                   </div>
                   {item.abcClass && <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span>}
                 </div>
@@ -275,11 +290,12 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         {/* Desktop: table com scroll próprio */}
         <div className="workspace-table-area hidden md:block">
           <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
-            <table className="workspace-data-table enterprise-table w-full min-w-[1040px] text-sm">
+            <table className="workspace-data-table enterprise-table w-full min-w-[1160px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
                   <th className="pb-3 pr-2 font-semibold">Descrição</th>
+                  <th className="pb-3 pr-2 font-semibold">Categoria</th>
                   {hasSupplierData && <th className="hidden pb-3 pr-2 font-semibold xl:table-cell">Cód. Fabricante</th>}
                   <th className="pb-3 pr-2 text-center font-semibold">Estoque</th>
                   <th className="pb-3 pr-2 text-center font-semibold">Vendas 30d</th>
@@ -311,6 +327,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                           <span className="block truncate font-medium text-text-primary" title={item.title}>{item.title}</span>
                         )}
                       </td>
+                      <td className="max-w-[150px] py-3 pr-2"><InventoryCategoryTrigger item={item} onOpen={setSelectedCategoryKey} /></td>
                       {hasSupplierData && <td className="hidden max-w-[110px] truncate py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell" title={item.manufacturerCode ?? undefined}>{item.manufacturerCode ?? '—'}</td>}
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
@@ -340,7 +357,17 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
           </DataTableViewport>
         </div>
       </div>
+      <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>
+  )
+}
+
+function InventoryCategoryTrigger({ item, onOpen, className = '' }: { item: DashboardInventoryItem; onOpen: (key: string) => void; className?: string }) {
+  const source = categoryItemFromInventory(item)
+  return (
+    <button type="button" onClick={() => onOpen(categoryKey(source))} className={`${className} group/category flex max-w-full items-center gap-0.5 truncate text-[10.5px] font-medium text-text-muted hover:text-text-primary hover:underline`} title={`Analisar categoria ${categoryLabel(source)}`}>
+      <span className="truncate">{categoryLabel(source)}</span><ChevronRight className="h-3 w-3 shrink-0 opacity-60 transition-transform group-hover/category:translate-x-0.5" />
+    </button>
   )
 }
 

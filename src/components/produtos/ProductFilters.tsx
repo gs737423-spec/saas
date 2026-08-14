@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, ChevronDown, Check, X } from 'lucide-react'
-import { productCategories, getMarketplaceColor } from '@/data/mockData'
+import { getMarketplaceColor } from '@/data/mockData'
 import type { Marketplace } from '@/data/mockData'
+import CategoryFilterDropdown from '@/components/category/CategoryFilterDropdown'
+import type { CategoryOption } from '@/lib/categoryAnalytics'
 
 const marketplaces: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
 
@@ -14,6 +16,7 @@ export interface ProductFilterState {
 interface Props {
   filters: ProductFilterState
   onChange: (next: ProductFilterState) => void
+  categoryOptions: CategoryOption[]
 }
 
 // Period is global (topbar calendar dropdown, PeriodContext) — no local
@@ -138,89 +141,7 @@ function MultiMarketplaceDropdown({
   )
 }
 
-function MultiCategoryDropdown({
-  options,
-  selected,
-  onChange,
-}: {
-  options: string[]
-  selected: Set<string>
-  onChange: (next: Set<string>) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
-  }, [])
-
-  const toggle = (category: string) => {
-    const next = new Set(selected)
-    if (next.has(category)) next.delete(category)
-    else next.add(category)
-    onChange(next)
-  }
-
-  const label =
-    selected.size === 0
-      ? 'Todas as categorias'
-      : selected.size === 1
-        ? [...selected][0]
-        : `${selected.size} categorias`
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`motion-input flex h-11 w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-border-subtle bg-bg-card/60 px-3.5 text-sm font-medium text-text-secondary hover:border-border-default focus:border-accent-blue/50 ${open || selected.size > 0 ? 'control-active' : 'control-inactive'}`}
-      >
-        <span className="truncate">{label}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full z-30 mt-1.5 w-full min-w-[200px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
-          <button
-            type="button"
-            onClick={() => { onChange(new Set()); setOpen(false) }}
-            className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-              selected.size === 0 ? 'control-active bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
-            }`}
-          >
-            Todas as categorias
-            {selected.size === 0 && <Check className="h-3.5 w-3.5 shrink-0" />}
-          </button>
-          <div className="mx-3 border-t border-border-subtle" />
-          {options.map((category) => {
-            const active = selected.has(category)
-            return (
-              <button
-                key={category}
-                type="button"
-                onClick={() => toggle(category)}
-                title={category}
-                className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-                  active ? 'control-active bg-accent-blue/10 text-text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
-                }`}
-              >
-                <span className="truncate">{category}</span>
-                {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-blue" />}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default function ProductFilters({ filters, onChange }: Props) {
-  const categoryOptions: string[] = [...productCategories]
-
+export default function ProductFilters({ filters, onChange, categoryOptions }: Props) {
   return (
     <div className="workspace-product-filters enterprise-filter-surface rounded-lg border border-border-subtle p-2">
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(280px,1fr)_minmax(200px,230px)_minmax(200px,230px)]">
@@ -238,7 +159,7 @@ export default function ProductFilters({ filters, onChange }: Props) {
           selected={filters.marketplaces}
           onChange={(v) => onChange({ ...filters, marketplaces: v })}
         />
-        <MultiCategoryDropdown
+        <CategoryFilterDropdown
           options={categoryOptions}
           selected={filters.categories}
           onChange={(v) => onChange({ ...filters, categories: v })}
