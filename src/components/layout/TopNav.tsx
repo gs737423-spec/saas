@@ -69,9 +69,6 @@ function DesktopNavigationDock({ pathname }: { pathname: string }) {
             className={({ isActive }) => `topnav-dock-item ${isActive ? 'topnav-dock-item-active' : ''}`}
           >
             <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-            <span className="topnav-dock-tooltip" aria-hidden="true">
-              {item.label}
-            </span>
           </NavLink>
         )
       })}
