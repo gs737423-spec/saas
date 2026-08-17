@@ -44,4 +44,15 @@ describe('marketplace temporal comparison', () => {
     expect(result.currentTotal).toBe(200)
     expect(result.slots.reduce((sum, slot) => sum + slot.current, 0)).toBe(200)
   })
+
+  it('compares a channel discovered dynamically without a new schema field', () => {
+    const days: ComparisonDailyPoint[] = [
+      { ...point('2026-08-01', 0), channels: { 'external:vtex:xyz': 25 }, total: 25 },
+      { ...point('2026-08-08', 0), channels: { 'external:vtex:xyz': 40 }, total: 40 },
+    ]
+    const result = buildChannelComparison(days, 1, 7, 'external:vtex:xyz')
+    expect(result.currentTotal).toBe(40)
+    expect(result.previousTotal).toBe(25)
+    expect(result.deltaPct).toBe(60)
+  })
 })

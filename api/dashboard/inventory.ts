@@ -10,6 +10,7 @@ type InventoryApiResponse = DashboardInventoryResponse & { ok: boolean; message?
 const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
   mercadolivre: 'Mercado Livre',
   shopee: 'Shopee',
+  vtex: 'Loja Própria',
 }
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
@@ -60,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, provider, status, last_sync_at')
       .eq('company_id', auth.companyId)
-      .eq('status', 'connected')
+      .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
 
     if (connError) throw new Error(connError.message)
 
@@ -112,6 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('quantity, unit_price, external_product_id, orders!inner(status, ordered_at, connection_id)')
       .eq('company_id', auth.companyId)
       .eq('orders.status', 'paid')
+      .eq('orders.analytics_included', true)
       .gte('orders.ordered_at', since30d)
 
     const salesByKey = new Map<string, { units: number; revenue: number }>()
@@ -145,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const product = productByKey.get(key)
         const sales = salesByKey.get(key)
         const soldQuantity = sales?.units ?? null
-        const turnoverRate = sales && row.available_quantity > 0 ? sales.units / row.available_quantity : null
+        const turnoverRate = sales && row.available_quantity != null && row.available_quantity > 0 ? sales.units / row.available_quantity : null
 
         return {
           sku: row.sku,

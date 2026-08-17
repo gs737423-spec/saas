@@ -14,6 +14,8 @@ import { useConnections, getMarketplaceColor, type IntegrationStatus, type Merca
 import type { Marketplace } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
 import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
+import VtexConnectionCard from '@/components/importacoes/VtexConnectionCard'
+import VtexChannelMappingCard from '@/components/importacoes/VtexChannelMappingCard'
 
 const OTHER_MARKETPLACES: Marketplace[] = ['Amazon', 'Loja Própria']
 
@@ -39,6 +41,9 @@ const statusConfig: Record<IntegrationStatus, { label: string; color: string; bg
   disconnected: { label: 'Desconectado', color: 'text-text-muted', bg: 'bg-bg-card', border: 'border-border-subtle', dotClass: 'bg-text-muted' },
   pending: { label: 'Pendente', color: 'text-accent-blue', bg: 'bg-accent-blue/15', border: 'border-accent-blue/30', dotClass: 'bg-accent-blue animate-pulse' },
   error: { label: 'Erro', color: 'text-accent-rose', bg: 'bg-accent-rose/15', border: 'border-accent-rose/30', dotClass: 'bg-accent-rose' },
+  connecting: { label: 'Conectando', color: 'text-accent-blue', bg: 'bg-accent-blue/15', border: 'border-accent-blue/30', dotClass: 'bg-accent-blue animate-pulse' },
+  syncing: { label: 'Sincronizando', color: 'text-accent-blue', bg: 'bg-accent-blue/15', border: 'border-accent-blue/30', dotClass: 'bg-accent-blue animate-pulse' },
+  requires_attention: { label: 'Requer atenção', color: 'text-accent-rose', bg: 'bg-accent-rose/15', border: 'border-accent-rose/30', dotClass: 'bg-accent-rose' },
   expired: { label: 'Expirado', color: 'text-accent-amber', bg: 'bg-accent-amber/15', border: 'border-accent-amber/30', dotClass: 'bg-accent-amber' },
   config_missing: { label: 'Configuração pendente', color: 'text-accent-amber', bg: 'bg-accent-amber/15', border: 'border-accent-amber/30', dotClass: 'bg-accent-amber' },
 }
@@ -261,6 +266,8 @@ export default function Importacoes() {
       <div className="grid gap-3 sm:grid-cols-2">
         <MercadoLivreCard />
         <ShopeeCard />
+        <VtexConnectionCard />
+        <VtexChannelMappingCard />
         {OTHER_MARKETPLACES.map((mp) => (
           <NotImplementedCard key={mp} marketplace={mp} />
         ))}

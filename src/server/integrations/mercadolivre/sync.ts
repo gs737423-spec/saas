@@ -7,6 +7,7 @@ import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLiv
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
+import { directCanonicalOrderKey, persistCanonicalOrder } from '../orderIdentity.js'
 
 export class ConnectionMissingError extends Error {}
 
@@ -208,31 +209,17 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     for (const order of orders) {
       try {
         const orderRow = mapOrderToRow(order)
-        const { data: upsertedOrder, error: orderError } = await supabase
-          .from('orders')
-          .upsert(
-            { company_id: companyId, connection_id: connection.id, provider: 'mercadolivre', ...orderRow },
-            { onConflict: 'company_id,connection_id,external_order_id' }
-          )
-          .select('id')
-          .single()
-        if (orderError) throw new Error(`Failed to upsert order ${order.id}: ${orderError.message}`)
+        await persistCanonicalOrder(supabase, {
+          companyId, connectionId: connection.id, provider: 'mercadolivre',
+          externalOrderId: orderRow.external_order_id,
+          canonicalOrderKey: directCanonicalOrderKey('mercadolivre', orderRow.external_order_id),
+          salesChannel: 'mercadolivre', status: orderRow.status,
+          totalAmount: orderRow.total_amount, feeAmount: orderRow.fee_amount,
+          currency: orderRow.currency, orderedAt: orderRow.ordered_at,
+          items: mapOrderItems(order).map((item) => ({ ...item, sku: item.sku ?? skuByProductId.get(item.external_product_id) ?? null })),
+        })
         ordersImported += 1
 
-        // Substitui os itens do pedido a cada sync (nunca acumula duplicado se
-        // o pedido já existia) — pedido não muda item depois de fechado, mas
-        // reprocessar é seguro e mais simples que diffar item a item.
-        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id).eq('company_id', companyId)
-        const itemRows = mapOrderItems(order).map((item) => ({
-          company_id: companyId,
-          order_id: upsertedOrder.id,
-          ...item,
-          sku: item.sku ?? skuByProductId.get(item.external_product_id) ?? null,
-        }))
-        if (itemRows.length > 0) {
-          const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
-          if (itemsError) throw new Error(`Failed to insert items for order ${order.id}: ${itemsError.message}`)
-        }
       } catch (orderErr) {
         const message = orderErr instanceof MercadoLivreApiError
           ? orderErr.message

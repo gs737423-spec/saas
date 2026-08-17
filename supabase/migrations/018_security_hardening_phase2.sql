@@ -1,4 +1,18 @@
 -- Security hardening phase 2. CREATED LOCALLY; do not apply without review.
+begin;
+
+-- SECURITY DEFINER helpers used by RLS must resolve built-ins before public
+-- objects and expose only the minimum roles required by their callers.
+alter function public.user_company_ids() set search_path = pg_catalog, public;
+revoke all on function public.user_company_ids() from public, anon;
+grant execute on function public.user_company_ids() to authenticated, service_role;
+
+alter function public.is_platform_admin() set search_path = pg_catalog, public;
+revoke all on function public.is_platform_admin() from public, anon;
+grant execute on function public.is_platform_admin() to authenticated, service_role;
+
+alter function public.check_rate_limit(text, integer, integer) set search_path = pg_catalog, public;
+
 create table if not exists public.security_audit_logs (
   id uuid primary key default gen_random_uuid(), created_at timestamptz not null default now(),
   request_id text not null check (char_length(request_id) between 8 and 128), actor_user_id uuid,
@@ -59,3 +73,5 @@ begin
 end; $$;
 revoke all on function public.delete_company_if_empty(uuid,uuid,text) from public, anon, authenticated;
 grant execute on function public.delete_company_if_empty(uuid,uuid,text) to service_role;
+
+commit;

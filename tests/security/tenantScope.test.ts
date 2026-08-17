@@ -33,8 +33,11 @@ describe('service-role tenant scope regressions', () => {
       const source = readFileSync(resolve(file), 'utf8')
       expect(source).toContain('claimSyncLock(supabase, companyId, connection.id, startedAt)')
       expect(source).toContain('releaseSyncLock(supabase, companyId, connection.id)')
-      expect(source).toMatch(/\.eq\('order_id', upsertedOrder\.id\)\.eq\('company_id', companyId\)/)
+      expect(source).toContain('persistCanonicalOrder(supabase')
     }
+
+    const canonical = readFileSync(resolve('src/server/integrations/orderIdentity.ts'), 'utf8')
+    expect(canonical.match(/\.eq\('company_id', input\.companyId\)/g)?.length).toBeGreaterThanOrEqual(4)
   })
 
   it('does not trust company identifiers from mutation bodies', () => {

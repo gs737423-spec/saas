@@ -29,7 +29,7 @@ const ABC_STYLE: Record<AbcClass, { color: string; bg: string }> = {
 // Cobertura (dias de estoque no ritmo de venda atual) — derivada de campos
 // já reais (availableQuantity/soldQuantity), sem nenhum dado novo inventado.
 function coverageDays(item: DashboardInventoryItem): number | null {
-  if (!item.soldQuantity || item.soldQuantity <= 0) return null
+  if (item.availableQuantity === null || !item.soldQuantity || item.soldQuantity <= 0) return null
   const dailyRate = item.soldQuantity / 30
   return dailyRate > 0 ? item.availableQuantity / dailyRate : null
 }
@@ -154,7 +154,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
   const stalledCount = enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
   const curvaA = items.filter((i) => i.abcClass === 'A')
-  const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * i.availableQuantity, 0)
+  const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * (i.availableQuantity ?? 0), 0)
 
   const filtered = enriched.filter(({ item, cov, giro }) => {
     if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
@@ -174,7 +174,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
   const sorted = [...filtered].sort((a, b) => {
     if (sort === 'revenue') return b.item.revenue30d - a.item.revenue30d
-    if (sort === 'stock') return b.item.availableQuantity - a.item.availableQuantity
+    if (sort === 'stock') return (b.item.availableQuantity ?? -1) - (a.item.availableQuantity ?? -1)
     if (sort === 'units30d') return (b.item.soldQuantity ?? 0) - (a.item.soldQuantity ?? 0)
     return (b.cov ?? 0) - (a.cov ?? 0)
   })
@@ -276,10 +276,10 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                   {item.abcClass && <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span>}
                 </div>
                 <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-border-subtle/50 pt-2.5 text-[11px]">
-                  <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity}</p></div>
+                  <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity ?? 'N/D'}</p></div>
                   <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{item.soldQuantity ?? '—'}</p></div>
                   <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}</p></div>
-                  <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">R$ {brl((item.price ?? 0) * item.availableQuantity)}</p></div>
+                  <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">{item.availableQuantity === null ? 'N/D' : `R$ ${brl((item.price ?? 0) * item.availableQuantity)}`}</p></div>
                   <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: giro.color }}>{giro.label}</p></div>
                 </div>
               </div>
@@ -314,7 +314,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
               <tbody>
                 {sorted.map(({ item, cov, giro }) => {
                   const covStyle = coveragePresentation(cov)
-                  const stockValue = (item.price ?? 0) * item.availableQuantity
+                  const stockValue = item.availableQuantity === null ? null : (item.price ?? 0) * item.availableQuantity
                   const avgTicket = item.soldQuantity && item.soldQuantity > 0 ? item.revenue30d / item.soldQuantity : 0
                   const share = totalRevenue > 0 ? (item.revenue30d / totalRevenue) * 100 : 0
                   return (
@@ -329,7 +329,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                       </td>
                       <td className="max-w-[150px] py-3 pr-2"><InventoryCategoryTrigger item={item} onOpen={setSelectedCategoryKey} /></td>
                       {hasSupplierData && <td className="hidden max-w-[110px] truncate py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell" title={item.manufacturerCode ?? undefined}>{item.manufacturerCode ?? '—'}</td>}
-                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity}</td>
+                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity ?? 'N/D'}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
                       <td className="py-3 pr-2 text-center">
                         <span className="rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold" style={{ color: covStyle.color, background: covStyle.background }}>
@@ -340,7 +340,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                       {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">{item.entryQty ?? '—'}</td>}
                       {hasSupplierData && <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.lastInvoiceNumber ?? '—'}</td>}
                       {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary lg:table-cell">{item.freightValue != null ? `R$ ${brl2(item.freightValue)}` : '—'}</td>}
-                      <td className="py-3 pr-2 text-center font-mono text-text-primary">R$ {brl(stockValue)}</td>
+                      <td className="py-3 pr-2 text-center font-mono text-text-primary">{stockValue === null ? 'N/D' : `R$ ${brl(stockValue)}`}</td>
                       <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">R$ {brl2(avgTicket)}</td>
                       <td className="py-3 pr-2 text-center font-mono text-text-secondary">{pct(share)}%</td>
                       <td className="py-3 pr-2 text-center">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Store } from 'lucide-react'
-import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
+import { getMarketplaceColor } from '@/data/mockData'
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
@@ -60,7 +60,7 @@ function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
 interface MiniChartProps {
   title: string
   question: string
-  data: { marketplace: Marketplace; value: number; display: string }[]
+  data: { marketplace: string; value: number; display: string }[]
   maxValue?: number
 }
 
@@ -153,9 +153,8 @@ export default function Marketplaces() {
     )
   }
 
-  // Sempre os 4 canais, na ordem canônica — canal sem pedido no período vem
-  // zerado, nunca some da tela (estrutura não muda por quantidade de
-  // marketplace conectado, ver decisão 2026-08-06).
+  // Preserva os canais-base da demonstração e anexa canais reais descobertos;
+  // o backend é a fonte definitiva da dimensão dinâmica.
   const rows = fillAllMarketplaces(data.byMarketplace)
 
   return (

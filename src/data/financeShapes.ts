@@ -1,4 +1,4 @@
-import { ALL_MARKETPLACES, type Marketplace } from '@/data/mockData'
+import { ALL_MARKETPLACES } from '@/data/mockData'
 
 export type FinanceSource = 'demo' | 'real' | 'estimated'
 
@@ -13,7 +13,7 @@ export interface MarketplaceGrowth {
 }
 
 export interface MarketplaceFinance {
-  marketplace: Marketplace
+  marketplace: string
   grossRevenue: number
   fees: number
   refunds: number
@@ -41,7 +41,7 @@ const ZERO_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: nu
  *  por quantidade de marketplace conectado (ver decisão 2026-08-06). */
 export function fillAllMarketplaces(rows: MarketplaceFinance[]): MarketplaceFinance[] {
   const byMarketplace = new Map(rows.map((r) => [r.marketplace, r]))
-  return ALL_MARKETPLACES.map((marketplace) => byMarketplace.get(marketplace) ?? {
+  const baseline = ALL_MARKETPLACES.map((marketplace) => byMarketplace.get(marketplace) ?? {
     marketplace,
     grossRevenue: 0,
     fees: 0,
@@ -52,13 +52,15 @@ export function fillAllMarketplaces(rows: MarketplaceFinance[]): MarketplaceFina
     growth: ZERO_GROWTH,
     source: rows[0]?.source ?? 'real',
   })
+  const baselineNames = new Set<string>(ALL_MARKETPLACES)
+  return [...baseline, ...rows.filter((row) => !baselineNames.has(row.marketplace))]
 }
 
 export type FinanceTransactionType = 'Venda' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'
 
 export interface FinanceTransaction {
   date: string
-  marketplace: Marketplace
+  marketplace: string
   type: FinanceTransactionType
   identifier: string
   gross: number

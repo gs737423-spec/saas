@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, status, last_sync_at')
       .eq('company_id', auth.companyId)
-      .eq('status', 'connected')
+      .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
 
     if (connError) throw new Error(connError.message)
 
@@ -71,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('status, total_amount, fee_amount')
       .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
+      .eq('analytics_included', true)
       .gte('ordered_at', since)
 
     if (ordersError) throw new Error(ordersError.message)
@@ -104,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
       .eq('status', 'paid')
+      .eq('analytics_included', true)
       .gte('ordered_at', prevSince)
       .lt('ordered_at', since)
     const previousGross = (previousOrders ?? []).reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)

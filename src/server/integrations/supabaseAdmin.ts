@@ -48,6 +48,12 @@ export const SHOPEE_ENV_VARS = [
   'INTEGRATIONS_ENCRYPTION_KEY',
 ] as const
 
+/** Env vars required by VTEX persistence and encrypted credential use. */
+export const VTEX_ENV_VARS = [
+  ...CORE_ENV_VARS,
+  'INTEGRATIONS_ENCRYPTION_KEY',
+] as const
+
 /** Returns the subset of `names` that are missing/empty in `process.env`. */
 export function getMissingEnvVars(names: readonly string[]): string[] {
   return names.filter((name) => !getServerEnv(name))

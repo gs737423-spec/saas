@@ -26,6 +26,6 @@ export function categoryItemFromInventory(item: DashboardInventoryItem): Categor
     categoryName: item.categoryName,
     revenue: item.revenue30d,
     units: item.soldQuantity,
-    stock: item.availableQuantity,
+    stock: item.availableQuantity ?? 0,
   }
 }

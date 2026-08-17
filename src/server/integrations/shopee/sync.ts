@@ -7,6 +7,7 @@ import { getItemBaseInfoBatch, searchShopItemIds, searchOrders, ShopeeApiError }
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
 import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
+import { directCanonicalOrderKey, persistCanonicalOrder } from '../orderIdentity.js'
 
 export class ConnectionMissingError extends Error {}
 
@@ -155,23 +156,16 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
     for (const order of orders) {
       try {
         const orderRow = mapOrderToRow(order)
-        const { data: upsertedOrder, error: orderError } = await supabase
-          .from('orders')
-          .upsert(
-            { company_id: companyId, connection_id: connection.id, provider: 'shopee', ...orderRow },
-            { onConflict: 'company_id,connection_id,external_order_id' }
-          )
-          .select('id')
-          .single()
-        if (orderError) throw new Error(`Failed to upsert order ${order.order_sn}: ${orderError.message}`)
+        await persistCanonicalOrder(supabase, {
+          companyId, connectionId: connection.id, provider: 'shopee',
+          externalOrderId: orderRow.external_order_id,
+          canonicalOrderKey: directCanonicalOrderKey('shopee', orderRow.external_order_id),
+          salesChannel: 'shopee', status: orderRow.status,
+          totalAmount: orderRow.total_amount, feeAmount: orderRow.fee_amount,
+          currency: orderRow.currency, orderedAt: orderRow.ordered_at,
+          items: mapOrderItems(order),
+        })
         ordersImported += 1
-
-        await supabase.from('order_items').delete().eq('order_id', upsertedOrder.id).eq('company_id', companyId)
-        const itemRows = mapOrderItems(order).map((item) => ({ company_id: companyId, order_id: upsertedOrder.id, ...item }))
-        if (itemRows.length > 0) {
-          const { error: itemsError } = await supabase.from('order_items').insert(itemRows)
-          if (itemsError) throw new Error(`Failed to insert items for order ${order.order_sn}: ${itemsError.message}`)
-        }
       } catch (orderErr) {
         errors.push(orderErr instanceof Error ? orderErr.message : `Unknown error processing order ${order.order_sn}`)
       }

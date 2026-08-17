@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { Provider } from '../../src/server/integrations/types.js'
-import type { Marketplace } from '../../src/data/mockData.js'
+import { providerDefaultChannel, salesChannelDisplayName, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
 
 export interface DailyRevenuePoint {
   date: string
@@ -11,6 +11,7 @@ export interface DailyRevenuePoint {
   shopee: number
   amazon: number
   lojapropria: number
+  channels: Record<string, number>
   total: number
 }
 
@@ -18,18 +19,9 @@ interface DailyApiResponse {
   ok: boolean
   source: 'real' | 'demo' | 'config_missing' | 'error'
   days: DailyRevenuePoint[]
+  channels: Array<{ key: string; label: string }>
   message?: string
 }
-
-const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
-  mercadolivre: 'Mercado Livre',
-  shopee: 'Shopee',
-}
-
-const PROVIDER_KEY: Record<Provider, keyof Omit<DailyRevenuePoint, 'date' | 'label' | 'total'>> = {
-  mercadolivre: 'mercadolivre',
-  shopee: 'shopee',
-} as Record<Provider, keyof Omit<DailyRevenuePoint, 'date' | 'label' | 'total'>>
 
 function dateKey(iso: string): string {
   return iso.slice(0, 10)
@@ -46,6 +38,7 @@ function emptyDays(totalDays: number): DailyRevenuePoint[] {
       shopee: 0,
       amazon: 0,
       lojapropria: 0,
+      channels: {},
       total: 0,
     })
   }
@@ -60,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const missing = getMissingEnvVars(CORE_ENV_VARS)
     if (missing.length > 0) {
-      res.status(200).json({ ok: false, source: 'config_missing', days: [], message: 'Configuração do Supabase pendente.' } satisfies DailyApiResponse)
+      res.status(200).json({ ok: false, source: 'config_missing', days: [], channels: [], message: 'Configuração do Supabase pendente.' } satisfies DailyApiResponse)
       return
     }
 
@@ -80,23 +73,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, provider')
       .eq('company_id', auth.companyId)
-      .eq('status', 'connected')
+      .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
     if (connError) throw new Error(connError.message)
 
     if (!connections || connections.length === 0) {
-      res.status(200).json({ ok: true, source: 'demo', days: emptyDays(totalDays) } satisfies DailyApiResponse)
+      res.status(200).json({ ok: true, source: 'demo', days: emptyDays(totalDays), channels: [] } satisfies DailyApiResponse)
       return
     }
 
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
+    const { data: registeredChannels, error: channelError } = await supabase.from('sales_channels')
+      .select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active')
+    if (channelError) throw new Error(channelError.message)
+    const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
+
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('connection_id, total_amount, ordered_at')
+      .select('connection_id, sales_channel, total_amount, ordered_at')
       .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
       .eq('status', 'paid')
+      .eq('analytics_included', true)
       .gte('ordered_at', since)
     if (ordersError) throw new Error(ordersError.message)
 
@@ -106,18 +105,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     for (const o of orders ?? []) {
       const provider = providerByConnectionId.get(o.connection_id)
-      if (!provider || !PROVIDER_LABEL[provider]) continue
+      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!channel) continue
       const key = dateKey(o.ordered_at)
       const point = byDay.get(key)
       if (!point) continue
-      const field = PROVIDER_KEY[provider]
-      point[field] += Number(o.total_amount ?? 0)
-      point.total += Number(o.total_amount ?? 0)
+      const amount = Number(o.total_amount ?? 0)
+      point.channels[channel] = (point.channels[channel] ?? 0) + amount
+      const field: 'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria' | null = channel === 'loja_propria'
+        ? 'lojapropria'
+        : channel === 'mercadolivre' || channel === 'shopee' || channel === 'amazon'
+          ? channel
+          : null
+      if (field) point[field] += amount
+      point.total += amount
     }
 
-    res.status(200).json({ ok: true, source: 'real', days: Array.from(byDay.values()) } satisfies DailyApiResponse)
+    const observedKeys = new Set(Array.from(byDay.values()).flatMap((point) => Object.keys(point.channels)))
+    const channels = Array.from(observedKeys).map((key) => ({ key, label: salesChannelDisplayName(key, channelNameByKey.get(key)) }))
+    res.status(200).json({ ok: true, source: 'real', days: Array.from(byDay.values()), channels } satisfies DailyApiResponse)
   } catch (err) {
     console.error('[api/dashboard/finance-daily]', err)
-    res.status(200).json({ ok: false, source: 'error', days: [], message: 'Erro controlado ao consultar receita diária.' } satisfies DailyApiResponse)
+    res.status(200).json({ ok: false, source: 'error', days: [], channels: [], message: 'Erro controlado ao consultar receita diária.' } satisfies DailyApiResponse)
   }
 }

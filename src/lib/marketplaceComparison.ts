@@ -1,4 +1,4 @@
-export type ComparisonChannelKey = 'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria'
+export type ComparisonChannelKey = string
 
 export interface ComparisonDailyPoint {
   date: string
@@ -7,7 +7,15 @@ export interface ComparisonDailyPoint {
   shopee: number
   amazon: number
   lojapropria: number
+  channels?: Record<string, number>
   total: number
+}
+
+function channelValue(point: ComparisonDailyPoint, channel: ComparisonChannelKey): number {
+  const dynamic = point.channels?.[channel]
+  if (typeof dynamic === 'number') return dynamic
+  const legacy = (point as unknown as Record<string, unknown>)[channel]
+  return typeof legacy === 'number' ? legacy : 0
 }
 
 export interface ComparisonSlot {
@@ -87,16 +95,16 @@ export function buildChannelComparison(
       label: rangeLabel(currentDates, compactDay),
       currentDateLabel: rangeLabel(currentDates, fullDate),
       previousDateLabel: rangeLabel(previousDates, fullDate),
-      current: bucket.reduce((sum, point) => sum + point[channel], 0),
+      current: bucket.reduce((sum, point) => sum + channelValue(point, channel), 0),
       previous: hasCompletePreviousRange
-        ? previousPoints.reduce((sum, point) => sum + (point?.[channel] ?? 0), 0)
+        ? previousPoints.reduce((sum, point) => sum + (point ? channelValue(point, channel) : 0), 0)
         : null,
     })
   }
 
-  const currentTotal = currentDays.reduce((sum, point) => sum + point[channel], 0)
+  const currentTotal = currentDays.reduce((sum, point) => sum + channelValue(point, channel), 0)
   const alignedPrevious = currentDays.map((point) => byDate.get(shiftIsoDate(point.date, offsetDays)))
-  const previousTotal = alignedPrevious.reduce((sum, point) => sum + (point?.[channel] ?? 0), 0)
+  const previousTotal = alignedPrevious.reduce((sum, point) => sum + (point ? channelValue(point, channel) : 0), 0)
   const hasCompletePreviousRange = alignedPrevious.every(Boolean)
 
   return {

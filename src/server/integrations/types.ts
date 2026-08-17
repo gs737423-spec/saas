@@ -1,6 +1,6 @@
 import type { Marketplace } from '@/data/mockData'
 
-export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria'
+export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria' | 'vtex'
 
 /**
  * Removido (01/08) — company_id agora vem sempre de `requireCompany()`
@@ -10,7 +10,7 @@ export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_p
  * ponto ainda precisa da migração.
  */
 
-export type ConnectionStatus = 'disconnected' | 'pending' | 'connected' | 'error' | 'expired'
+export type ConnectionStatus = 'disconnected' | 'pending' | 'connecting' | 'connected' | 'syncing' | 'requires_attention' | 'error' | 'expired'
 
 /** Extra status the UI can show that is never persisted in the DB — computed when required env vars are missing. */
 export type SanitizedConnectionStatus = ConnectionStatus | 'config_missing'
@@ -29,6 +29,8 @@ export interface MarketplaceConnectionRow {
   sync_interval_minutes: number
   last_sync_at: string | null
   last_error: string | null
+  last_success_at?: string | null
+  next_sync_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -43,6 +45,11 @@ export interface SanitizedConnectionStatusResponse {
   inventoryCount: number
   ordersCount: number
   lastError: string | null
+  lastSuccessAt?: string | null
+  nextSyncAt?: string | null
+  permissions?: Record<string, boolean>
+  channelMappings?: Record<string, string[]>
+  activeSync?: { id: string; status: string; stage: string; counts: Record<string, number> } | null
 }
 
 export interface SanitizedSyncLogEntry {
@@ -66,6 +73,14 @@ export type SyncLogEventType =
   | 'validation_error'
   | 'config_missing'
   | 'connection_missing'
+  | 'connection_tested'
+  | 'credentials_rotated'
+  | 'connection_disconnected'
+  | 'sync_queued'
+  | 'sync_stage'
+  | 'channel_discovered'
+  | 'provider_rate_limited'
+  | 'credentials_invalid'
 
 export type SyncLogStatus = 'info' | 'success' | 'error'
 
@@ -80,7 +95,8 @@ export interface DashboardInventoryItem {
   /** Metadados oficiais do produto persistido em marketplace_products. */
   categoryId: string | null
   categoryName: string | null
-  availableQuantity: number
+  /** null means the provider did not expose a finite inventory quantity. */
+  availableQuantity: number | null
   price: number | null
   status: string | null
   /** Unidades vendidas nos últimos 30 dias — calculado de order_items real,

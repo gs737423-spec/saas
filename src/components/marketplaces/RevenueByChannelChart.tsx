@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react'
-import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
+import { getMarketplaceColor } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { buildChannelComparison, safeDeltaPct, type ChannelComparison, type ComparisonChannelKey, type ComparisonDailyPoint } from '@/lib/marketplaceComparison'
 
-const channels: { key: ComparisonChannelKey; label: Marketplace }[] = [
+const fallbackChannels: { key: ComparisonChannelKey; label: string }[] = [
   { key: 'mercadolivre', label: 'Mercado Livre' },
   { key: 'shopee', label: 'Shopee' },
   { key: 'amazon', label: 'Amazon' },
   { key: 'lojapropria', label: 'Loja Própria' },
 ]
 
-interface DailyApiResponse { ok: boolean; source: string; days: ComparisonDailyPoint[] }
+interface DailyApiResponse { ok: boolean; source: string; days: ComparisonDailyPoint[]; channels?: Array<{ key: string; label: string }> }
 
 const compareOptions = [
   { key: 'yesterday' as const, label: 'Ontem', offsetDays: 1 },
@@ -29,6 +29,7 @@ export default function RevenueByChannelChart() {
   const { period } = usePeriod()
   const [compareKey, setCompareKey] = useState<CompareKey>('week')
   const [allDays, setAllDays] = useState<ComparisonDailyPoint[]>([])
+  const [availableChannels, setAvailableChannels] = useState<Array<{ key: string; label: string }>>(fallbackChannels)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function RevenueByChannelChart() {
     apiFetchJson<DailyApiResponse>(`/api/dashboard/finance-daily?days=${period.days}`).then((response) => {
       if (!cancelled) {
         setAllDays(response?.days ?? [])
+        setAvailableChannels(response?.channels?.length ? response.channels : fallbackChannels)
         setLoading(false)
       }
     })
@@ -48,10 +50,32 @@ export default function RevenueByChannelChart() {
   }, [period.days])
 
   const compare = compareOptions.find((option) => option.key === compareKey) ?? compareOptions[1]
-  const rows = useMemo(() => channels.map((channel) => ({
-    ...channel,
-    comparison: buildChannelComparison(allDays, period.days, compare.offsetDays, channel.key),
-  })), [allDays, compare.offsetDays, period.days])
+  const rows = useMemo(() => {
+    const currentDays = allDays.slice(-period.days)
+    const totals = new Map(availableChannels.map((channel) => [channel.key, currentDays.reduce((sum, point) => {
+      const dynamic = point.channels?.[channel.key]
+      const legacy = (point as unknown as Record<string, unknown>)[channel.key]
+      return sum + (typeof dynamic === 'number' ? dynamic : typeof legacy === 'number' ? legacy : 0)
+    }, 0)]))
+    const ranked = [...availableChannels].sort((a, b) => (totals.get(b.key) ?? 0) - (totals.get(a.key) ?? 0))
+    let comparisonDays = allDays
+    let visible = ranked
+    if (ranked.length > 4) {
+      const otherKeys = ranked.slice(3).map((channel) => channel.key)
+      comparisonDays = allDays.map((point) => ({
+        ...point,
+        channels: {
+          ...(point.channels ?? {}),
+          other_channels: otherKeys.reduce((sum, key) => sum + Number(point.channels?.[key] ?? 0), 0),
+        },
+      }))
+      visible = [...ranked.slice(0, 3), { key: 'other_channels', label: 'Outros canais' }]
+    }
+    return visible.map((channel) => ({
+      ...channel,
+      comparison: buildChannelComparison(comparisonDays, period.days, compare.offsetDays, channel.key),
+    }))
+  }, [allDays, availableChannels, compare.offsetDays, period.days])
   const totalRevenue = rows.reduce((sum, row) => sum + row.comparison.currentTotal, 0)
 
   if (loading) return <div className="overview-glass-elevated flex items-center gap-2 rounded-2xl p-4 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando receita diária...</div>
@@ -81,7 +105,7 @@ export default function RevenueByChannelChart() {
   )
 }
 
-function PerformanceLane({ label, comparison, compareLabel }: { label: Marketplace; comparison: ChannelComparison; compareLabel: string }) {
+function PerformanceLane({ label, comparison, compareLabel }: { label: string; comparison: ChannelComparison; compareLabel: string }) {
   const color = getMarketplaceColor(label)
   const max = Math.max(...comparison.slots.flatMap((slot) => [slot.current, slot.previous ?? 0]), 1)
   const delta = comparison.deltaPct

@@ -31,10 +31,11 @@ export function coveragePresentation(coverageDays: number | null): InventoryStat
 
 export function giroPresentation(
   soldQuantity: number | null | undefined,
-  availableQuantity: number,
+  availableQuantity: number | null,
   coverageDays: number | null,
 ): InventoryStatusPresentation<GiroPresentationLabel> {
   if (!soldQuantity || soldQuantity <= 0) {
+    if (availableQuantity === null) return status('Parado', 'neutral')
     return status(availableQuantity > 0 ? 'Parado crítico' : 'Parado', 'danger')
   }
   if (coverageDays === null) return status('Normal', 'neutral')

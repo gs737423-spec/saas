@@ -13,6 +13,7 @@ type ProductsApiResponse = DashboardProductsResponse
 const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
   mercadolivre: 'Mercado Livre',
   shopee: 'Shopee',
+  vtex: 'Loja Própria',
 }
 
 interface OrderItemAgg {
@@ -113,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, provider, status')
       .eq('company_id', auth.companyId)
-      .eq('status', 'connected')
+      .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
     if (connError) throw new Error(connError.message)
 
     if (!connections || connections.length === 0) {
@@ -148,6 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
       .eq('company_id', auth.companyId)
       .eq('orders.status', 'paid')
+      .eq('orders.analytics_included', true)
       .gte('orders.ordered_at', since)
     const currentByProduct = aggregateByProduct((currentItems ?? []) as unknown as OrderItemAgg[])
 
@@ -156,6 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
       .eq('company_id', auth.companyId)
       .eq('orders.status', 'paid')
+      .eq('orders.analytics_included', true)
       .gte('orders.ordered_at', prevSince)
       .lt('orders.ordered_at', since)
     const previousByProduct = aggregateByProduct((previousItems ?? []) as unknown as OrderItemAgg[])

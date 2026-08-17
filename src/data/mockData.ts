@@ -516,14 +516,18 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
   return { score, status, breakdown }
 }
 
-export function getMarketplaceColor(mp: Marketplace): string {
+export function getMarketplaceColor(mp: string): string {
   const colors: Record<Marketplace, string> = {
     'Mercado Livre': '#E3B900',
     'Shopee': '#EE5A3F',
     'Amazon': '#E98A15',
     'Loja Própria': '#4285F4',
   }
-  return colors[mp]
+  if (mp in colors) return colors[mp as Marketplace]
+  const neutralPalette = ['#64748B', '#6B7280', '#78716C', '#71717A', '#5F6B7A', '#68737D']
+  let hash = 0
+  for (let index = 0; index < mp.length; index += 1) hash = Math.imul(31, hash) + mp.charCodeAt(index) | 0
+  return neutralPalette[Math.abs(hash) % neutralPalette.length]
 }
 
 /** Variante de TEXTO (não a cor de marca) pro tema ESCURO — usada como

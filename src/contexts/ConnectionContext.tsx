@@ -3,7 +3,7 @@ import { getMarketplaceColor } from '@/data/mockData'
 import { supabase } from '@/lib/supabaseClient'
 import { withViewAsCompanyId } from '@/lib/apiFetch'
 
-export type IntegrationStatus = 'disconnected' | 'pending' | 'connected' | 'error' | 'expired' | 'config_missing'
+export type IntegrationStatus = 'disconnected' | 'pending' | 'connecting' | 'connected' | 'syncing' | 'requires_attention' | 'error' | 'expired' | 'config_missing'
 
 export interface MercadoLivreStatus {
   provider: 'mercadolivre'
@@ -27,6 +27,30 @@ export interface ShopeeStatus {
   lastError: string | null
 }
 
+export interface VtexStatus {
+  provider: 'vtex'
+  status: IntegrationStatus
+  lastSyncAt: string | null
+  lastSuccessAt?: string | null
+  nextSyncAt?: string | null
+  externalAccountId: string | null
+  productsCount: number
+  inventoryCount: number
+  ordersCount: number
+  lastError: string | null
+  permissions?: Record<string, boolean>
+  channelMappings?: Record<string, string[]>
+  activeSync?: { id: string; status: string; stage: string; counts: Record<string, number> } | null
+}
+
+export interface VtexCredentialsInput { accountName: string; appKey: string; appToken: string; channelMappings?: Record<string, string[]> }
+
+export interface VtexSyncResponse {
+  ok: boolean
+  message?: string
+  run?: { id: string; mode: 'full' | 'incremental'; status: string; stage: string }
+}
+
 export interface SyncLogEntry {
   id: string
   provider: string
@@ -48,9 +72,11 @@ interface SyncSummary {
 interface ConnectionContextValue {
   mercadoLivre: MercadoLivreStatus | null
   shopee: ShopeeStatus | null
+  vtex: VtexStatus | null
   loading: boolean
   syncing: boolean
   syncingShopee: boolean
+  syncingVtex: boolean
   /** True once a fetch to /api/integrations/status has genuinely failed (network
    *  error, non-200, backend unreachable) — distinct from `loading`, so the UI
    *  can show "backend indisponível" instead of spinning forever. This never
@@ -65,11 +91,16 @@ interface ConnectionContextValue {
    *  sessão sem empresa, etc) — null quando não há erro pendente. */
   connectError: string | null
   connectErrorShopee: string | null
+  connectErrorVtex: string | null
   refresh: () => Promise<void>
   connectMercadoLivre: () => void
   connectShopee: () => void
   syncMercadoLivre: () => Promise<SyncSummary | null>
   syncShopee: () => Promise<SyncSummary | null>
+  connectVtex: (credentials: VtexCredentialsInput) => Promise<boolean>
+  rotateVtexCredentials: (credentials: VtexCredentialsInput) => Promise<boolean>
+  disconnectVtex: () => Promise<boolean>
+  syncVtex: (mode?: 'full' | 'incremental') => Promise<VtexSyncResponse | null>
 }
 
 const ConnectionContext = createContext<ConnectionContextValue | null>(null)
@@ -111,23 +142,28 @@ async function fetchJsonWithError<T>(url: string, init?: RequestInit): Promise<{
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [mercadoLivre, setMercadoLivre] = useState<MercadoLivreStatus | null>(null)
   const [shopee, setShopee] = useState<ShopeeStatus | null>(null)
+  const [vtex, setVtex] = useState<VtexStatus | null>(null)
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [syncingShopee, setSyncingShopee] = useState(false)
+  const [syncingVtex, setSyncingVtex] = useState(false)
   const [backendUnreachable, setBackendUnreachable] = useState(false)
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
   const [connectErrorShopee, setConnectErrorShopee] = useState<string | null>(null)
+  const [connectErrorVtex, setConnectErrorVtex] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    const [{ data: status, message }, { data: shopeeStatus }, logsResponse] = await Promise.all([
+    const [{ data: status, message }, { data: shopeeStatus }, { data: vtexStatus }, logsResponse] = await Promise.all([
       fetchJsonWithError<MercadoLivreStatus>('/api/integrations/status'),
       fetchJsonWithError<ShopeeStatus>('/api/integrations/status?provider=shopee'),
+      fetchJsonWithError<VtexStatus>('/api/integrations/status?provider=vtex'),
       fetchJson<{ logs: SyncLogEntry[] }>('/api/integrations/logs?limit=20'),
     ])
     if (status) setMercadoLivre(status)
     if (shopeeStatus) setShopee(shopeeStatus)
+    if (vtexStatus) setVtex(vtexStatus)
     if (logsResponse) setLogs(logsResponse.logs)
     // status is only ever null here if the request itself failed — every real
     // response (including config_missing) is a 200 with a body.
@@ -197,24 +233,65 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh])
 
+  const connectVtex = useCallback(async (credentials: VtexCredentialsInput) => {
+    setConnectErrorVtex(null)
+    const { data, message } = await fetchJsonWithError<{ ok: boolean; message?: string }>('/api/integrations/vtex/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) })
+    if (!data?.ok) { setConnectErrorVtex(data?.message ?? message ?? 'Não foi possível conectar a VTEX.'); return false }
+    await refresh()
+    return true
+  }, [refresh])
+
+  const rotateVtexCredentials = useCallback(async (credentials: VtexCredentialsInput) => {
+    setConnectErrorVtex(null)
+    const { data, message } = await fetchJsonWithError<{ ok: boolean; message?: string }>('/api/integrations/vtex/credentials', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) })
+    if (!data?.ok) { setConnectErrorVtex(data?.message ?? message ?? 'As novas credenciais não foram aplicadas.'); return false }
+    await refresh()
+    return true
+  }, [refresh])
+
+  const disconnectVtex = useCallback(async () => {
+    const { data } = await fetchJsonWithError<{ ok: boolean }>('/api/integrations/vtex/disconnect', { method: 'DELETE' })
+    if (!data?.ok) return false
+    await refresh()
+    return true
+  }, [refresh])
+
+  const syncVtex = useCallback(async (mode: 'full' | 'incremental' = 'full') => {
+    setConnectErrorVtex(null)
+    setSyncingVtex(true)
+    try {
+      const { data: result, message } = await fetchJsonWithError<VtexSyncResponse>('/api/integrations/vtex/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) })
+      if (!result?.ok) setConnectErrorVtex(result?.message ?? message ?? 'Não foi possível iniciar a sincronização VTEX.')
+      await refresh()
+      return result
+    } finally { setSyncingVtex(false) }
+  }, [refresh])
+
   return (
     <ConnectionContext.Provider
       value={{
         mercadoLivre,
         shopee,
+        vtex,
         loading,
         syncing,
         syncingShopee,
+        syncingVtex,
         backendUnreachable,
         statusErrorMessage,
         logs,
         connectError,
         connectErrorShopee,
+        connectErrorVtex,
         refresh,
         connectMercadoLivre,
         connectShopee,
         syncMercadoLivre,
         syncShopee,
+        connectVtex,
+        rotateVtexCredentials,
+        disconnectVtex,
+        syncVtex,
       }}
     >
       {children}

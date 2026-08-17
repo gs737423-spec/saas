@@ -2,8 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { FinanceOverview, MarketplaceFinance, MarketplaceGrowth, FinanceTransaction } from '../../src/data/financeShapes.js'
-import type { Marketplace } from '../../src/data/mockData.js'
-import type { Provider } from '../../src/server/integrations/types.js'
+import { providerDefaultChannel, salesChannelDisplayName, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
 
 interface FinanceApiResponse {
   ok: boolean
@@ -18,11 +17,6 @@ const EMPTY_OVERVIEW: FinanceOverview = { grossRevenue: 0, fees: 0, refunds: 0, 
 // Rótulo de exibição por provider — mesmo texto usado em toda a UI (cards de
 // conexão, cores etc). Amazon/Loja Própria ainda não têm sync real; ficam de
 // fora até terem OAuth implementado (não têm connection_id pra filtrar).
-const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
-  mercadolivre: 'Mercado Livre',
-  shopee: 'Shopee',
-}
-
 function pctChange(current: number, previous: number): number | null {
   if (previous <= 0) return null
   return ((current - previous) / previous) * 100
@@ -41,37 +35,39 @@ function daysAgoKey(n: number): string {
  *  usuário explicitamente: "D-7 é hoje comparado com 7 dias atrás". Busca
  *  366 dias pra trás independente do filtro de período da tela, senão D-365
  *  nunca teria dado quando o usuário está olhando os últimos 30 dias. */
-async function computeGrowthByProvider(
+async function computeGrowthByChannel(
   supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>,
   companyId: string,
   connectionIds: string[],
-  providerByConnectionId: Map<string, Provider>
-): Promise<Map<Provider, MarketplaceGrowth>> {
+  providerByConnectionId: Map<string, string>
+): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
   const since366 = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
   const { data: yearOrders } = await supabase
     .from('orders')
-    .select('connection_id, total_amount, ordered_at')
+    .select('connection_id, sales_channel, total_amount, ordered_at')
     .in('connection_id', connectionIds)
     .eq('company_id', companyId)
     .eq('status', 'paid')
+    .eq('analytics_included', true)
     .gte('ordered_at', since366)
 
   // provider -> dateKey -> revenue naquele dia
-  const revenueByProviderDay = new Map<Provider, Map<string, number>>()
+  const revenueByChannelDay = new Map<StoredSalesChannel, Map<string, number>>()
   for (const o of yearOrders ?? []) {
     const provider = providerByConnectionId.get(o.connection_id)
-    if (!provider) continue
-    const byDay = revenueByProviderDay.get(provider) ?? new Map<string, number>()
+    const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+    if (!channel) continue
+    const byDay = revenueByChannelDay.get(channel) ?? new Map<string, number>()
     const key = dateKey(o.ordered_at)
     byDay.set(key, (byDay.get(key) ?? 0) + Number(o.total_amount ?? 0))
-    revenueByProviderDay.set(provider, byDay)
+    revenueByChannelDay.set(channel, byDay)
   }
 
   const todayKey = daysAgoKey(0)
-  const result = new Map<Provider, MarketplaceGrowth>()
-  for (const [provider, byDay] of revenueByProviderDay.entries()) {
+  const result = new Map<StoredSalesChannel, MarketplaceGrowth>()
+  for (const [channel, byDay] of revenueByChannelDay.entries()) {
     const today = byDay.get(todayKey) ?? 0
-    result.set(provider, {
+    result.set(channel, {
       d1: pctChange(today, byDay.get(daysAgoKey(1)) ?? 0),
       d7: pctChange(today, byDay.get(daysAgoKey(7)) ?? 0),
       d30: pctChange(today, byDay.get(daysAgoKey(30)) ?? 0),
@@ -105,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('marketplace_connections')
       .select('id, provider, status')
       .eq('company_id', auth.companyId)
-      .eq('status', 'connected')
+      .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
     if (connError) throw new Error(connError.message)
 
     if (!connections || connections.length === 0) {
@@ -113,14 +109,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
+    const providerByConnectionId = new Map(connections.map((c) => [c.id, String(c.provider)]))
     const connectionIds = connections.map((c) => c.id)
+
+    const { data: registeredChannels, error: channelError } = await supabase.from('sales_channels')
+      .select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active')
+    if (channelError) throw new Error(channelError.message)
+    const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
 
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('connection_id, external_order_id, status, total_amount, fee_amount, ordered_at')
+      .select('connection_id, external_order_id, status, sales_channel, total_amount, fee_amount, ordered_at')
       .in('connection_id', connectionIds)
       .eq('company_id', auth.companyId)
+      .eq('analytics_included', true)
       .gte('ordered_at', since)
       .order('ordered_at', { ascending: false })
     if (ordersError) throw new Error(ordersError.message)
@@ -142,31 +144,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Agrupa por provider real (não mais 1 linha fixa "Mercado Livre") —
     // cada marketplace conectado com pedido no período vira uma linha.
-    const byProvider = new Map<Provider, { grossRevenue: number; fees: number; refunds: number; ordersCount: number }>()
+    const byChannel = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number }>()
     for (const o of paid) {
       const provider = providerByConnectionId.get(o.connection_id)
-      if (!provider) continue
-      const acc = byProvider.get(provider) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
+      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!channel) continue
+      const acc = byChannel.get(channel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
       acc.grossRevenue += Number(o.total_amount ?? 0)
       acc.fees += Number(o.fee_amount ?? 0)
       acc.ordersCount += 1
-      byProvider.set(provider, acc)
+      byChannel.set(channel, acc)
     }
     for (const o of cancelled) {
       const provider = providerByConnectionId.get(o.connection_id)
-      if (!provider) continue
-      const acc = byProvider.get(provider) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
+      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!channel) continue
+      const acc = byChannel.get(channel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
       acc.refunds += Number(o.total_amount ?? 0)
-      byProvider.set(provider, acc)
+      byChannel.set(channel, acc)
     }
 
-    const growthByProvider = await computeGrowthByProvider(supabase, auth.companyId, connectionIds, providerByConnectionId)
+    const growthByChannel = await computeGrowthByChannel(supabase, auth.companyId, connectionIds, providerByConnectionId)
     const EMPTY_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
 
-    const byMarketplace: MarketplaceFinance[] = Array.from(byProvider.entries())
-      .map(([provider, acc]): MarketplaceFinance | null => {
-        const marketplace = PROVIDER_LABEL[provider]
-        if (!marketplace) return null
+    const byMarketplace: MarketplaceFinance[] = Array.from(byChannel.entries())
+      .map(([channel, acc]): MarketplaceFinance | null => {
+        const marketplace = salesChannelDisplayName(channel, channelNameByKey.get(channel))
         return {
           marketplace,
           grossRevenue: acc.grossRevenue,
@@ -175,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           netValue: acc.grossRevenue - acc.fees - acc.refunds,
           ordersCount: acc.ordersCount,
           averageTicket: acc.ordersCount > 0 ? acc.grossRevenue / acc.ordersCount : 0,
-          growth: growthByProvider.get(provider) ?? EMPTY_GROWTH,
+          growth: growthByChannel.get(channel) ?? EMPTY_GROWTH,
           source: 'real',
         }
       })
@@ -186,7 +189,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // não infla o canal errado (mesma regra dos outros endpoints).
     const transactions: FinanceTransaction[] = [
       ...paid.flatMap((o) => {
-        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id)!]
+        const provider = providerByConnectionId.get(o.connection_id)
+        const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+        const marketplace = channel ? salesChannelDisplayName(channel, channelNameByKey.get(channel)) : undefined
         if (!marketplace) return []
         return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],
@@ -199,7 +204,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }]
       }),
       ...cancelled.flatMap((o) => {
-        const marketplace = PROVIDER_LABEL[providerByConnectionId.get(o.connection_id)!]
+        const provider = providerByConnectionId.get(o.connection_id)
+        const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+        const marketplace = channel ? salesChannelDisplayName(channel, channelNameByKey.get(channel)) : undefined
         if (!marketplace) return []
         return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],
