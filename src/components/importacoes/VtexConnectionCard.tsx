@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, RefreshCw, Settings, ShieldCheck, Unplug, X } from 'lucide-react'
 import { useConnections, type VtexCredentialsInput } from '@/contexts/ConnectionContext'
+import vtexLogo from '@/assets/marketplaces/vtex-logo.svg'
 
 const STATUS_LABEL: Record<string, string> = {
   disconnected: 'Desconectado', pending: 'Pendente', connecting: 'Conectando', connected: 'Conectado',
@@ -47,7 +48,7 @@ export default function VtexConnectionCard() {
       <div className="connection-card glass-panel glass-panel-hover motion-card-tight relative overflow-hidden rounded-md p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-blue/30 bg-accent-blue/10 text-[11px] font-bold text-accent-blue">VTEX</span>
+            <img src={vtexLogo} alt="" aria-hidden="true" className="h-10 w-10 shrink-0 object-contain" />
             <div><h3 className="text-sm font-semibold text-text-primary">VTEX</h3><p className="text-[10.5px] text-text-muted">Integração nativa somente leitura</p></div>
           </div>
           <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${connected ? 'border-accent-emerald/30 bg-accent-emerald/15 text-accent-emerald' : vtex?.status === 'error' || vtex?.status === 'requires_attention' ? 'border-accent-rose/30 bg-accent-rose/15 text-accent-rose' : 'border-border-subtle bg-bg-card text-text-muted'}`}>{loading ? 'Carregando' : STATUS_LABEL[vtex?.status ?? 'disconnected']}</span>
