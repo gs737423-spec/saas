@@ -55,6 +55,14 @@ export function normalizeVtexChannelMappings(value: unknown): Record<string, str
   return result
 }
 
+/** 3 meses é o padrão (primeira carga rápida); 6 é o teto oferecido na UI.
+ *  Qualquer outro valor cai no padrão em vez de rejeitar a requisição —
+ *  histórico inicial é uma preferência, não algo que deva quebrar o
+ *  connect por um valor mal formado. */
+export function normalizeVtexHistoryMonths(value: unknown): 3 | 6 {
+  return value === 6 || value === '6' ? 6 : 3
+}
+
 export function normalizeVtexCanonicalChannel(value: unknown): string {
   if (typeof value !== 'string') throw new Error('VTEX_INVALID_CHANNEL_MAPPING')
   const normalized = value.trim().toLowerCase()

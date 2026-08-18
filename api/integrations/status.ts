@@ -2,6 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS, SHOPEE_ENV_VARS, VTEX_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import type { Provider, SanitizedConnectionStatusResponse } from '../../src/server/integrations/types.js'
 import { requireCapability } from '../../src/server/auth/authorization.js'
+import { HEARTBEAT_STALE_MINUTES, resolveVtexHistoryMonths } from '../../src/server/integrations/vtex/sync.js'
+import { computeVtexSyncProgress } from '../../src/server/integrations/vtex/progress.js'
 
 type StatusResponse = SanitizedConnectionStatusResponse & { ok: boolean; source: string; message?: string }
 
@@ -96,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
       supabase.from('orders').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
       provider === 'vtex'
-        ? supabase.from('integration_sync_runs').select('id, status, stage, counts').eq('connection_id', connection.id).eq('company_id', auth.companyId).in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        ? supabase.from('integration_sync_runs').select('id, status, stage, checkpoint, counts, errors, mode, last_heartbeat_at, started_at').eq('connection_id', connection.id).eq('company_id', auth.companyId).in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(1).maybeSingle()
         : Promise.resolve({ data: null }),
     ])
 
@@ -116,7 +118,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       nextSyncAt: connection.next_sync_at,
       permissions: connection.permissions ?? undefined,
       channelMappings: provider === 'vtex' ? (connection.provider_metadata?.channelMappings ?? {}) : undefined,
-      activeSync: activeSync ? { id: activeSync.id, status: activeSync.status, stage: activeSync.stage, counts: activeSync.counts ?? {} } : null,
+      historyMonths: provider === 'vtex' ? resolveVtexHistoryMonths(connection.provider_metadata) : undefined,
+      activeSync: activeSync ? (() => {
+        const heartbeatAt = activeSync.last_heartbeat_at ?? activeSync.started_at ?? null
+        // `queued` depois de um yield controlado (orçamento de tempo estourado,
+        // não travamento) é estado normal enquanto espera o próximo tick do
+        // cron (a cada 15min, acima de HEARTBEAT_STALE_MINUTES=5) — nunca deve
+        // aparecer como "interrompida" pro usuário. Só uma run que ainda está
+        // `running` (de verdade processando) e sem heartbeat recente é
+        // candidata a stale de verdade.
+        const isStale = activeSync.status === 'running' && Boolean(heartbeatAt && Date.now() - new Date(heartbeatAt).getTime() > HEARTBEAT_STALE_MINUTES * 60 * 1000)
+        return {
+          id: activeSync.id,
+          status: activeSync.status,
+          stage: activeSync.stage,
+          mode: activeSync.mode,
+          counts: activeSync.counts ?? {},
+          errorCount: Array.isArray(activeSync.errors) ? activeSync.errors.length : 0,
+          history: { start: activeSync.checkpoint?.orderHistoryStart ?? null, end: activeSync.checkpoint?.orderTargetEnd ?? null },
+          progress: computeVtexSyncProgress(activeSync.stage, activeSync.checkpoint, activeSync.counts),
+          lastHeartbeatAt: heartbeatAt,
+          isStale,
+        }
+      })() : null,
     }
     res.status(200).json(response)
   } catch (err) {

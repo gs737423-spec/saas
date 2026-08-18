@@ -8,7 +8,7 @@ import { getMissingEnvVars, getSupabaseAdmin, VTEX_ENV_VARS } from '../../../src
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
 import { testVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
-import { normalizeVtexAccountName, normalizeVtexChannelMappings, validateVtexCredential } from '../../../src/server/integrations/vtex/validation.js'
+import { normalizeVtexAccountName, normalizeVtexChannelMappings, normalizeVtexHistoryMonths, validateVtexCredential } from '../../../src/server/integrations/vtex/validation.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return void res.status(405).json({ ok: false, error: 'method_not_allowed' })
@@ -24,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       appToken: validateVtexCredential(req.body?.appToken, 'appToken'),
     }
     const channelMappings = normalizeVtexChannelMappings(req.body?.channelMappings)
+    const historyMonths = normalizeVtexHistoryMonths(req.body?.historyMonths)
     const test = await testVtexConnection(credentials)
     if (!test.valid || test.missingRequired.length > 0) {
       res.status(200).json({ ok: false, error: test.valid ? 'VTEX_PERMISSION_REQUIRED' : 'VTEX_INVALID_CREDENTIALS', message: test.valid ? 'Credencial válida, mas faltam permissões para concluir a integração.' : 'A credencial VTEX é inválida.', permissions: test.permissions })
@@ -38,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       credential_key_encrypted: encryptSecret(credentials.appKey),
       credential_secret_encrypted: encryptSecret(credentials.appToken),
       permissions: Object.fromEntries(test.permissions.map((permission) => [permission.domain, permission.ok])),
-      provider_metadata: { authMethod: 'application_key', channelMappings },
+      provider_metadata: { authMethod: 'application_key', channelMappings, historyMonths },
       last_error: null,
       failure_count: 0,
       circuit_open_until: null,

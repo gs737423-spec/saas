@@ -173,4 +173,15 @@ export interface VtexSyncCheckpoint {
   orderWindowEnd?: string
   orderTargetEnd?: string
   lastOrderChange?: string
+  /** Contagem de recuperações de run travada (stale) — ver reclaimStaleVtexRun
+   *  em sync.ts. Depois de MAX_STALE_RECOVERIES seguidas, a run é marcada
+   *  failed em vez de tentar de novo pra sempre. */
+  staleRecoveries?: number
+  /** Total de SKUs do catálogo (conhecido assim que `getSkuIds()` roda) —
+   *  junto de `skuOffset`, dá progresso real do estágio `catalog`. */
+  skuTotal?: number
+  /** Início do intervalo de histórico pedido (3/6 meses) — junto de
+   *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
+   *  `orders`: fração do intervalo já coberta por janelas concluídas. */
+  orderHistoryStart?: string
 }

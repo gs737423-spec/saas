@@ -27,6 +27,19 @@ export interface ShopeeStatus {
   lastError: string | null
 }
 
+export interface VtexActiveSync {
+  id: string
+  status: string
+  stage: string
+  mode: string
+  counts: Record<string, number>
+  errorCount: number
+  history: { start: string | null; end: string | null }
+  progress: { percent: number | null; processed: number; total: number | null; basis: 'count' | 'time_window' | 'none' }
+  lastHeartbeatAt: string | null
+  isStale: boolean
+}
+
 export interface VtexStatus {
   provider: 'vtex'
   status: IntegrationStatus
@@ -40,10 +53,11 @@ export interface VtexStatus {
   lastError: string | null
   permissions?: Record<string, boolean>
   channelMappings?: Record<string, string[]>
-  activeSync?: { id: string; status: string; stage: string; counts: Record<string, number> } | null
+  historyMonths?: number
+  activeSync?: VtexActiveSync | null
 }
 
-export interface VtexCredentialsInput { accountName: string; appKey: string; appToken: string; channelMappings?: Record<string, string[]> }
+export interface VtexCredentialsInput { accountName: string; appKey: string; appToken: string; channelMappings?: Record<string, string[]>; historyMonths?: 3 | 6 }
 
 export interface VtexSyncResponse {
   ok: boolean

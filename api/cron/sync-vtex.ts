@@ -55,6 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       syncsSucceeded: 0,
       syncsPartial: 0,
       syncsFailed: 0,
+      // Run que estourou o orçamento de tempo interno e devolveu `running`
+      // pra retomar no próximo tick — NÃO é falha (checkpoint/heartbeat
+      // preservados), então não deve contar em `syncsFailed`. Campo aditivo:
+      // nenhum consumidor existente do shape de resposta quebra por causa dele.
+      syncsYielded: 0,
     }
 
     for (const connection of dueConnections.data ?? []) {
@@ -65,6 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (run.status === 'success') summary.syncsSucceeded += 1
         else if (run.status === 'partial') summary.syncsPartial += 1
         else if (run.status === 'failed') summary.syncsFailed += 1
+        else if (run.status === 'running') summary.syncsYielded += 1
       } catch (runError) {
         if (runError instanceof VtexSyncNotDueError) summary.connectionsSkippedNotDue += 1
         else if (runError instanceof SyncAlreadyRunningError) summary.connectionsSkippedLocked += 1

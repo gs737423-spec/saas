@@ -49,7 +49,19 @@ export interface SanitizedConnectionStatusResponse {
   nextSyncAt?: string | null
   permissions?: Record<string, boolean>
   channelMappings?: Record<string, string[]>
-  activeSync?: { id: string; status: string; stage: string; counts: Record<string, number> } | null
+  historyMonths?: number
+  activeSync?: {
+    id: string
+    status: string
+    stage: string
+    mode: string
+    counts: Record<string, number>
+    errorCount: number
+    history: { start: string | null; end: string | null }
+    progress: { percent: number | null; processed: number; total: number | null }
+    lastHeartbeatAt: string | null
+    isStale: boolean
+  } | null
 }
 
 export interface SanitizedSyncLogEntry {

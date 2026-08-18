@@ -31,12 +31,28 @@ export async function loadVtexChannelMappings(
   return merged
 }
 
+/** Chave de cache = (external_key, canonical_channel, resolution_status) — se
+ *  qualquer um desses mudar entre pedidos, refaz o round-trip normalmente.
+ *  Isso evita reescrever `sales_channels`/`vtex_channel_mappings` a cada
+ *  pedido quando (o caso comum) muitos pedidos seguidos são do mesmo canal
+ *  dentro da mesma run: sem cache eram 3 round-trips extras por pedido só
+ *  pra reconfirmar um estado que já foi persistido segundos atrás. Escopo é
+ *  por-run (Map criado em `processVtexSyncRun`), nunca cross-tenant — a
+ *  chave já embute o que varia por conexão dentro do loop de uma única run,
+ *  que é sempre de uma company/connection só. */
+export type VtexChannelResolutionCache = Map<string, { discovered: boolean; resolved: boolean }>
+
 export async function persistVtexChannelResolution(
   supabase: SupabaseClient,
   companyId: string,
   connectionId: string,
   order: VtexNormalizedOrder,
+  cache?: VtexChannelResolutionCache,
 ): Promise<{ discovered: boolean; resolved: boolean }> {
+  const cacheKey = `${order.externalChannelKey}::${order.channel}::${order.channelResolutionStatus}`
+  const cached = cache?.get(cacheKey)
+  if (cached) return cached
+
   const { error: channelError } = await supabase.from('sales_channels').upsert({
     company_id: companyId,
     canonical_key: order.channel,
@@ -70,5 +86,7 @@ export async function persistVtexChannelResolution(
   }, { onConflict: 'company_id,connection_id,source_provider,external_key' })
   if (mappingError) throw new Error(`Failed to persist VTEX channel mapping: ${mappingError.message}`)
 
-  return { discovered: !existing, resolved: order.channelResolutionStatus === 'resolved' }
+  const result = { discovered: !existing, resolved: order.channelResolutionStatus === 'resolved' }
+  cache?.set(cacheKey, result)
+  return result
 }

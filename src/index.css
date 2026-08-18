@@ -1357,6 +1357,54 @@ body {
     }
   }
 
+  /* ---- Progresso de sincronização VTEX -----------------------------------
+     Trilho neutro + preenchimento animado. Determinado: width real, muda
+     suave (transition), nunca salta seco. Indeterminado: bloco deslizando —
+     usado só quando o backend genuinamente não sabe o total ainda (nunca
+     progresso fake por timer). */
+  .vtex-progress-track {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-bg-highlight);
+    overflow: hidden;
+  }
+  .vtex-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-accent-primary-deep, var(--color-accent-primary)), var(--color-accent-primary));
+    transition: width var(--motion-duration-normal, 240ms) var(--motion-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+  .vtex-progress-fill--indeterminate {
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    animation: vtex-progress-slide 1.4s ease-in-out infinite;
+  }
+  @keyframes vtex-progress-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vtex-progress-fill { transition: none; }
+    .vtex-progress-fill--indeterminate { animation: none; left: 0; width: 100%; opacity: 0.5; }
+  }
+
+  /* Timeline de estágios — bolinha preenchida/ativa/pendente + linha. */
+  .vtex-stage-dot {
+    transition: background-color var(--motion-duration-fast, 160ms) ease, border-color var(--motion-duration-fast, 160ms) ease, transform var(--motion-duration-fast, 160ms) ease;
+  }
+  .vtex-stage-dot--active {
+    animation: vtex-stage-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes vtex-stage-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-primary) 45%, transparent); }
+    50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent-primary) 12%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vtex-stage-dot--active { animation: none; }
+  }
+
   /* ==========================================================================
      DataTableViewport — wrapper padronizado de scroll interno + cabeçalho
      sticky para tabelas longas (ver src/components/common/DataTableViewport.tsx).
