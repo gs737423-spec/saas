@@ -49,7 +49,10 @@ function timeAgo(iso: string | null): string {
  *  progresso fake por timer, ver computeVtexSyncProgress no backend),
  *  timeline de estágios e contadores reais. */
 export default function VtexSyncProgressPanel({ activeSync, onResume }: { activeSync: VtexActiveSync; onResume?: () => void }) {
-  const { stage, progress, counts, history, lastHeartbeatAt, isStale } = activeSync
+  const { stage, progress, counts, history, lastHeartbeatAt, isStale, state } = activeSync
+  // Fonte única de verdade: o estado derivado no backend. `isStale` é
+  // mantido só como fallback para respostas de status antigas em cache.
+  const needsAttention = state ? state === 'requires_attention' : isStale
   const range = formatDateRange(history.start, history.end)
   const orders = counts.ordersFetched ?? 0
   const products = counts.productsFetched ?? 0
@@ -57,7 +60,7 @@ export default function VtexSyncProgressPanel({ activeSync, onResume }: { active
   const catalogDone = STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf('catalog')
   const ordersDone = STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf('orders')
 
-  if (isStale) {
+  if (needsAttention) {
     return (
       <div className="mt-3 rounded-lg border border-accent-amber/25 bg-accent-amber/8 p-3">
         <p className="text-[12px] font-medium text-text-primary">Sincronização interrompida</p>

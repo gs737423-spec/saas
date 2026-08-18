@@ -14,14 +14,17 @@ describe('VTEX normalization', () => {
     expect(classifyVtexChannel({ ...baseOrder, affiliateId: 'SHP', marketplaceOrderId: '201' }, { shopee: ['shp'] })).toBe('shopee')
     expect(classifyVtexChannel({ ...baseOrder, affiliateId: 'AMZ', marketplaceOrderId: '202' }, { amazon: ['amz'] })).toBe('amazon')
     expect(classifyVtexChannel({ ...baseOrder, affiliateId: 'MGL', marketplaceOrderId: '203' }, { magalu: ['mgl'] })).toBe('magalu')
-    expect(classifyVtexChannel({ ...baseOrder, affiliateId: 'NEW', marketplaceOrderId: '201' })).toMatch(/^external:vtex:new-/)
+    // Identificador desconhecido NÃO vira canal próprio: cai no balde único
+    // 'external:vtex:unmapped'. Antes, cada sigla nova gerava um canônico
+    // 'external:vtex:<slug>-<hash>' — a causa raiz da explosão de canais.
+    expect(classifyVtexChannel({ ...baseOrder, affiliateId: 'NEW', marketplaceOrderId: '201' })).toBe('external:vtex:unmapped')
   })
 
   it('preserves unresolved marketplace revenue without classifying it as own store', () => {
     const unresolved = normalizeVtexOrder({ ...baseOrder, affiliateId: 'NEW', marketplaceOrderId: '201' })
     expect(unresolved.analyticsIncluded).toBe(true)
     expect(unresolved.channelResolutionStatus).toBe('unresolved')
-    expect(unresolved.channel).toMatch(/^external:vtex:new-/)
+    expect(unresolved.channel).toBe('external:vtex:unmapped')
     expect(unresolved.channel).not.toBe('loja_propria')
     expect(unresolved.canonicalOrderKey).toBe('vtex:VTEX-1')
     expect(unresolved.unavailableReason).toBe('VTEX_CHANNEL_MAPPING_REQUIRED')

@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from '../../../src/server/integrations/supabaseAdmin
 import { loadVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
 import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
 import { normalizeVtexCanonicalChannel, normalizeVtexChannelDisplayName, normalizeVtexChannelMappings, normalizeVtexExternalChannelKey } from '../../../src/server/integrations/vtex/validation.js'
+import { describeVtexIdentifier, findCanonicalChannel, humanizeCanonicalKey, parseVtexExternalKey } from '../../../src/server/integrations/vtex/channelResolution.js'
 
 function safeText(value: unknown, maxLength = 160): string | null {
   if (typeof value !== 'string') return null
@@ -41,29 +42,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (channelsError) throw new Error(channelsError.message)
 
       const labels = new Map((channels ?? []).map((channel) => [String(channel.canonical_key), safeText(channel.display_name) ?? String(channel.canonical_key)]))
-      res.status(200).json({
-        ok: true,
-        channels: (mappings ?? []).map((mapping) => ({
+      // Cada linha é um IDENTIFICADOR BRUTO da VTEX — não um "marketplace".
+      // Só depois de resolvido ele aponta para um canal canônico. A UI
+      // agrupa por `canonicalChannel` usando exatamente estes campos.
+      const identifiers = (mappings ?? []).map((mapping) => {
+        const parsed = parseVtexExternalKey(String(mapping.external_key))
+        const canonicalChannel = String(mapping.canonical_channel)
+        const resolved = mapping.resolution_status === 'resolved'
+        return {
           externalKey: String(mapping.external_key),
-          displayName: safeText(mapping.external_marketplace_name)
-            ?? safeText(mapping.affiliate_id)
-            ?? safeText(mapping.external_sales_channel)
-            ?? labels.get(String(mapping.canonical_channel))
-            ?? 'Canal VTEX',
-          externalIdentifier: safeText(mapping.affiliate_id)
-            ?? safeText(mapping.external_sales_channel)
-            ?? safeText(mapping.external_key, 120)
-            ?? 'Identificador indisponível',
-          canonicalChannel: String(mapping.canonical_channel),
-          canonicalDisplayName: labels.get(String(mapping.canonical_channel)) ?? String(mapping.canonical_channel),
+          identifierType: parsed.type,
+          identifierValue: safeText(mapping.affiliate_id) ?? safeText(mapping.external_sales_channel) ?? parsed.value,
+          identifierLabel: describeVtexIdentifier(parsed.type, safeText(mapping.affiliate_id) ?? safeText(mapping.external_sales_channel) ?? parsed.value),
+          canonicalChannel: resolved ? canonicalChannel : null,
+          canonicalDisplayName: resolved ? (labels.get(canonicalChannel) ?? humanizeCanonicalKey(canonicalChannel)) : null,
           resolutionStatus: mapping.resolution_status,
           lastSeenAt: mapping.last_seen_at,
-        })),
-        canonicalChannels: (channels ?? []).filter((channel) => !String(channel.canonical_key).startsWith('external:vtex:')).map((channel) => ({
-          canonicalKey: String(channel.canonical_key),
-          displayName: safeText(channel.display_name) ?? String(channel.canonical_key),
-          channelType: channel.channel_type,
-        })),
+        }
+      })
+      res.status(200).json({
+        ok: true,
+        // `channels` mantém o nome do contrato anterior para não quebrar
+        // clientes existentes; o conteúdo agora é explicitamente uma lista
+        // de identificadores.
+        channels: identifiers,
+        counters: {
+          total: identifiers.length,
+          resolved: identifiers.filter((item) => item.resolutionStatus === 'resolved').length,
+          unresolved: identifiers.filter((item) => item.resolutionStatus === 'unresolved').length,
+        },
+        canonicalChannels: (channels ?? [])
+          .filter((channel) => !String(channel.canonical_key).startsWith('external:vtex:'))
+          .map((channel) => ({
+            canonicalKey: String(channel.canonical_key),
+            displayName: safeText(channel.display_name) ?? String(channel.canonical_key),
+            channelType: channel.channel_type,
+          })),
       })
       return
     }
@@ -72,7 +86,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.body?.externalKey !== undefined) {
       const externalKey = normalizeVtexExternalChannelKey(req.body.externalKey)
-      const canonicalChannel = normalizeVtexCanonicalChannel(req.body.canonicalChannel)
+      // Colapsa variações de escrita no canônico do registry ANTES de
+      // gravar: "Amazon", "amazon" e "AMAZON" escolhidos na UI viram sempre
+      // a chave `amazon`, nunca um segundo canal.
+      const requestedChannel = normalizeVtexCanonicalChannel(req.body.canonicalChannel)
+      const canonicalChannel = findCanonicalChannel(requestedChannel)?.key ?? requestedChannel
       const { data: mapping, error: mappingError } = await supabase.from('vtex_channel_mappings')
         .select('id')
         .eq('company_id', auth.companyId)
@@ -90,7 +108,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .maybeSingle()
       if (channelLookupError) throw new Error(channelLookupError.message)
       if (!existingChannel) {
-        const displayName = normalizeVtexChannelDisplayName(req.body.displayName)
+        const displayName = findCanonicalChannel(canonicalChannel)?.displayName
+          ?? normalizeVtexChannelDisplayName(req.body.displayName)
         const { error: createChannelError } = await supabase.from('sales_channels').upsert({
           company_id: auth.companyId,
           canonical_key: canonicalChannel,

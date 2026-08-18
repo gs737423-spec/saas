@@ -4,6 +4,7 @@ import type { Provider, SanitizedConnectionStatusResponse } from '../../src/serv
 import { requireCapability } from '../../src/server/auth/authorization.js'
 import { HEARTBEAT_STALE_MINUTES, resolveVtexHistoryMonths } from '../../src/server/integrations/vtex/sync.js'
 import { computeVtexSyncProgress } from '../../src/server/integrations/vtex/progress.js'
+import { deriveVtexRunState } from '../../src/server/integrations/vtex/checkpoint.js'
 
 type StatusResponse = SanitizedConnectionStatusResponse & { ok: boolean; source: string; message?: string }
 
@@ -121,16 +122,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       historyMonths: provider === 'vtex' ? resolveVtexHistoryMonths(connection.provider_metadata) : undefined,
       activeSync: activeSync ? (() => {
         const heartbeatAt = activeSync.last_heartbeat_at ?? activeSync.started_at ?? null
+        // UM estado só, derivado num lugar só (`deriveVtexRunState`). Antes,
+        // `status` e `isStale` eram calculados separadamente e a UI conseguia
+        // mostrar "sincronizando" e "interrompida" ao mesmo tempo.
         // `queued` depois de um yield controlado (orçamento de tempo estourado,
-        // não travamento) é estado normal enquanto espera o próximo tick do
-        // cron (a cada 15min, acima de HEARTBEAT_STALE_MINUTES=5) — nunca deve
-        // aparecer como "interrompida" pro usuário. Só uma run que ainda está
-        // `running` (de verdade processando) e sem heartbeat recente é
-        // candidata a stale de verdade.
-        const isStale = activeSync.status === 'running' && Boolean(heartbeatAt && Date.now() - new Date(heartbeatAt).getTime() > HEARTBEAT_STALE_MINUTES * 60 * 1000)
+        // não travamento) continua sendo estado NORMAL enquanto espera o
+        // próximo tick do cron — nunca alerta. Só `running` sem heartbeat
+        // recente vira `requires_attention`.
+        const state = deriveVtexRunState({
+          status: activeSync.status,
+          stage: activeSync.stage,
+          lastHeartbeatAt: activeSync.last_heartbeat_at,
+          startedAt: activeSync.started_at,
+          errorCount: Array.isArray(activeSync.errors) ? activeSync.errors.length : 0,
+          staleAfterMs: HEARTBEAT_STALE_MINUTES * 60 * 1000,
+        })
+        const isStale = state === 'requires_attention'
         return {
           id: activeSync.id,
           status: activeSync.status,
+          state,
           stage: activeSync.stage,
           mode: activeSync.mode,
           counts: activeSync.counts ?? {},

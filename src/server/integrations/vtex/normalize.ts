@@ -1,4 +1,5 @@
 import type { VtexAnalyticChannel, VtexCategoryNode, VtexChannelMappings, VtexChannelResolution, VtexInventoryResponse, VtexNormalizedOrder, VtexOrder, VtexPrice, VtexSkuContext } from './types.js'
+import { resolveVtexChannel as resolveCanonicalVtexChannel, resolveVtexChannelIdentity } from './channelResolution.js'
 
 const PAID_STATUSES = new Set([
   'payment-approved', 'window-to-cancel', 'ready-for-handling', 'start-handling',
@@ -14,80 +15,44 @@ export function normalizeVtexOrderStatus(status: string): string {
   return normalized || 'unknown'
 }
 
-function normalizedAffiliate(value: string | null | undefined): string {
-  return (value ?? '').trim().toLowerCase()
-}
-
-const KNOWN_CHANNEL_LABELS: Record<string, string> = {
-  mercadolivre: 'Mercado Livre', shopee: 'Shopee', amazon: 'Amazon', magalu: 'Magalu', loja_propria: 'Loja Própria',
-}
-
-function stableShortHash(value: string): string {
-  let hash = 2166136261
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index)
-    hash = Math.imul(hash, 16777619)
-  }
-  return (hash >>> 0).toString(36).padStart(7, '0')
-}
-
-function safeChannelSegment(value: string): string {
-  return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'unmapped'
-}
-
-function channelLabel(canonicalChannel: string): string {
-  return KNOWN_CHANNEL_LABELS[canonicalChannel]
-    ?? canonicalChannel.split(/[:_.-]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
-}
-
+/** Identidade externa do pedido — delega para o resolvedor central
+ *  (channelResolution.ts). Continua exportada porque já é usada por nome;
+ *  o que mudou foi a implementação deixar de ser local e duplicada. */
 export function vtexExternalChannelIdentity(order: Pick<VtexOrder, 'affiliateId' | 'marketplaceOrderId' | 'salesChannel' | 'origin'>): { externalKey: string; rawIdentity: string | null } {
-  const affiliate = normalizedAffiliate(order.affiliateId)
-  if (affiliate) return { externalKey: `affiliate:${affiliate}`, rawIdentity: String(order.affiliateId).trim() }
-  const externalSalesChannel = normalizedAffiliate(order.salesChannel)
-  if (externalSalesChannel) return { externalKey: `sales-channel:${externalSalesChannel}`, rawIdentity: String(order.salesChannel).trim() }
-  if (!order.marketplaceOrderId) return { externalKey: 'native-store', rawIdentity: null }
-  return { externalKey: 'marketplace:unidentified', rawIdentity: null }
+  const identity = resolveVtexChannelIdentity(order)
+  const rawIdentity = identity.type === 'affiliate_id'
+    ? identity.raw.affiliateId
+    : identity.type === 'sales_channel' ? identity.raw.salesChannel : null
+  return { externalKey: identity.externalKey, rawIdentity }
 }
 
+/** ANTES: cada identificador bruto desconhecido virava um canal canônico
+ *  novo (`external:vtex:<slug>-<hash>`). Como `orders.sales_channel` tem FK
+ *  para `sales_channels`, isso obrigava a criar uma linha de "marketplace"
+ *  por sigla — a explosão de dezenas/centenas de canais vista em produção,
+ *  e também a origem da segunda "Amazon" (o canônico `amazon` já existia,
+ *  e um affiliate cujo texto lembrava Amazon gerava um canônico paralelo).
+ *
+ *  AGORA: identificador desconhecido cai no ÚNICO balde
+ *  `external:vtex:unmapped` ("Canal não identificado"), e o identificador
+ *  bruto vive em `vtex_channel_mappings`, que é onde ele pertence. Nenhum
+ *  canal canônico é criado automaticamente, em hipótese alguma. */
 export function resolveVtexChannel(order: Pick<VtexOrder, 'affiliateId' | 'marketplaceOrderId' | 'salesChannel' | 'origin'>, mappings: VtexChannelMappings = {}): VtexChannelResolution {
-  const identity = vtexExternalChannelIdentity(order)
-  const affiliate = normalizedAffiliate(order.affiliateId)
-  for (const [canonicalChannel, values] of Object.entries(mappings)) {
-    if (values.some((value) => {
-      const normalized = normalizedAffiliate(value)
-      return (affiliate && normalized === affiliate) || normalized === identity.externalKey
-    })) {
-      return {
-        canonicalChannel,
-        displayName: channelLabel(canonicalChannel),
-        channelType: canonicalChannel === 'loja_propria' ? 'own_store' : 'marketplace',
-        resolutionStatus: 'resolved',
-        externalKey: identity.externalKey,
-        externalSalesChannel: order.salesChannel ? String(order.salesChannel) : null,
-        externalMarketplaceName: null,
-      }
-    }
-  }
-  if (identity.externalKey === 'native-store') {
-    return {
-      canonicalChannel: 'loja_propria', displayName: 'Loja Própria', channelType: 'own_store',
-      resolutionStatus: 'resolved', externalKey: identity.externalKey,
-      externalSalesChannel: order.salesChannel ? String(order.salesChannel) : null, externalMarketplaceName: null,
-    }
-  }
-  const identitySeed = identity.rawIdentity ?? identity.externalKey
-  const canonicalChannel = `external:vtex:${safeChannelSegment(identitySeed)}-${stableShortHash(identity.externalKey)}`
+  const resolution = resolveCanonicalVtexChannel(order, mappings)
   return {
-    canonicalChannel,
-    displayName: identity.rawIdentity ? `Canal VTEX ${identity.rawIdentity}` : 'Canal VTEX não mapeado',
-    channelType: 'external',
-    resolutionStatus: 'unresolved',
-    externalKey: identity.externalKey,
-    externalSalesChannel: order.salesChannel ? String(order.salesChannel) : null,
+    canonicalChannel: resolution.canonicalKey,
+    displayName: resolution.displayName,
+    channelType: resolution.channelType,
+    resolutionStatus: resolution.status,
+    externalKey: resolution.externalKey,
+    externalSalesChannel: resolution.rawIdentifiers.salesChannel,
     externalMarketplaceName: null,
+    identifierType: resolution.identifierType,
+    identifierValue: resolution.identifierValue,
+    resolutionSource: resolution.source,
   }
 }
+
 
 export function classifyVtexChannel(order: Pick<VtexOrder, 'affiliateId' | 'marketplaceOrderId' | 'salesChannel' | 'origin'>, mappings: VtexChannelMappings = {}): VtexAnalyticChannel {
   return resolveVtexChannel(order, mappings).canonicalChannel
@@ -113,6 +78,9 @@ export function normalizeVtexOrder(order: VtexOrder, mappings: VtexChannelMappin
     externalChannelKey: resolution.externalKey,
     externalSalesChannel: resolution.externalSalesChannel,
     externalMarketplaceName: resolution.externalMarketplaceName,
+    identifierType: resolution.identifierType,
+    identifierValue: resolution.identifierValue,
+    resolutionSource: resolution.resolutionSource,
     analyticsIncluded,
     unavailableReason: resolution.resolutionStatus === 'unresolved' ? 'VTEX_CHANNEL_MAPPING_REQUIRED' : null,
     externalOrderId: String(order.orderId),

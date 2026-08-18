@@ -6,7 +6,8 @@ import { persistCanonicalOrder } from '../orderIdentity.js'
 import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
-import { loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
+import { ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
+import { buildVtexRunConfig, normalizeVtexCheckpoint, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -199,7 +200,13 @@ export async function queueVtexSync(companyId: string, mode: 'full' | 'increment
   const { data: active } = await supabase.from('integration_sync_runs').select('*')
     .eq('company_id', companyId).eq('connection_id', connection.id).in('status', ['queued', 'running']).maybeSingle()
   if (active) return active as SyncRunRow
-  const { data, error } = await supabase.from('integration_sync_runs').insert({ company_id: companyId, connection_id: connection.id, provider: 'vtex', mode, status: 'queued', stage: 'validate', counts: EMPTY_COUNTS, checkpoint: {} }).select('*').single()
+  // Snapshot da configuração NO MOMENTO DA CRIAÇÃO da run — a partir daqui
+  // essa run usa esses valores até terminar. Mudar `historyMonths` na
+  // conexão depois disso só afeta a PRÓXIMA run; nunca reescreve as regras
+  // de uma run em andamento (foi exatamente isso que produziu o checkpoint
+  // impossível encontrado em produção).
+  const runConfig = buildVtexRunConfig(resolveVtexHistoryMonths(connection.provider_metadata), mode)
+  const { data, error } = await supabase.from('integration_sync_runs').insert({ company_id: companyId, connection_id: connection.id, provider: 'vtex', mode, status: 'queued', stage: 'validate', counts: EMPTY_COUNTS, checkpoint: { version: VTEX_CHECKPOINT_VERSION, runConfig } }).select('*').single()
   if (error) throw new Error(`Failed to queue VTEX sync: ${error.message}`)
   await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_queued', status: 'info', message: `VTEX ${mode} sync queued` })
   return data as SyncRunRow
@@ -215,7 +222,22 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
 
   await claimSyncLock(supabase, companyId, connection.id, new Date())
   const counts = mergeCounts(run.counts)
-  const checkpoint = run.checkpoint ?? {}
+  // Invariantes do checkpoint ANTES de processar qualquer coisa: migra
+  // checkpoint sem versão, congela o snapshot de config e recalcula janelas
+  // logicamente impossíveis (historyStart depois da janela atual, window
+  // invertida, orderPage < 1). Nunca apaga pedido — checkpoint ruim é
+  // ponteiro errado, e os upserts downstream são idempotentes.
+  const fallbackConfig = buildVtexRunConfig(resolveVtexHistoryMonths(connection.provider_metadata), run.mode)
+  const normalization = normalizeVtexCheckpoint(run.checkpoint, fallbackConfig)
+  const checkpoint = normalization.checkpoint
+  const runConfig = normalization.config
+  if (normalization.normalized) {
+    await logSyncEvent({
+      companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+      message: 'VTEX sync checkpoint normalized before processing',
+      payload: { code: 'CHECKPOINT_NORMALIZED', stage: run.stage, reasons: normalization.reasons, checkpointVersion: VTEX_CHECKPOINT_VERSION },
+    })
+  }
   const errors = [...(run.errors ?? [])]
   const deadline = Date.now() + RUN_TIME_BUDGET_MS
 
@@ -302,16 +324,23 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     if (run.stage === 'orders') {
       const providerMetadata = connection.provider_metadata ?? {}
       const configuredMappings = normalizeVtexChannelMappings(providerMetadata.channelMappings ?? {})
+      // Canais canônicos base existem antes de qualquer pedido — a
+      // sincronização nunca precisa inventar canal pra satisfazer a FK de
+      // `orders.sales_channel`.
+      await ensureBaseSalesChannels(supabase, companyId)
       const mappings = await loadVtexChannelMappings(supabase, companyId, connection.id, configuredMappings)
       const channelResolutionCache: VtexChannelResolutionCache = new Map()
+      // `runConfig.historyMonths` vem do SNAPSHOT da run, não da config
+      // atual da conexão — trocar 12 -> 3 meses no sistema não mistura mais
+      // regras dentro de uma run que já estava em andamento.
       const initialFrom = run.mode === 'incremental' && connection.last_success_at
         ? new Date(new Date(connection.last_success_at).getTime() - INCREMENTAL_OVERLAP_MS)
-        : new Date(Date.now() - resolveVtexHistoryMonths(providerMetadata) * 30 * DAY_MS)
+        : new Date(Date.now() - runConfig.historyMonths * 30 * DAY_MS)
       const targetEnd = checkpoint.orderTargetEnd ? new Date(checkpoint.orderTargetEnd) : new Date()
       const windowStart = checkpoint.orderWindowStart ? new Date(checkpoint.orderWindowStart) : initialFrom
       let windowEnd = checkpoint.orderWindowEnd
         ? new Date(checkpoint.orderWindowEnd)
-        : new Date(Math.min(windowStart.getTime() + ORDER_WINDOW_MS, targetEnd.getTime()))
+        : new Date(Math.min(windowStart.getTime() + runConfig.windowMs, targetEnd.getTime()))
       checkpoint.orderWindowStart = windowStart.toISOString()
       checkpoint.orderWindowEnd = windowEnd.toISOString()
       checkpoint.orderTargetEnd = targetEnd.toISOString()
@@ -410,7 +439,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         errors.push(`An hourly order window exceeded the VTEX ${MAX_ORDER_PAGES_PER_RUN}-page API limit and was preserved as partial.`)
       } else if (windowEnd.getTime() < targetEnd.getTime()) {
         const nextStart = windowEnd
-        const nextEnd = new Date(Math.min(nextStart.getTime() + ORDER_WINDOW_MS, targetEnd.getTime()))
+        const nextEnd = new Date(Math.min(nextStart.getTime() + runConfig.windowMs, targetEnd.getTime()))
         checkpoint.orderWindowStart = nextStart.toISOString()
         checkpoint.orderWindowEnd = nextEnd.toISOString()
         checkpoint.orderPage = 1

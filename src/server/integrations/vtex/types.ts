@@ -125,6 +125,12 @@ export interface VtexChannelResolution {
   externalKey: string
   externalSalesChannel: string | null
   externalMarketplaceName: string | null
+  /** Identificador bruto VTEX separado do canal canônico (ver
+   *  channelResolution.ts) — a UI agrupa/filtra por estes campos sem
+   *  precisar parsear `externalKey`. */
+  identifierType: 'affiliate_id' | 'sales_channel' | 'native_store' | 'unidentified'
+  identifierValue: string
+  resolutionSource: 'mapping' | 'native_store' | 'unresolved'
 }
 
 export interface VtexNormalizedOrder {
@@ -136,6 +142,9 @@ export interface VtexNormalizedOrder {
   externalChannelKey: string
   externalSalesChannel: string | null
   externalMarketplaceName: string | null
+  identifierType: VtexChannelResolution['identifierType']
+  identifierValue: string
+  resolutionSource: VtexChannelResolution['resolutionSource']
   analyticsIncluded: boolean
   unavailableReason: string | null
   externalOrderId: string
@@ -167,6 +176,18 @@ export interface VtexSyncCounts {
 }
 
 export interface VtexSyncCheckpoint {
+  /** Versão do formato do checkpoint (ver checkpoint.ts). Ausente = run
+   *  legada, migrada explicitamente antes de qualquer processamento —
+   *  nunca se mistura campo de regra antiga com regra nova em silêncio. */
+  version?: number
+  /** Snapshot da configuração no momento em que a run foi CRIADA. Vale por
+   *  toda a vida da run; mudança de config do sistema só afeta a próxima. */
+  runConfig?: {
+    historyMonths: number
+    windowMs: number
+    syncMode: 'full' | 'incremental'
+    checkpointVersion: number
+  }
   skuOffset?: number
   orderPage?: number
   orderWindowStart?: string

@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { FinanceOverview, MarketplaceFinance, MarketplaceGrowth, FinanceTransaction } from '../../src/data/financeShapes.js'
-import { providerDefaultChannel, salesChannelDisplayName, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
+import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
 
 interface FinanceApiResponse {
   ok: boolean
@@ -39,7 +39,8 @@ async function computeGrowthByChannel(
   supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>,
   companyId: string,
   connectionIds: string[],
-  providerByConnectionId: Map<string, string>
+  providerByConnectionId: Map<string, string>,
+  trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
   const since366 = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
   const { data: yearOrders } = await supabase
@@ -55,8 +56,9 @@ async function computeGrowthByChannel(
   const revenueByChannelDay = new Map<StoredSalesChannel, Map<string, number>>()
   for (const o of yearOrders ?? []) {
     const provider = providerByConnectionId.get(o.connection_id)
-    const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-    if (!channel) continue
+    const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+    if (!storedChannel) continue
+    const channel = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels).effectiveChannel
     const byDay = revenueByChannelDay.get(channel) ?? new Map<string, number>()
     const key = dateKey(o.ordered_at)
     byDay.set(key, (byDay.get(key) ?? 0) + Number(o.total_amount ?? 0))
@@ -112,8 +114,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, String(c.provider)]))
     const connectionIds = connections.map((c) => c.id)
 
-    const { data: registeredChannels, error: channelError } = await supabase.from('sales_channels')
-      .select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active')
+    const [{ data: registeredChannels, error: channelError }, trustedChannels] = await Promise.all([
+      supabase.from('sales_channels').select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active'),
+      loadTrustedAnalyticsChannels(supabase, auth.companyId),
+    ])
     if (channelError) throw new Error(channelError.message)
     const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
 
@@ -144,32 +148,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Agrupa por provider real (não mais 1 linha fixa "Mercado Livre") —
     // cada marketplace conectado com pedido no período vira uma linha.
-    const byChannel = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number }>()
+    // Agregação por canal EFETIVO: pedidos antigos presos em canônicos VTEX
+    // legados fabricados (external:vtex:mzn-..., mlb-..., ...) caem juntos
+    // no mesmo "Canal não identificado" em vez de virarem uma linha cada.
+    // `orders`/`sales_channels` não são alterados — só a leitura agrega
+    // diferente. `resolveEffectiveAnalyticsChannel` nunca usa prefixo:
+    // decide por `trustedChannels` (registry + mappings resolvidos).
+    const byChannel = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number; displayName: string }>()
     for (const o of paid) {
       const provider = providerByConnectionId.get(o.connection_id)
-      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-      if (!channel) continue
-      const acc = byChannel.get(channel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
+      const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!storedChannel) continue
+      const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
+      const acc = byChannel.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, displayName }
       acc.grossRevenue += Number(o.total_amount ?? 0)
       acc.fees += Number(o.fee_amount ?? 0)
       acc.ordersCount += 1
-      byChannel.set(channel, acc)
+      byChannel.set(effectiveChannel, acc)
     }
     for (const o of cancelled) {
       const provider = providerByConnectionId.get(o.connection_id)
-      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-      if (!channel) continue
-      const acc = byChannel.get(channel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0 }
+      const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!storedChannel) continue
+      const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
+      const acc = byChannel.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, displayName }
       acc.refunds += Number(o.total_amount ?? 0)
-      byChannel.set(channel, acc)
+      byChannel.set(effectiveChannel, acc)
     }
 
-    const growthByChannel = await computeGrowthByChannel(supabase, auth.companyId, connectionIds, providerByConnectionId)
+    const growthByChannel = await computeGrowthByChannel(supabase, auth.companyId, connectionIds, providerByConnectionId, trustedChannels)
     const EMPTY_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
 
     const byMarketplace: MarketplaceFinance[] = Array.from(byChannel.entries())
       .map(([channel, acc]): MarketplaceFinance | null => {
-        const marketplace = salesChannelDisplayName(channel, channelNameByKey.get(channel))
+        const marketplace = acc.displayName
         return {
           marketplace,
           grossRevenue: acc.grossRevenue,
@@ -190,8 +202,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const transactions: FinanceTransaction[] = [
       ...paid.flatMap((o) => {
         const provider = providerByConnectionId.get(o.connection_id)
-        const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-        const marketplace = channel ? salesChannelDisplayName(channel, channelNameByKey.get(channel)) : undefined
+        const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+        const marketplace = storedChannel ? resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel)).displayName : undefined
         if (!marketplace) return []
         return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],
@@ -205,8 +217,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
       ...cancelled.flatMap((o) => {
         const provider = providerByConnectionId.get(o.connection_id)
-        const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-        const marketplace = channel ? salesChannelDisplayName(channel, channelNameByKey.get(channel)) : undefined
+        const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+        const marketplace = storedChannel ? resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel)).displayName : undefined
         if (!marketplace) return []
         return [{
           date: new Date(o.ordered_at).toISOString().split('T')[0],

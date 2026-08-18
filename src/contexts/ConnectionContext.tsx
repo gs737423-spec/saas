@@ -30,6 +30,11 @@ export interface ShopeeStatus {
 export interface VtexActiveSync {
   id: string
   status: string
+  /** Estado único derivado no backend (deriveVtexRunState) — a UI NUNCA
+   *  combina `status` com outra flag pra decidir o que mostrar, senão
+   *  volta a ser possível exibir "sincronizando" e "interrompida" juntos.
+   *  `yielded_queued` é pausa normal entre ticks do cron, não alerta. */
+  state?: 'queued' | 'running' | 'yielded_queued' | 'partial' | 'failed_recoverable' | 'requires_attention' | 'completed'
   stage: string
   mode: string
   counts: Record<string, number>

@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { Provider } from '../../src/server/integrations/types.js'
-import { providerDefaultChannel, salesChannelDisplayName, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
+import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
 
 export interface DailyRevenuePoint {
   date: string
@@ -84,8 +84,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
-    const { data: registeredChannels, error: channelError } = await supabase.from('sales_channels')
-      .select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active')
+    const [{ data: registeredChannels, error: channelError }, trustedChannels] = await Promise.all([
+      supabase.from('sales_channels').select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active'),
+      loadTrustedAnalyticsChannels(supabase, auth.companyId),
+    ])
     if (channelError) throw new Error(channelError.message)
     const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
 
@@ -103,26 +105,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const template = emptyDays(totalDays)
     for (const t of template) byDay.set(t.date, t)
 
+    const displayNameByEffectiveKey = new Map<string, string>()
     for (const o of orders ?? []) {
       const provider = providerByConnectionId.get(o.connection_id)
-      const channel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-      if (!channel) continue
+      const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+      if (!storedChannel) continue
+      // Agregação usa o canal EFETIVO, não o bruto — pedidos antigos presos
+      // em canônicos legados fabricados (external:vtex:mzn-...) caem todos
+      // no mesmo balde `external:vtex:unmapped`, nunca viram grupos
+      // separados. `orders`/`sales_channels` não são alterados.
+      const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
+      displayNameByEffectiveKey.set(effectiveChannel, displayName)
       const key = dateKey(o.ordered_at)
       const point = byDay.get(key)
       if (!point) continue
       const amount = Number(o.total_amount ?? 0)
-      point.channels[channel] = (point.channels[channel] ?? 0) + amount
-      const field: 'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria' | null = channel === 'loja_propria'
+      point.channels[effectiveChannel] = (point.channels[effectiveChannel] ?? 0) + amount
+      const field: 'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria' | null = effectiveChannel === 'loja_propria'
         ? 'lojapropria'
-        : channel === 'mercadolivre' || channel === 'shopee' || channel === 'amazon'
-          ? channel
+        : effectiveChannel === 'mercadolivre' || effectiveChannel === 'shopee' || effectiveChannel === 'amazon'
+          ? effectiveChannel
           : null
       if (field) point[field] += amount
       point.total += amount
     }
 
     const observedKeys = new Set(Array.from(byDay.values()).flatMap((point) => Object.keys(point.channels)))
-    const channels = Array.from(observedKeys).map((key) => ({ key, label: salesChannelDisplayName(key, channelNameByKey.get(key)) }))
+    const channels = Array.from(observedKeys).map((key) => ({ key, label: displayNameByEffectiveKey.get(key) ?? key }))
     res.status(200).json({ ok: true, source: 'real', days: Array.from(byDay.values()), channels } satisfies DailyApiResponse)
   } catch (err) {
     console.error('[api/dashboard/finance-daily]', err)
