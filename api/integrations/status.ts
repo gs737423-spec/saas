@@ -150,6 +150,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           progress: computeVtexSyncProgress(activeSync.stage, activeSync.checkpoint, activeSync.counts),
           lastHeartbeatAt: heartbeatAt,
           isStale,
+          catalogStatus: activeSync.checkpoint?.catalogStatus ?? 'unknown',
+          catalogSkuTotal: activeSync.checkpoint?.catalogSkuTotal ?? activeSync.checkpoint?.skuTotal ?? null,
         }
       })() : null,
     }

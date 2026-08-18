@@ -373,6 +373,7 @@ describe('checkpoint versioning and normalization', () => {
       orderWindowEnd: '2026-06-08T00:00:00.000Z',
       orderTargetEnd: '2026-08-18T00:00:00.000Z',
       orderPage: 2,
+      catalogStatus: 'completed',
     }, config, now)
     expect(good.normalized).toBe(false)
     expect(good.checkpoint.orderWindowStart).toBe('2026-06-01T00:00:00.000Z')

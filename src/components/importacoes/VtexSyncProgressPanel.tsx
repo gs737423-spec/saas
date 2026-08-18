@@ -49,7 +49,7 @@ function timeAgo(iso: string | null): string {
  *  progresso fake por timer, ver computeVtexSyncProgress no backend),
  *  timeline de estágios e contadores reais. */
 export default function VtexSyncProgressPanel({ activeSync, onResume }: { activeSync: VtexActiveSync; onResume?: () => void }) {
-  const { stage, progress, counts, history, lastHeartbeatAt, isStale, state } = activeSync
+  const { stage, progress, counts, history, lastHeartbeatAt, isStale, state, catalogStatus } = activeSync
   // Fonte única de verdade: o estado derivado no backend. `isStale` é
   // mantido só como fallback para respostas de status antigas em cache.
   const needsAttention = state ? state === 'requires_attention' : isStale
@@ -57,7 +57,14 @@ export default function VtexSyncProgressPanel({ activeSync, onResume }: { active
   const orders = counts.ordersFetched ?? 0
   const products = counts.productsFetched ?? 0
   const inventory = counts.inventoriesFetched ?? 0
-  const catalogDone = STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf('catalog')
+  // NUNCA usar `stage==='orders'` (ou qualquer estágio posterior) como prova
+  // de que o catálogo terminou — uma run pode ter herdado `stage='orders'`
+  // sem o bloco `catalog` jamais ter rodado (ver checkpoint.ts/sync.ts,
+  // caso real de produção). A única prova é `catalogStatus`.
+  const effectiveCatalogStatus = catalogStatus ?? 'unknown'
+  const catalogDone = effectiveCatalogStatus === 'completed' || effectiveCatalogStatus === 'empty'
+  const catalogBlocked = effectiveCatalogStatus === 'blocked'
+  const catalogPartial = effectiveCatalogStatus === 'partial'
   const ordersDone = STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf('orders')
 
   if (needsAttention) {
@@ -139,17 +146,24 @@ export default function VtexSyncProgressPanel({ activeSync, onResume }: { active
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
         <div>
           <p className="font-semibold tabular-nums text-text-primary">{orders.toLocaleString('pt-BR')}</p>
-          <p className="text-[9.5px] text-text-muted">Pedidos</p>
+          <p className="text-[9.5px] text-text-muted">Pedidos processados</p>
         </div>
         <div>
-          <p className={`font-semibold tabular-nums ${catalogDone || products > 0 ? 'text-text-primary' : 'text-text-muted'}`}>{catalogDone || products > 0 ? products.toLocaleString('pt-BR') : 'Aguardando'}</p>
+          <p className={`font-semibold tabular-nums ${catalogDone ? 'text-text-primary' : catalogBlocked ? 'text-accent-amber' : 'text-text-muted'}`}>
+            {catalogBlocked ? 'Acesso insuficiente' : catalogPartial ? 'Parcial' : catalogDone ? products.toLocaleString('pt-BR') : 'Aguardando validação'}
+          </p>
           <p className="text-[9.5px] text-text-muted">Produtos</p>
         </div>
         <div>
-          <p className={`font-semibold tabular-nums ${catalogDone || inventory > 0 ? 'text-text-primary' : 'text-text-muted'}`}>{catalogDone || inventory > 0 ? inventory.toLocaleString('pt-BR') : 'Aguardando'}</p>
+          <p className={`font-semibold tabular-nums ${catalogDone ? 'text-text-primary' : catalogBlocked ? 'text-accent-amber' : 'text-text-muted'}`}>
+            {catalogBlocked ? 'Acesso insuficiente' : catalogPartial ? 'Parcial' : catalogDone ? inventory.toLocaleString('pt-BR') : 'Aguardando validação'}
+          </p>
           <p className="text-[9.5px] text-text-muted">Estoque</p>
         </div>
       </div>
+      {catalogBlocked && (
+        <p className="mt-2 text-[10.5px] text-accent-amber">Acesso insuficiente para validar o catálogo. Revise as permissões da credencial VTEX.</p>
+      )}
       {ordersDone && <span className="sr-only" aria-live="polite">Pedidos concluídos, finalizando sincronização.</span>}
     </div>
   )

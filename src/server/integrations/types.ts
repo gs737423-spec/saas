@@ -61,6 +61,12 @@ export interface SanitizedConnectionStatusResponse {
     progress: { percent: number | null; processed: number; total: number | null }
     lastHeartbeatAt: string | null
     isStale: boolean
+    /** Prova de validação de catálogo desta run — nunca inferida de `stage`.
+     *  'unknown' inclusive para runs legadas sem o campo no checkpoint. A UI
+     *  NUNCA deve mostrar "Produtos e estoque OK" só porque `stage==='orders'`;
+     *  precisa checar este campo. Ver src/server/integrations/vtex/checkpoint.ts. */
+    catalogStatus?: 'unknown' | 'validating' | 'completed' | 'empty' | 'partial' | 'blocked'
+    catalogSkuTotal?: number | null
   } | null
 }
 
@@ -93,6 +99,13 @@ export type SyncLogEventType =
   | 'channel_discovered'
   | 'provider_rate_limited'
   | 'credentials_invalid'
+  | 'catalog_validation_started'
+  | 'catalog_sku_ids_loaded'
+  | 'catalog_empty_validated'
+  | 'catalog_permission_denied'
+  | 'catalog_payload_invalid'
+  | 'catalog_batch_progress'
+  | 'catalog_completed'
 
 export type SyncLogStatus = 'info' | 'success' | 'error'
 

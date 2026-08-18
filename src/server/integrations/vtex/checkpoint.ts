@@ -99,6 +99,20 @@ export function normalizeVtexCheckpoint(
   else if (checkpoint.version !== VTEX_CHECKPOINT_VERSION) reasons.push(`version_${checkpoint.version}_to_${VTEX_CHECKPOINT_VERSION}`)
   if (!checkpoint.runConfig) reasons.push('missing_run_config')
 
+  // Prova de validação de catálogo é ADITIVA e nunca inferida: checkpoint
+  // sem `catalogStatus` (todo checkpoint legado, inclusive o caso real de
+  // produção com `stage='orders'`/`skuTotal=NULL`/zero produtos) ganha
+  // 'unknown' explicitamente aqui — nunca 'completed'. Isso é o que permite
+  // a state machine em sync.ts decidir revalidar o catálogo sem depender de
+  // `stage`, que pode ter sido herdado de uma execução anterior ao próprio
+  // conceito de validação de catálogo existir.
+  const validCatalogStatuses = ['unknown', 'validating', 'completed', 'empty', 'partial', 'blocked']
+  if (!checkpoint.catalogStatus || !validCatalogStatuses.includes(checkpoint.catalogStatus)) {
+    if (checkpoint.catalogStatus) reasons.push('invalid_catalog_status')
+    else reasons.push('missing_catalog_status')
+    checkpoint.catalogStatus = 'unknown'
+  }
+
   // Ponteiros numéricos: nunca abaixo do mínimo válido.
   if (checkpoint.orderPage !== undefined && (!Number.isFinite(Number(checkpoint.orderPage)) || Number(checkpoint.orderPage) < 1)) {
     checkpoint.orderPage = 1
@@ -155,6 +169,20 @@ export function normalizeVtexCheckpoint(
   }
 
   return { checkpoint, config, normalized: reasons.length > 0, reasons }
+}
+
+/** Gate único da state machine: decide se a run precisa (re)entrar no
+ *  estágio `catalog` ANTES de continuar consumindo `orders`, baseado
+ *  exclusivamente em `catalogStatus` normalizado — nunca em `stage`.
+ *  `unknown` é o único estado que reentra; uma vez `completed`/`empty`/
+ *  `blocked`, nunca mais reentra nesta run (evita loop eterno numa conta
+ *  sem permissão de catálogo). `partial`/`validating` também não reentram
+ *  por este gate porque nesses casos `stage` já está em `catalog` (a run
+ *  foi yieldada no meio do próprio estágio) — o fluxo sequencial normal
+ *  retoma o lote de onde parou sem precisar do gate. */
+export function vtexCatalogNeedsRevalidation(checkpoint: VtexSyncCheckpoint | null | undefined): boolean {
+  const status = checkpoint?.catalogStatus
+  return status === undefined || status === 'unknown'
 }
 
 /** Estado único e coerente exposto pelo contrato de status. Existe porque

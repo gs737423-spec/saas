@@ -43,6 +43,10 @@ export interface VtexActiveSync {
   progress: { percent: number | null; processed: number; total: number | null; basis: 'count' | 'time_window' | 'none' }
   lastHeartbeatAt: string | null
   isStale: boolean
+  /** Prova de validação de catálogo desta run — NUNCA inferida de `stage`.
+   *  'unknown' cobre inclusive runs legadas sem o campo no checkpoint. */
+  catalogStatus?: 'unknown' | 'validating' | 'completed' | 'empty' | 'partial' | 'blocked'
+  catalogSkuTotal?: number | null
 }
 
 export interface VtexStatus {

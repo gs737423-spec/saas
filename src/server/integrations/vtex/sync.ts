@@ -7,7 +7,7 @@ import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
 import { ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
-import { buildVtexRunConfig, normalizeVtexCheckpoint, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
+import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -246,6 +246,26 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     await updateRun(supabase, run, { status: 'running', started_at: new Date().toISOString() })
     await supabase.from('marketplace_connections').update({ status: 'syncing', last_error: null }).eq('id', connection.id).eq('company_id', companyId)
 
+    // GATE DE REVALIDAÇÃO DE CATÁLOGO — cobre exatamente o caso real de
+    // produção: uma run com `stage='orders'` (herdado de uma execução
+    // anterior ao conceito de validação de catálogo, ou de um reclaim que
+    // preservou `stage` cegamente) cujo checkpoint nunca provou que o
+    // catálogo rodou (`catalogStatus` ausente/`'unknown'`). Decide-se
+    // SOMENTE por `catalogStatus` — nunca por `stage` — e nunca reseta
+    // nenhum campo de pedidos já presente no checkpoint (historyStart/
+    // windowStart/windowEnd/targetEnd/orderPage ficam intocados). É uma
+    // reentrada única: depois que `catalogStatus` sai de `'unknown'`, este
+    // gate nunca mais dispara para esta run.
+    if (['orders', 'finalize', 'complete'].includes(run.stage) && vtexCatalogNeedsRevalidation(checkpoint)) {
+      await logSyncEvent({
+        companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+        message: 'VTEX run resumed at a post-catalog stage without proof the catalog stage ever ran — reentering catalog validation once before continuing orders',
+        payload: { code: 'CATALOG_REVALIDATION_REQUIRED', previousStage: run.stage, catalogStatus: checkpoint.catalogStatus ?? 'unknown' },
+      })
+      run.stage = 'catalog'
+      await updateRun(supabase, run, { stage: run.stage, checkpoint })
+    }
+
     if (run.stage === 'validate') {
       await client.getCategoryTree(1)
       run.stage = 'categories'
@@ -268,13 +288,78 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     }
 
     if (run.stage === 'catalog') {
-      const skuIds = await client.getSkuIds()
-      checkpoint.skuTotal = skuIds.length
-      const start = Number(checkpoint.skuOffset ?? 0)
-      const batch = skuIds.slice(start, start + SKU_BATCH_SIZE)
-      await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch started', payload: { stage: 'catalog', batchSize: batch.length, offset: start, total: skuIds.length } })
-      const batchStartedAt = Date.now()
-      const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
+      if (checkpoint.catalogStatus === undefined || checkpoint.catalogStatus === 'unknown') {
+        checkpoint.catalogStatus = 'validating'
+        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog validation started', payload: { code: 'CATALOG_VALIDATION_STARTED', stage: 'catalog' } })
+      }
+
+      let skuIds: number[] | null = null
+      try {
+        const rawSkuIds = await client.getSkuIds()
+        // Validação defensiva de schema: um payload não-array (200 OK mas
+        // corpo malformado) NUNCA pode virar `[]` em silêncio — isso é
+        // exatamente o tipo de gap que fazia "0 produtos" ficar
+        // indistinguível de "catálogo nunca validado de verdade".
+        if (!Array.isArray(rawSkuIds)) {
+          await logSyncEvent({
+            companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'error',
+            message: 'VTEX getSkuIds returned a non-array payload — not coerced to empty catalog',
+            payload: { code: 'CATALOG_PAYLOAD_INVALID', stage: 'catalog', payloadType: typeof rawSkuIds },
+          })
+          throw new Error('VTEX_CATALOG_PAYLOAD_INVALID')
+        }
+        skuIds = rawSkuIds
+      } catch (catalogError) {
+        if (catalogError instanceof VtexApiError && [401, 403].includes(catalogError.status)) {
+          // Erro de permissão é uma PROVA definitiva, não uma ambiguidade:
+          // catalogStatus vira 'blocked' (terminal — o gate de revalidação
+          // nunca mais reentra nesta run) e a conexão segue o mesmo padrão
+          // já usado pro catch geral de 401/403 no final do arquivo.
+          checkpoint.catalogStatus = 'blocked'
+          checkpoint.catalogValidatedAt = new Date().toISOString()
+          await logSyncEvent({
+            companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'error',
+            message: 'VTEX catalog endpoint denied access — marking catalog as blocked, connection requires attention',
+            payload: { code: 'CATALOG_PERMISSION_DENIED', stage: 'catalog', httpStatus: catalogError.status, vtexErrorCode: catalogError.code },
+          })
+          await supabase.from('marketplace_connections').update({ status: 'requires_attention', last_error: 'VTEX_CATALOG_PERMISSION_REQUIRED' }).eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
+          // Não retorna aqui: cai no bloco comum abaixo (`skuIds` continua
+          // `null`, então o processamento de lote é pulado) que avança pra
+          // `orders` e persiste checkpoint+counts+errors uma única vez.
+        } else {
+          // Qualquer outro erro (rede, 5xx, payload inválido) é tratado como
+          // possivelmente transitório: NÃO marca `blocked` (que é terminal),
+          // deixa `catalogStatus` como está (`'unknown'`/`'validating'`) pra
+          // a run tentar de novo no próximo tick, e propaga o erro pro catch
+          // geral do arquivo — que já sabe persistir/retry via
+          // nextVtexFailureState/circuit breaker, sem duplicar essa lógica aqui.
+          throw catalogError
+        }
+      }
+
+      if (skuIds !== null) {
+        // `getSkuIds()` retornando um array vazio é AMBÍGUO em runs antigas
+        // sem prova de validação: pode ser um catálogo genuinamente vazio,
+        // mas também pode ser uma run legada nunca processada de verdade.
+        // Com `catalogStatus`, a ambiguidade desaparece: só marcamos
+        // `'empty'` (estado terminal, validado por sucesso HTTP real) quando
+        // a chamada teve sucesso E o array veio vazio.
+        if (skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
+          checkpoint.catalogStatus = 'empty'
+          checkpoint.catalogValidatedAt = new Date().toISOString()
+          await logSyncEvent({
+            companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+            message: 'VTEX catalog validated as genuinely empty (successful HTTP response, zero SKU ids)',
+            payload: { code: 'CATALOG_EMPTY_VALIDATED', stage: 'catalog', skuTotal: 0 },
+          })
+        }
+        checkpoint.skuTotal = skuIds.length
+        checkpoint.catalogSkuTotal = skuIds.length
+        const start = Number(checkpoint.skuOffset ?? 0)
+        const batch = skuIds.slice(start, start + SKU_BATCH_SIZE)
+        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch started', payload: { code: 'CATALOG_SKU_IDS_LOADED', stage: 'catalog', batchSize: batch.length, offset: start, total: skuIds.length } })
+        const batchStartedAt = Date.now()
+        const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
         try {
           const sku = await client.getSku(skuId)
           const [priceResult, inventoryResult] = await Promise.allSettled([client.getPrice(skuId), client.getInventory(skuId)])
@@ -303,18 +388,29 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         // "processando" sem nada persistido.
         await updateRun(supabase, run, { checkpoint: { ...checkpoint, skuOffset: start + processedInThisCall }, counts, errors: errors.slice(-100) })
       })
-      checkpoint.skuOffset = start + processedCount
-      await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch completed', payload: { stage: 'catalog', processed: processedCount, totalProcessed: checkpoint.skuOffset, durationMs: Date.now() - batchStartedAt } })
-      if (timedOut || checkpoint.skuOffset < skuIds.length) {
-        // Yield controlado (orçamento de tempo, não travamento) — devolve
-        // `queued` em vez de `running`: o cron roda a cada 15min, bem acima
-        // de HEARTBEAT_STALE_MINUTES=5, então uma run `running` recém-yieldada
-        // seria erroneamente vista como stale pelo próximo `reclaimStaleVtexRun`
-        // antes do cron legítimo conseguir retomá-la. `queued` fica fora do
-        // alcance do reclaim (que só olha `status = 'running'`) e o próximo
-        // tick do cron a resume normalmente pelo checkpoint salvo.
-        await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
-        return { ...run, checkpoint, counts, errors, status: 'queued' }
+        checkpoint.skuOffset = start + processedCount
+        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch completed', payload: { code: 'CATALOG_BATCH_PROGRESS', stage: 'catalog', processed: processedCount, totalProcessed: checkpoint.skuOffset, durationMs: Date.now() - batchStartedAt } })
+        if (timedOut || checkpoint.skuOffset < skuIds.length) {
+          // Yield controlado (orçamento de tempo, não travamento) — devolve
+          // `queued` em vez de `running`: o cron roda a cada 15min, bem acima
+          // de HEARTBEAT_STALE_MINUTES=5, então uma run `running` recém-yieldada
+          // seria erroneamente vista como stale pelo próximo `reclaimStaleVtexRun`
+          // antes do cron legítimo conseguir retomá-la. `queued` fica fora do
+          // alcance do reclaim (que só olha `status = 'running'`) e o próximo
+          // tick do cron a resume normalmente pelo checkpoint salvo.
+          // `catalogStatus` só vira 'completed'/'empty' quando o lote inteiro
+          // terminou — enquanto há mais SKUs pra processar, fica 'partial'
+          // (nunca terminal, pra reentrar sozinho pelo `stage==='catalog'` já
+          // persistido, sem precisar do gate de revalidação).
+          if (checkpoint.catalogStatus !== 'empty') checkpoint.catalogStatus = 'partial'
+          await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
+          return { ...run, checkpoint, counts, errors, status: 'queued' }
+        }
+        if (checkpoint.catalogStatus !== 'empty') {
+          checkpoint.catalogStatus = 'completed'
+          checkpoint.catalogValidatedAt = new Date().toISOString()
+        }
+        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog stage completed', payload: { code: 'CATALOG_COMPLETED', stage: 'catalog', catalogStatus: checkpoint.catalogStatus, total: skuIds.length } })
       }
       run.stage = 'orders'
       checkpoint.orderPage = checkpoint.orderPage ?? 1

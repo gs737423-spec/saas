@@ -199,8 +199,21 @@ export interface VtexSyncCheckpoint {
    *  failed em vez de tentar de novo pra sempre. */
   staleRecoveries?: number
   /** Total de SKUs do catálogo (conhecido assim que `getSkuIds()` roda) —
-   *  junto de `skuOffset`, dá progresso real do estágio `catalog`. */
+   *  junto de `skuOffset`, dá progresso real do estágio `catalog`.
+   *  MANTIDO por compatibilidade; `catalogSkuTotal` é o campo escrito pela
+   *  nova state machine — `skuTotal` continua sendo espelhado pra não
+   *  quebrar leitores existentes (progress.ts, UI). */
   skuTotal?: number
+  /** Prova explícita de que o catálogo foi (re)validado nesta run — NUNCA
+   *  inferida a partir de `stage` ou da mera presença de `skuTotal`.
+   *  Checkpoint sem este campo (todo checkpoint legado) é tratado como
+   *  `'unknown'`, jamais como `'completed'`. Ver checkpoint.ts. */
+  catalogStatus?: 'unknown' | 'validating' | 'completed' | 'empty' | 'partial' | 'blocked'
+  /** Timestamp da última transição de `catalogStatus` para um estado
+   *  terminal (`completed`/`empty`/`blocked`). */
+  catalogValidatedAt?: string
+  /** Total de SKUs observado na validação de catálogo mais recente. */
+  catalogSkuTotal?: number
   /** Início do intervalo de histórico pedido (3/6 meses) — junto de
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */
