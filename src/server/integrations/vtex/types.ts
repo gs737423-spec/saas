@@ -227,6 +227,15 @@ export interface VtexSyncCheckpoint {
    *  invocação que estourou o orçamento de tempo no meio da paginação
    *  continuar exatamente de onde parou, nunca do zero. */
   catalogPaginationFrom?: number
+  /** Lista completa de SKU ids descoberta por um dos fallbacks (sales
+   *  channel ou paginação) — persistida pra os lotes seguintes de `catalog`
+   *  reusarem em vez de rechamar `getSkuIds()` global a cada tick. Sem isso,
+   *  cada tick redescobria do zero via endpoint global (não confiável em
+   *  catálogos grandes), voltava `[]`, e o lote seguinte ficava vazio —
+   *  fazendo o estágio `catalog` terminar `completed` prematuramente com só
+   *  o primeiro lote processado (bug real de produção, conta com 18k SKUs
+   *  travada em 40 produtos). Limpo quando o estágio `catalog` termina. */
+  catalogSkuIds?: number[]
   /** Início do intervalo de histórico pedido (3/6 meses) — junto de
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */

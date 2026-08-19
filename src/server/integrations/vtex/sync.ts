@@ -443,6 +443,13 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       }
 
       let skuIds: number[] | null = null
+      if (checkpoint.catalogSkuIds && checkpoint.catalogSkuIds.length > 0) {
+        // Lote já retomando um catálogo descoberto via fallback numa
+        // invocação anterior — reusa a lista persistida em vez de
+        // rechamar o endpoint global (não confiável em catálogos grandes,
+        // ver comentário em types.ts em `catalogSkuIds`).
+        skuIds = checkpoint.catalogSkuIds
+      } else
       try {
         const rawSkuIds = await client.getSkuIds()
         // Validação defensiva de schema: um payload não-array (200 OK mas
@@ -486,7 +493,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         }
       }
 
-      if (skuIds !== null && skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
+      if (skuIds !== null && skuIds.length === 0 && !checkpoint.catalogSkuIds) {
         // Descoberta global vazia NÃO é prova de catálogo vazio nesta conta:
         // algumas contas VTEX modelam o catálogo só por sales channel, sem
         // afiliação global — `stockkeepingunitids` devolve `[]` mesmo
@@ -544,6 +551,10 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         }
         checkpoint.skuTotal = skuIds.length
         checkpoint.catalogSkuTotal = skuIds.length
+        // Persiste a lista pra lotes seguintes reusarem (ver catalogSkuIds
+        // em types.ts) — só quando maior que o lote, senão não há próximo
+        // tick que precise dela e o checkpoint fica menor.
+        checkpoint.catalogSkuIds = skuIds.length > SKU_BATCH_SIZE ? skuIds : undefined
         const start = Number(checkpoint.skuOffset ?? 0)
         const batch = skuIds.slice(start, start + SKU_BATCH_SIZE)
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch started', payload: { code: 'CATALOG_SKU_IDS_LOADED', stage: 'catalog', batchSize: batch.length, offset: start, total: skuIds.length } })
@@ -595,6 +606,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
           return { ...run, checkpoint, counts, errors, status: 'queued' }
         }
+        checkpoint.catalogSkuIds = undefined
         if (checkpoint.catalogStatus !== 'empty') {
           checkpoint.catalogStatus = 'completed'
           checkpoint.catalogValidatedAt = new Date().toISOString()
