@@ -7,7 +7,7 @@ import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
 import { ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
-import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
+import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -278,7 +278,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
   const { data, error } = await supabase.from('integration_sync_runs').select('*').eq('id', runId).eq('company_id', companyId).eq('connection_id', connection.id).single()
   if (error || !data) throw new Error('VTEX_SYNC_RUN_NOT_FOUND')
   const run = data as SyncRunRow
-  if (['success', 'partial', 'failed'].includes(run.status)) return run
+  if ((VTEX_SYNC_TERMINAL_STATUSES as readonly string[]).includes(run.status)) return run
 
   await claimSyncLock(supabase, companyId, connection.id, new Date())
   const counts = mergeCounts(run.counts)
@@ -419,6 +419,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         if (skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
           checkpoint.catalogStatus = 'empty'
           checkpoint.catalogValidatedAt = new Date().toISOString()
+          checkpoint.catalogDiscoveryVersion = VTEX_CATALOG_DISCOVERY_VERSION
           await logSyncEvent({
             companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
             message: 'VTEX catalog validated as genuinely empty (global discovery and per-sales-channel fallback both returned zero SKU ids)',
@@ -481,6 +482,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         if (checkpoint.catalogStatus !== 'empty') {
           checkpoint.catalogStatus = 'completed'
           checkpoint.catalogValidatedAt = new Date().toISOString()
+          checkpoint.catalogDiscoveryVersion = VTEX_CATALOG_DISCOVERY_VERSION
         }
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog stage completed', payload: { code: 'CATALOG_COMPLETED', stage: 'catalog', catalogStatus: checkpoint.catalogStatus, total: skuIds.length } })
       }

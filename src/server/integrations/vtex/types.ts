@@ -214,6 +214,14 @@ export interface VtexSyncCheckpoint {
   catalogValidatedAt?: string
   /** Total de SKUs observado na validação de catálogo mais recente. */
   catalogSkuTotal?: number
+  /** Versão da ESTRATÉGIA de descoberta que produziu `catalogStatus`. Existe
+   *  porque `'empty'` é uma prova terminal — mas uma prova só vale pela
+   *  estratégia que a gerou. Uma run que ficou `catalogStatus='empty'` antes
+   *  do fallback por sales channel existir (descoberta só global) não pode
+   *  ser tratada como equivalente a uma validada pela estratégia atual (que
+   *  também tenta por sales channel antes de aceitar vazio) — ver
+   *  checkpoint.ts/VTEX_CATALOG_DISCOVERY_VERSION. */
+  catalogDiscoveryVersion?: number
   /** Início do intervalo de histórico pedido (3/6 meses) — junto de
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */

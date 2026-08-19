@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation } from '../src/server/integrations/vtex/checkpoint'
+import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION } from '../src/server/integrations/vtex/checkpoint'
 import { VtexClient } from '../src/server/integrations/vtex/client'
 import { VtexApiError } from '../src/server/integrations/vtex/errors'
 import type { VtexSyncCheckpoint } from '../src/server/integrations/vtex/types'
@@ -81,6 +81,36 @@ describe('Teste B — normalização de catálogo preserva o checkpoint de pedid
 // dispara para 'unknown'/ausente; uma vez terminal (completed/empty/
 // blocked) ou em andamento (partial/validating), nunca reentra de novo.
 // -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Caso real de produção pós-deploy do fallback por sales channel: uma run
+// já tinha `catalogStatus='empty'` gravado pela estratégia ANTIGA (só
+// descoberta global, `catalogDiscoveryVersion` ausente/1). Sem essa
+// distinção, `'empty'` sendo terminal faria essa run nunca mais tentar a
+// nova estratégia (que busca por sales channel antes de aceitar vazio) —
+// ficaria pra sempre com produtos/estoque zerados mesmo com produtos reais.
+// -----------------------------------------------------------------------
+describe('catalogStatus=empty de versão de descoberta antiga é revalidado com a estratégia atual', () => {
+  it('empty sem catalogDiscoveryVersion (todo checkpoint anterior a esta mudança) volta para unknown', () => {
+    const result = normalizeVtexCheckpoint({ catalogStatus: 'empty', skuTotal: 0 } as VtexSyncCheckpoint, fallback)
+    expect(result.checkpoint.catalogStatus).toBe('unknown')
+    expect(result.normalized).toBe(true)
+    expect(result.reasons).toContain('catalog_empty_needs_revalidation_with_current_discovery_strategy')
+  })
+
+  it('empty marcado pela estratégia atual (catalogDiscoveryVersion em dia) NÃO é revalidado de novo — continua terminal', () => {
+    const result = normalizeVtexCheckpoint(
+      { catalogStatus: 'empty', catalogDiscoveryVersion: VTEX_CATALOG_DISCOVERY_VERSION } as unknown as VtexSyncCheckpoint,
+      fallback,
+    )
+    expect(result.checkpoint.catalogStatus).toBe('empty')
+  })
+
+  it('completed não é afetado pela versão de descoberta — só empty depende da estratégia de "não achei nada"', () => {
+    const result = normalizeVtexCheckpoint({ catalogStatus: 'completed', catalogSkuTotal: 40 } as VtexSyncCheckpoint, fallback)
+    expect(result.checkpoint.catalogStatus).toBe('completed')
+  })
+})
+
 describe('Teste F — catálogo já validado nunca reentra (gate de reentrada única)', () => {
   it('needs revalidation when catalogStatus is unknown or missing', () => {
     expect(vtexCatalogNeedsRevalidation(undefined)).toBe(true)

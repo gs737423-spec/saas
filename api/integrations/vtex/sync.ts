@@ -17,7 +17,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mode = req.body?.mode === 'incremental' ? 'incremental' : 'full'
     const queued = await queueVtexSync(auth.companyId, mode, 'manual')
     const run = await processVtexSyncRun(auth.companyId, queued.id)
-    res.status(200).json({ ok: run.status === 'success' || run.status === 'running' || run.status === 'partial', run: { id: run.id, mode: run.mode, status: run.status, stage: run.stage, checkpoint: run.checkpoint, counts: run.counts, errors: run.errors } })
+    // `processVtexSyncRun` nunca devolve `status:'running'` para quem chama
+    // — todo yield por orçamento de tempo devolve `'queued'` (só o banco
+    // passa por `'running'` internamente). Sync manual que só progrediu
+    // normalmente (caso comum em catálogo/histórico grande) chegava aqui
+    // como `ok:false`, indistinguível de falha real.
+    res.status(200).json({ ok: run.status === 'success' || run.status === 'queued' || run.status === 'partial', run: { id: run.id, mode: run.mode, status: run.status, stage: run.stage, checkpoint: run.checkpoint, counts: run.counts, errors: run.errors } })
   } catch (error) {
     const safe = publicVtexError(error)
     res.status(200).json({ ok: false, error: safe.code, message: safe.message })

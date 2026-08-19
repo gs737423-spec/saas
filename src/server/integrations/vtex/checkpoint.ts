@@ -34,6 +34,14 @@ import type { VtexSyncCheckpoint } from './types.js'
 
 export const VTEX_CHECKPOINT_VERSION = 2
 
+/** Versão da estratégia de DESCOBERTA de catálogo (não confundir com
+ *  `VTEX_CHECKPOINT_VERSION`, que versiona o checkpoint inteiro). 1 = só
+ *  descoberta global (`getSkuIds`). 2 = acrescenta fallback por sales
+ *  channel quando a global vem vazia (caso real: contas que modelam
+ *  catálogo só por canal devolvem `[]` na lista global mesmo com produtos
+ *  reais). Bump aqui sempre que a estratégia de descoberta mudar. */
+export const VTEX_CATALOG_DISCOVERY_VERSION = 2
+
 export const VTEX_ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -110,6 +118,15 @@ export function normalizeVtexCheckpoint(
   if (!checkpoint.catalogStatus || !validCatalogStatuses.includes(checkpoint.catalogStatus)) {
     if (checkpoint.catalogStatus) reasons.push('invalid_catalog_status')
     else reasons.push('missing_catalog_status')
+    checkpoint.catalogStatus = 'unknown'
+  } else if (checkpoint.catalogStatus === 'empty' && (checkpoint.catalogDiscoveryVersion ?? 1) < VTEX_CATALOG_DISCOVERY_VERSION) {
+    // `'empty'` só é uma prova terminal enquanto vale pela estratégia que a
+    // gerou. Uma run marcada vazia pela descoberta só-global (versão 1, ou
+    // sem marcação alguma — todo checkpoint anterior a esta mudança) nunca
+    // tentou o fallback por sales channel. Rebaixa pra 'unknown' UMA vez —
+    // o gate de revalidação em sync.ts reentra em catalog, e desta vez a
+    // estratégia atual (que já tenta sales channel) decide de verdade.
+    reasons.push('catalog_empty_needs_revalidation_with_current_discovery_strategy')
     checkpoint.catalogStatus = 'unknown'
   }
 
