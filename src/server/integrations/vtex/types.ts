@@ -222,6 +222,11 @@ export interface VtexSyncCheckpoint {
    *  também tenta por sales channel antes de aceitar vazio) — ver
    *  checkpoint.ts/VTEX_CATALOG_DISCOVERY_VERSION. */
   catalogDiscoveryVersion?: number
+  /** Posição (`_from`) de retomada da paginação por `GetProductAndSkuIds` —
+   *  terceiro nível de fallback (catálogos grandes). Persistido pra uma
+   *  invocação que estourou o orçamento de tempo no meio da paginação
+   *  continuar exatamente de onde parou, nunca do zero. */
+  catalogPaginationFrom?: number
   /** Início do intervalo de histórico pedido (3/6 meses) — junto de
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */

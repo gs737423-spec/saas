@@ -244,6 +244,81 @@ export async function discoverVtexSkuIdsBySalesChannel(client: VtexClient, compa
   return [...skuIds]
 }
 
+const CATALOG_PAGINATION_PAGE_SIZE = 50
+
+export interface VtexPaginatedDiscoveryResult {
+  skuIds: number[]
+  nextFrom: number
+  done: boolean
+  total: number | null
+}
+
+/** Terceiro nível de fallback, só tentado se a descoberta global E o
+ *  fallback por sales channel devolverem `[]`. Existe porque catálogos
+ *  grandes (comprovado em produção: 18k+ produtos ativos no admin da VTEX)
+ *  fazem `stockkeepingunitids`/`stockkeepingunitidsbysaleschannel`
+ *  devolverem vazio mesmo com produtos reais — esses dois endpoints não são
+ *  confiáveis em volume. `GetProductAndSkuIds` é paginado por índice
+ *  (`_from`/`_to`) e usa `range.total` do próprio payload como critério de
+ *  parada — nunca assume um total.
+ *
+ *  Resumível: se o orçamento de tempo estourar no meio da paginação,
+ *  devolve `done:false` com `nextFrom` na posição exata — o chamador
+ *  persiste isso no checkpoint (`catalogPaginationFrom`) e a invocação
+ *  seguinte continua dali, nunca do zero. */
+export async function discoverVtexSkuIdsByPagination(
+  client: VtexClient,
+  companyId: string,
+  connectionId: string,
+  startFrom: number,
+  deadline: number,
+): Promise<VtexPaginatedDiscoveryResult> {
+  const skuIds = new Set<number>()
+  let from = Math.max(0, startFrom)
+  let total: number | null = null
+  let pagesFetched = 0
+
+  while (total === null || from <= total) {
+    if (Date.now() >= deadline) {
+      await logSyncEvent({
+        companyId, connectionId, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+        message: 'VTEX catalog pagination fallback yielded on time budget — resuming from the same offset next tick',
+        payload: { code: 'CATALOG_PAGINATION_YIELDED', stage: 'catalog', nextFrom: from, total, pagesFetched },
+      })
+      return { skuIds: [...skuIds], nextFrom: from, done: false, total }
+    }
+    let page: { data: Record<string, number[]>; range: { total: number } } | null = null
+    try {
+      page = await client.getProductAndSkuIds(from, from + CATALOG_PAGINATION_PAGE_SIZE - 1)
+    } catch {
+      // Falha transitória no meio da paginação: para aqui (não avança
+      // `from`), resume no próximo tick — mesma postura do resto do
+      // catálogo, nunca insiste em loop apertado contra um erro persistente.
+      await logSyncEvent({
+        companyId, connectionId, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+        message: 'VTEX catalog pagination fallback hit a transient error mid-page — resuming from the same offset next tick',
+        payload: { code: 'CATALOG_PAGINATION_ERROR', stage: 'catalog', nextFrom: from, total, pagesFetched },
+      })
+      return { skuIds: [...skuIds], nextFrom: from, done: false, total }
+    }
+    const rangeTotal = Number(page?.range?.total)
+    total = Number.isFinite(rangeTotal) ? rangeTotal : total ?? 0
+    for (const ids of Object.values(page?.data ?? {})) {
+      if (Array.isArray(ids)) for (const id of ids) skuIds.add(id)
+    }
+    pagesFetched += 1
+    from += CATALOG_PAGINATION_PAGE_SIZE
+    if (total === 0) break // range.total ausente/zero na primeira página: catálogo vazio de verdade por essa via
+  }
+
+  await logSyncEvent({
+    companyId, connectionId, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+    message: 'VTEX catalog discovered via paginated GetProductAndSkuIds fallback (global and per-sales-channel discovery were both empty)',
+    payload: { code: 'CATALOG_PAGINATION_COMPLETED', stage: 'catalog', pagesFetched, total, dedupedSkuTotal: skuIds.size },
+  })
+  return { skuIds: [...skuIds], nextFrom: from, done: true, total }
+}
+
 export async function queueVtexSync(companyId: string, mode: 'full' | 'incremental', trigger: 'auto' | 'manual'): Promise<SyncRunRow> {
   const supabase = await getSupabaseAdmin()
   const connection = await loadVtexConnection(companyId)
@@ -418,25 +493,52 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         // existindo produtos reais (comprovado: SKUs de pedidos já
         // importados respondem em `getSku`). Antes de aceitar "vazio",
         // descobre os sales channels REAIS da conta (nunca hardcoded) e
-        // busca SKUs em cada um.
-        skuIds = await discoverVtexSkuIdsBySalesChannel(client, companyId, connection.id)
+        // busca SKUs em cada um. Pula esse passo se já está retomando a
+        // paginação (terceiro fallback) — sales channel já rodou e voltou
+        // vazio numa invocação anterior, não precisa repetir a cada tick.
+        const resumingPagination = checkpoint.catalogPaginationFrom !== undefined
+        if (!resumingPagination) {
+          skuIds = await discoverVtexSkuIdsBySalesChannel(client, companyId, connection.id)
+        }
+
+        if (resumingPagination || skuIds.length === 0) {
+          // Terceiro nível de fallback, só tentado se global E sales channel
+          // vieram vazios: catálogos grandes (comprovado em produção — 18k+
+          // produtos ativos no admin da VTEX) fazem os dois endpoints acima
+          // devolverem `[]` mesmo com produtos reais. `GetProductAndSkuIds` é
+          // paginado por índice e nunca falha silenciosamente por volume.
+          // Resumível: se estourar o orçamento no meio, devolve `queued` com
+          // `catalogPaginationFrom` persistido — a próxima invocação continua
+          // exatamente dali, sem tocar em pedidos/checkpoint de orders.
+          const paginationFrom = Number(checkpoint.catalogPaginationFrom ?? 0)
+          const pagination = await discoverVtexSkuIdsByPagination(client, companyId, connection.id, paginationFrom, deadline)
+          if (!pagination.done) {
+            checkpoint.catalogPaginationFrom = pagination.nextFrom
+            checkpoint.catalogStatus = 'validating'
+            await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
+            return { ...run, checkpoint, counts, errors, status: 'queued' }
+          }
+          checkpoint.catalogPaginationFrom = undefined
+          skuIds = pagination.skuIds
+        }
       }
 
       if (skuIds !== null) {
-        // `getSkuIds()` (com ou sem o fallback por sales channel) retornando
-        // um array vazio é AMBÍGUO em runs antigas sem prova de validação:
-        // pode ser um catálogo genuinamente vazio, mas também pode ser uma
-        // run legada nunca processada de verdade. Com `catalogStatus`, a
-        // ambiguidade desaparece: só marcamos `'empty'` (estado terminal,
-        // validado por sucesso HTTP real em TODAS as estratégias tentadas)
-        // quando a chamada teve sucesso E o array veio vazio.
+        // `getSkuIds()` (com ou sem os fallbacks por sales channel/paginação)
+        // retornando um array vazio é AMBÍGUO em runs antigas sem prova de
+        // validação: pode ser um catálogo genuinamente vazio, mas também
+        // pode ser uma run legada nunca processada de verdade. Com
+        // `catalogStatus`, a ambiguidade desaparece: só marcamos `'empty'`
+        // (estado terminal, validado por sucesso HTTP real em TODAS as
+        // estratégias tentadas) quando a chamada teve sucesso E o array veio
+        // vazio.
         if (skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
           checkpoint.catalogStatus = 'empty'
           checkpoint.catalogValidatedAt = new Date().toISOString()
           checkpoint.catalogDiscoveryVersion = VTEX_CATALOG_DISCOVERY_VERSION
           await logSyncEvent({
             companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
-            message: 'VTEX catalog validated as genuinely empty (global discovery and per-sales-channel fallback both returned zero SKU ids)',
+            message: 'VTEX catalog validated as genuinely empty (global, per-sales-channel and paginated discovery all returned zero SKU ids)',
             payload: { code: 'CATALOG_EMPTY_VALIDATED', stage: 'catalog', skuTotal: 0 },
           })
         }

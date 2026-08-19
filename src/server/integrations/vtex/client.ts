@@ -109,6 +109,16 @@ export class VtexClient {
    *  cada canal em `getSalesChannels`, nunca um sales channel hardcoded. */
   getSalesChannels() { return this.request<Array<{ Id: number | string; Name?: string; IsActive?: boolean }>>('/api/catalog_system/pvt/saleschannel/list') }
   getSkuIdsBySalesChannel(salesChannelId: number | string) { return this.request<number[]>(`/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel/${encodeURIComponent(String(salesChannelId))}`) }
+  /** Terceiro nível de fallback: catálogos grandes (dezenas de milhares de
+   *  produtos) podem fazer `stockkeepingunitids` e a variante por sales
+   *  channel devolverem `[]` mesmo com produtos reais cadastrados —
+   *  comprovado em produção (conta com 18k+ produtos ativos no admin da
+   *  VTEX, ambos os endpoints acima devolvendo vazio). `GetProductAndSkuIds`
+   *  é paginado por índice (`_from`/`_to`), nunca falha silenciosamente por
+   *  volume. */
+  getProductAndSkuIds(from: number, to: number) {
+    return this.request<{ data: Record<string, number[]>; range: { total: number; from: number; to: number } }>(`/api/catalog_system/pvt/products/GetProductAndSkuIds?_from=${from}&_to=${to}`)
+  }
   getSku(skuId: number | string) { return this.request<VtexSkuContext>(`/api/catalog_system/pvt/sku/stockkeepingunitbyid/${encodeURIComponent(String(skuId))}`) }
   getPrice(skuId: number | string) { return this.request<VtexPrice>(`/pricing/prices/${encodeURIComponent(String(skuId))}`) }
   getInventory(skuId: number | string) { return this.request<VtexInventoryResponse>(`/api/logistics/pvt/inventory/skus/${encodeURIComponent(String(skuId))}`) }
