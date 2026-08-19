@@ -195,11 +195,18 @@ export async function queueVtexSync(companyId: string, mode: 'full' | 'increment
   const supabase = await getSupabaseAdmin()
   const connection = await loadVtexConnection(companyId)
   assertVtexCircuitClosed(connection.circuit_open_until)
-  if (trigger === 'auto' && !isVtexSyncDue(connection.next_sync_at)) throw new VtexSyncNotDueError()
   await reclaimStaleVtexRun(supabase, companyId, connection.id)
+  // Uma run `queued` já existente (yield por orçamento de tempo, aguardando
+  // o próximo tick) tem PRIORIDADE sobre a checagem de "due": ela não é uma
+  // sync nova, é a MESMA execução continuando. `next_sync_at` só governa
+  // quando iniciar uma sync do zero — nunca quando retomar uma já em
+  // andamento. Sem isso, uma run interrompida ficava esperando o intervalo
+  // de 24h (`VTEX_AUTO_SYNC_INTERVAL_MS`) inteiro antes do cron voltar a
+  // tocar nela, mesmo rodando a cada poucos minutos.
   const { data: active } = await supabase.from('integration_sync_runs').select('*')
     .eq('company_id', companyId).eq('connection_id', connection.id).in('status', ['queued', 'running']).maybeSingle()
   if (active) return active as SyncRunRow
+  if (trigger === 'auto' && !isVtexSyncDue(connection.next_sync_at)) throw new VtexSyncNotDueError()
   // Snapshot da configuração NO MOMENTO DA CRIAÇÃO da run — a partir daqui
   // essa run usa esses valores até terminar. Mudar `historyMonths` na
   // conexão depois disso só afeta a PRÓXIMA run; nunca reescreve as regras

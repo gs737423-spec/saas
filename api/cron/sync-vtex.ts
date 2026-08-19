@@ -34,16 +34,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const circuitClosed = `circuit_open_until.is.null,circuit_open_until.lte.${nowIso}`
     const lockAvailable = `sync_started_at.is.null,sync_started_at.lt.${staleBefore}`
 
-    const [checked, notDue, circuitOpen, locked, dueConnections] = await Promise.all([
+    // Conexões com uma run `queued`/`running` já existente precisam ser
+    // visitadas neste tick INDEPENDENTE de `next_sync_at` — uma run yieldada
+    // por orçamento de tempo está aguardando o cron continuá-la, não
+    // esperando o intervalo de 24h de uma sync nova (ver queueVtexSync).
+    // Sem isso, uma run interrompida ficava presa em `queued` até a conexão
+    // voltar a ficar "due", mesmo o cron rodando a cada poucos minutos.
+    const { data: activeRuns, error: activeRunsError } = await supabase.from('integration_sync_runs')
+      .select('company_id').eq('provider', 'vtex').in('status', ['queued', 'running'])
+    if (activeRunsError) throw new Error(activeRunsError.message)
+    const activeRunCompanyIds = [...new Set((activeRuns ?? []).map((row) => String(row.company_id)))]
+
+    const [checked, notDue, circuitOpen, locked, dueConnections, resumableConnections] = await Promise.all([
       eligibleConnections(supabase, { count: 'exact', head: true }),
       eligibleConnections(supabase, { count: 'exact', head: true }).gt('next_sync_at', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).gt('circuit_open_until', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).or(circuitClosed).gte('sync_started_at', staleBefore),
       eligibleConnections(supabase).or(due).or(circuitClosed).or(lockAvailable).order('next_sync_at', { ascending: true, nullsFirst: true }),
+      activeRunCompanyIds.length > 0
+        ? eligibleConnections(supabase).in('company_id', activeRunCompanyIds).or(circuitClosed).or(lockAvailable)
+        : Promise.resolve({ data: [], error: null }),
     ])
-    for (const result of [checked, notDue, circuitOpen, locked, dueConnections]) {
+    for (const result of [checked, notDue, circuitOpen, locked, dueConnections, resumableConnections]) {
       if (result.error) throw new Error(result.error.message)
     }
+
+    // União due + resumable, sem processar a mesma conexão duas vezes.
+    const connectionsToProcess = new Map<string, { company_id: string }>()
+    for (const connection of dueConnections.data ?? []) connectionsToProcess.set(String(connection.company_id), connection)
+    for (const connection of resumableConnections.data ?? []) connectionsToProcess.set(String(connection.company_id), connection)
 
     const summary = {
       connectionsChecked: checked.count ?? 0,
@@ -62,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       syncsYielded: 0,
     }
 
-    for (const connection of dueConnections.data ?? []) {
+    for (const connection of connectionsToProcess.values()) {
       try {
         const queued = await queueVtexSync(connection.company_id, 'incremental', 'auto')
         summary.syncsStarted += 1
