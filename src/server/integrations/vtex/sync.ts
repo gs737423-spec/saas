@@ -556,7 +556,14 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         // tick que precise dela e o checkpoint fica menor.
         checkpoint.catalogSkuIds = skuIds.length > SKU_BATCH_SIZE ? skuIds : undefined
         const start = Number(checkpoint.skuOffset ?? 0)
-        const batch = skuIds.slice(start, start + SKU_BATCH_SIZE)
+        // Passa TODO o restante pra `runBudgetedBatches` — ela já para
+        // sozinha em `deadline` (RUN_TIME_BUDGET_MS=210s). Fatiar em
+        // `SKU_BATCH_SIZE` aqui fazia o lote (40 itens, ~5 concorrentes)
+        // terminar em segundos e devolver `timedOut:false` bem antes do
+        // orçamento acabar — cada tick do cron desperdiçava quase todo o
+        // tempo disponível, processando só 40 SKUs a cada ~15min pra um
+        // catálogo de 17k+ (bug real de produção, conta climario).
+        const batch = skuIds.slice(start)
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch started', payload: { code: 'CATALOG_SKU_IDS_LOADED', stage: 'catalog', batchSize: batch.length, offset: start, total: skuIds.length } })
         const batchStartedAt = Date.now()
         const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
