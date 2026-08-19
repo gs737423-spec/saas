@@ -39,16 +39,19 @@ export const VTEX_CHECKPOINT_VERSION = 2
  *  descoberta global (`getSkuIds`). 2 = acrescenta fallback por sales
  *  channel quando a global vem vazia (caso real: contas que modelam
  *  catálogo só por canal devolvem `[]` na lista global mesmo com produtos
- *  reais). 3 = mesma estratégia da v2, mas o bump em si força uma nova
- *  tentativa: a run real (climario) tinha `catalogStatus='empty'` com
- *  `catalogDiscoveryVersion=2` legitimamente vazio na v2 — só depois disso
- *  a permissão de Catalog/Pricing foi liberada no License Manager da VTEX
- *  (fato externo, não detectável pelo código). Sem o bump, `'empty'` v2
- *  continuaria terminal para sempre mesmo com a credencial já corrigida.
+ *  reais). 3 = mesma estratégia da v2, bump só pra forçar revalidação depois
+ *  de uma mudança externa suspeita (permissão). 4 = acrescenta o terceiro
+ *  fallback paginado (`GetProductAndSkuIds`) — a run real (climario) já
+ *  tinha `catalogStatus='empty'`/`catalogDiscoveryVersion=3` validado só
+ *  pela v2 (global + sales channel) ANTES do fallback paginado existir no
+ *  código; confirmado nos logs de produção (`CATALOG_SALES_CHANNEL_
+ *  DISCOVERY_COMPLETED` sem nenhum `CATALOG_PAGINATION_*` correspondente).
+ *  Sem este bump, `'empty'` v3 ficaria terminal pra sempre e a paginação
+ *  nunca chegaria a rodar pra essa conta.
  *  Bump aqui sempre que a estratégia de descoberta mudar OU quando for
  *  necessário forçar uma revalidação por causa de mudança externa conhecida
  *  (permissão liberada, etc). */
-export const VTEX_CATALOG_DISCOVERY_VERSION = 3
+export const VTEX_CATALOG_DISCOVERY_VERSION = 4
 
 export const VTEX_ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
