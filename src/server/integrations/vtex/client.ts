@@ -103,6 +103,12 @@ export class VtexClient {
 
   getCategoryTree(levels = 10) { return this.request<VtexCategoryNode[]>(`/api/catalog_system/pub/category/tree/${levels}`) }
   getSkuIds() { return this.request<number[]>('/api/catalog_system/pvt/sku/stockkeepingunitids') }
+  /** Descoberta global de SKUs. Algumas contas VTEX (catálogo modelado só
+   *  por sales channel, sem afiliação global) devolvem `[]` aqui mesmo com
+   *  produtos reais — nesse caso o fallback é `getSkuIdsBySalesChannel` por
+   *  cada canal em `getSalesChannels`, nunca um sales channel hardcoded. */
+  getSalesChannels() { return this.request<Array<{ Id: number | string; Name?: string; IsActive?: boolean }>>('/api/catalog_system/pvt/saleschannel/list') }
+  getSkuIdsBySalesChannel(salesChannelId: number | string) { return this.request<number[]>(`/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel/${encodeURIComponent(String(salesChannelId))}`) }
   getSku(skuId: number | string) { return this.request<VtexSkuContext>(`/api/catalog_system/pvt/sku/stockkeepingunitbyid/${encodeURIComponent(String(skuId))}`) }
   getPrice(skuId: number | string) { return this.request<VtexPrice>(`/pricing/prices/${encodeURIComponent(String(skuId))}`) }
   getInventory(skuId: number | string) { return this.request<VtexInventoryResponse>(`/api/logistics/pvt/inventory/skus/${encodeURIComponent(String(skuId))}`) }

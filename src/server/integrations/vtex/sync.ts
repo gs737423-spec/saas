@@ -191,6 +191,59 @@ export async function runBudgetedBatches<T>(
   return { processedCount, timedOut: false }
 }
 
+/** Fallback de descoberta de catálogo: algumas contas VTEX não têm SKU
+ *  algum na lista global (`getSkuIds`) porque o catálogo é modelado só por
+ *  sales channel — `stockkeepingunitids` devolve `[]` mesmo com produtos
+ *  reais publicados. Descobre os sales channels REAIS da conta (nunca um
+ *  valor hardcoded como `1`) via `getSalesChannels`, busca SKUs em cada um e
+ *  deduplica. Falha de UM canal (rede/permissão) não aborta os demais — cada
+ *  canal é isolado, e o resultado agregado é o que importa. Se
+ *  `getSalesChannels` em si falhar ou não retornar nenhum canal ativo,
+ *  devolve `[]` (o chamador decide se isso é catálogo vazio de verdade). */
+export async function discoverVtexSkuIdsBySalesChannel(client: VtexClient, companyId: string, connectionId: string): Promise<number[]> {
+  let channels: Array<{ Id: number | string; IsActive?: boolean }> = []
+  try {
+    const raw = await client.getSalesChannels()
+    channels = Array.isArray(raw) ? raw.filter((channel) => channel.IsActive !== false) : []
+  } catch {
+    channels = []
+  }
+  if (channels.length === 0) {
+    await logSyncEvent({
+      companyId, connectionId, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+      message: 'VTEX global SKU discovery returned empty and no active sales channel was found for per-channel fallback',
+      payload: { code: 'CATALOG_SALES_CHANNEL_DISCOVERY_EMPTY', stage: 'catalog' },
+    })
+    return []
+  }
+
+  const skuIds = new Set<number>()
+  const perChannelCounts: Record<string, number> = {}
+  for (const channel of channels) {
+    try {
+      const ids = await client.getSkuIdsBySalesChannel(channel.Id)
+      if (Array.isArray(ids)) {
+        perChannelCounts[String(channel.Id)] = ids.length
+        for (const id of ids) skuIds.add(id)
+      } else {
+        perChannelCounts[String(channel.Id)] = 0
+      }
+    } catch {
+      // Canal isolado: um sales channel com erro (permissão específica,
+      // canal desativado no meio do caminho) não derruba a descoberta dos
+      // outros — só fica de fora do agregado.
+      perChannelCounts[String(channel.Id)] = 0
+    }
+  }
+
+  await logSyncEvent({
+    companyId, connectionId, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+    message: 'VTEX catalog discovered via per-sales-channel fallback (global SKU list was empty)',
+    payload: { code: 'CATALOG_SALES_CHANNEL_DISCOVERY_COMPLETED', stage: 'catalog', channelsChecked: channels.length, perChannelCounts, dedupedSkuTotal: skuIds.size },
+  })
+  return [...skuIds]
+}
+
 export async function queueVtexSync(companyId: string, mode: 'full' | 'incremental', trigger: 'auto' | 'manual'): Promise<SyncRunRow> {
   const supabase = await getSupabaseAdmin()
   const connection = await loadVtexConnection(companyId)
@@ -344,19 +397,31 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         }
       }
 
+      if (skuIds !== null && skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
+        // Descoberta global vazia NÃO é prova de catálogo vazio nesta conta:
+        // algumas contas VTEX modelam o catálogo só por sales channel, sem
+        // afiliação global — `stockkeepingunitids` devolve `[]` mesmo
+        // existindo produtos reais (comprovado: SKUs de pedidos já
+        // importados respondem em `getSku`). Antes de aceitar "vazio",
+        // descobre os sales channels REAIS da conta (nunca hardcoded) e
+        // busca SKUs em cada um.
+        skuIds = await discoverVtexSkuIdsBySalesChannel(client, companyId, connection.id)
+      }
+
       if (skuIds !== null) {
-        // `getSkuIds()` retornando um array vazio é AMBÍGUO em runs antigas
-        // sem prova de validação: pode ser um catálogo genuinamente vazio,
-        // mas também pode ser uma run legada nunca processada de verdade.
-        // Com `catalogStatus`, a ambiguidade desaparece: só marcamos
-        // `'empty'` (estado terminal, validado por sucesso HTTP real) quando
-        // a chamada teve sucesso E o array veio vazio.
+        // `getSkuIds()` (com ou sem o fallback por sales channel) retornando
+        // um array vazio é AMBÍGUO em runs antigas sem prova de validação:
+        // pode ser um catálogo genuinamente vazio, mas também pode ser uma
+        // run legada nunca processada de verdade. Com `catalogStatus`, a
+        // ambiguidade desaparece: só marcamos `'empty'` (estado terminal,
+        // validado por sucesso HTTP real em TODAS as estratégias tentadas)
+        // quando a chamada teve sucesso E o array veio vazio.
         if (skuIds.length === 0 && Number(checkpoint.skuOffset ?? 0) === 0) {
           checkpoint.catalogStatus = 'empty'
           checkpoint.catalogValidatedAt = new Date().toISOString()
           await logSyncEvent({
             companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
-            message: 'VTEX catalog validated as genuinely empty (successful HTTP response, zero SKU ids)',
+            message: 'VTEX catalog validated as genuinely empty (global discovery and per-sales-channel fallback both returned zero SKU ids)',
             payload: { code: 'CATALOG_EMPTY_VALIDATED', stage: 'catalog', skuTotal: 0 },
           })
         }
