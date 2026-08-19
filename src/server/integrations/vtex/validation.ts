@@ -27,6 +27,14 @@ export function buildVtexBaseUrl(accountName: string): string {
   return `https://${safeAccount}.vtexcommercestable.com.br`
 }
 
+/** A API de Pricing vive num host separado (`api.vtex.com/{account}`), não
+ *  no host de comércio (`{account}.vtexcommercestable.com.br`) usado por
+ *  catálogo/estoque/pedidos. */
+export function buildVtexPricingBaseUrl(accountName: string): string {
+  const safeAccount = normalizeVtexAccountName(accountName)
+  return `https://api.vtex.com/${safeAccount}`
+}
+
 export function sanitizeVtexPath(path: string): string {
   if (!path.startsWith('/') || path.startsWith('//') || /https?:|\\|[\r\n]/i.test(path)) throw new Error('VTEX_INVALID_PATH')
   return path

@@ -1,5 +1,5 @@
 import { VtexApiError } from './errors.js'
-import { buildVtexBaseUrl, sanitizeVtexPath } from './validation.js'
+import { buildVtexBaseUrl, buildVtexPricingBaseUrl, sanitizeVtexPath } from './validation.js'
 import type { VtexCategoryNode, VtexCredentials, VtexInventoryResponse, VtexOrder, VtexOrderListResponse, VtexPrice, VtexSkuContext } from './types.js'
 
 const REQUEST_TIMEOUT_MS = 15_000
@@ -29,6 +29,13 @@ function retryAfterMs(response: Response): number | null {
 
 export class VtexClient {
   private readonly baseUrl: string
+  /** A API de Pricing da VTEX NÃO vive no host `{account}.vtexcommercestable.com.br`
+   *  (usado por catálogo/estoque/pedidos) — vive em `api.vtex.com/{account}`,
+   *  um host completamente separado. Chamar `/pricing/*` no host de comércio
+   *  falha (bug real de produção: preço sempre nulo pra toda a conta, nunca
+   *  detectado porque o erro cai no `Promise.allSettled` do lote de SKU e é
+   *  tratado como "sem preço" em vez de "endpoint errado"). */
+  private readonly pricingBaseUrl: string
   private readonly fetchImpl: typeof fetch
   private readonly sleep: (ms: number) => Promise<void>
   private readonly random: () => number
@@ -36,13 +43,14 @@ export class VtexClient {
 
   constructor(private readonly credentials: VtexCredentials, deps: VtexClientDependencies = {}) {
     this.baseUrl = buildVtexBaseUrl(credentials.accountName)
+    this.pricingBaseUrl = buildVtexPricingBaseUrl(credentials.accountName)
     this.fetchImpl = deps.fetchImpl ?? fetch
     this.sleep = deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)))
     this.random = deps.random ?? Math.random
     this.now = deps.now ?? Date.now
   }
 
-  async request<T>(path: string, init: RequestInit = {}, attempt = 0): Promise<T> {
+  async request<T>(path: string, init: RequestInit = {}, attempt = 0, baseUrl: string = this.baseUrl): Promise<T> {
     const safePath = sanitizeVtexPath(path)
     const circuit = circuits.get(this.credentials.accountName)
     if (circuit && circuit.openUntil > this.now()) throw new VtexApiError('VTEX_CIRCUIT_OPEN', 'VTEX circuit is temporarily open', 503, safePath)
@@ -51,7 +59,7 @@ export class VtexClient {
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     let response: Response
     try {
-      response = await this.fetchImpl(`${this.baseUrl}${safePath}`, {
+      response = await this.fetchImpl(`${baseUrl}${safePath}`, {
         ...init,
         signal: controller.signal,
         headers: {
@@ -66,7 +74,7 @@ export class VtexClient {
       clearTimeout(timeout)
       if (attempt < MAX_TRANSIENT_RETRIES) {
         await this.sleep(DEFAULT_RETRY_MS * 2 ** attempt + Math.floor(this.random() * 250))
-        return this.request<T>(safePath, init, attempt + 1)
+        return this.request<T>(safePath, init, attempt + 1, baseUrl)
       }
       this.recordFailure()
       throw new VtexApiError('VTEX_UNAVAILABLE', error instanceof Error && error.name === 'AbortError' ? 'VTEX request timed out' : 'VTEX network failure', 0, safePath)
@@ -87,7 +95,7 @@ export class VtexClient {
     const waitMs = response.status === 429 ? (retryAfterMs(response) ?? 60_000) : DEFAULT_RETRY_MS * 2 ** attempt + Math.floor(this.random() * 250)
     if (transient && attempt < MAX_TRANSIENT_RETRIES) {
       await this.sleep(waitMs)
-      return this.request<T>(safePath, init, attempt + 1)
+      return this.request<T>(safePath, init, attempt + 1, baseUrl)
     }
     if (transient) this.recordFailure()
     if (response.status === 429) throw new VtexApiError('VTEX_RATE_LIMITED', 'VTEX rate limit reached', 429, safePath, waitMs)
@@ -120,10 +128,10 @@ export class VtexClient {
     return this.request<{ data: Record<string, number[]>; range: { total: number; from: number; to: number } }>(`/api/catalog_system/pvt/products/GetProductAndSkuIds?_from=${from}&_to=${to}`)
   }
   getSku(skuId: number | string) { return this.request<VtexSkuContext>(`/api/catalog_system/pvt/sku/stockkeepingunitbyid/${encodeURIComponent(String(skuId))}`) }
-  getPrice(skuId: number | string) { return this.request<VtexPrice>(`/pricing/prices/${encodeURIComponent(String(skuId))}`) }
+  getPrice(skuId: number | string) { return this.request<VtexPrice>(`/pricing/prices/${encodeURIComponent(String(skuId))}`, {}, 0, this.pricingBaseUrl) }
   getInventory(skuId: number | string) { return this.request<VtexInventoryResponse>(`/api/logistics/pvt/inventory/skus/${encodeURIComponent(String(skuId))}`) }
   listWarehouses() { return this.request<Array<{ id?: string; name?: string }>>('/api/logistics/pvt/configuration/warehouses') }
-  getPricingConfig() { return this.request<Record<string, unknown>>('/pricing/config') }
+  getPricingConfig() { return this.request<Record<string, unknown>>('/pricing/config', {}, 0, this.pricingBaseUrl) }
   listOrders(query: string) { return this.request<VtexOrderListResponse>(`/api/oms/pvt/orders?${query}`) }
   getOrder(orderId: string) { return this.request<VtexOrder>(`/api/oms/pvt/orders/${encodeURIComponent(orderId)}`) }
   getFeedConfig() { return this.request<Record<string, unknown>>('/api/orders/feed/config') }
