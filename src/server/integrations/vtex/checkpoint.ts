@@ -48,10 +48,18 @@ export const VTEX_CHECKPOINT_VERSION = 2
  *  DISCOVERY_COMPLETED` sem nenhum `CATALOG_PAGINATION_*` correspondente).
  *  Sem este bump, `'empty'` v3 ficaria terminal pra sempre e a paginação
  *  nunca chegaria a rodar pra essa conta.
+ *  5 = corrige bug real de produção onde a lista de SKU ids descoberta pelo
+ *  fallback paginado não era persistida entre lotes de `catalog` (ver
+ *  `catalogSkuIds` em types.ts) — a run real (climario) já tinha rodado a
+ *  paginação inteira (17.659 SKUs descobertos, confirmado em `sync_logs`
+ *  via `CATALOG_PAGINATION_COMPLETED`), processado só o primeiro lote de 40,
+ *  e terminado `catalogStatus='completed'`/`catalogSkuTotal=0` no lote
+ *  seguinte por causa do bug. Sem este bump ela ficaria "completed" errada
+ *  pra sempre (não bate no gate de `'empty'`).
  *  Bump aqui sempre que a estratégia de descoberta mudar OU quando for
  *  necessário forçar uma revalidação por causa de mudança externa conhecida
  *  (permissão liberada, etc). */
-export const VTEX_CATALOG_DISCOVERY_VERSION = 4
+export const VTEX_CATALOG_DISCOVERY_VERSION = 5
 
 export const VTEX_ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -138,6 +146,23 @@ export function normalizeVtexCheckpoint(
     // o gate de revalidação em sync.ts reentra em catalog, e desta vez a
     // estratégia atual (que já tenta sales channel) decide de verdade.
     reasons.push('catalog_empty_needs_revalidation_with_current_discovery_strategy')
+    checkpoint.catalogStatus = 'unknown'
+  } else if (
+    checkpoint.catalogStatus === 'completed' &&
+    (checkpoint.catalogSkuTotal ?? 0) === 0 &&
+    Number(checkpoint.skuOffset ?? 0) > 0 &&
+    (checkpoint.catalogDiscoveryVersion ?? 1) < VTEX_CATALOG_DISCOVERY_VERSION
+  ) {
+    // Prova de bug real de produção (ver catalogSkuIds em types.ts): a
+    // descoberta paginada achava a lista inteira, mas ela não era
+    // persistida entre lotes — no lote seguinte (`skuOffset>0`) a lista
+    // recalculada vinha vazia, o lote virava `[]`, e o estágio terminava
+    // `'completed'` com `catalogSkuTotal=0` mesmo tendo processado só o
+    // primeiro lote. Essa combinação (`completed` + `skuTotal=0` +
+    // `skuOffset>0`) é logicamente impossível pra uma descoberta que
+    // funcionou de verdade — é a assinatura exata do bug. Rebaixa pra
+    // 'unknown' UMA vez pra reentrar em catalog com a lista persistida.
+    reasons.push('catalog_completed_with_zero_total_needs_revalidation')
     checkpoint.catalogStatus = 'unknown'
   }
 
