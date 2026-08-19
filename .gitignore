@@ -8,6 +8,9 @@ dist-ssr
 # Vercel
 .vercel
 
+# Supabase CLI local cache
+supabase/.temp/
+
 # Local env files (never commit secrets)
 .env
 .env.*

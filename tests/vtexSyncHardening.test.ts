@@ -305,3 +305,25 @@ describe('yield vs stale semantics (post-yield status)', () => {
     expect(midRunReturns.every((status) => status === 'queued')).toBe(true)
   })
 })
+
+// -----------------------------------------------------------------------
+// Audit gap #5: a 401/403 while fetching an individual order (getOrder)
+// used to be swallowed exactly like any other item-level error — the order
+// stage kept grinding through every remaining item in the page/window with
+// a revoked credential until the time budget or MAX_ORDER_PAGES_PER_RUN ran
+// out, instead of stopping fast like the catalog stage already does.
+// -----------------------------------------------------------------------
+describe('orders stage stops on VTEX 401/403 instead of retrying item by item (static source check)', () => {
+  it('the order item handler detects VtexApiError 401/403 and sets a flag that breaks the page loop', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+    expect(source).toContain('ordersPermissionDenied = true')
+    // The flag must actually be checked after the batch to break the do/while
+    // order-page loop — not just set and ignored.
+    expect(source).toMatch(/if \(ordersPermissionDenied\) \{[\s\S]{0,700}ranOutOfTime = true/)
+    // Same terminal treatment already used by the catalog stage: mark the
+    // connection requires_attention instead of retrying forever.
+    expect(source).toMatch(/ordersPermissionDenied[\s\S]{0,700}requires_attention/)
+  })
+})

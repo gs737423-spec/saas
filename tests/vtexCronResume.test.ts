@@ -82,4 +82,35 @@ describe('queueVtexSync — run ativa tem prioridade sobre "due" (regressão rea
 
     await expect(queueVtexSync('company-a', 'incremental', 'auto')).rejects.toBeInstanceOf(VtexSyncNotDueError)
   })
+
+  it('mode pedido diferente do mode da run ativa é logado (achado #6 da auditoria) — antes era silenciosamente ignorado', async () => {
+    const { getSupabaseAdmin } = await import('../src/server/integrations/supabaseAdmin.js')
+    const { logSyncEvent } = await import('../src/server/integrations/syncLog.js')
+    vi.mocked(logSyncEvent).mockClear()
+    const activeRun = { id: 'run-1', status: 'queued', stage: 'orders', mode: 'incremental' }
+    vi.mocked(getSupabaseAdmin).mockResolvedValueOnce(makeSupabaseMock({ activeRun }) as never)
+
+    const { queueVtexSync } = await import('../src/server/integrations/vtex/sync.js')
+    const result = await queueVtexSync('company-a', 'full', 'manual') // pediu full, run ativa é incremental
+
+    expect(result).toEqual(activeRun) // ainda retoma a existente — comportamento não muda
+    expect(logSyncEvent).toHaveBeenCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({ code: 'SYNC_MODE_IGNORED_ACTIVE_RUN', requestedMode: 'full', activeMode: 'incremental' }),
+    }))
+  })
+
+  it('mode pedido igual ao da run ativa NÃO gera log de divergência', async () => {
+    const { getSupabaseAdmin } = await import('../src/server/integrations/supabaseAdmin.js')
+    const { logSyncEvent } = await import('../src/server/integrations/syncLog.js')
+    vi.mocked(logSyncEvent).mockClear()
+    const activeRun = { id: 'run-1', status: 'queued', stage: 'orders', mode: 'incremental' }
+    vi.mocked(getSupabaseAdmin).mockResolvedValueOnce(makeSupabaseMock({ activeRun }) as never)
+
+    const { queueVtexSync } = await import('../src/server/integrations/vtex/sync.js')
+    await queueVtexSync('company-a', 'incremental', 'auto')
+
+    expect(logSyncEvent).not.toHaveBeenCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({ code: 'SYNC_MODE_IGNORED_ACTIVE_RUN' }),
+    }))
+  })
 })

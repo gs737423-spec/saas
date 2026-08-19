@@ -258,7 +258,21 @@ export async function queueVtexSync(companyId: string, mode: 'full' | 'increment
   // tocar nela, mesmo rodando a cada poucos minutos.
   const { data: active } = await supabase.from('integration_sync_runs').select('*')
     .eq('company_id', companyId).eq('connection_id', connection.id).in('status', ['queued', 'running']).maybeSingle()
-  if (active) return active as SyncRunRow
+  if (active) {
+    const activeRun = active as SyncRunRow
+    if (activeRun.mode !== mode) {
+      // O `mode` pedido (ex: `full` disparado manualmente após resolver um
+      // mapeamento de canal) é silenciosamente ignorado quando já existe
+      // uma run ativa de outro modo — sem log isso é invisível: o usuário
+      // pede uma coisa, recebe outra, sem nenhum rastro em produção.
+      await logSyncEvent({
+        companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+        message: `VTEX ${mode} sync requested but an active ${activeRun.mode} run already exists — resuming the existing run instead`,
+        payload: { code: 'SYNC_MODE_IGNORED_ACTIVE_RUN', requestedMode: mode, activeMode: activeRun.mode, activeRunId: activeRun.id },
+      })
+    }
+    return activeRun
+  }
   if (trigger === 'auto' && !isVtexSyncDue(connection.next_sync_at)) throw new VtexSyncNotDueError()
   // Snapshot da configuração NO MOMENTO DA CRIAÇÃO da run — a partir daqui
   // essa run usa esses valores até terminar. Mudar `historyMonths` na
@@ -520,6 +534,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       let totalPages = page
       let sourceTotalPages = page
       let ranOutOfTime = false
+      let ordersPermissionDenied = false
       do {
         const filterName = run.mode === 'incremental' ? 'f_lastChange' : 'f_creationDate'
         const filterField = run.mode === 'incremental' ? 'lastChange' : 'creationDate'
@@ -583,6 +598,15 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             else counts.ordersUpdated += 1
             if (persisted.deduplicated) counts.ordersDeduplicated += 1
           } catch (orderError) {
+            // 401/403 é diferente de qualquer outro erro de item: a
+            // credencial foi revogada/perdeu permissão, não é um pedido
+            // específico com payload ruim. Insistir pedido a pedido até
+            // estourar orçamento/MAX_ORDER_PAGES_PER_RUN só gasta chamadas
+            // HTTP e round-trips de Supabase à toa — mesmo padrão já usado
+            // no estágio catalog (VTEX_CATALOG_PERMISSION_REQUIRED).
+            if (orderError instanceof VtexApiError && [401, 403].includes(orderError.status)) {
+              ordersPermissionDenied = true
+            }
             counts.errors += 1
             errors.push(`Order ${summary.orderId}: ${sanitizedError(orderError)}`)
           }
@@ -593,6 +617,16 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           await updateRun(supabase, run, { checkpoint, counts, errors: errors.slice(-100) })
         })
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX order page completed', payload: { stage: 'orders', page, totalProcessed: counts.ordersFetched, durationMs: Date.now() - pageStartedAt, timedOut } })
+        if (ordersPermissionDenied) {
+          await logSyncEvent({
+            companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'error',
+            message: 'VTEX orders endpoint denied access mid-page — stopping order fetch instead of retrying item by item until budget runs out',
+            payload: { code: 'ORDERS_PERMISSION_DENIED', stage: 'orders', page },
+          })
+          await supabase.from('marketplace_connections').update({ status: 'requires_attention', last_error: 'VTEX_ORDERS_PERMISSION_REQUIRED' }).eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
+          ranOutOfTime = true
+          break
+        }
         if (timedOut) { ranOutOfTime = true; break }
 
         page += 1
