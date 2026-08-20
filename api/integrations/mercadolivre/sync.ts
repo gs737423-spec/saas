@@ -3,6 +3,14 @@ import { getMissingEnvVars, MERCADOLIVRE_ENV_VARS } from '../../../src/server/in
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import type { SyncSummary } from '../../../src/server/integrations/types.js'
 import { ConnectionMissingError, runMercadoLivreSync } from '../../../src/server/integrations/mercadolivre/sync.js'
+import { SyncAlreadyRunningError, SyncLockUnavailableError } from '../../../src/server/integrations/syncLock.js'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
+import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
+
+// Catálogo grande com concorrência 8 pode passar de 1-2min em conta real —
+// pede o teto máximo pra Fluid Compute em vez de confiar só no default da
+// plataforma.
+export const config = { maxDuration: 300 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -23,6 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const summary: SyncSummary & { ok: boolean; message?: string } = {
         productsImported: 0,
         inventoryUpdated: 0,
+        ordersImported: 0,
         errors: [`config_missing: ${missing.join(', ')}`],
         durationMs: 0,
         source: 'config_missing',
@@ -33,7 +42,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const summary = await runMercadoLivreSync()
+    const auth = await requireCapability(req, res, 'marketplaces.manage')
+    if (!auth) return
+
+    // 5 syncs por 30min por empresa — cada sync bate na API do Mercado
+    // Livre em loop (todo o catálogo), não é operação pra rodar em loop.
+    if (!(await checkRateLimit(res, `ml-sync:${auth.companyId}`, 5, 1800, { req, route: '/api/integrations/mercadolivre/sync', policy: 'critical' }))) return
+
+    const summary = await runMercadoLivreSync(auth.companyId)
     res.status(200).json({ ok: true, ...summary })
   } catch (err) {
     if (err instanceof ConnectionMissingError) {
@@ -45,6 +61,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message: err.message,
       })
       res.status(200).json({ ok: false, source: 'disconnected', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
+      return
+    }
+    if (err instanceof SyncAlreadyRunningError) {
+      res.status(200).json({ ok: false, source: 'already_running', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
+      return
+    }
+    if (err instanceof SyncLockUnavailableError) {
+      res.status(503).json({ ok: false, source: 'migration_pending', message: err.message, productsImported: 0, inventoryUpdated: 0, errors: [err.message], durationMs: 0 })
       return
     }
     console.error('[mercadolivre/sync]', err)

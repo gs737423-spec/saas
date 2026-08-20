@@ -1,400 +1,164 @@
-import { useMemo, useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { getMarketplaceColor, type Marketplace } from '@/data/mockData'
+import { useEffect, useMemo, useState } from 'react'
+import { Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { getMarketplaceColor } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
-import { TODAY } from '@/lib/periods'
-import { motionTokens, useReducedMotion } from '@/lib/motion'
+import { apiFetchJson } from '@/lib/apiFetch'
+import { buildChannelComparison, safeDeltaPct, type ChannelComparison, type ComparisonChannelKey, type ComparisonDailyPoint } from '@/lib/marketplaceComparison'
 
-// Entrance timing for both series — within the 450-750ms window, no bounce
-// (Recharts only accepts named easings here, 'ease-out' is the closest
-// match to the enter token's decelerate curve without overshoot).
-const CHART_ENTER_MS = motionTokens.duration.slow + 150 // 550ms
-
-const channels: { key: 'mercadoLivre' | 'shopee' | 'amazon' | 'lojaPropria'; label: Marketplace }[] = [
-  { key: 'mercadoLivre', label: 'Mercado Livre' },
+const fallbackChannels: { key: ComparisonChannelKey; label: string }[] = [
+  { key: 'mercadolivre', label: 'Mercado Livre' },
   { key: 'shopee', label: 'Shopee' },
   { key: 'amazon', label: 'Amazon' },
-  { key: 'lojaPropria', label: 'Loja Própria' },
+  { key: 'lojapropria', label: 'Loja Própria' },
 ]
 
-type ChannelKey = typeof channels[number]['key']
+interface DailyApiResponse { ok: boolean; source: string; days: ComparisonDailyPoint[]; channels?: Array<{ key: string; label: string }> }
 
-interface DailyData {
-  date: string
-  label: string
-  mercadoLivre: number
-  shopee: number
-  amazon: number
-  lojaPropria: number
-  total: number
-}
-
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000
-  return x - Math.floor(x)
-}
-
-function generateDailyData(totalDays: number): DailyData[] {
-  const data: DailyData[] = []
-  const baselines = { mercadoLivre: 2800, shopee: 1600, amazon: 900, lojaPropria: 550 }
-  const growthPerDay = { mercadoLivre: 3.5, shopee: 4.2, amazon: 2.8, lojaPropria: 1.8 }
-
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(TODAY)
-    d.setDate(d.getDate() - i)
-    const dayOfWeek = d.getDay()
-    const weekendFactor = dayOfWeek === 0 ? 0.7 : dayOfWeek === 6 ? 0.85 : 1
-    const dayIndex = totalDays - i
-    const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
-
-    const entry: any = {
-      date: d.toISOString().split('T')[0],
-      label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-    }
-
-    let total = 0
-    for (const c of channels) {
-      const base = baselines[c.key]
-      const growth = growthPerDay[c.key] * dayIndex
-      const variation = (seededRandom(seed + c.key.length) - 0.5) * base * 0.3
-      const value = Math.round((base + growth + variation) * weekendFactor)
-      entry[c.key] = Math.max(0, value)
-      total += entry[c.key]
-    }
-    entry.total = total
-    data.push(entry)
-  }
-  return data
-}
-
-// 400 days of history so any period plus its "previous window" comparison
-// (up to 2x the selected range) always has data behind it.
-const allDailyData = generateDailyData(400)
-const dailyByDate = new Map(allDailyData.map((d) => [d.date, d]))
-
-const compareOptions: { key: 'yesterday' | 'week' | 'month'; label: string; offsetDays: number }[] = [
-  { key: 'yesterday', label: 'Ontem', offsetDays: 1 },
-  { key: 'week', label: 'Semana passada', offsetDays: 7 },
-  { key: 'month', label: 'Mês passado', offsetDays: 30 },
+const compareOptions = [
+  { key: 'yesterday' as const, label: 'Ontem', offsetDays: 1 },
+  { key: 'week' as const, label: 'Semana passada', offsetDays: 7 },
+  { key: 'month' as const, label: 'Mês passado', offsetDays: 30 },
 ]
 
-const brl = (v: number) => v.toLocaleString('pt-BR')
-const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-
-/** Downsamples a daily slice so the chart stays readable on longer ranges. */
-function resample(sliced: DailyData[], periodDays: number): DailyData[] {
-  if (periodDays <= 15) return sliced
-  const step = periodDays <= 30 ? 2 : periodDays <= 90 ? 3 : 7
-  return sliced.filter((_, i) => i % step === 0 || i === sliced.length - 1)
-}
-
-function CustomTooltip({ active, payload, label, activeChannels, compareLabel }: any) {
-  if (!active || !payload?.length) return null
-  const list: typeof channels = activeChannels
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1225]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label} · vs {compareLabel.toLowerCase()}</p>
-      {list.map((c) => {
-        const cur = payload.find((p: any) => p.dataKey === c.key)?.value
-        const prev = payload.find((p: any) => p.dataKey === `prev_${c.key}`)?.value
-        if (cur === undefined) return null
-        const delta = prev > 0 ? ((cur - prev) / prev) * 100 : 0
-        const brand = getMarketplaceColor(c.label)
-        return (
-          <div key={c.key} className="border-t border-white/5 py-1 first:border-t-0 first:pt-0">
-            <div className="flex items-center justify-between gap-4 text-[11.5px]">
-              <span className="flex items-center gap-2 text-text-secondary">
-                <span className="h-2 w-2 rounded-full" style={{ background: brand, boxShadow: `0 0 6px ${brand}66` }} />
-                {c.label}
-              </span>
-              <span className="font-mono font-semibold text-text-primary">R$ {brl(cur)}</span>
-            </div>
-            {prev !== undefined && (
-              <div className="mt-0.5 flex items-center justify-between gap-4 pl-4 text-[10.5px] text-text-muted">
-                <span>anterior: R$ {brl(prev)}</span>
-                <span className={`font-mono font-semibold ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-                  {delta >= 0 ? '+' : ''}{pct(delta)}%
-                </span>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+type CompareKey = (typeof compareOptions)[number]['key']
+const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+const compactMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+const axisMoney = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 })
+const pct = (value: number) => value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 export default function RevenueByChannelChart() {
   const { period } = usePeriod()
-  const reducedMotion = useReducedMotion()
-  const chartDuration = reducedMotion ? 0 : CHART_ENTER_MS
-  // Multiple channels can be active at once, each keeping its own brand color.
-  const [selected, setSelected] = useState<Set<ChannelKey>>(new Set(channels.map((c) => c.key)))
-  // Offset (in days) used to look up the comparison line's values.
-  const [compareKey, setCompareKey] = useState<'yesterday' | 'week' | 'month'>('week')
+  const [compareKey, setCompareKey] = useState<CompareKey>('week')
+  const [allDays, setAllDays] = useState<ComparisonDailyPoint[]>([])
+  const [availableChannels, setAvailableChannels] = useState<Array<{ key: string; label: string }>>(fallbackChannels)
+  const [loading, setLoading] = useState(true)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
-  // Keep "Comparar com" in sync with the topbar period so the two filters
-  // never disagree: 1 day -> ontem, up to ~10 days -> semana passada,
-  // longer ranges -> mês passado. User can still override manually; the
-  // default just re-syncs whenever the topbar period itself changes.
   useEffect(() => {
     setCompareKey(period.days <= 1 ? 'yesterday' : period.days <= 10 ? 'week' : 'month')
-  }, [period.key])
+  }, [period.days])
 
-  const toggleChannel = (key: ChannelKey) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        if (next.size > 1) next.delete(key)
-      } else {
-        next.add(key)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    apiFetchJson<DailyApiResponse>(`/api/dashboard/finance-daily?days=${period.days}`).then((response) => {
+      if (!cancelled) {
+        setAllDays(response?.days ?? [])
+        setAvailableChannels(response?.channels?.length ? response.channels : fallbackChannels)
+        setLoading(false)
       }
-      return next
     })
-  }
+    return () => { cancelled = true }
+  }, [period.days])
 
-  const periodDays = period.days
-  const compareOffset = compareOptions.find((o) => o.key === compareKey)!.offsetDays
-  const activeChannels = channels.filter((c) => selected.has(c.key))
+  const compare = compareOptions.find((option) => option.key === compareKey) ?? compareOptions[1]
+  const rows = useMemo(() => {
+    const currentDays = allDays.slice(-period.days)
+    const totals = new Map(availableChannels.map((channel) => [channel.key, currentDays.reduce((sum, point) => {
+      const dynamic = point.channels?.[channel.key]
+      const legacy = (point as unknown as Record<string, unknown>)[channel.key]
+      return sum + (typeof dynamic === 'number' ? dynamic : typeof legacy === 'number' ? legacy : 0)
+    }, 0)]))
+    const ranked = [...availableChannels].sort((a, b) => (totals.get(b.key) ?? 0) - (totals.get(a.key) ?? 0))
+    let comparisonDays = allDays
+    let visible = ranked
+    if (ranked.length > 4) {
+      const otherKeys = ranked.slice(3).map((channel) => channel.key)
+      comparisonDays = allDays.map((point) => ({
+        ...point,
+        channels: {
+          ...(point.channels ?? {}),
+          other_channels: otherKeys.reduce((sum, key) => sum + Number(point.channels?.[key] ?? 0), 0),
+        },
+      }))
+      visible = [...ranked.slice(0, 3), { key: 'other_channels', label: 'Outros canais' }]
+    }
+    return visible.map((channel) => ({
+      ...channel,
+      comparison: buildChannelComparison(comparisonDays, period.days, compare.offsetDays, channel.key),
+    }))
+  }, [allDays, availableChannels, compare.offsetDays, period.days])
+  const totalRevenue = rows.reduce((sum, row) => sum + row.comparison.currentTotal, 0)
+  const selectedRow = rows.find((row) => row.key === selectedKey) ?? rows[0]
 
-  function shiftedDate(dateStr: string, offsetDays: number): DailyData | undefined {
-    const d = new Date(dateStr)
-    d.setDate(d.getDate() - offsetDays)
-    return dailyByDate.get(d.toISOString().split('T')[0])
-  }
-
-  const filteredData = useMemo(() => {
-    const current = resample(allDailyData.slice(-periodDays), periodDays)
-    return current.map((entry) => {
-      const prevEntry = shiftedDate(entry.date, compareOffset)
-      const row: any = { label: entry.label, date: entry.date }
-      for (const c of channels) {
-        row[c.key] = (entry as any)[c.key]
-        row[`prev_${c.key}`] = prevEntry ? (prevEntry as any)[c.key] : undefined
-      }
-      return row
-    })
-  }, [periodDays, compareOffset])
-
-  const channelSummary = useMemo(() => {
-    const periodData = allDailyData.slice(-periodDays)
-    const previousData = allDailyData.slice(-periodDays * 2, -periodDays)
-    const totalAll = periodData.reduce((s, d) => s + d.total, 0)
-    return channels
-      .map((c) => {
-        const total = periodData.reduce((s, d) => s + (d as any)[c.key], 0)
-        const prevTotal = previousData.reduce((s, d) => s + (d as any)[c.key], 0)
-        const growth = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : 0
-        const share = totalAll > 0 ? (total / totalAll) * 100 : 0
-        return { ...c, total, growth, share }
-      })
-      .sort((a, b) => b.total - a.total)
-  }, [periodDays])
-
-  const totalRevenue = channelSummary.reduce((s, c) => s + c.total, 0)
-  const compareLabel = compareOptions.find((o) => o.key === compareKey)!.label
+  if (loading) return <div className="overview-glass-elevated flex items-center gap-2 rounded-2xl p-4 text-xs text-text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando receita diária...</div>
+  if (totalRevenue === 0 && allDays.length === 0) return null
 
   return (
-    <div className="overview-glass-elevated motion-panel relative overflow-hidden rounded-[22px] p-3.5 sm:p-4">
-      {/* Header */}
-      <div className="relative mb-2.5">
-        <h3 className="text-base font-semibold tracking-tight text-text-primary">Receita por Marketplace</h3>
-        <p className="mt-0.5 text-[13px] text-text-secondary">
-          {period.label} · Total: <span className="font-mono font-semibold text-text-primary">R$ {brl(totalRevenue)}</span>
-        </p>
-        <p className="mt-1 text-[11.5px] text-text-secondary">
-          Comparando com <span className="font-medium text-text-secondary">{compareLabel.toLowerCase()}</span> (linha tracejada)
-        </p>
+    <section className="overview-glass-elevated motion-panel workspace-marketplace-chart relative rounded-2xl p-4 sm:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-text-primary">Evolução de receita</h3>
+          <p className="mt-0.5 text-[12px] text-text-secondary">{period.label} · Receita consolidada <strong className="font-mono text-text-primary">{compactMoney.format(totalRevenue)}</strong></p>
+        </div>
+        <div className="flex items-center gap-1 self-start rounded-lg border border-border-subtle bg-bg-card p-1" aria-label="Comparar com">
+          {compareOptions.map((option) => <button key={option.key} type="button" onClick={() => setCompareKey(option.key)} className={`motion-chip rounded-md px-2.5 py-1 text-[10.5px] font-semibold ${compareKey === option.key ? 'control-active' : 'control-inactive'}`} aria-pressed={compareKey === option.key}>{option.label}</button>)}
+        </div>
       </div>
 
-      {/* Channel cards — click to toggle, multiple can be active */}
-      <div className="relative mb-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        {channelSummary.map((c, idx) => {
-          const brand = getMarketplaceColor(c.label)
-          const positive = c.growth > 0.5
-          const negative = c.growth < -0.5
-          const isVisible = selected.has(c.key)
-          return (
-            <button
-              key={c.key}
-              onClick={() => toggleChannel(c.key)}
-              title="Clique para mostrar/ocultar este canal no gráfico"
-              className={`group relative cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
-                isVisible
-                  ? 'border-white/[0.08] bg-white/[0.03]'
-                  : 'border-white/[0.04] bg-white/[0.01] opacity-50'
-              }`}
-              style={{
-                boxShadow: isVisible ? `0 4px 24px -4px ${brand}15, inset 0 1px 0 ${brand}10` : 'none',
-              }}
-            >
-              {/* Top glow line */}
-              <div
-                className="absolute inset-x-0 top-0 h-[2px] transition-opacity duration-300"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${brand}, transparent)`,
-                  opacity: isVisible ? 0.8 : 0.2,
-                }}
-              />
-
-              <div className="px-3.5 py-2.5">
-                {/* Channel name + rank */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full transition-all duration-300"
-                      style={{
-                        background: brand,
-                        boxShadow: isVisible ? `0 0 8px ${brand}88` : 'none',
-                      }}
-                    />
-                    <span className="text-[11px] font-semibold text-text-secondary">{c.label}</span>
-                  </div>
-                  {idx === 0 && isVisible && (
-                    <span className="rounded-full bg-accent-blue/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-accent-blue">
-                      Líder
-                    </span>
-                  )}
-                </div>
-
-                {/* Value */}
-                <div className="mt-1.5 font-mono text-lg font-bold leading-none tracking-tight text-text-primary sm:text-xl">
-                  R$ {brl(c.total)}
-                </div>
-
-                {/* Growth + Share row */}
-                <div className="mt-1.5 flex items-center justify-between">
-                  <div className={`flex items-center gap-1 text-[11px] font-semibold ${
-                    positive ? 'text-accent-emerald' : negative ? 'text-accent-rose' : 'text-text-muted'
-                  }`}>
-                    {positive ? <TrendingUp className="h-3 w-3" /> : negative ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                    {positive ? '+' : ''}{pct(c.growth)}%
-                  </div>
-                  <span className="text-[10px] font-medium text-text-muted">{pct(c.share)}% do total</span>
-                </div>
-
-                {/* Share bar */}
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${c.share}%`,
-                      background: `linear-gradient(90deg, ${brand}, ${brand}88)`,
-                      boxShadow: `0 0 8px ${brand}44`,
-                    }}
-                  />
-                </div>
-              </div>
-            </button>
-          )
-        })}
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4" aria-label="Selecionar canal">
+        {rows.map((row) => <ChannelSelector key={row.key} label={row.label} comparison={row.comparison} selected={row.key === selectedRow?.key} onSelect={() => setSelectedKey(row.key)} />)}
       </div>
 
-      {/* Chart */}
-      <div className="h-44 sm:h-52">
+      {selectedRow && <FocusedPerformanceChart label={selectedRow.label} comparison={selectedRow.comparison} compareLabel={compare.label} />}
+    </section>
+  )
+}
+
+function ChannelSelector({ label, comparison, selected, onSelect }: { label: string; comparison: ChannelComparison; selected: boolean; onSelect: () => void }) {
+  const color = getMarketplaceColor(label)
+  const delta = comparison.deltaPct
+  const positive = delta !== null && delta > 0.5
+  const negative = delta !== null && delta < -0.5
+
+  return (
+    <button type="button" onClick={onSelect} aria-pressed={selected} className={`rounded-xl border px-3.5 py-3 text-left transition-colors ${selected ? 'bg-bg-card-hover' : 'border-border-subtle bg-bg-card/60 hover:border-border-default hover:bg-bg-card'}`} style={selected ? { borderColor: `${color}80`, boxShadow: `inset 0 2px 0 ${color}` } : undefined}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2 truncate text-[11px] font-semibold text-text-secondary"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />{label}</span>
+        <span className={`inline-flex items-center gap-1 font-mono text-[10px] font-semibold ${positive ? 'text-accent-emerald' : negative ? 'text-accent-rose' : 'text-text-muted'}`}>{positive ? <TrendingUp className="h-3 w-3" /> : negative ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}{delta === null ? 'Sem base' : `${delta >= 0 ? '+' : ''}${pct(delta)}%`}</span>
+      </div>
+      <p className="mt-2 font-mono text-base font-bold tracking-tight text-text-primary">{compactMoney.format(comparison.currentTotal)}</p>
+      <p className="mt-0.5 text-[9px] uppercase tracking-wider text-text-muted">Receita no período</p>
+    </button>
+  )
+}
+
+function FocusedPerformanceChart({ label, comparison, compareLabel }: { label: string; comparison: ChannelComparison; compareLabel: string }) {
+  const color = getMarketplaceColor(label)
+  const chartData = comparison.slots.map((slot) => ({ label: slot.label, Atual: slot.current, Anterior: slot.previous }))
+  const delta = comparison.deltaPct
+
+  return (
+    <div className="mt-4 rounded-xl border border-border-subtle bg-bg-card/40 px-3 py-3 sm:px-4 sm:py-4">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-[12px] font-semibold text-text-primary"><span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{label}</p>
+          <p className="mt-1 text-[10px] text-text-muted">Receita diária · comparação com {compareLabel.toLowerCase()}</p>
+        </div>
+        <div className="flex items-center gap-5 text-right">
+          <div><p className="font-mono text-sm font-semibold text-text-primary">{compactMoney.format(comparison.currentTotal)}</p><p className="text-[8.5px] uppercase tracking-wider text-text-muted">Atual</p></div>
+          <div><p className="font-mono text-sm text-text-secondary">{comparison.hasCompletePreviousRange ? compactMoney.format(comparison.previousTotal) : '—'}</p><p className="text-[8.5px] uppercase tracking-wider text-text-muted">Anterior</p></div>
+          <div><p className={`font-mono text-sm font-semibold ${delta !== null && delta > 0.5 ? 'text-accent-emerald' : delta !== null && delta < -0.5 ? 'text-accent-rose' : 'text-text-muted'}`}>{delta === null ? 'Sem base' : `${delta >= 0 ? '+' : ''}${pct(delta)}%`}</p><p className="text-[8.5px] uppercase tracking-wider text-text-muted">Variação</p></div>
+        </div>
+      </div>
+
+      <div className="h-[240px] w-full" aria-label={`Evolução diária de receita de ${label}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={filteredData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-            <defs>
-              {channels.map((c) => {
-                const color = getMarketplaceColor(c.label)
-                return (
-                  <linearGradient key={c.key} id={`fill-${c.key}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity={0.28} />
-                    <stop offset="50%" stopColor={color} stopOpacity={0.06} />
-                    <stop offset="100%" stopColor={color} stopOpacity={0} />
-                  </linearGradient>
-                )
-              })}
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: '#6B7A9E', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fill: '#6B7A9E', fontSize: 10 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
-              width={40}
-            />
-            <Tooltip
-              content={<CustomTooltip activeChannels={activeChannels} compareLabel={compareLabel} />}
-              cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' }}
-              wrapperStyle={{ transition: `transform ${motionTokens.duration.ultrafast}ms ${'ease-out'}, opacity ${motionTokens.duration.fast}ms ${'ease-out'}`, outline: 'none' }}
-              animationDuration={motionTokens.duration.ultrafast}
-              animationEasing="ease-out"
-            />
-            {activeChannels.map((c) => {
-              const color = getMarketplaceColor(c.label)
-              return (
-                <Line
-                  key={`prev-${c.key}`}
-                  type="monotone"
-                  dataKey={`prev_${c.key}`}
-                  name={`${c.label} · ${compareLabel}`}
-                  stroke={color}
-                  strokeWidth={1.75}
-                  strokeOpacity={0.55}
-                  strokeDasharray="5 4"
-                  dot={false}
-                  activeDot={{ r: 3, fill: color, stroke: '#0d1225', strokeWidth: 1.5, fillOpacity: 0.7 }}
-                  animationDuration={chartDuration}
-                  animationEasing="ease-out"
-                />
-              )
-            })}
-            {activeChannels.map((c) => {
-              const color = getMarketplaceColor(c.label)
-              return (
-                <Area
-                  key={c.key}
-                  type="monotone"
-                  dataKey={c.key}
-                  name={c.label}
-                  stroke={color}
-                  strokeWidth={2.5}
-                  fill={`url(#fill-${c.key})`}
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    strokeWidth: 2,
-                    stroke: '#0d1225',
-                    fill: color,
-                    style: { filter: `drop-shadow(0 0 4px ${color}88)` },
-                  }}
-                  animationDuration={chartDuration}
-                  animationEasing="ease-out"
-                />
-              )
-            })}
-          </ComposedChart>
+          <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="var(--color-border-subtle)" strokeDasharray="3 5" />
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} dy={8} />
+            <YAxis axisLine={false} tickLine={false} width={62} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} tickFormatter={(value: number) => `R$ ${axisMoney.format(value)}`} />
+            <Tooltip formatter={(value, name) => [money.format(Number(value ?? 0)), name]} contentStyle={{ background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border-default)', borderRadius: 10, boxShadow: '0 16px 40px rgba(0,0,0,.24)', fontSize: 11 }} labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600, marginBottom: 6 }} itemStyle={{ color: 'var(--color-text-secondary)', padding: '2px 0' }} />
+            <Line type="monotone" dataKey="Anterior" stroke="var(--color-text-muted)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} connectNulls />
+            <Line type="monotone" dataKey="Atual" stroke={color} strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: color, stroke: 'var(--color-bg-elevated)', strokeWidth: 2 }} />
+          </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Compare controls */}
-      <div className="relative mt-2 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Comparar com</span>
-          {compareOptions.map((o) => (
-            <button
-              key={o.key}
-              onClick={() => setCompareKey(o.key)}
-              className={`cursor-pointer rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
-                compareKey === o.key
-                  ? 'border-white/20 bg-white/[0.08] text-text-primary'
-                  : 'border-white/5 bg-transparent text-text-muted hover:opacity-80'
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <span className="text-[10px] text-text-muted">Clique nos cards acima para comparar mais de um canal ao mesmo tempo.</span>
+      <div className="mt-2 flex items-center gap-4 border-t border-border-subtle pt-3 text-[9.5px] text-text-muted">
+        <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-5 rounded-full" style={{ background: color }} />Período atual</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-5 border-t border-dashed border-text-muted" />Período anterior</span>
       </div>
     </div>
   )

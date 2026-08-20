@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, Package } from 'lucide-react'
-import { products } from '@/data/mockData'
-import { LayoutDashboard, Store, Boxes, Wallet, Megaphone, Star, Link2, FileBarChart2, Settings } from 'lucide-react'
+import { LayoutDashboard, Store, Boxes, Wallet, Link2, FileBarChart2, Settings } from 'lucide-react'
+import { apiFetchJson } from '@/lib/apiFetch'
+import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
 
 const pages = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
@@ -10,8 +11,6 @@ const pages = [
   { icon: Package, label: 'Produtos', to: '/app/produtos' },
   { icon: Boxes, label: 'Estoque', to: '/app/estoque' },
   { icon: Wallet, label: 'Financeiro', to: '/app/financeiro' },
-  { icon: Megaphone, label: 'Marketing', to: '/app/marketing' },
-  { icon: Star, label: 'Avaliações', to: '/app/avaliacoes' },
   { icon: Link2, label: 'Conexões', to: '/app/importacoes' },
   { icon: FileBarChart2, label: 'Relatórios', to: '/app/relatorios' },
   { icon: Settings, label: 'Configurações', to: '/app/configuracoes' },
@@ -23,6 +22,7 @@ export default function SearchMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const [real, setReal] = useState<DashboardProductsResponse | null>(null)
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -37,7 +37,19 @@ export default function SearchMenu() {
     else setQuery('')
   }, [open])
 
+  // Busca produto real (não mock) quando a empresa tem marketplace
+  // sincronizado — carrega só na primeira vez que o usuário abre a busca.
+  useEffect(() => {
+    if (!open || real) return
+    apiFetchJson<DashboardProductsResponse>('/api/dashboard/products?days=30').then(setReal)
+  }, [open, real])
+
   const q = query.trim().toLowerCase()
+
+  // O modo demonstração é explícito e usa o mesmo contrato do catálogo;
+  // nele a pesquisa deve continuar útil, sem inventar uma fonte paralela.
+  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name' | 'category' | 'marketplace'>[] =
+    real?.source === 'real' || real?.source === 'demo' ? real.items : []
 
   const matchedPages = useMemo(
     () => (q ? pages.filter((p) => p.label.toLowerCase().includes(q)) : pages),
@@ -46,9 +58,9 @@ export default function SearchMenu() {
   const matchedProducts = useMemo(
     () =>
       q
-        ? products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 6)
+        ? searchableProducts.filter((p) => [p.name, p.sku, p.category, p.marketplace].some((value) => value?.toLowerCase().includes(q))).slice(0, 6)
         : [],
-    [q]
+    [q, searchableProducts]
   )
 
   function go(to: string) {
@@ -60,6 +72,8 @@ export default function SearchMenu() {
     <div ref={ref} className="relative">
       <button
         title="Buscar"
+        aria-label="Buscar"
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="motion-header-control flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
@@ -67,7 +81,7 @@ export default function SearchMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover search-menu-panel absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
             <Search className="h-4 w-4 shrink-0 text-text-muted" />
             <input
@@ -75,8 +89,8 @@ export default function SearchMenu() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-              placeholder="Buscar páginas, produtos, SKU..."
-              className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+              placeholder="Buscar SKU, produto, categoria ou marketplace..."
+              className="search-menu-input min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary outline-none placeholder:text-text-secondary"
             />
             {query && (
               <button onClick={() => setQuery('')} className="cursor-pointer text-text-muted hover:text-text-primary">
@@ -93,7 +107,7 @@ export default function SearchMenu() {
                   <button
                     key={p.to}
                     onClick={() => go(p.to)}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
+                    className="search-menu-item flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-semibold text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary"
                   >
                     <p.icon className="h-4 w-4 text-text-muted" />
                     {p.label}
@@ -107,14 +121,16 @@ export default function SearchMenu() {
                 <p className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Produtos</p>
                 {matchedProducts.map((p) => (
                   <button
-                    key={p.sku}
-                    onClick={() => go(`/app/produto/${p.sku}`)}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
+                    key={p.id}
+                    onClick={() => go(`/app/produto/${p.sku ?? p.id}`)}
+                    className="search-menu-item flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/5"
                   >
                     <Package className="h-4 w-4 shrink-0 text-text-muted" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-text-primary">{p.name}</span>
-                      <span className="block truncate font-mono text-[10px] text-text-muted">{p.sku}</span>
+                      <span className="block truncate font-mono text-[10px] text-text-muted">
+                        {[p.sku ?? p.id, p.category, p.marketplace].filter(Boolean).join(' · ')}
+                      </span>
                     </span>
                   </button>
                 ))}

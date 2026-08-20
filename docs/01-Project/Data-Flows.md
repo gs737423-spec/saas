@@ -44,3 +44,19 @@ sequenceDiagram
 - Não duplicar pedidos ao reprocessar.
 - Não cruzar tenants.
 - Não transformar falha parcial em sucesso silencioso.
+
+## Descoberta de canal pela VTEX
+
+```mermaid
+flowchart LR
+    A[Pedido VTEX] --> B[Extrair affiliate/salesChannel]
+    B --> C{Mapping tenant-scoped existe?}
+    C -->|Sim| D[Canal canônico resolved]
+    C -->|Não| E[Registrar external:vtex:* unresolved]
+    D --> F[Persistir pedido + provenance]
+    E --> F
+    F --> G[Totais globais se pedido elegível]
+    F --> H[Breakdown por canal/Outros]
+```
+
+Affiliate novo gera warning/evento sanitizado, mas não falha o sync. Um mapping criado depois reprocessa a mesma source reference e atualiza a identidade canônica sem nova venda analítica.

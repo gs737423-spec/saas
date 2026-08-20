@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X, ArrowRight, Lock } from 'lucide-react'
-import { nav, specialistHref } from '@/site/content'
+import { Menu, X, Lock } from 'lucide-react'
+import { ctaLabels, nav } from '@/site/content'
 import { useScrolled } from '@/site/hooks'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
 // Header dark glass — transparente sobre o hero petróleo no topo, vira barra
 // glass sólida ao rolar. Modificador `site-header--dark` restringe o tema
@@ -12,7 +13,6 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const firstLinkRef = useRef<HTMLAnchorElement>(null)
-  const specialist = specialistHref()
 
   useEffect(() => {
     if (!open) return
@@ -32,15 +32,15 @@ export default function SiteHeader() {
     <header className="site-header site-header--dark" data-scrolled={scrolled}>
       <div
         className="site-container flex items-center justify-between gap-4 transition-[height] duration-300"
-        style={{ height: scrolled ? 60 : 70 }}
+        style={{ height: scrolled ? 70 : 82 }}
       >
-        {/* Marca tipográfica temporária — só o nome, sem símbolo. */}
-        <a href="#topo" className="flex shrink-0 items-center" aria-label="Vintec — início">
-          <span className="text-[26px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>Vintec</span>
+        <a href="#topo" className="flex shrink-0 items-center gap-2.5" aria-label="MKTOnline — início">
+          <MKTOnlineLogo mode="symbol" size="md" />
+          <span className="text-[28px] font-extrabold tracking-tight" style={{ color: '#FFFFFF', letterSpacing: '-0.02em' }}>MKTOnline</span>
         </a>
 
         {/* Nav desktop — breakpoint 1100px (nav:) */}
-        <nav className="hidden items-center gap-0.5 nav:flex" aria-label="Navegação principal">
+        <nav className="hidden items-center gap-2 nav:flex" aria-label="Navegação principal">
           {nav.map((n) => (
             <a key={n.href} href={n.href} className="vt-nav-link">
               {n.label}
@@ -49,16 +49,12 @@ export default function SiteHeader() {
         </nav>
 
         {/* Ações desktop */}
-        <div className="hidden items-center gap-2 nav:flex">
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-colors"
-            style={{ color: 'rgba(234,244,243,0.85)' }}
-          >
+        <div className="hidden items-center gap-2.5 nav:flex">
+          <Link to="/login" className="vt-header-btn-secondary">
             <Lock className="h-3.5 w-3.5" /> Entrar
           </Link>
-          <a href={specialist} target={specialist.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="btn btn-amber" style={{ padding: '0.72rem 1.35rem', fontSize: '0.92rem' }}>
-            Fale com um especialista
+          <a href="#conversao" className="btn btn-amber" style={{ height: 50, padding: '0 26px', fontSize: '15px', fontWeight: 700 }}>
+            {ctaLabels.principal}
           </a>
         </div>
 
@@ -66,7 +62,7 @@ export default function SiteHeader() {
         <div className="nav:hidden">
           <button
             className="btn btn-glass"
-            style={{ padding: '0.55rem', borderRadius: 12 }}
+            style={{ width: 46, height: 46, padding: 0, borderRadius: 12 }}
             aria-label={open ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={open}
             aria-controls="site-mobile-menu"
@@ -115,7 +111,7 @@ export default function SiteHeader() {
                     ref={i === 0 ? firstLinkRef : undefined}
                     href={n.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-3 text-[15px] font-medium"
+                    className="rounded-xl px-3 py-3 text-[18px] font-medium"
                     style={{ color: '#EAF4F3' }}
                   >
                     {n.label}
@@ -125,13 +121,11 @@ export default function SiteHeader() {
               <div className="flex flex-col gap-2 p-2 pt-3">
                 <Link to="/login" onClick={() => setOpen(false)} className="btn btn-glass w-full">Entrar</Link>
                 <a
-                  href={specialist}
-                  target={specialist.startsWith('http') ? '_blank' : undefined}
-                  rel="noopener noreferrer"
+                  href="#conversao"
                   onClick={() => setOpen(false)}
                   className="btn btn-primary w-full"
                 >
-                  Fale com um especialista <ArrowRight className="h-4 w-4" />
+                  {ctaLabels.principal}
                 </a>
               </div>
             </div>

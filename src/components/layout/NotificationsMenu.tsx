@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, AlertTriangle, AlertCircle, Info } from 'lucide-react'
-import { getExecutiveAlerts, type ExecutiveAlertSeverity } from '@/data/mockData'
+import type { ExecutiveAlertSeverity, ExecutiveAlert } from '@/data/mockData'
+import { apiFetchJson } from '@/lib/apiFetch'
+import type { DashboardProductsResponse } from '@/server/dashboardProducts'
 
 const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
   danger: AlertTriangle,
@@ -10,16 +12,51 @@ const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
 }
 
 const severityColor: Record<ExecutiveAlertSeverity, string> = {
-  danger: '#F4436C',
-  warning: '#F5C24B',
-  info: '#4C82F7',
+  danger: '#FF5E7D',
+  warning: '#FFC95A',
+  info: '#5B8DEF',
+}
+
+const LOW_STOCK_THRESHOLD = 10
+
+// Notificações reais (estoque zerado/baixo dos produtos sincronizados) quando
+// a empresa tem marketplace conectado — mock só como demonstração quando não
+// tem nada real ainda. Busca uma vez ao montar (barra do topo, vive em toda
+// página) — não precisa ser em tempo real.
+function useAlerts(): ExecutiveAlert[] {
+  const [real, setReal] = useState<DashboardProductsResponse | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetchJson<DashboardProductsResponse>('/api/dashboard/products?days=30').then((data) => {
+      if (!cancelled) setReal(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Sem conexão/sync ainda — sem alerta nenhum, nunca mock (sino aparece em
+  // toda página, inclusive no primeiro login de um vendedor real).
+  if (real?.source !== 'real') return []
+
+  const alerts: ExecutiveAlert[] = []
+  real.items
+    .filter((p) => p.stock === 0)
+    .slice(0, 4)
+    .forEach((p) => alerts.push({ id: `stock-${p.id}`, rule: 'Estoque zerado', message: `${p.name} está sem estoque disponível.`, severity: 'danger', sku: p.sku ?? p.id }))
+  real.items
+    .filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
+    .slice(0, 4)
+    .forEach((p) => alerts.push({ id: `low-${p.id}`, rule: 'Estoque baixo', message: `${p.name} tem só ${p.stock} unidade(s) disponíveis.`, severity: 'warning', sku: p.sku ?? p.id }))
+  return alerts.slice(0, 6)
 }
 
 export default function NotificationsMenu() {
   const [open, setOpen] = useState(false)
   const [read, setRead] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const alerts = getExecutiveAlerts()
+  const alerts = useAlerts()
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -33,6 +70,8 @@ export default function NotificationsMenu() {
     <div ref={ref} className="relative">
       <button
         title="Notificações"
+        aria-label="Notificações"
+        aria-expanded={open}
         onClick={() => { setOpen((o) => !o); setRead(true) }}
         className="motion-header-control relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
@@ -43,7 +82,7 @@ export default function NotificationsMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">Notificações</p>
             <span className="text-[11px] text-text-muted">{alerts.length} alertas</span>
@@ -64,8 +103,9 @@ export default function NotificationsMenu() {
                   </div>
                 </div>
               )
-              return a.sku ? (
-                <Link key={a.id} to={`/app/produto/${a.sku}`} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
+              const href = a.sku ? `/app/produto/${a.sku}` : a.marketplace ? '/app/marketplaces' : null
+              return href ? (
+                <Link key={a.id} to={href} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
                   {content}
                 </Link>
               ) : (

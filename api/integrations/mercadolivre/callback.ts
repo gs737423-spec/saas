@@ -3,7 +3,6 @@ import { getMissingEnvVars, getSupabaseAdmin, MERCADOLIVRE_ENV_VARS } from '../.
 import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/mercadolivre/auth.js'
 import { encryptSecret } from '../../../src/server/integrations/crypto.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
-import { DEFAULT_COMPANY_ID } from '../../../src/server/integrations/types.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const appBaseUrl = process.env.APP_BASE_URL
@@ -28,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'error',
         message: `Mercado Livre returned error: ${mlError}`,
       })
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
       return
     }
 
@@ -41,27 +40,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'error',
         message: !code ? 'Missing authorization code in callback' : 'Invalid or expired OAuth state',
       })
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
       return
     }
 
+    const companyId = statePayload.companyId
     const tokenResponse = await exchangeCodeForToken(code)
     const supabase = await getSupabaseAdmin()
+
+    // Sem refresh_token = a conta autorizante não tem permissão de
+    // vendedor no Mercado Livre. Marcar como "connected" mesmo assim fazia
+    // o sync falhar pra sempre em silêncio (loadConnection exige
+    // refresh_token) enquanto a UI mostrava "Conectado" — cliente nunca
+    // entendia o motivo. Agora fica status:'error' com mensagem explícita
+    // desde a primeira tentativa.
+    const isSellerAccount = Boolean(tokenResponse.refresh_token)
 
     const { data, error: upsertError } = await supabase
       .from('marketplace_connections')
       .upsert(
         {
-          company_id: DEFAULT_COMPANY_ID,
+          company_id: companyId,
           provider: 'mercadolivre',
-          status: 'connected',
+          status: isSellerAccount ? 'connected' : 'error',
           external_account_id: String(tokenResponse.user_id),
           seller_id: String(tokenResponse.user_id),
           access_token_encrypted: encryptSecret(tokenResponse.access_token),
-          refresh_token_encrypted: encryptSecret(tokenResponse.refresh_token),
+          refresh_token_encrypted: tokenResponse.refresh_token ? encryptSecret(tokenResponse.refresh_token) : null,
           token_expires_at: new Date(Date.now() + tokenResponse.expires_in * 1000).toISOString(),
           scopes: tokenResponse.scope,
-          last_error: null,
+          last_error: isSellerAccount ? null : 'A conta do Mercado Livre autorizada não tem permissão de vendedor. Reconecte usando uma conta vendedora (com anúncios ativos).',
         },
         { onConflict: 'company_id,provider' }
       )
@@ -73,15 +81,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await logSyncEvent({
+      companyId,
       connectionId: data.id,
       provider: 'mercadolivre',
       eventType: 'oauth_connected',
-      status: 'success',
-      message: 'Mercado Livre connection established',
+      status: isSellerAccount ? 'success' : 'error',
+      message: isSellerAccount ? 'Mercado Livre connection established' : 'Connected account has no seller permission (no refresh_token)',
       payload: { externalAccountId: String(tokenResponse.user_id), scopes: tokenResponse.scope },
     })
 
-    res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre`)
+    res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre${isSellerAccount ? '' : '&status=error'}`)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error during token exchange'
     console.error('[mercadolivre/callback]', message)
@@ -93,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message,
     })
     if (appBaseUrl) {
-      res.redirect(302, `${appBaseUrl}/importacoes?connected=mercadolivre&status=error`)
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=mercadolivre&status=error`)
     } else {
       res.status(200).json({ ok: false, source: 'error', message: 'Erro controlado durante autenticação com o Mercado Livre.' })
     }

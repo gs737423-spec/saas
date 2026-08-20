@@ -87,3 +87,18 @@ Não declare que passou sem executar.
 Atualize `docs/01-Project/Current-State.md` quando o estado funcional mudar.
 Crie uma decisão quando houver escolha arquitetônica, mudança de contrato ou regra permanente.
 Não reescreva o histórico para parecer que uma decisão sempre existiu.
+
+## Independent Quality Gate — Failure Hunter
+
+This project has a specialized subagent: `failure-hunter` (`.claude/agents/failure-hunter.md`). Use it as an independent adversarial quality gate after meaningful changes — not blindly after every trivial edit.
+
+Risk-based invocation:
+- **Tier 0** (copy, isolated CSS, comment, rename): normally skip.
+- **Tier 1** (pure utility, local state, no persistence): targeted verification only.
+- **Tier 2** (endpoint, form, shared state, internal integration): use when behavior or integration actually changed.
+- **Tier 3** (auth, RLS, service role, multi-tenancy, migrations, external integrations, cron, locks, retries, checkpoints, circuit breakers, concurrency, idempotency, secrets, critical persisted data): invoke proactively.
+- **Tier 4** (possible P0/P1, cross-tenant, corruption, hard concurrency bug): invoke Sonnet (failure-hunter's default) first. Opus is never automatic — the agent returns `DEEP_REVIEW_RECOMMENDED` instead of guessing, and you decide whether to run a deep review.
+
+When delegating, give `failure-hunter` factual context only — requirement, expected behavior, diff/files changed, any failing evidence — and do not pre-bias it by claiming the implementation is correct. It investigates independently, starting with targeted work and expanding only as risk/signal justifies (see the agent file's cost tiers). It consults this project's connected Second Brain/Obsidian selectively when historical knowledge is relevant, never by loading the whole vault, and treats it as historical context, not as ground truth over current code.
+
+Confirmed P0/P1 findings block approval. After a P0/P1 fix, run `failure-hunter` again against the original failure before considering it resolved.

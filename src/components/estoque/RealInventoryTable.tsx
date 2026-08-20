@@ -1,87 +1,394 @@
-import { getMarketplaceColor } from '@/data/mockData'
-import type { DashboardInventoryItem } from '@/server/integrations/types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Search, ChevronDown, ChevronRight, Check, Boxes, PauseCircle, Crown, Wallet } from 'lucide-react'
+import { getMarketplaceColor, getMarketplaceBadge, type Marketplace } from '@/data/mockData'
+import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
+import DataTableViewport from '@/components/common/DataTableViewport'
+import { useTheme } from '@/contexts/ThemeContext'
+import { coveragePresentation, giroPresentation } from '@/lib/inventoryStatus'
+import CategoryDrawer from '@/components/category/CategoryDrawer'
+import CategoryFilterDropdown from '@/components/category/CategoryFilterDropdown'
+import { categoryKey, categoryLabel, getCategoryOptions, getTopCategory, matchesCategoryFilter } from '@/lib/categoryAnalytics'
+import { categoryItemFromInventory } from '@/lib/categoryAdapters'
 
-function relativeTime(iso: string | null): string {
+function relativeDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (diff < 60) return 'agora'
-  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`
-  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
-  return `há ${Math.floor(diff / 86400)}d`
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const brl = (v: number) => v.toLocaleString('pt-BR')
+const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+const ABC_STYLE: Record<AbcClass, { color: string; bg: string }> = {
+  A: { color: '#3BE38E', bg: 'rgba(43,214,160,0.14)' },
+  B: { color: '#3A8DFF', bg: 'rgba(47,107,255,0.14)' },
+  C: { color: '#6F829B', bg: 'rgba(111,130,155,0.16)' },
+}
+
+// Cobertura (dias de estoque no ritmo de venda atual) — derivada de campos
+// já reais (availableQuantity/soldQuantity), sem nenhum dado novo inventado.
+function coverageDays(item: DashboardInventoryItem): number | null {
+  if (item.availableQuantity === null || !item.soldQuantity || item.soldQuantity <= 0) return null
+  const dailyRate = item.soldQuantity / 30
+  return dailyRate > 0 ? item.availableQuantity / dailyRate : null
+}
+
+interface FilterState {
+  abc: Set<AbcClass>
+  onlyCritical: boolean
+  onlyStalled: boolean
+  marketplace: Marketplace | 'all'
+  categories: Set<string>
+  manufacturerSearch: string
+  onlyLowCoverage: boolean
+  onlyExcess: boolean
+  onlyNoRecentEntry: boolean
+}
+
+const defaultFilters: FilterState = {
+  abc: new Set(),
+  onlyCritical: false,
+  onlyStalled: false,
+  marketplace: 'all',
+  categories: new Set(),
+  manufacturerSearch: '',
+  onlyLowCoverage: false,
+  onlyExcess: false,
+  onlyNoRecentEntry: false,
+}
+
+function isDefault(f: FilterState): boolean {
+  return f.abc.size === 0 && f.categories.size === 0 && !f.onlyCritical && !f.onlyStalled && !f.onlyLowCoverage && !f.onlyExcess && !f.onlyNoRecentEntry && f.marketplace === 'all' && !f.manufacturerSearch
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`motion-chip cursor-pointer rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
+        active ? 'control-active border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'control-inactive border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-secondary'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+const MARKETPLACES: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
+
+function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; onChange: (v: Marketplace | 'all') => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [])
+
+  const options: (Marketplace | 'all')[] = ['all', ...MARKETPLACES]
+  const optionLabel = (v: Marketplace | 'all') => (v === 'all' ? 'Todos os canais' : v)
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`motion-chip flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[11.5px] font-medium ${
+          open ? 'control-active border-accent-blue/40 bg-accent-blue/15 text-accent-blue' : 'control-inactive border-border-subtle bg-bg-primary/40 text-text-secondary hover:text-text-primary'
+        }`}
+      >
+        {optionLabel(value)}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1.5 min-w-[180px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false) }}
+              className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3.5 py-2 text-left text-[12px] font-medium transition-colors ${
+                value === opt ? 'control-active bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+              }`}
+            >
+              {optionLabel(opt)}
+              {value === opt && <Check className="h-3.5 w-3.5" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function RealInventoryTable({ items }: { items: DashboardInventoryItem[] }) {
-  const mp = getMarketplaceColor('Mercado Livre')
+  const { theme } = useTheme()
+  const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const [sort, setSort] = useState<'revenue' | 'stock' | 'units30d' | 'coverage'>('revenue')
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
+  const categoryProducts = useMemo(() => items.map(categoryItemFromInventory), [items])
+  const categoryOptions = useMemo(() => getCategoryOptions(categoryProducts), [categoryProducts])
+  const topCategory = useMemo(() => getTopCategory(categoryProducts), [categoryProducts])
+  const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
+
+  const enriched = useMemo(() => items.map((item) => {
+    const cov = coverageDays(item)
+    const giro = giroPresentation(item.soldQuantity, item.availableQuantity, cov)
+    return { item, cov, giro }
+  }), [items])
+
+  // Dados de fornecedor/NF só existem no Modo Demonstração (sem tabela de
+  // purchase orders/NF real ainda — ver DashboardInventoryItem em types.ts).
+  // Sync real do Mercado Livre nunca preenche esses 5 campos: em vez de
+  // mostrar colunas inteiras de "—" (parece bug de sync pro cliente),
+  // esconde a seção inteira quando nenhum item tem esse dado.
+  const hasSupplierData = useMemo(
+    () => items.some((i) => i.manufacturerCode != null || i.lastEntryAt != null || i.entryQty != null || i.lastInvoiceNumber != null || i.freightValue != null),
+    [items]
+  )
+
+  const stalledCount = enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
+  const curvaA = items.filter((i) => i.abcClass === 'A')
+  const pricedItems = items.filter((item) => item.price !== null && item.availableQuantity !== null)
+  const totalValue = pricedItems.reduce((sum, item) => sum + item.price! * item.availableQuantity!, 0)
+
+  const filtered = enriched.filter(({ item, cov, giro }) => {
+    if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
+    if (filters.onlyCritical && !(cov !== null && cov < 7)) return false
+    if (filters.onlyStalled && !(giro.label === 'Parado' || giro.label === 'Parado crítico')) return false
+    if (filters.marketplace !== 'all' && item.marketplace !== filters.marketplace) return false
+    if (!matchesCategoryFilter(categoryItemFromInventory(item), filters.categories)) return false
+    if (filters.manufacturerSearch && !(item.manufacturerCode ?? '').toLowerCase().includes(filters.manufacturerSearch.toLowerCase())) return false
+    if (filters.onlyLowCoverage && !(cov !== null && cov < 15)) return false
+    if (filters.onlyExcess && !(cov !== null && cov > 45)) return false
+    if (filters.onlyNoRecentEntry) {
+      const daysSince = item.lastEntryAt ? (Date.now() - new Date(item.lastEntryAt).getTime()) / 86400000 : Infinity
+      if (daysSince < 20) return false
+    }
+    return true
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'revenue') return b.item.revenue30d - a.item.revenue30d
+    if (sort === 'stock') return (b.item.availableQuantity ?? -1) - (a.item.availableQuantity ?? -1)
+    if (sort === 'units30d') return (b.item.soldQuantity ?? 0) - (a.item.soldQuantity ?? 0)
+    return (b.cov ?? 0) - (a.cov ?? 0)
+  })
+
+  const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
+
+  const kpis: { key: string; label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean }[] = [
+    { key: 'value', label: 'Valor Estimado em Estoque', value: pricedItems.length > 0 ? `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}` : 'N/D', sub: pricedItems.length === items.length ? 'estoque × preço' : `${pricedItems.length}/${items.length} itens com preço`, icon: Wallet, primary: '#6366F1' },
+    { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
+    { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
+    { key: 'curveA', label: 'Produtos Curva A', value: String(curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
+  ]
 
   return (
-    <div className="overview-glass-elevated flex flex-col rounded-2xl p-4 sm:rounded-3xl sm:p-5">
-      <div className="mb-3.5">
-        <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
-        <p className="mt-0.5 text-xs text-text-muted">{items.length} produtos sincronizados do Mercado Livre</p>
-      </div>
-
-      {/* Mobile: stacked cards */}
-      <div className="space-y-2.5 md:hidden">
-        {items.map((item) => (
-          <div key={item.sku ?? item.title} className="overview-glass rounded-xl p-3.5">
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-medium text-text-primary">{item.title}</p>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <span className="font-mono text-[10px] text-text-muted">{item.sku ?? '—'}</span>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-[10px] font-medium" style={{ color: mp }}>{item.marketplace}</span>
-                </div>
-              </div>
-              <span className="shrink-0 rounded-md bg-bg-card px-1.5 py-0.5 text-[10px] font-medium text-text-secondary">{item.status ?? '—'}</span>
-            </div>
-            <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-border-subtle/50 pt-2.5 text-[11px]">
-              <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity}</p></div>
-              <div><p className="text-text-muted">Preço</p><p className="mt-0.5 font-mono text-text-secondary">{item.price != null ? `R$ ${item.price.toLocaleString('pt-BR')}` : '—'}</p></div>
-              <div><p className="text-text-muted">Sync</p><p className="mt-0.5 font-mono text-text-secondary">{relativeTime(item.lastSyncAt)}</p></div>
-            </div>
-          </div>
+    <div className="workspace-inventory flex flex-col gap-2.5">
+      <div className="workspace-kpi-grid grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {kpis.map((c) => (
+          <KpiCard key={c.key} c={c} />
         ))}
       </div>
 
-      {/* Desktop: table */}
-      <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
-              <th className="pb-3 pr-3 pl-2 font-semibold">SKU</th>
-              <th className="pb-3 pr-3 font-semibold">Título</th>
-              <th className="pb-3 pr-3 font-semibold">Marketplace</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Estoque</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Preço</th>
-              <th className="pb-3 pr-3 text-right font-semibold">Vendas 30d</th>
-              <th className="pb-3 pr-3 text-center font-semibold">Status</th>
-              <th className="pb-3 pr-2 text-right font-semibold">Última sync</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.sku ?? item.title} className="border-b border-border-subtle/50 transition-colors hover:bg-bg-card-hover/50">
-                <td className="py-3 pr-3 pl-2 font-mono text-[11px] text-text-muted">{item.sku ?? '—'}</td>
-                <td className="py-3 pr-3 font-medium text-text-primary">{item.title}</td>
-                <td className="py-3 pr-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: `${mp}15`, color: mp }}>
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: mp }} />
-                    {item.marketplace}
-                  </span>
-                </td>
-                <td className="py-3 pr-3 text-right font-mono text-text-secondary">{item.availableQuantity}</td>
-                <td className="py-3 pr-3 text-right font-mono text-text-secondary">{item.price != null ? `R$ ${item.price.toLocaleString('pt-BR')}` : '—'}</td>
-                <td className="py-3 pr-3 text-right font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
-                <td className="py-3 pr-3 text-center">
-                  <span className="rounded-md bg-bg-card px-2 py-0.5 text-[11px] font-medium text-text-secondary">{item.status ?? '—'}</span>
-                </td>
-                <td className="py-3 pr-2 text-right font-mono text-[11px] text-text-muted">{relativeTime(item.lastSyncAt)}</td>
-              </tr>
+      <div className="overview-glass-elevated motion-panel workspace-table-panel workspace-inventory-table flex flex-col rounded-2xl p-4 sm:p-5">
+        <div className="workspace-panel-header mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
+            <p className="mt-0.5 text-xs text-text-muted">{sorted.length} de {items.length} produtos · inclui Curva ABC</p>
+            {topCategory && <button type="button" onClick={() => setSelectedCategoryKey(topCategory.key)} className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-text-secondary hover:text-text-primary hover:underline" title="Maior faturamento no período">Categoria líder <strong className="text-text-primary">{topCategory.label} · R$ {brl(topCategory.revenue)}</strong><ChevronRight className="h-3 w-3" /></button>}
+          </div>
+          <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-0.5">
+            <span className="px-1.5 text-[9px] font-medium uppercase tracking-wider text-text-muted">Ordenar</span>
+            {[
+              { key: 'revenue' as const, label: 'Faturamento' },
+              { key: 'stock' as const, label: 'Estoque' },
+              { key: 'units30d' as const, label: 'Vendas 30d' },
+              { key: 'coverage' as const, label: 'Cobertura' },
+            ].map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setSort(o.key)}
+                className={`motion-chip cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium ${sort === o.key ? 'control-active bg-accent-blue/15 text-accent-blue' : 'control-inactive text-text-muted hover:text-text-secondary'}`}
+              >
+                {o.label}
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        <div className="workspace-inventory-toolbar enterprise-filter-surface mb-3.5 flex flex-wrap items-center gap-2 rounded-lg border border-border-subtle px-3 py-2">
+          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Curva</span>
+          {(['A', 'B', 'C'] as const).map((c) => (
+            <Chip key={c} active={filters.abc.has(c)} onClick={() => setFilters((f) => { const next = new Set(f.abc); if (next.has(c)) next.delete(c); else next.add(c); return { ...f, abc: next } })}>{c}</Chip>
+          ))}
+          <span className="mx-1 h-4 w-px bg-border-subtle" />
+          <Chip active={filters.onlyCritical} onClick={() => setFilters((f) => ({ ...f, onlyCritical: !f.onlyCritical }))}>Cobertura muito baixa</Chip>
+          <Chip active={filters.onlyStalled} onClick={() => setFilters((f) => ({ ...f, onlyStalled: !f.onlyStalled }))}>Parado</Chip>
+          <Chip active={filters.onlyLowCoverage} onClick={() => setFilters((f) => ({ ...f, onlyLowCoverage: !f.onlyLowCoverage }))}>Cobertura baixa</Chip>
+          <Chip active={filters.onlyExcess} onClick={() => setFilters((f) => ({ ...f, onlyExcess: !f.onlyExcess }))}>Excesso</Chip>
+          {hasSupplierData && (
+            <Chip active={filters.onlyNoRecentEntry} onClick={() => setFilters((f) => ({ ...f, onlyNoRecentEntry: !f.onlyNoRecentEntry }))}>Sem entrada recente</Chip>
+          )}
+          <span className="mx-1 h-4 w-px bg-border-subtle" />
+          <MarketplaceDropdown value={filters.marketplace} onChange={(v) => setFilters((f) => ({ ...f, marketplace: v }))} />
+          <CategoryFilterDropdown compact options={categoryOptions} selected={filters.categories} onChange={(categories) => setFilters((f) => ({ ...f, categories }))} />
+          {hasSupplierData && (
+            <div className="motion-input flex min-w-[160px] flex-1 items-center gap-1.5 rounded-sm border border-border-subtle bg-bg-primary/40 px-3 py-1.5 focus-within:border-accent-blue/50">
+              <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+              <input
+                value={filters.manufacturerSearch}
+                onChange={(e) => setFilters((f) => ({ ...f, manufacturerSearch: e.target.value }))}
+                placeholder="Código fabricante..."
+                className="w-full bg-transparent text-[11.5px] font-semibold text-text-primary placeholder:font-medium placeholder:text-text-secondary focus:outline-none"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-2.5 md:hidden">
+          {sorted.map(({ item, cov, giro }) => {
+            const mp = getMarketplaceColor(item.marketplace)
+            const covStyle = coveragePresentation(cov)
+            return (
+              <div key={`${item.marketplace}-${item.sku ?? item.title}`} className="overview-glass relative overflow-hidden rounded-xl p-3.5" style={{ boxShadow: `inset 3px 0 0 ${covStyle.color}` }}>
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    {item.sku ? (
+                      <Link to={`/app/produto/${item.sku}`} className="block truncate text-[13px] font-medium text-text-primary hover:text-accent-blue hover:underline">{item.title}</Link>
+                    ) : (
+                      <p className="truncate text-[13px] font-medium text-text-primary">{item.title}</p>
+                    )}
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] text-text-muted">{item.sku ?? '—'}</span>
+                      <span className="text-text-muted">·</span>
+                      <span className="text-[10px] font-medium" style={{ color: getMarketplaceBadge(item.marketplace, theme).text }}>{item.marketplace}</span>
+                    </div>
+                    <InventoryCategoryTrigger item={item} onOpen={setSelectedCategoryKey} className="mt-1" />
+                  </div>
+                  {item.abcClass && <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span>}
+                </div>
+                <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-border-subtle/50 pt-2.5 text-[11px]">
+                  <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity ?? 'N/D'}</p></div>
+                  <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{item.soldQuantity ?? '—'}</p></div>
+                  <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}</p></div>
+                  <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">{item.availableQuantity === null || item.price === null ? 'N/D' : `R$ ${brl(item.price * item.availableQuantity)}`}</p></div>
+                  <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: giro.color }}>{giro.label}</p></div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Desktop: table com scroll próprio */}
+        <div className="workspace-table-area hidden md:block">
+          <DataTableViewport size="large" ariaLabel="Estoque por produto. Role para visualizar mais itens." className="-mx-1 rounded-xl px-1">
+            <table className="workspace-data-table enterprise-table w-full min-w-[1160px] text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle text-left text-[10.5px] font-semibold uppercase tracking-wider text-text-muted">
+                  <th className="pb-3 pr-2 pl-2 font-semibold">Código</th>
+                  <th className="pb-3 pr-2 font-semibold">Descrição</th>
+                  <th className="pb-3 pr-2 font-semibold">Categoria</th>
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 font-semibold xl:table-cell">Cód. Fabricante</th>}
+                  <th className="pb-3 pr-2 text-center font-semibold">Estoque</th>
+                  <th className="pb-3 pr-2 text-center font-semibold">Vendas 30d</th>
+                  <th className="pb-3 pr-2 text-center font-semibold">Cobertura</th>
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Últ. Entrada</th>}
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Qtd. Entrada</th>}
+                  {hasSupplierData && <th className="pb-3 pr-2 text-center font-semibold">Última NF</th>}
+                  {hasSupplierData && <th className="hidden pb-3 pr-2 text-center font-semibold lg:table-cell">Valor Frete</th>}
+                  <th className="pb-3 pr-2 text-center font-semibold">Valor em Estoque</th>
+                  <th className="hidden pb-3 pr-2 text-center font-semibold xl:table-cell">Média</th>
+                  <th className="pb-3 pr-2 text-center font-semibold">Share</th>
+                  <th className="pb-3 pr-2 text-center font-semibold">ABC</th>
+                  <th className="pb-3 pr-2 text-center font-semibold">Giro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(({ item, cov, giro }) => {
+                  const covStyle = coveragePresentation(cov)
+                  const stockValue = item.availableQuantity === null || item.price === null ? null : item.price * item.availableQuantity
+                  const avgTicket = item.soldQuantity && item.soldQuantity > 0 ? item.revenue30d / item.soldQuantity : 0
+                  const share = totalRevenue > 0 ? (item.revenue30d / totalRevenue) * 100 : 0
+                  return (
+                    <tr key={`${item.marketplace}-${item.sku ?? item.title}`} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
+                      <td className="max-w-[130px] truncate py-3 pr-2 pl-2 font-mono text-[11px] text-text-muted" title={item.sku ?? undefined}>{item.sku ?? '—'}</td>
+                      <td className="max-w-[220px] py-3 pr-2">
+                        {item.sku ? (
+                          <Link to={`/app/produto/${item.sku}`} className="block truncate font-medium text-text-primary hover:text-accent-blue hover:underline" title={item.title}>{item.title}</Link>
+                        ) : (
+                          <span className="block truncate font-medium text-text-primary" title={item.title}>{item.title}</span>
+                        )}
+                      </td>
+                      <td className="max-w-[150px] py-3 pr-2"><InventoryCategoryTrigger item={item} onOpen={setSelectedCategoryKey} /></td>
+                      {hasSupplierData && <td className="hidden max-w-[110px] truncate py-3 pr-2 font-mono text-[11px] text-text-muted xl:table-cell" title={item.manufacturerCode ?? undefined}>{item.manufacturerCode ?? '—'}</td>}
+                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.availableQuantity ?? 'N/D'}</td>
+                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.soldQuantity ?? '—'}</td>
+                      <td className="py-3 pr-2 text-center">
+                        <span className="rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold" style={{ color: covStyle.color, background: covStyle.background }}>
+                          {cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}
+                        </span>
+                      </td>
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-[11px] text-text-secondary lg:table-cell">{relativeDate(item.lastEntryAt)}</td>}
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">{item.entryQty ?? '—'}</td>}
+                      {hasSupplierData && <td className="py-3 pr-2 text-center font-mono text-text-secondary">{item.lastInvoiceNumber ?? '—'}</td>}
+                      {hasSupplierData && <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary lg:table-cell">{item.freightValue != null ? `R$ ${brl2(item.freightValue)}` : '—'}</td>}
+                      <td className="py-3 pr-2 text-center font-mono text-text-primary">{stockValue === null ? 'N/D' : `R$ ${brl(stockValue)}`}</td>
+                      <td className="hidden py-3 pr-2 text-center font-mono text-text-secondary xl:table-cell">R$ {brl2(avgTicket)}</td>
+                      <td className="py-3 pr-2 text-center font-mono text-text-secondary">{pct(share)}%</td>
+                      <td className="py-3 pr-2 text-center">
+                        {item.abcClass ? <span className="rounded-md px-2 py-0.5 text-[11px] font-bold" style={{ color: ABC_STYLE[item.abcClass].color, background: ABC_STYLE[item.abcClass].bg }}>{item.abcClass}</span> : <span className="text-text-muted">—</span>}
+                      </td>
+                      <td className="py-3 pr-2 text-center">
+                        <span className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: giro.color, background: giro.background }}>{giro.label}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </DataTableViewport>
+        </div>
       </div>
+      <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>
+  )
+}
+
+function InventoryCategoryTrigger({ item, onOpen, className = '' }: { item: DashboardInventoryItem; onOpen: (key: string) => void; className?: string }) {
+  const source = categoryItemFromInventory(item)
+  return (
+    <button type="button" onClick={() => onOpen(categoryKey(source))} className={`${className} group/category flex max-w-full items-center gap-0.5 truncate text-[10.5px] font-medium text-text-muted hover:text-text-primary hover:underline`} title={`Analisar categoria ${categoryLabel(source)}`}>
+      <span className="truncate">{categoryLabel(source)}</span><ChevronRight className="h-3 w-3 shrink-0 opacity-60 transition-transform group-hover/category:translate-x-0.5" />
+    </button>
+  )
+}
+
+function KpiCard({ c }: { c: { label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean } }) {
+  const clickable = Boolean(c.onClick)
+  return (
+    <button
+      type="button"
+      onClick={c.onClick}
+      disabled={!clickable}
+      className={`workspace-kpi-card overview-glass overview-card-hover relative flex h-full min-h-[112px] min-w-0 flex-col overflow-hidden rounded-md p-2.5 text-left ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+    >
+      <div className="relative mb-1.5 flex min-h-[28px] items-start justify-between gap-1.5">
+        <span className="min-w-0 text-[9.5px] font-medium uppercase leading-tight tracking-wider text-text-muted">{c.label}</span>
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.primary}16`, boxShadow: `inset 0 0 0 1px ${c.primary}33` }}>
+          <c.icon className="h-3.5 w-3.5" style={{ color: c.primary }} />
+        </div>
+      </div>
+      <div className="relative mt-auto truncate font-mono text-[16px] font-bold leading-none tracking-tight text-text-primary">{c.value}</div>
+      <div className="relative mt-1 truncate text-[10px] text-text-muted">{c.sub}</div>
+    </button>
   )
 }

@@ -42,3 +42,12 @@ flowchart LR
 - Conectores externos não definem diretamente o modelo interno.
 - Regras de negócio não ficam duplicadas entre páginas.
 - Consultas devem carregar o escopo do tenant.
+
+## Registry universal de canais VTEX
+
+- `provider` identifica o conector/source que entregou o dado; continua controlado.
+- `sales_channel` identifica onde a venda ocorreu; é uma chave textual extensível registrada em `sales_channels`.
+- `vtex_channel_mappings` resolve identidade externa por `company_id` + `connection_id`; affiliate IDs não têm significado global presumido.
+- Canal novo é persistido como `external:vtex:*` e `unresolved`, sem criar provider direto.
+- Elegibilidade global (`analytics_included`) e resolução do canal (`channel_resolution_status`) são decisões independentes.
+- `order_source_refs` preserva origem e identidade suficientes para reclassificação/deduplicação futura.

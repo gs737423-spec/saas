@@ -1,0 +1,50 @@
+interface Service {
+  label: string
+  text: string
+}
+
+const services: Service[] = [
+  { label: 'DIAGNÓSTICO E DIREÇÃO ESTRATÉGICA', text: 'Analisamos a operação junto com a empresa, identificamos gargalos e definimos em conjunto quais problemas e oportunidades devem receber atenção primeiro.' },
+  { label: 'ACOMPANHAMENTO DE PERFORMANCE', text: 'Acompanhamos faturamento, margem, pedidos, estoque, produtos e desempenho dos canais lado a lado com a gestão, ao longo do tempo.' },
+  { label: 'DESENVOLVIMENTO DE MARKETPLACES', text: 'Colaboramos com a empresa para entender o papel de cada canal, identificar oportunidades e organizar prioridades para crescer com mais controle.' },
+  { label: 'PLATAFORMA DE GESTÃO MKTONLINE', text: 'Disponibilizamos uma plataforma própria, mantida junto com a empresa, para consolidar os principais indicadores e sustentar o acompanhamento entre consultores e gestores.' },
+]
+
+// Serviços da consultoria — substitui de vez a antiga ExperienceSection.
+// A MKTOnline é consultoria; a plataforma é um dos 4 serviços (o último), não
+// uma seção-argumento própria. Painel único: título+texto à esquerda,
+// 4 serviços em grade 2×2 à direita, sem cards grandes/numeração/timeline.
+export default function ServicosSection() {
+  return (
+    <section id="servicos" className="sec-dark-flat servicos-section scroll-mt-24">
+      <div className="site-container site-container--tight servicos-container" style={{ maxWidth: 1200 }}>
+        <span className="servicos-eyebrow">COMO A MKTONLINE PODE AJUDAR</span>
+
+        <div className="servicos-panel">
+          <div className="servicos-panel__intro">
+            <h2 className="servicos-panel__title">
+              Consultoria que participa da operação, não apenas entrega recomendações.
+            </h2>
+            <p className="servicos-panel__text">
+              Cada empresa possui desafios diferentes. Por isso, a MKTOnline começa entendendo o cenário atual e
+              estrutura o acompanhamento de acordo com os canais, objetivos e prioridades do negócio.
+            </p>
+          </div>
+
+          <div className="servicos-grid">
+            {services.map((s) => (
+              <div key={s.label} className="servicos-item">
+                <span className="servicos-item__label">{s.label}</span>
+                <p className="servicos-item__text">{s.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="servicos-closing">
+          A tecnologia faz parte da entrega. O principal valor está na experiência aplicada às decisões da empresa.
+        </p>
+      </div>
+    </section>
+  )
+}

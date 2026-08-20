@@ -1,13 +1,14 @@
-// Palco visual da pessoa do hero — substitui os balões/formas soltas por uma
-// composição única: forma principal (arco) + forma secundária + detalhe
-// âmbar + base/pedestal + sombra de contato + pessoa. Nada aqui é
-// position:absolute solto sem função — cada camada ancora a próxima.
+// Palco visual da pessoa do hero — forma principal (arco) + forma secundária +
+// detalhe âmbar + base/pedestal + sombra de contato + pessoa. As 3 pessoas
+// ficam SEMPRE montadas (camadas persistentes, position:absolute, mesmo
+// palco/base/altura) — troca de slide só muda opacity/visibility/transform,
+// nunca remonta a <img> nem re-decodifica do zero. Isso evita o atraso/"queda"
+// da pessoa depois da copy trocar.
 export default function HeroPersonStage({
-  person, personAlt, eager,
+  people, activeIndex,
 }: {
-  person: string
-  personAlt: string
-  eager?: boolean
+  people: { src: string; alt: string }[]
+  activeIndex: number
 }) {
   return (
     <div className="hero-stage">
@@ -15,14 +16,18 @@ export default function HeroPersonStage({
       <span className="hero-stage-secondary" aria-hidden="true" />
       <span className="hero-stage-amber" aria-hidden="true" />
       <span className="hero-stage-base" aria-hidden="true" />
-      <img
-        key={person}
-        src={person}
-        alt={personAlt}
-        className="hero-person"
-        loading={eager ? 'eager' : 'lazy'}
-        draggable={false}
-      />
+      {people.map((p, i) => (
+        <img
+          key={p.src}
+          src={p.src}
+          alt={i === activeIndex ? p.alt : ''}
+          aria-hidden={i === activeIndex ? undefined : true}
+          className="hero-person"
+          data-active={i === activeIndex}
+          loading="eager"
+          draggable={false}
+        />
+      ))}
     </div>
   )
 }

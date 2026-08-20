@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Search } from 'lucide-react'
-import type { FinanceTransaction, FinanceTransactionType } from '@/data/financeData'
+import type { FinanceTransaction, FinanceTransactionType } from '@/data/financeShapes'
 import { getMarketplaceColor } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 const typeTone: Record<FinanceTransactionType, string> = {
-  Venda: '#16C784',
-  Comissão: '#F5C24B',
-  Tarifa: '#F5C24B',
-  Estorno: '#F4436C',
-  Devolução: '#F4436C',
-  Ajuste: '#59688A',
+  Venda: '#3BE38E',
+  Tarifa: '#FFC95A',
+  Estorno: '#FF5E7D',
+  Devolução: '#FF5E7D',
+  Ajuste: '#6F829B',
 }
 
 function formatDate(dateStr: string): string {
@@ -20,7 +19,7 @@ function formatDate(dateStr: string): string {
   return `${d}/${m}/${y.slice(2)}`
 }
 
-const typeOptions: FinanceTransactionType[] = ['Venda', 'Comissão', 'Tarifa', 'Estorno', 'Devolução', 'Ajuste']
+const typeOptions: FinanceTransactionType[] = ['Venda', 'Tarifa', 'Estorno', 'Devolução', 'Ajuste']
 
 export default function TransactionsLedger({ transactions }: { transactions: FinanceTransaction[] }) {
   const [open, setOpen] = useState(false)
@@ -51,7 +50,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
   }, [transactions, activeTypes, query])
 
   return (
-    <div className="glass-panel motion-panel rounded-2xl p-4 sm:p-5">
+    <div className="glass-panel motion-panel enterprise-section rounded-2xl">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -60,24 +59,24 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
           <p className="mt-0.5 text-xs text-text-muted">
-            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, comissão, estornos e ajustes
+            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, tarifas, estornos e ajustes
           </p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="mt-4">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTypes(new Set())}
-                className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
+                className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={
                   activeTypes.size === 0
-                    ? { background: '#3B82F618', color: '#3B82F6' }
-                    : { background: 'transparent', color: 'var(--text-muted)' }
+                    ? { background: 'var(--light-charcoal, var(--color-primary-600))', color: 'var(--light-on-charcoal, white)' }
+                    : { background: 'var(--color-bg-highlight)', color: 'var(--color-text-secondary)' }
                 }
               >
                 Todos
@@ -87,11 +86,11 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                   key={type}
                   type="button"
                   onClick={() => toggleType(type)}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors"
+                  className="rounded-sm px-2.5 py-1 text-[11px] font-medium transition-colors"
                   style={
                     activeTypes.has(type)
-                      ? { background: `${typeTone[type]}18`, color: typeTone[type] }
-                      : { background: 'transparent', color: 'var(--text-muted)' }
+                      ? { background: 'var(--light-charcoal, var(--color-primary-600))', color: 'var(--light-on-charcoal, white)' }
+                      : { background: 'var(--color-bg-highlight)', color: 'var(--color-text-secondary)' }
                   }
                 >
                   {type}
@@ -110,7 +109,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
             </div>
           </div>
           <DataTableViewport size="large" ariaLabel="Movimentações financeiras. Use as setas ou role para visualizar mais registros." className="-mx-1 rounded-xl px-1">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="enterprise-table w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                   <th className="pb-3 pr-4 font-semibold">Data</th>

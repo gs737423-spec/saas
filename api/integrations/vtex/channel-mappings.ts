@@ -1,0 +1,170 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireCapability } from '../../../src/server/auth/authorization.js'
+import { checkRateLimit } from '../../../src/server/auth/rateLimit.js'
+import { getRequestId } from '../../../src/server/security/requestContext.js'
+import { writeSecurityAudit } from '../../../src/server/security/auditLog.js'
+import { getSupabaseAdmin } from '../../../src/server/integrations/supabaseAdmin.js'
+import { loadVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
+import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
+import { normalizeVtexCanonicalChannel, normalizeVtexChannelDisplayName, normalizeVtexChannelMappings, normalizeVtexExternalChannelKey } from '../../../src/server/integrations/vtex/validation.js'
+import { CANONICAL_CHANNELS, describeVtexIdentifier, findCanonicalChannel, humanizeCanonicalKey, parseVtexExternalKey } from '../../../src/server/integrations/vtex/channelResolution.js'
+import { reclassifyVtexOrdersForIdentifier } from '../../../src/server/integrations/vtex/channelRegistry.js'
+
+function safeText(value: unknown, maxLength = 160): string | null {
+  if (typeof value !== 'string') return null
+  const normalized = value.trim().replace(/[\u0000-\u001f\u007f]/g, '')
+  return normalized ? normalized.slice(0, maxLength) : null
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (!['GET', 'PUT'].includes(req.method ?? '')) return void res.status(405).json({ ok: false, error: 'method_not_allowed' })
+  const auth = await requireCapability(req, res, 'marketplaces.manage')
+  if (!auth) return
+
+  try {
+    const current = await loadVtexConnection(auth.companyId)
+    const supabase = await getSupabaseAdmin()
+
+    if (req.method === 'GET') {
+      const [{ data: mappings, error: mappingsError }, { data: channels, error: channelsError }] = await Promise.all([
+        supabase.from('vtex_channel_mappings')
+          .select('external_key, affiliate_id, external_marketplace_name, external_sales_channel, canonical_channel, resolution_status, last_seen_at')
+          .eq('company_id', auth.companyId)
+          .eq('connection_id', current.id)
+          .eq('source_provider', 'vtex')
+          .order('last_seen_at', { ascending: false }),
+        supabase.from('sales_channels')
+          .select('canonical_key, display_name, channel_type')
+          .eq('company_id', auth.companyId)
+          .eq('status', 'active')
+          .order('display_name', { ascending: true }),
+      ])
+      if (mappingsError) throw new Error(mappingsError.message)
+      if (channelsError) throw new Error(channelsError.message)
+
+      const labels = new Map((channels ?? []).map((channel) => [String(channel.canonical_key), safeText(channel.display_name) ?? String(channel.canonical_key)]))
+      // Cada linha é um IDENTIFICADOR BRUTO da VTEX — não um "marketplace".
+      // Só depois de resolvido ele aponta para um canal canônico. A UI
+      // agrupa por `canonicalChannel` usando exatamente estes campos.
+      const identifiers = (mappings ?? []).map((mapping) => {
+        const parsed = parseVtexExternalKey(String(mapping.external_key))
+        const canonicalChannel = String(mapping.canonical_channel)
+        const resolved = mapping.resolution_status === 'resolved'
+        return {
+          externalKey: String(mapping.external_key),
+          identifierType: parsed.type,
+          identifierValue: safeText(mapping.affiliate_id) ?? safeText(mapping.external_sales_channel) ?? parsed.value,
+          identifierLabel: describeVtexIdentifier(parsed.type, safeText(mapping.affiliate_id) ?? safeText(mapping.external_sales_channel) ?? parsed.value),
+          canonicalChannel: resolved ? canonicalChannel : null,
+          canonicalDisplayName: resolved ? (labels.get(canonicalChannel) ?? humanizeCanonicalKey(canonicalChannel)) : null,
+          resolutionStatus: mapping.resolution_status,
+          lastSeenAt: mapping.last_seen_at,
+        }
+      })
+      res.status(200).json({
+        ok: true,
+        // `channels` mantém o nome do contrato anterior para não quebrar
+        // clientes existentes; o conteúdo agora é explicitamente uma lista
+        // de identificadores.
+        channels: identifiers,
+        counters: {
+          total: identifiers.length,
+          resolved: identifiers.filter((item) => item.resolutionStatus === 'resolved').length,
+          unresolved: identifiers.filter((item) => item.resolutionStatus === 'unresolved').length,
+        },
+        canonicalChannels: [...new Map([
+          ...CANONICAL_CHANNELS.map((channel) => [channel.key, {
+            canonicalKey: channel.key, displayName: channel.displayName, channelType: channel.channelType,
+          }] as const),
+          ...(channels ?? [])
+            .filter((channel) => !String(channel.canonical_key).startsWith('external:vtex:'))
+            .map((channel) => [String(channel.canonical_key), {
+            canonicalKey: String(channel.canonical_key),
+            displayName: safeText(channel.display_name) ?? String(channel.canonical_key),
+            channelType: channel.channel_type,
+            }] as const),
+        ]).values()],
+      })
+      return
+    }
+
+    if (!(await checkRateLimit(res, `vtex-channel-mappings:${auth.companyId}`, 10, 1800, { req, route: '/api/integrations/vtex/channel-mappings', policy: 'critical' }))) return
+
+    if (req.body?.externalKey !== undefined) {
+      const externalKey = normalizeVtexExternalChannelKey(req.body.externalKey)
+      // Colapsa variações de escrita no canônico do registry ANTES de
+      // gravar: "Amazon", "amazon" e "AMAZON" escolhidos na UI viram sempre
+      // a chave `amazon`, nunca um segundo canal.
+      const requestedChannel = normalizeVtexCanonicalChannel(req.body.canonicalChannel)
+      const canonicalChannel = findCanonicalChannel(requestedChannel)?.key ?? requestedChannel
+      const { data: mapping, error: mappingError } = await supabase.from('vtex_channel_mappings')
+        .select('id, identifier_type, identifier_value, affiliate_id, external_sales_channel')
+        .eq('company_id', auth.companyId)
+        .eq('connection_id', current.id)
+        .eq('source_provider', 'vtex')
+        .eq('external_key', externalKey)
+        .maybeSingle()
+      if (mappingError) throw new Error(mappingError.message)
+      if (!mapping) throw new Error('VTEX_CHANNEL_MAPPING_NOT_FOUND')
+
+      const { data: existingChannel, error: channelLookupError } = await supabase.from('sales_channels')
+        .select('canonical_key')
+        .eq('company_id', auth.companyId)
+        .eq('canonical_key', canonicalChannel)
+        .maybeSingle()
+      if (channelLookupError) throw new Error(channelLookupError.message)
+      if (!existingChannel) {
+        const displayName = findCanonicalChannel(canonicalChannel)?.displayName
+          ?? normalizeVtexChannelDisplayName(req.body.displayName)
+        const { error: createChannelError } = await supabase.from('sales_channels').upsert({
+          company_id: auth.companyId,
+          canonical_key: canonicalChannel,
+          display_name: displayName,
+          channel_type: 'marketplace',
+          status: 'active',
+        }, { onConflict: 'company_id,canonical_key' })
+        if (createChannelError) throw new Error(createChannelError.message)
+      }
+
+      const { error: updateError } = await supabase.from('vtex_channel_mappings').update({
+        canonical_channel: canonicalChannel,
+        resolution_status: 'resolved',
+        resolution_source: 'mapping',
+        updated_at: new Date().toISOString(),
+      }).eq('id', mapping.id).eq('company_id', auth.companyId).eq('connection_id', current.id)
+      if (updateError) throw new Error(updateError.message)
+
+      const parsed = parseVtexExternalKey(externalKey)
+      if (parsed.type === 'affiliate_id' || parsed.type === 'sales_channel') {
+        await reclassifyVtexOrdersForIdentifier(
+          supabase, auth.companyId, current.id, parsed.type,
+          safeText(parsed.type === 'affiliate_id' ? mapping.affiliate_id : mapping.external_sales_channel)
+            ?? safeText(mapping.identifier_value) ?? parsed.value,
+          canonicalChannel,
+        )
+      }
+
+      await writeSecurityAudit({
+        requestId: getRequestId(req, res), actorUserId: auth.userId, companyId: auth.companyId,
+        action: 'vtex.channel_mapping_resolved', targetType: 'vtex_channel_mapping', targetId: mapping.id,
+        metadata: { canonicalChannel, requiresFullSync: false },
+      })
+      res.status(200).json({ ok: true, canonicalChannel, requiresFullSync: false })
+      return
+    }
+
+    const channelMappings = normalizeVtexChannelMappings({
+      ...(current.provider_metadata?.channelMappings ?? {}),
+      ...(typeof req.body === 'object' && req.body !== null ? req.body : {}),
+    })
+    const { error } = await supabase.from('marketplace_connections').update({
+      provider_metadata: { ...(current.provider_metadata ?? {}), authMethod: 'application_key', channelMappings },
+    }).eq('id', current.id).eq('company_id', auth.companyId)
+    if (error) throw new Error(error.message)
+    await writeSecurityAudit({ requestId: getRequestId(req, res), actorUserId: auth.userId, companyId: auth.companyId, action: 'vtex.channel_mappings_update', targetType: 'marketplace_connection', targetId: current.id, metadata: { mappedChannels: Object.keys(channelMappings).filter((key) => channelMappings[key].length > 0).join(',') } })
+    res.status(200).json({ ok: true, channelMappings, requiresFullSync: true })
+  } catch (error) {
+    const safe = publicVtexError(error)
+    res.status(200).json({ ok: false, error: safe.code, message: safe.message })
+  }
+}

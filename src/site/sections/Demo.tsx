@@ -25,7 +25,7 @@ export default function Demo() {
   const [showOptional, setShowOptional] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', whatsapp: '', company: '', marketplaces: [] as string[], monthlyOrders: '', consent: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da Vintec.')
+  const waHref = specialistHref('Olá! Gostaria de falar com um especialista da MKTOnline.')
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }))
@@ -92,9 +92,9 @@ export default function Demo() {
       <div className="site-container py-16 md:py-24">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
-            <span className="site-label mb-3" style={{ color: '#6EC8FF' }}>Fale com a Vintec</span>
+            <span className="site-label mb-3" style={{ color: '#6EC8FF' }}>Fale com a MKTOnline</span>
             <h2 className="site-h2 vt-ink">Vamos conversar sobre a sua operação?</h2>
-            <p className="site-lead mt-4 vt-muted">Entenda como a Vintec pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
+            <p className="site-lead mt-4 vt-muted">Entenda como a MKTOnline pode apoiar sua operação multicanal — conexão por API, visão centralizada e acompanhamento com nossa equipe.</p>
             <ul className="mt-6 space-y-2.5">
               {['Demonstração guiada da plataforma', 'Orientação sobre integrações por API', 'Análise inicial da estrutura da operação'].map((t) => (
                 <li key={t} className="flex items-center gap-2.5 text-[14.5px] vt-muted">

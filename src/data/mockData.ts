@@ -2,6 +2,14 @@ import { BASELINE_DAYS, type PeriodOption } from '@/lib/periods'
 
 export type Marketplace = 'Mercado Livre' | 'Shopee' | 'Amazon' | 'Loja Própria'
 
+/** Único lugar que precisa crescer ao adicionar um canal novo — todo
+ *  componente que itera sobre essa lista (em vez de sobre o dado que voltou
+ *  da API) ganha o canal automaticamente sem mudar estrutura. Ver decisão
+ *  docs/02-Decisions/2026-08-06 - Paridade estrutural Demonstracao e
+ *  cliente real.md: tela nunca varia por quantidade de marketplace
+ *  conectado, só o valor fica zerado. */
+export const ALL_MARKETPLACES: Marketplace[] = ['Mercado Livre', 'Shopee', 'Amazon', 'Loja Própria']
+
 export interface KPI {
   label: string
   value: string
@@ -497,25 +505,61 @@ export function getProductHealthScore(product: Product, stock: StockItem | undef
   const reputacao = Math.max(20, Math.min(100, 100 - Math.abs(product.trend < 0 ? 25 : 5)))
 
   const breakdown: HealthScoreBreakdown[] = [
-    { label: 'Vendas', score: Math.round(vendas), color: '#4C82F7' },
-    { label: 'Margem', score: Math.round(margem), color: '#F5A524' },
-    { label: 'Estoque', score: Math.round(estoque), color: '#22D3EE' },
-    { label: 'Marketing', score: Math.round(marketing), color: '#9061F9' },
-    { label: 'Reputação', score: Math.round(reputacao), color: '#16C784' },
+    { label: 'Vendas', score: Math.round(vendas), color: '#2F6BFF' },
+    { label: 'Margem', score: Math.round(margem), color: '#FFC95A' },
+    { label: 'Estoque', score: Math.round(estoque), color: '#6366F1' },
+    { label: 'Marketing', score: Math.round(marketing), color: '#194B9B' },
+    { label: 'Reputação', score: Math.round(reputacao), color: '#3BE38E' },
   ]
 
   const score = Math.round(breakdown.reduce((s, b) => s + b.score, 0) / breakdown.length)
   return { score, status, breakdown }
 }
 
-export function getMarketplaceColor(mp: Marketplace): string {
+export function getMarketplaceColor(mp: string): string {
   const colors: Record<Marketplace, string> = {
-    'Mercado Livre': '#FFE600',
-    'Shopee': '#EE4D2D',
-    'Amazon': '#FF9900',
-    'Loja Própria': '#3B82F6',
+    'Mercado Livre': '#E3B900',
+    'Shopee': '#EE5A3F',
+    'Amazon': '#E98A15',
+    'Loja Própria': '#4285F4',
+  }
+  if (mp in colors) return colors[mp as Marketplace]
+  const neutralPalette = ['#64748B', '#6B7280', '#78716C', '#71717A', '#5F6B7A', '#68737D']
+  let hash = 0
+  for (let index = 0; index < mp.length; index += 1) hash = Math.imul(31, hash) + mp.charCodeAt(index) | 0
+  return neutralPalette[Math.abs(hash) % neutralPalette.length]
+}
+
+/** Variante de TEXTO (não a cor de marca) pro tema ESCURO — usada como
+ *  fallback fora de contexto de tema e por getMarketplaceBadge() abaixo. A
+ *  cor de marca de Mercado Livre (#FFE600, amarelo puro) só funciona como
+ *  acento pequeno (bolinha/ícone), nunca como texto. */
+export function getMarketplaceTextColor(mp: Marketplace): string {
+  const colors: Record<Marketplace, string> = {
+    'Mercado Livre': '#FFD84D',
+    'Shopee': '#FF7A59',
+    'Amazon': '#FFB84D',
+    'Loja Própria': '#60A5FA',
   }
   return colors[mp]
+}
+
+/** Badge (fundo + texto) do nome do marketplace, com par dedicado por tema
+ *  — fundo opaco suave + texto escuro de alto contraste no claro (pedido
+ *  explícito de acessibilidade), tinta translúcida + texto vívido no
+ *  escuro (mesma lógica de sempre, cor de marca "abafada" pra não cansar).
+ *  A bolinha/dot continua usando getMarketplaceColor (cor de marca crua). */
+export function getMarketplaceBadge(mp: Marketplace, theme: 'dark' | 'light'): { bg: string; text: string } {
+  if (theme === 'light') {
+    const light: Record<Marketplace, { bg: string; text: string }> = {
+      'Mercado Livre': { bg: '#FEF3C7', text: '#B45309' },
+      'Shopee': { bg: '#FEE2E2', text: '#DC2626' },
+      'Amazon': { bg: '#FFEDD5', text: '#C2410C' },
+      'Loja Própria': { bg: '#E0F2FE', text: '#0369A1' },
+    }
+    return light[mp]
+  }
+  return { bg: `${getMarketplaceColor(mp)}1A`, text: getMarketplaceTextColor(mp) }
 }
 
 /* ============================================================================
@@ -598,7 +642,6 @@ export function scaleChannelOverview(items: ChannelOverview[], period: PeriodOpt
 /* --- KPIs globais da Visão Geral --------------------------------------- */
 
 const _ordersTotal = marketplaceMetrics.reduce((s, m) => s + m.orders, 0)
-const _feesTotal = _withNet.reduce((s, m) => s + m.fees, 0)
 const _avgTicket = _grossTotal / _ordersTotal
 /** Devoluções — estimativa de ~2.3% do bruto, consistente entre os canais. */
 const _returnsTotal = _grossTotal * 0.023
@@ -616,7 +659,9 @@ export interface OverviewKpi {
   scalesWithPeriod: boolean
   prefix?: string
   suffix?: string
-  change: number
+  /** null quando não há comparação real com o período anterior (dado real
+   *  sem histórico agregado ainda) — Delta não renderiza nesse caso. */
+  change: number | null
   /** Contexto curto sob o número. */
   context: string
   /** Micro-tag de transparência de dado (ex.: "estimado"). */
@@ -659,18 +704,6 @@ export const overviewKpis: OverviewKpi[] = [
     change: 3.8,
     context: 'Bruto por pedido',
     tone: 'violet',
-  },
-  {
-    key: 'fees',
-    label: 'Comissão',
-    value: _feesTotal.toLocaleString('pt-BR'),
-    raw: _feesTotal,
-    scalesWithPeriod: true,
-    prefix: 'R$',
-    change: 1.4,
-    context: `${Math.round((_feesTotal / _grossTotal) * 1000) / 10}% do bruto`,
-    tag: 'estimado',
-    tone: 'amber',
   },
   {
     key: 'returns',
@@ -953,7 +986,7 @@ export function getExecutiveHighlights(): ExecutiveHighlight[] {
  * margem ou lucro real. Essa página não trata de lucro.
  * ========================================================================= */
 
-export type TurnoverStatus = 'Normal' | 'Lento' | 'Parado' | 'Parado crítico'
+export type TurnoverStatus = 'Normal' | 'Baixo' | 'Parado' | 'Parado crítico'
 
 interface InventoryExtra {
   sku: string
@@ -979,7 +1012,7 @@ const inventoryExtras: InventoryExtra[] = [
   { sku: 'GRF-INX-100', manufacturerCode: 'FAB-91023', lastEntryDate: '25/06/2026', lastEntryQty: 200, cost: 17.55, lastEntryCost: 17.55, previousEntryCost: 17.55, turnoverStatus: 'Normal' },
   { sku: 'DEC-DIG-070', manufacturerCode: 'FAB-13376', lastEntryDate: '10/06/2026', lastEntryQty: 100, cost: 52.83, lastEntryCost: 52.83, previousEntryCost: 52.83, turnoverStatus: 'Normal' },
   { sku: 'CAL-CMF-055', manufacturerCode: 'FAB-24689', lastEntryDate: '18/06/2026', lastEntryQty: 120, cost: 26.5, lastEntryCost: 26.5, previousEntryCost: 26.5, turnoverStatus: 'Normal' },
-  { sku: 'COZ-CER-018', manufacturerCode: 'FAB-35542', lastEntryDate: '20/05/2026', lastEntryQty: 90, cost: 25.61, lastEntryCost: 27.9, previousEntryCost: 25.61, turnoverStatus: 'Lento' },
+  { sku: 'COZ-CER-018', manufacturerCode: 'FAB-35542', lastEntryDate: '20/05/2026', lastEntryQty: 90, cost: 25.61, lastEntryCost: 27.9, previousEntryCost: 25.61, turnoverStatus: 'Baixo' },
 ]
 
 export interface InventoryItem {
@@ -1018,16 +1051,16 @@ export interface CoverageStatus {
 
 /** Cobertura tem cor funcional própria — cobertura alta nem sempre é boa (capital parado). */
 export function getCoverageStatus(days: number): CoverageStatus {
-  if (days <= 7) return { label: 'Crítico', color: '#F4436C' }
-  if (days <= 20) return { label: 'Atenção', color: '#F5C24B' }
-  if (days <= 45) return { label: 'Saudável', color: '#16C784' }
-  return { label: 'Excesso', color: '#22D3EE' }
+  if (days <= 7) return { label: 'Crítico', color: '#FF5E7D' }
+  if (days <= 20) return { label: 'Atenção', color: '#FFC95A' }
+  if (days <= 45) return { label: 'Saudável', color: '#3BE38E' }
+  return { label: 'Excesso', color: '#6366F1' }
 }
 
 /** Status de giro é independente da cobertura — cor própria (roxo/laranja) pra não confundir. */
 export const turnoverStatusStyle: Record<TurnoverStatus, { color: string; bg: string }> = {
-  'Normal': { color: '#16C784', bg: 'rgba(22,199,132,0.12)' },
-  'Lento': { color: '#F5A524', bg: 'rgba(245,165,36,0.12)' },
+  'Normal': { color: '#3BE38E', bg: 'rgba(43,214,160,0.12)' },
+  'Baixo': { color: '#EB6B7C', bg: 'rgba(235,107,124,0.12)' },
   'Parado': { color: '#9061F9', bg: 'rgba(144,97,249,0.12)' },
   'Parado crítico': { color: '#8B2942', bg: 'rgba(139,41,66,0.18)' },
 }

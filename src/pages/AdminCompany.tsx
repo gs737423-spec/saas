@@ -1,0 +1,1064 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import {
+  ArrowLeft, Mail, Phone, Globe, FileText, Loader2, CheckCircle2, XCircle, Trash2, UserX, Save, Wifi, WifiOff,
+  Users2, ShieldCheck, Settings, Headset, CreditCard, Plug, AlertTriangle, PenLine,
+  MessageCircle, PhoneCall, Ticket, Clock3, Star, ShieldAlert, Copy, LogIn, ChevronRight,
+  ExternalLink, Lock,
+} from 'lucide-react'
+import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
+import { hueFor, initialsFor, timeAgo, type CnpjInfo } from '@/lib/adminUi'
+import StatusBadge, { type StatusBadgeVariant } from '@/components/common/StatusBadge'
+import CompanyRegistrationInfo from '@/components/common/CompanyRegistrationInfo'
+import CompanyAvatar from '@/components/common/CompanyAvatar'
+import { useViewAs } from '@/contexts/ViewAsContext'
+import { LogoMercadoLivre, LogoShopee, LogoAmazon, LogoLojaPropria } from '@/site/logos'
+
+export type AdminCompanyTab = 'visao-geral' | 'acessos' | 'integracoes' | 'cobranca' | 'suporte' | 'configuracoes'
+
+const TAB_ORDER: AdminCompanyTab[] = ['visao-geral', 'acessos', 'integracoes', 'cobranca', 'suporte', 'configuracoes']
+
+const TAB_LABEL: Record<AdminCompanyTab, string> = {
+  'visao-geral': 'Visão Geral',
+  acessos: 'Acessos',
+  integracoes: 'Integrações',
+  cobranca: 'Cobrança',
+  suporte: 'Suporte',
+  configuracoes: 'Configurações',
+}
+
+interface Company {
+  id: string
+  name: string
+  createdAt: string
+  contactEmail: string | null
+  contactPhone: string | null
+  notes: string | null
+  cnpj: string | null
+  whatsapp: string | null
+  website: string | null
+  status: string
+  receitaData: CnpjInfo | null
+  logoUrl: string | null
+  memberCount: number
+}
+
+const STATUS_OPTIONS = [
+  { value: 'onboarding', label: 'Onboarding' },
+  { value: 'ativo', label: 'Ativa' },
+  { value: 'em_risco', label: 'Em risco' },
+  { value: 'suspenso', label: 'Suspensa' },
+]
+
+const STATUS_STYLE: Record<string, { label: string; variant: StatusBadgeVariant }> = {
+  onboarding: { label: 'Onboarding', variant: 'info' },
+  ativo: { label: 'Ativa', variant: 'success' },
+  em_risco: { label: 'Em risco', variant: 'warning' },
+  suspenso: { label: 'Suspensa', variant: 'danger' },
+}
+
+// Mercado Livre e Shopee têm integração real (sync de verdade, ver
+// src/server/integrations/{mercadolivre,shopee}/**) — Amazon/Loja Própria
+// ainda não (verdade, não é mock) até virarem integrações de verdade.
+const NOT_YET_IMPLEMENTED: { name: string; Logo: () => React.JSX.Element }[] = [
+  { name: 'Amazon', Logo: LogoAmazon },
+  { name: 'Loja Própria', Logo: LogoLojaPropria },
+]
+
+
+interface Member {
+  userId: string
+  email: string | null
+  role: string
+  addedAt: string
+}
+
+interface IntegrationStatus {
+  status: string
+  productsCount: number
+  inventoryCount: number
+  ordersCount: number
+  lastSyncAt: string | null
+}
+
+type Feedback = { type: 'success' | 'error'; text: string } | null
+
+export default function AdminCompany() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { enterViewAs } = useViewAs()
+
+  const [company, setCompany] = useState<Company | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [unauthorized, setUnauthorized] = useState(false)
+  const [loadError, setLoadError] = useState(false)
+  const [configMissing, setConfigMissing] = useState(false)
+  const [notFound, setNotFound] = useState(false)
+
+  const [name, setName] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [notes, setNotes] = useState('')
+  const [cnpj, setCnpj] = useState('')
+  const [cnpjLocked, setCnpjLocked] = useState(true)
+  const [cnpjLookup, setCnpjLookup] = useState<'idle' | 'checking' | 'found' | 'notfound' | 'error'>('idle')
+  const [cnpjLookupInfo, setCnpjLookupInfo] = useState<CnpjInfo | null>(null)
+  const [whatsapp, setWhatsapp] = useState('')
+  const [website, setWebsite] = useState('')
+  const [status, setStatus] = useState('ativo')
+  const [saving, setSaving] = useState(false)
+  const [saveFeedback, setSaveFeedback] = useState<Feedback>(null)
+
+  const [members, setMembers] = useState<Member[]>([])
+  const [loadingMembers, setLoadingMembers] = useState(true)
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null)
+
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [inviteFeedback, setInviteFeedback] = useState<Feedback>(null)
+
+  const [integration, setIntegration] = useState<IntegrationStatus | null>(null)
+  const [loadingIntegration, setLoadingIntegration] = useState(true)
+  const [shopeeIntegration, setShopeeIntegration] = useState<IntegrationStatus | null>(null)
+  const [loadingShopee, setLoadingShopee] = useState(true)
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const [tab, setTab] = useState<AdminCompanyTab>('visao-geral')
+  const [togglingStatus, setTogglingStatus] = useState(false)
+
+  // 403 (not_admin) é o único caso que mostra "Acesso restrito" — erro de
+  // rede/cold start não pode virar essa mensagem pra um admin de verdade
+  // (essa página faz 4 fetches paralelos, mais chance de timeout isolado).
+  // 1 retry automático antes de desistir (mesmo padrão de Admin.tsx).
+  const loadCompany = useCallback(async (isRetry = false) => {
+    try {
+      const res = await apiFetch('/api/admin/companies')
+      if (res.status === 403) {
+        setUnauthorized(true)
+        setLoadError(false)
+        setConfigMissing(false)
+        setLoading(false)
+        return
+      }
+      if (res.status === 503) {
+        setConfigMissing(true)
+        setLoading(false)
+        return
+      }
+      const body = (await res.json().catch(() => null)) as { ok: boolean; companies?: Company[] } | null
+      if (res.ok && body?.ok) {
+        const found = (body.companies ?? []).find((c) => c.id === id) ?? null
+        if (!found) {
+          setNotFound(true)
+        } else {
+          setCompany(found)
+          setName(found.name)
+          setContactEmail(found.contactEmail ?? '')
+          setContactPhone(found.contactPhone ?? '')
+          setNotes(found.notes ?? '')
+          setCnpj(found.cnpj ?? '')
+          setWhatsapp(found.whatsapp ?? '')
+          setWebsite(found.website ?? '')
+          setStatus(found.status ?? 'ativo')
+        }
+        setUnauthorized(false)
+        setLoadError(false)
+        setConfigMissing(false)
+        setLoading(false)
+        return
+      }
+      throw new Error('unexpected_response')
+    } catch {
+      if (!isRetry) {
+        await new Promise((r) => setTimeout(r, 800))
+        return loadCompany(true)
+      }
+      setLoadError(true)
+      setLoading(false)
+    }
+  }, [id])
+
+  const loadMembers = useCallback(async () => {
+    if (!id) return
+    setLoadingMembers(true)
+    const res = await apiFetchJson<{ ok: boolean; members: Member[] }>(`/api/admin/members?companyId=${id}`)
+    setMembers(res?.members ?? [])
+    setLoadingMembers(false)
+  }, [id])
+
+  const loadIntegration = useCallback(async () => {
+    if (!id) return
+    setLoadingIntegration(true)
+    const res = await apiFetchJson<IntegrationStatus & { ok: boolean }>(`/api/integrations/status?company_id=${id}`)
+    setIntegration(res?.ok ? res : null)
+    setLoadingIntegration(false)
+  }, [id])
+
+  const loadShopeeIntegration = useCallback(async () => {
+    if (!id) return
+    setLoadingShopee(true)
+    const res = await apiFetchJson<IntegrationStatus & { ok: boolean }>(`/api/integrations/status?company_id=${id}&provider=shopee`)
+    setShopeeIntegration(res?.ok ? res : null)
+    setLoadingShopee(false)
+  }, [id])
+
+  useEffect(() => {
+    loadCompany()
+    loadMembers()
+    loadIntegration()
+    loadShopeeIntegration()
+  }, [loadCompany, loadMembers, loadIntegration, loadShopeeIntegration])
+
+  // CNPJ destrancado (botão "Editar") — consulta a Receita Federal de novo,
+  // mesma lógica do cadastro de cliente novo. Só entra no payload de save
+  // se de fato foi reaberto e reconfirmado, nunca sobrescreve o snapshot
+  // salvo por engano.
+  useEffect(() => {
+    if (cnpjLocked) return
+    const digits = cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) {
+      setCnpjLookup('idle')
+      setCnpjLookupInfo(null)
+      return
+    }
+    let cancelled = false
+    setCnpjLookup('checking')
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await apiFetchJson<{ ok: boolean; found: boolean | null } & Partial<CnpjInfo>>(`/api/cnpj-lookup?cnpj=${digits}`)
+        if (cancelled) return
+        if (res?.ok && res.found) {
+          setCnpjLookupInfo({
+            razaoSocial: res.razaoSocial ?? null,
+            nomeFantasia: res.nomeFantasia ?? null,
+            situacaoCadastral: res.situacaoCadastral ?? null,
+            dataSituacaoCadastral: res.dataSituacaoCadastral ?? null,
+            dataInicioAtividade: res.dataInicioAtividade ?? null,
+            atividadePrincipal: res.atividadePrincipal ?? null,
+            cnaeCodigo: res.cnaeCodigo ?? null,
+            cnaesSecundarios: res.cnaesSecundarios ?? [],
+            naturezaJuridica: res.naturezaJuridica ?? null,
+            porte: res.porte ?? null,
+            capitalSocial: res.capitalSocial ?? null,
+            telefone: res.telefone ?? null,
+            email: res.email ?? null,
+            endereco: res.endereco ?? null,
+            matrizFilial: res.matrizFilial ?? null,
+            simplesNacional: res.simplesNacional ?? null,
+            socios: res.socios ?? [],
+          })
+          setCnpjLookup('found')
+        } else if (res?.found === false) {
+          setCnpjLookup('notfound')
+          setCnpjLookupInfo(null)
+        } else {
+          setCnpjLookup('error')
+          setCnpjLookupInfo(null)
+        }
+      } catch {
+        if (!cancelled) { setCnpjLookup('error'); setCnpjLookupInfo(null) }
+      }
+    }, 500)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [cnpj, cnpjLocked])
+
+  async function handleToggleStatus() {
+    if (!id) return
+    const nextStatus = status === 'suspenso' ? 'ativo' : 'suspenso'
+    setTogglingStatus(true)
+    try {
+      const res = await apiFetchJson<{ ok: boolean }>('/api/admin/companies', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status: nextStatus }),
+      })
+      if (res?.ok) {
+        setStatus(nextStatus)
+        loadCompany()
+      }
+    } finally {
+      setTogglingStatus(false)
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!id) return
+    // CNPJ destrancado precisa ter sido reconfirmado na Receita antes de
+    // salvar — nunca grava um CNPJ trocado sem validar (mesma regra do
+    // cadastro de cliente novo em AdminClients.tsx).
+    if (!cnpjLocked && cnpj.replace(/\D/g, '').length > 0 && cnpjLookup !== 'found' && cnpjLookup !== 'error') {
+      setSaveFeedback({ type: 'error', text: 'Confirme o CNPJ na Receita Federal antes de salvar (ou clique no cadeado pra cancelar a edição).' })
+      return
+    }
+    setSaving(true)
+    setSaveFeedback(null)
+    try {
+      const res = await apiFetchJson<{ ok: boolean; message?: string }>('/api/admin/companies', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id, name, contactEmail, contactPhone, notes, cnpj, whatsapp, website, status,
+          ...(!cnpjLocked && cnpjLookupInfo ? { receitaData: cnpjLookupInfo } : {}),
+        }),
+      })
+      if (res?.ok) {
+        setSaveFeedback({ type: 'success', text: 'Salvo.' })
+        setCnpjLocked(true)
+        loadCompany()
+      } else {
+        setSaveFeedback({ type: 'error', text: res?.message ?? 'Erro ao salvar.' })
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!inviteEmail.trim() || !id) return
+    setInviting(true)
+    setInviteFeedback(null)
+    try {
+      const res = await apiFetchJson<{ ok: boolean; message?: string; invited?: boolean }>('/api/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), companyId: id }),
+      })
+      if (res?.ok) {
+        setInviteFeedback({ type: 'success', text: res.invited ? `Convite enviado para ${inviteEmail.trim()}.` : 'Usuário já existia — vinculado.' })
+        setInviteEmail('')
+        await loadMembers()
+        loadCompany()
+      } else {
+        setInviteFeedback({ type: 'error', text: res?.message ?? 'Erro ao convidar.' })
+      }
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  async function handleRemoveMember(userId: string) {
+    if (!id) return
+    setRemovingUserId(userId)
+    try {
+      const res = await apiFetchJson<{ ok: boolean }>(`/api/admin/members?userId=${userId}&companyId=${id}`, { method: 'DELETE' })
+      if (res?.ok) {
+        await loadMembers()
+        loadCompany()
+      }
+    } finally {
+      setRemovingUserId(null)
+    }
+  }
+
+  async function handleDelete() {
+    if (!id) return
+    setDeleting(true)
+    try {
+      const res = await apiFetchJson<{ ok: boolean; message?: string }>(`/api/admin/companies?id=${id}`, { method: 'DELETE' })
+      if (res?.ok) {
+        navigate('/app/admin/clientes')
+      } else {
+        setDeleting(false)
+        setConfirmingDelete(false)
+      }
+    } catch {
+      setDeleting(false)
+      setConfirmingDelete(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Carregando...
+      </div>
+    )
+  }
+
+  if (configMissing) {
+    return (
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+        <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
+        <h2 className="text-base font-semibold text-text-primary">Configuração pendente</h2>
+        <p className="mt-1.5 text-sm text-text-muted">O servidor ainda não tem as variáveis do Supabase configuradas.</p>
+      </div>
+    )
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+        <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-accent-rose" />
+        <h2 className="text-base font-semibold text-text-primary">Acesso restrito</h2>
+        <p className="mt-1.5 text-sm text-text-muted">Esta área é só para a equipe interna.</p>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+        <Settings className="mx-auto mb-3 h-8 w-8 text-accent-amber" />
+        <h2 className="text-base font-semibold text-text-primary">Não foi possível carregar</h2>
+        <p className="mt-1.5 text-sm text-text-muted">Falha de conexão ao verificar seu acesso. Tente novamente.</p>
+        <button
+          type="button"
+          onClick={() => { setLoading(true); setLoadError(false); loadCompany() }}
+          className="mt-3 rounded-lg bg-accent-blue px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-blue-hover"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    )
+  }
+
+  if (notFound || !company) {
+    return (
+      <div className="glass-panel mx-auto mt-12 max-w-md rounded-xl p-6 text-center">
+        <p className="text-sm text-text-muted">Empresa não encontrada.</p>
+        <Link to="/app/admin/clientes" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-accent-primary">
+          <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+        </Link>
+      </div>
+    )
+  }
+
+  const isConnected = integration?.status === 'connected'
+  const isShopeeConnected = shopeeIntegration?.status === 'connected'
+  const connectedCount = (isConnected ? 1 : 0) + (isShopeeConnected ? 1 : 0)
+  const st = STATUS_STYLE[company.status] ?? STATUS_STYLE.ativo
+
+  return (
+    <div className="flex flex-col gap-5 pb-10">
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+          <Link to="/app/admin/clientes" className="flex items-center gap-1.5 transition-colors hover:text-text-primary">
+            <ArrowLeft className="h-3.5 w-3.5" /> Empresas
+          </Link>
+          <span>/</span>
+          <span className="truncate text-text-secondary">{company.name}</span>
+          <span>/</span>
+          <span className="truncate text-text-primary">{TAB_LABEL[tab]}</span>
+        </div>
+
+        {/* Header — identidade, badges reais, ações que existem de verdade */}
+        <div className="glass-panel flex flex-col gap-3 rounded-xl p-4">
+          <div className="flex flex-wrap items-start gap-3">
+            <CompanyAvatar
+              companyId={company.id}
+              companyName={company.name}
+              logoUrl={company.logoUrl}
+              size="lg"
+              editable
+              onUploaded={(url) => setCompany((prev) => prev ? { ...prev, logoUrl: url } : prev)}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-xl font-bold tracking-tight text-text-primary">{company.name}</h1>
+                <button type="button" onClick={() => setTab('configuracoes')} title="Editar" className="text-text-muted transition-colors hover:text-text-primary">
+                  <PenLine className="h-3.5 w-3.5" />
+                </button>
+                <StatusBadge variant={st.variant} label={st.label} />
+              </div>
+              <p className="mt-0.5 text-xs text-text-muted">Cliente desde {timeAgo(company.createdAt)} · ID #{company.id.slice(0, 8)}</p>
+            </div>
+
+            {/* Ação principal fica sempre visível e destacada — é a ferramenta
+                de consultoria (entrar no ambiente do cliente para suporte). */}
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {company.whatsapp && (
+                <a href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20">
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className="flex items-center gap-1.5 rounded-lg border border-accent-rose/25 bg-transparent px-3 py-2 text-xs font-medium text-accent-rose/80 transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
+              >
+                {togglingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />}
+                {status === 'suspenso' ? 'Reativar empresa' : 'Suspender empresa'}
+              </button>
+              <button
+                type="button"
+                title="Abre o dashboard real do cliente, somente leitura — pra usar em call de consultoria"
+                onClick={() => { enterViewAs(company.id, company.name); navigate('/app') }}
+                className="flex items-center gap-1.5 rounded-lg bg-accent-primary px-4 py-2.5 text-[13px] font-bold text-[#081423] shadow-lg shadow-accent-primary/10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <ExternalLink className="h-4 w-4" /> Acessar Painel do Lojista
+              </button>
+            </div>
+          </div>
+
+          {/* Atalhos pros dois blocos que mais importam — clicáveis, levam
+              direto pra aba correspondente. */}
+          <div className="grid grid-cols-1 gap-2 border-t border-border-subtle pt-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTab('acessos')}
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Users2 className="h-3.5 w-3.5 shrink-0 text-accent-primary" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Membros da Equipe ({members.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('integracoes')}
+              className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/30 px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-card-hover/40"
+            >
+              <Plug className="h-3.5 w-3.5 shrink-0 text-accent-primary" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-wide text-text-secondary">Integrações de Marketplace ({connectedCount}/4)</span>
+            </button>
+          </div>
+
+          {/* Dados cadastrais/fiscais — compacto, direto no header (nunca
+              mais em card separado lá embaixo). Vem do snapshot da Receita
+              Federal salvo no cadastro (company.receitaData). */}
+          <div>
+            <CompanyRegistrationInfo
+              name={company.name}
+              cnpj={company.cnpj}
+              receitaData={company.receitaData}
+              contactEmail={company.contactEmail}
+              contactPhone={company.contactPhone}
+              whatsapp={company.whatsapp}
+            />
+          </div>
+
+          {/* Tab bar interna — ocupa a largura toda agora que a sidebar saiu */}
+          <div className="grid grid-cols-3 gap-1 border-t border-border-subtle pt-3 sm:flex sm:items-center">
+            {TAB_ORDER.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-center text-[12.5px] font-semibold transition-colors sm:flex-1 ${
+                  tab === t ? 'bg-accent-primary/15 text-accent-primary' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'
+                }`}
+              >
+                {TAB_LABEL[t]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === 'visao-geral' && (
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <button type="button" onClick={() => setTab('acessos')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-violet/10 text-accent-violet"><Users2 className="h-4 w-4" /></span>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{members.length}</p>
+                  <p className="text-[11px] text-text-muted">acessos vinculados</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-primary/10 text-accent-primary"><Plug className="h-4 w-4" /></span>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.productsCount ?? 0}</p>
+                  <p className="text-[11px] text-text-muted">produtos sincronizados</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-blue/10 text-accent-blue"><Ticket className="h-4 w-4" /></span>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{integration?.ordersCount ?? 0}</p>
+                  <p className="text-[11px] text-text-muted">pedidos importados</p>
+                </button>
+                <button type="button" onClick={() => setTab('integracoes')} className="glass-panel glass-panel-hover flex flex-col items-start gap-2 rounded-xl p-6 text-left">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-emerald/10 text-accent-emerald"><Wifi className="h-4 w-4" /></span>
+                  <p className="text-3xl font-bold tabular-nums text-text-primary">{connectedCount}/4</p>
+                  <p className="text-[11px] text-text-muted">integrações ativas</p>
+                </button>
+              </div>
+
+              <div className="glass-panel rounded-xl p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Marketplaces conectados</h3>
+                  <button type="button" onClick={() => setTab('integracoes')} className="flex items-center gap-1 text-[11px] font-medium text-accent-primary hover:underline">
+                    Ver todas as integrações <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex flex-col divide-y divide-border-subtle">
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Mercado Livre</p>
+                        <p className="text-[11px] text-text-muted">{integration?.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Shopee</p>
+                        <p className="text-[11px] text-text-muted">{shopeeIntegration?.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'sem sync ainda'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1.5 text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isShopeeConnected ? 'bg-accent-emerald' : 'bg-text-muted'}`} />
+                        {isShopeeConnected ? 'Operacional' : 'Não conectado'}
+                      </span>
+                      <button type="button" onClick={() => setTab('integracoes')} className="rounded-lg border border-border-subtle px-2 py-1 text-[11px] font-medium text-text-secondary transition-colors hover:bg-white/5">Ver detalhes</button>
+                    </div>
+                  </div>
+                  {NOT_YET_IMPLEMENTED.map((mp) => (
+                    <div key={mp.name} className="flex items-center justify-between py-2.5 opacity-60">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                        <p className="text-sm font-medium text-text-primary">{mp.name}</p>
+                      </div>
+                      <span className="text-[11px] text-text-muted">Integração ainda não existe</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="glass-panel rounded-xl p-6">
+                <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Alertas e pendências
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {!isConnected && !isShopeeConnected && (
+                    <div className="flex items-start justify-between gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
+                        <span className="text-[11px] text-text-secondary">Sem integração ativa — nenhum marketplace conectado.</span>
+                      </div>
+                      <button type="button" onClick={() => setTab('integracoes')} className="shrink-0 rounded-md bg-accent-amber/15 px-2 py-1 text-[10px] font-semibold text-accent-amber">Resolver</button>
+                    </div>
+                  )}
+                  {members.length === 0 && (
+                    <div className="flex items-start justify-between gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 p-2.5">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
+                        <span className="text-[11px] text-text-secondary">Nenhum acesso vinculado ainda.</span>
+                      </div>
+                      <button type="button" onClick={() => setTab('acessos')} className="shrink-0 rounded-md bg-accent-amber/15 px-2 py-1 text-[10px] font-semibold text-accent-amber">Resolver</button>
+                    </div>
+                  )}
+                  {(isConnected || isShopeeConnected) && members.length > 0 && <p className="text-xs text-text-muted">Nenhum alerta no momento.</p>}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {tab === 'acessos' && (
+          <div className="glass-panel rounded-xl p-6">
+            <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+              <Users2 className="h-3.5 w-3.5" />
+              Acessos ({members.length})
+            </h3>
+
+            {loadingMembers ? (
+              <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+            ) : (
+              <div className="flex flex-col gap-1 border-b border-border-subtle pb-3">
+                {members.length === 0 && <p className="py-1.5 text-xs text-text-muted">Nenhum acesso vinculado ainda.</p>}
+                {members.map((m) => (
+                  <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-white/5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: hueFor(m.userId), color: '#081423' }}>
+                      {initialsFor(m.email ?? m.userId)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{m.email ?? m.userId}</span>
+                    <span className="shrink-0 text-[10px] text-text-muted">desde {timeAgo(m.addedAt)}</span>
+                    <button
+                      onClick={() => handleRemoveMember(m.userId)}
+                      disabled={removingUserId === m.userId}
+                      className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-accent-rose transition-colors hover:bg-accent-rose/10 disabled:opacity-40"
+                    >
+                      {removingUserId === m.userId ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={handleInvite} className="mt-3 flex gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@cliente.com"
+                className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-bg-primary/40 px-2.5 py-2 text-xs text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none"
+              />
+              <button type="submit" disabled={inviting || !inviteEmail.trim()} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-primary/15 px-3 text-xs font-semibold text-accent-primary transition-colors hover:bg-accent-primary/25 disabled:opacity-40">
+                {inviting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                Convidar
+              </button>
+            </form>
+            {inviteFeedback && (
+              <p className={`mt-2 flex items-center gap-1.5 text-xs ${inviteFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                {inviteFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                {inviteFeedback.text}
+              </p>
+            )}
+          </div>
+        )}
+
+        {tab === 'integracoes' && (
+          <div className="flex flex-col gap-4">
+            <div className="glass-panel rounded-xl p-6">
+              <div className="mb-3 flex items-center gap-2.5">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoMercadoLivre /></div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Mercado Livre</h3>
+                  <span className={`text-[11px] font-medium ${isConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isConnected ? 'Operacional' : 'Não conectado'}</span>
+                </div>
+              </div>
+              {loadingIntegration ? (
+                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              ) : integration ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-baseline gap-6">
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.productsCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.inventoryCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">estoque</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{integration.ordersCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    {integration.lastSyncAt ? `Última sync ${timeAgo(integration.lastSyncAt)}` : 'Cliente ainda não conectou nenhum marketplace.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+              )}
+              {!isConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com o Mercado Livre, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Mercado Livre". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
+              )}
+            </div>
+
+            <div className="glass-panel rounded-xl p-6">
+              <div className="mb-3 flex items-center gap-2.5">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><LogoShopee /></div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Shopee</h3>
+                  <span className={`text-[11px] font-medium ${isShopeeConnected ? 'text-accent-emerald' : 'text-text-muted'}`}>{isShopeeConnected ? 'Operacional' : 'Não conectado'}</span>
+                </div>
+              </div>
+              {loadingShopee ? (
+                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              ) : shopeeIntegration ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-baseline gap-6">
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.productsCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">produtos</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.inventoryCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">estoque</p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold tabular-nums text-text-primary">{shopeeIntegration.ordersCount}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-text-muted">pedidos</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    {shopeeIntegration.lastSyncAt ? `Última sync ${timeAgo(shopeeIntegration.lastSyncAt)}` : 'Cliente ainda não conectou a Shopee.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">Sem dados de integração ainda.</p>
+              )}
+              {!isShopeeConnected && company.whatsapp && (
+                <a
+                  href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `Olá! Pra começar a usar a MKTOnline com a Shopee, é só conectar sua conta: entre em ${window.location.origin}/app/importacoes e clique em "Conectar Shopee". Qualquer dúvida, me chama por aqui.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-accent-emerald/25 bg-accent-emerald/10 px-3 py-2 text-xs font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Enviar instruções de conexão via WhatsApp
+                </a>
+              )}
+            </div>
+
+            {NOT_YET_IMPLEMENTED.map((mp) => (
+              <div key={mp.name} className="glass-panel flex items-center justify-between rounded-xl p-6 opacity-60">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full [&>img]:h-10 [&>img]:w-10 [&>svg]:h-10 [&>svg]:w-10"><mp.Logo /></div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-text-primary">{mp.name}</h3>
+                    <p className="text-[11px] text-text-muted">Integração ainda não existe nesta plataforma</p>
+                  </div>
+                </div>
+                <span className="rounded-full border border-border-subtle px-2.5 py-1 text-[10px] font-medium text-text-muted">Em breve</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'cobranca' && (
+          <div className="glass-panel flex flex-col items-center gap-2 rounded-xl p-10 text-center">
+            <CreditCard className="h-6 w-6 text-text-muted" />
+            <p className="text-sm font-medium text-text-primary">Cobrança ainda não está conectada</p>
+            <p className="max-w-sm text-xs text-text-muted">Plano e valor ficam em "Observações" na aba Configurações por enquanto. Histórico de faturas depende de integrar um provedor de cobrança.</p>
+          </div>
+        )}
+
+        {tab === 'suporte' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2 text-[11px] font-medium text-accent-amber">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              Prévia de layout (exemplo) — sem tabela de tickets/notas no banco ainda.
+            </div>
+
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.6fr_1fr]">
+              <div className="flex flex-col gap-4">
+                <div className="glass-panel rounded-xl p-6">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <Clock3 className="h-3.5 w-3.5" /> Histórico de atendimento
+                  </h3>
+                  <div className="flex flex-col gap-2.5 text-xs">
+                    {[
+                      { title: 'Ligação realizada', by: 'Carlos Silva', desc: 'Dúvida sobre integração Amazon.' },
+                      { title: 'Token da Amazon expirou', by: 'Sistema', desc: 'O token de autenticação da Amazon expirou.' },
+                      { title: 'Enviado tutorial de integração', by: 'Gabriel Souza', desc: 'Tutorial enviado via WhatsApp sobre integração Shopee.' },
+                    ].map((ev) => (
+                      <div key={ev.title} className="flex items-start gap-2.5 border-b border-border-subtle/60 pb-2.5 last:border-0">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-primary" />
+                        <div className="min-w-0">
+                          <p className="text-text-primary">{ev.title} <span className="text-text-muted">— {ev.by}</span></p>
+                          <p className="text-text-muted">{ev.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-panel rounded-xl p-6">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <Ticket className="h-3.5 w-3.5" /> Chamados
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { id: '#418', title: 'Integração Shopee não sincroniza produtos', status: 'Resolvido', color: 'text-accent-emerald bg-accent-emerald/10' },
+                      { id: '#412', title: 'Erro ao publicar no Mercado Livre', status: 'Fechado', color: 'text-text-muted bg-bg-primary/60' },
+                      { id: '#409', title: 'Solicitação de novo usuário', status: 'Aberto', color: 'text-accent-rose bg-accent-rose/10' },
+                    ].map((c) => (
+                      <div key={c.id} className="flex items-center justify-between rounded-lg px-1.5 py-1.5 text-xs">
+                        <span className="text-text-muted">{c.id}</span>
+                        <span className="min-w-0 flex-1 truncate px-2 text-text-primary">{c.title}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${c.color}`}>{c.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-panel grid grid-cols-2 gap-4 rounded-xl p-6 sm:grid-cols-3">
+                  {[
+                    { icon: Clock3, label: 'tempo médio resposta', value: '—' },
+                    { icon: Star, label: 'satisfação média', value: '—' },
+                    { icon: ShieldAlert, label: 'risco de churn', value: '—' },
+                  ].map((m) => (
+                    <div key={m.label} className="flex flex-col gap-1">
+                      <m.icon className="h-4 w-4 text-text-muted" />
+                      <p className="text-lg font-bold text-text-primary">{m.value}</p>
+                      <p className="text-[10px] text-text-muted">{m.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="glass-panel rounded-xl p-6">
+                  <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Observações internas</h3>
+                  <p className="text-xs text-text-secondary">Cliente prefere atendimento via WhatsApp. Nenhuma observação real registrada ainda.</p>
+                </div>
+                <div className="glass-panel rounded-xl p-6">
+                  <h3 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <PhoneCall className="h-3.5 w-3.5" /> Atalhos rápidos
+                  </h3>
+                  <div className="flex flex-col gap-1">
+                    {company.whatsapp && (
+                      <a href={`https://wa.me/55${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                        <MessageCircle className="h-3.5 w-3.5" /> Enviar WhatsApp
+                      </a>
+                    )}
+                    {company.contactEmail && (
+                      <a href={`mailto:${company.contactEmail}`} className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                        <Mail className="h-3.5 w-3.5" /> Enviar e-mail
+                      </a>
+                    )}
+                    <button type="button" onClick={() => { navigator.clipboard.writeText(company.id) }} className="flex items-center gap-2 rounded-lg px-2 py-2 text-left text-xs text-text-secondary transition-colors hover:bg-white/5 hover:text-text-primary">
+                      <Copy className="h-3.5 w-3.5" /> Copiar ID da empresa
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'configuracoes' && (
+          <>
+            <form onSubmit={handleSave} className="glass-panel flex flex-col gap-3 rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Dados de contato</h3>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="rounded-lg border border-border-subtle bg-bg-primary/40 px-2 py-1 text-[11px] font-medium text-text-primary focus:border-accent-primary/50 focus:outline-none"
+                >
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Nome</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary focus:border-accent-primary/50 focus:outline-none" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                    CNPJ {cnpjLocked && <span className="text-text-muted/60" title="Vem da Receita Federal — clique em Editar pra corrigir">(imutável)</span>}
+                  </label>
+                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${cnpjLocked ? 'border-border-subtle/60 bg-bg-primary/20' : 'border-accent-primary/40 bg-bg-primary/40'}`}>
+                    {cnpjLocked ? <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" /> : <FileText className="h-3.5 w-3.5 shrink-0 text-text-muted" />}
+                    {cnpjLocked ? (
+                      <span className="min-w-0 flex-1 text-sm text-text-secondary">{cnpj || 'não cadastrado'}</span>
+                    ) : (
+                      <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0001-00" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!cnpjLocked) { setCnpj(company?.cnpj ?? ''); setCnpjLookup('idle'); setCnpjLookupInfo(null) }
+                        setCnpjLocked((l) => !l)
+                      }}
+                      className="shrink-0 text-[11px] font-medium text-accent-primary hover:underline"
+                    >
+                      {cnpjLocked ? 'Editar' : 'Cancelar'}
+                    </button>
+                  </div>
+                  {!cnpjLocked && cnpjLookup === 'checking' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-text-muted"><Loader2 className="h-3 w-3 animate-spin" /> Consultando Receita Federal...</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'found' && cnpjLookupInfo && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-emerald"><CheckCircle2 className="h-3 w-3" /> {cnpjLookupInfo.razaoSocial ?? cnpjLookupInfo.nomeFantasia}</p>
+                  )}
+                  {!cnpjLocked && cnpjLookup === 'notfound' && (
+                    <p className="flex items-center gap-1.5 text-[11px] text-accent-rose"><AlertTriangle className="h-3 w-3" /> CNPJ não encontrado — corrija pra poder salvar.</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">E-mail de contato</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="contato@cliente.com" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Telefone</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">WhatsApp</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(11) 90000-0000" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                  {whatsapp && (
+                    <a href={`https://wa.me/55${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 w-fit text-[10px] text-accent-emerald hover:underline">
+                      abrir conversa
+                    </a>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Site</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2">
+                    <Globe className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="cliente.com.br" className="min-w-0 flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted/45 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-[11px] text-text-muted">Observações (plano, valor, data do contrato...)</label>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="resize-none rounded-lg border border-border-subtle bg-bg-primary/40 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/45 focus:border-accent-primary/50 focus:outline-none" />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="submit" disabled={saving} className="flex items-center gap-1.5 rounded-lg bg-accent-blue/15 px-3 py-2 text-xs font-semibold text-accent-blue transition-colors hover:bg-accent-blue/25 disabled:opacity-40">
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Salvar
+                </button>
+                {saveFeedback && (
+                  <span className={`flex items-center gap-1.5 text-xs ${saveFeedback.type === 'success' ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+                    {saveFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {saveFeedback.text}
+                  </span>
+                )}
+              </div>
+            </form>
+
+            <div className="rounded-xl border border-accent-rose/20 p-5">
+              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-accent-rose">Zona de risco</h3>
+              {!confirmingDelete ? (
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-accent-rose/25 bg-accent-rose/10 px-3 py-2 text-xs font-semibold text-accent-rose transition-colors hover:bg-accent-rose/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir empresa
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 rounded-lg border border-accent-rose/30 bg-accent-rose/5 p-3">
+                  <p className="text-xs text-text-secondary">
+                    Confirma excluir <strong className="text-text-primary">{company.name}</strong>? Remove os acessos vinculados. Não pode ser desfeito.
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={handleDelete} disabled={deleting} className="flex items-center gap-1.5 rounded-lg bg-accent-rose px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-rose/90 disabled:opacity-40">
+                      {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      Sim, excluir
+                    </button>
+                    <button onClick={() => setConfirmingDelete(false)} disabled={deleting} className="rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-white/5">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

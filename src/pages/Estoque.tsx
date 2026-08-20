@@ -1,46 +1,47 @@
 import { useEffect, useState } from 'react'
-import InventoryKPIs from '@/components/estoque/InventoryKPIs'
-import InventoryTable from '@/components/estoque/InventoryTable'
+import { Loader2, Boxes } from 'lucide-react'
 import RealInventoryTable from '@/components/estoque/RealInventoryTable'
-import { defaultInventoryFilters, type InventoryFilterState } from '@/components/estoque/InventoryFilters'
+import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import type { DashboardInventoryResponse } from '@/server/integrations/types'
+import { apiFetchJson } from '@/lib/apiFetch'
 
 export default function Estoque() {
-  const [filters, setFilters] = useState<InventoryFilterState>(defaultInventoryFilters)
   const [inventory, setInventory] = useState<DashboardInventoryResponse | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/dashboard/inventory')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: DashboardInventoryResponse | null) => {
-        if (!cancelled) setInventory(data)
-      })
-      .catch(() => {
-        if (!cancelled) setInventory(null)
-      })
+    apiFetchJson<DashboardInventoryResponse>('/api/dashboard/inventory').then((data) => {
+      if (!cancelled) {
+        setInventory(data)
+        setLoading(false)
+      }
+    })
     return () => {
       cancelled = true
     }
   }, [])
 
-  const source = inventory?.source ?? 'demo'
-  const showRealTable = source === 'real' && inventory && inventory.items.length > 0
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center gap-2 text-sm text-text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Carregando...
+      </div>
+    )
+  }
+
+  if (inventory?.source === 'real' && inventory.items.length === 0) {
+    return <ConnectMarketplacePrompt icon={Boxes} title="Estoque ainda não disponível" description="A conexão está ativa e o estoque real está sendo sincronizado. Nenhum valor ilustrativo será exibido enquanto isso." />
+  }
+
+  if (!inventory || (inventory.source !== 'real' && inventory.source !== 'demo') || inventory.items.length === 0) {
+    return <ConnectMarketplacePrompt icon={Boxes} title="Conecte um marketplace pra ver seu estoque" description="Assim que sincronizar o Mercado Livre, o estoque real de cada produto aparece aqui." />
+  }
 
   return (
-    <div className="space-y-2 sm:space-y-2.5">
-      {showRealTable ? (
-        <RealInventoryTable items={inventory.items} />
-      ) : (
-        <>
-          <div className="motion-block-in">
-            <InventoryKPIs filters={filters} onChange={setFilters} />
-          </div>
-          <div className="motion-block-in motion-block-in-2">
-            <InventoryTable filters={filters} onChange={setFilters} />
-          </div>
-        </>
-      )}
+    <div className="workspace-page workspace-page--inventory">
+      <RealInventoryTable items={inventory.items} />
     </div>
   )
 }

@@ -8,6 +8,9 @@ dist-ssr
 # Vercel
 .vercel
 
+# Supabase CLI local cache
+supabase/.temp/
+
 # Local env files (never commit secrets)
 .env
 .env.*
@@ -29,5 +32,6 @@ pnpm-debug.log*
 
 .vercel
 
-# Configurações locais do Obsidian
+# Configuraï¿½ï¿½es locais do Obsidian
 .obsidian/
+.env*

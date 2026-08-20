@@ -1,5 +1,5 @@
 // Métricas institucionais — NÃO VALIDADAS. Nenhum valor aqui é dado real
-// confirmado pela Vintec. `verified:false` + `source:null` em cada item.
+// confirmado pela MKTOnline. `verified:false` + `source:null` em cada item.
 // `showInProduction:false` é o sinal de bloqueio: NÃO fazer deploy dessas
 // métricas sem trocar para valores reais e `verified:true` com `source`.
 export type SiteMetric = {
