@@ -22,15 +22,12 @@ interface SyncResult {
   message?: string
 }
 
-// LIMITAÇÃO CONHECIDA: roda sequencial, 1 empresa/conexão por vez, dentro do
-// teto de 300s da function. Catálogo grande (~1-2min por sync, ver
-// mercadolivre/sync.ts) limita isso a poucas dezenas de conexões por
-// disparo do cron antes de estourar o tempo. Não é um bug — é o mesmo
-// tradeoff que o botão manual já tinha, só que agora automático. Se o
-// volume de empresas conectadas crescer a ponto de estourar 300s, a solução
-// é migrar pra uma fila (Trigger.dev, Vercel Queues) que dispare 1 função
-// por conexão em paralelo — resolver isso quando o volume real pedir, não
-// antes (ver CORE-RULES #7).
+interface CronConnection {
+  company_id: string
+  provider: Provider
+  last_sync_at: string | null
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Vercel Cron manda `Authorization: Bearer ${CRON_SECRET}` automaticamente
   // quando CRON_SECRET está configurado nas env vars do projeto — é a forma
@@ -67,18 +64,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const supabase = await getSupabaseAdmin()
-    const { data: connections, error } = await supabase
+    const { data: connections, error, count } = await supabase
       .from('marketplace_connections')
-      .select('company_id, provider')
+      .select('company_id, provider, last_sync_at', { count: 'exact' })
       .eq('status', 'connected')
       .in('provider', availableProviders)
+      .order('last_sync_at', { ascending: true, nullsFirst: true })
+      .order('company_id', { ascending: true })
+      .order('provider', { ascending: true })
+      // Uma conexão por tick é deliberado: cada sync individual pode consumir
+      // quase todo o maxDuration. O cron roda a cada 5 minutos e o próximo
+      // tick seleciona automaticamente a conexão com last_sync_at mais antigo,
+      // sem depender de cursor que nenhum scheduler consumia.
+      .limit(1)
     if (error) throw new Error(error.message)
 
     const results: SyncResult[] = []
-    // Sequencial de propósito — cada runXSync já garante isolamento por
-    // company_id, mas rodar em paralelo aqui multiplicaria chamadas
-    // simultâneas às APIs externas (ML/Shopee) sem necessidade real.
-    for (const conn of connections ?? []) {
+    const orderedConnections = (connections ?? []) as CronConnection[]
+    for (const conn of orderedConnections) {
       const provider = conn.provider as Provider
       const syncer = SYNCERS[provider]
       if (!syncer) continue
@@ -93,7 +96,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    res.status(200).json({ ok: true, syncedCount: results.length, results })
+    const remainingCount = Math.max(0, (count ?? orderedConnections.length) - results.length)
+    res.status(200).json({
+      ok: true,
+      partial: remainingCount > 0,
+      syncedCount: results.length,
+      remainingCount,
+      continuation: remainingCount > 0 ? 'next_scheduled_tick' : null,
+      results,
+    })
   } catch (err) {
     console.error('[api/cron/sync-all]', err)
     res.status(500).json({ ok: false, message: 'Erro ao listar conexões pra sync agendado.' })

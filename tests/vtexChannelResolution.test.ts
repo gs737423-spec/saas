@@ -14,6 +14,7 @@ import { normalizeVtexOrder } from '../src/server/integrations/vtex/normalize'
 import { persistVtexChannelResolution, loadVtexChannelMappings, type VtexChannelResolutionCache } from '../src/server/integrations/vtex/channelRegistry'
 import {
   VTEX_CHECKPOINT_VERSION,
+  VTEX_CATALOG_DISCOVERY_VERSION,
   buildVtexRunConfig,
   deriveVtexRunState,
   normalizeVtexCheckpoint,
@@ -284,6 +285,22 @@ describe('channel persistence and dedupe', () => {
     expect(normalized.channelResolutionStatus).toBe('resolved')
   })
 
+  it('descoberta concorrente nunca sobrescreve mapping explícito já resolvido', async () => {
+    const { client, tables } = fakeSupabase()
+    tables.vtex_channel_mappings.push({
+      id: 'manual-1', company_id: 'company-1', connection_id: 'conn-1', source_provider: 'vtex',
+      external_key: 'affiliate:mzn', identifier_type: 'affiliate_id', identifier_value: 'mzn', affiliate_id: 'MZN',
+      canonical_channel: 'amazon', resolution_status: 'resolved', resolution_source: 'mapping',
+    })
+
+    // Simula snapshot antigo da run: ainda normaliza MZN como unresolved.
+    const result = await persist(client, new Map(), order({ orderId: 'stale-run', affiliateId: 'MZN', marketplaceOrderId: 'mp-stale' }), {})
+
+    expect(result).toMatchObject({ resolved: true, canonicalChannel: 'amazon', resolutionStatus: 'resolved' })
+    expect(tables.vtex_channel_mappings).toHaveLength(1)
+    expect(tables.vtex_channel_mappings[0]).toMatchObject({ canonical_channel: 'amazon', resolution_status: 'resolved', resolution_source: 'mapping' })
+  })
+
   // -------------------------------------------------------------------------
   // Colisão do UNIQUE normalizado (021) com o upsert por external_key: uma
   // linha legada com case/whitespace diferente do que o código sempre grava
@@ -372,8 +389,11 @@ describe('checkpoint versioning and normalization', () => {
       orderWindowStart: '2026-06-01T00:00:00.000Z',
       orderWindowEnd: '2026-06-08T00:00:00.000Z',
       orderTargetEnd: '2026-08-18T00:00:00.000Z',
+      orderTraversal: 'recent_first',
+      orderBackfillFloor: '2026-05-20T00:00:00.000Z',
       orderPage: 2,
       catalogStatus: 'completed',
+      catalogDiscoveryVersion: VTEX_CATALOG_DISCOVERY_VERSION,
     }, config, now)
     expect(good.normalized).toBe(false)
     expect(good.checkpoint.orderWindowStart).toBe('2026-06-01T00:00:00.000Z')

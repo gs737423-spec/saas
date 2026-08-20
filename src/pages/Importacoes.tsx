@@ -1,5 +1,4 @@
 import {
-  Link2,
   RefreshCw,
   Wifi,
   Loader2,
@@ -251,11 +250,6 @@ export default function Importacoes() {
 
   return (
     <div className="enterprise-page">
-      <div className="flex items-end justify-between gap-2">
-        <div><h1 className="text-lg font-semibold text-text-primary">Conexões</h1><p className="mt-0.5 text-[12.5px] text-text-secondary">Gerencie os canais que alimentam sua operação.</p></div>
-        <Link2 className="h-4 w-4 text-accent-primary" />
-      </div>
-
       {backendUnreachable && (
         <div className="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-bg px-3 py-2.5 text-[12.5px] text-text-secondary" role="status">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-rose" />

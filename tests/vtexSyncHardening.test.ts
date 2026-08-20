@@ -319,9 +319,9 @@ describe('orders stage stops on VTEX 401/403 instead of retrying item by item (s
     const path = await import('node:path')
     const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
     expect(source).toContain('ordersPermissionDenied = true')
-    // The flag must actually be checked after the batch to break the do/while
-    // order-page loop — not just set and ignored.
-    expect(source).toMatch(/if \(ordersPermissionDenied\) \{[\s\S]{0,700}ranOutOfTime = true/)
+    // The flag must terminate the run as partial — never leave it queued in
+    // an infinite retry loop with credentials that cannot read OMS.
+    expect(source).toMatch(/if \(ordersPermissionDenied\) \{[\s\S]{0,1000}status: 'partial'[\s\S]{0,300}stage: 'complete'/)
     // Same terminal treatment already used by the catalog stage: mark the
     // connection requires_attention instead of retrying forever.
     expect(source).toMatch(/ordersPermissionDenied[\s\S]{0,700}requires_attention/)

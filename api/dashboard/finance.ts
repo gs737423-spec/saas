@@ -9,6 +9,7 @@ interface FinanceApiResponse {
   overview: FinanceOverview
   byMarketplace: MarketplaceFinance[]
   transactions: FinanceTransaction[]
+  lastSyncAt: string | null
   message?: string
 }
 
@@ -90,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const missing = getMissingEnvVars(CORE_ENV_VARS)
     if (missing.length > 0) {
-      res.status(200).json({ ok: false, overview: { ...EMPTY_OVERVIEW }, byMarketplace: [], transactions: [], message: 'Configuração do Supabase pendente.' } satisfies FinanceApiResponse)
+      res.status(200).json({ ok: false, overview: { ...EMPTY_OVERVIEW }, byMarketplace: [], transactions: [], lastSyncAt: null, message: 'Configuração do Supabase pendente.' } satisfies FinanceApiResponse)
       return
     }
 
@@ -104,18 +105,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: connections, error: connError } = await supabase
       .from('marketplace_connections')
-      .select('id, provider, status')
+      .select('id, provider, status, last_sync_at')
       .eq('company_id', auth.companyId)
       .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
     if (connError) throw new Error(connError.message)
 
     if (!connections || connections.length === 0) {
-      res.status(200).json({ ok: true, overview: { ...EMPTY_OVERVIEW }, byMarketplace: [], transactions: [] } satisfies FinanceApiResponse)
+      res.status(200).json({ ok: true, overview: { ...EMPTY_OVERVIEW }, byMarketplace: [], transactions: [], lastSyncAt: null } satisfies FinanceApiResponse)
       return
     }
 
     const providerByConnectionId = new Map(connections.map((c) => [c.id, String(c.provider)]))
     const connectionIds = connections.map((c) => c.id)
+    const lastSyncAt = connections.reduce<string | null>((latest, connection) => {
+      if (!connection.last_sync_at) return latest
+      return !latest || connection.last_sync_at > latest ? connection.last_sync_at : latest
+    }, null)
 
     const [{ data: registeredChannels, error: channelError }, trustedChannels] = await Promise.all([
       supabase.from('sales_channels').select('canonical_key, display_name').eq('company_id', auth.companyId).eq('status', 'active'),
@@ -138,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (ordersError) throw new Error(ordersError.message)
 
     if (!orders || orders.length === 0) {
-      res.status(200).json({ ok: true, overview: { ...EMPTY_OVERVIEW }, byMarketplace: [], transactions: [] } satisfies FinanceApiResponse)
+      res.status(200).json({ ok: true, overview: { ...EMPTY_OVERVIEW, source: 'real' }, byMarketplace: [], transactions: [], lastSyncAt } satisfies FinanceApiResponse)
       return
     }
 
@@ -238,9 +243,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     ].sort((a, b) => (a.date < b.date ? 1 : -1))
 
-    res.status(200).json({ ok: true, overview, byMarketplace, transactions } satisfies FinanceApiResponse)
+    res.status(200).json({ ok: true, overview, byMarketplace, transactions, lastSyncAt } satisfies FinanceApiResponse)
   } catch (err) {
     console.error('[api/dashboard/finance]', err)
-    res.status(200).json({ ok: false, overview: { ...EMPTY_OVERVIEW, source: 'demo' }, byMarketplace: [], transactions: [], message: 'Erro controlado ao consultar financeiro.' } satisfies FinanceApiResponse)
+    res.status(200).json({ ok: false, overview: { ...EMPTY_OVERVIEW, source: 'demo' }, byMarketplace: [], transactions: [], lastSyncAt: null, message: 'Erro controlado ao consultar financeiro.' } satisfies FinanceApiResponse)
   }
 }

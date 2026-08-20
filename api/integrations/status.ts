@@ -106,7 +106,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const finalStatus = isExpired ? 'expired' : connection.status
     const response: StatusResponse = {
       ok: true,
-      source: finalStatus === 'connected' ? 'real' : 'demo',
+      // `syncing`/`requires_attention` continuam usando dados REAIS já
+      // persistidos. Status operacional não transforma tenant conectado em
+      // demo nem autoriza fixtures no frontend.
+      source: 'real',
       provider,
       status: finalStatus,
       lastSyncAt: connection.last_sync_at,

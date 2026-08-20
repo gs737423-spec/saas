@@ -50,11 +50,7 @@ export default function Suporte() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-bold text-text-primary">Suporte</h1>
-          <p className="text-[13px] text-text-muted">Abra um chamado e acompanhe as respostas da nossa equipe.</p>
-        </div>
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setShowCreate(true)}

@@ -91,9 +91,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (invError) throw new Error(invError.message)
 
     if (!inventoryRows || inventoryRows.length === 0) {
-      // Conectado mas nenhum sync rodou ainda — segue demo até existir dado
-      // real, nunca finge que já "tem estoque" só porque a conexão existe.
-      const response: InventoryApiResponse = { ok: true, source: 'demo', items: [], lastSyncAt }
+      // Conectado sem estoque é um snapshot real vazio; fixture demo só entra
+      // quando o modo de demonstração foi explicitamente ativado no cliente.
+      const response: InventoryApiResponse = { ok: true, source: 'real', items: [], lastSyncAt }
       res.status(200).json(response)
       return
     }

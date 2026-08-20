@@ -83,6 +83,16 @@ export function normalizeForComparison(value: unknown): string {
   return value.normalize('NFKD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+/** Converte um NOME CONFIÁVEL (retornado pela própria VTEX ou escolhido
+ * pelo usuário) em chave compatível com a constraint de `sales_channels`.
+ * Não deve ser usado para adivinhar marketplace a partir de siglas. */
+export function canonicalKeyFromTrustedName(value: unknown): string {
+  return normalizeForComparison(value)
+    .replace(/[^a-z0-9._:-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '')
+}
+
 /** Busca EXATA por chave canônica — é o que a resolução de logo usa.
  *  Diferente de `findCanonicalChannel`, não aceita alias nem display name:
  *  "Amazon" (nome) não resolve marca; só a chave `amazon` resolve. */

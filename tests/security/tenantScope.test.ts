@@ -27,12 +27,14 @@ describe('service-role tenant scope regressions', () => {
   it('scopes sync locks and connection mutations by both connection and company', () => {
     const lock = readFileSync(resolve('src/server/integrations/syncLock.ts'), 'utf8')
     expect(lock).toContain(".eq('id', connectionId)")
-    expect(lock.match(/\.eq\('company_id', companyId\)/g)?.length).toBeGreaterThanOrEqual(2)
+    expect(lock).toContain(".eq('company_id', companyId)")
+    expect(lock.match(/\.eq\('company_id', lease\.companyId\)/g)?.length).toBeGreaterThanOrEqual(2)
+    expect(lock.match(/\.eq\('sync_started_at', lease\.heartbeatAt\)/g)?.length).toBeGreaterThanOrEqual(2)
 
     for (const file of ['src/server/integrations/mercadolivre/sync.ts', 'src/server/integrations/shopee/sync.ts']) {
       const source = readFileSync(resolve(file), 'utf8')
-      expect(source).toContain('claimSyncLock(supabase, companyId, connection.id, startedAt)')
-      expect(source).toContain('releaseSyncLock(supabase, companyId, connection.id)')
+      expect(source).toContain('const lease = await claimSyncLock(supabase, companyId, connection.id, startedAt)')
+      expect(source).toContain('releaseSyncLock(supabase, lease)')
       expect(source).toContain('persistCanonicalOrder(supabase')
     }
 

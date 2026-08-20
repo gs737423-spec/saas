@@ -41,11 +41,13 @@ export function computeVtexSyncProgress(stage: string, checkpoint: VtexSyncCheck
   }
 
   if (stage === 'orders' && cp.orderHistoryStart && cp.orderTargetEnd) {
-    const start = Date.parse(cp.orderHistoryStart)
+    const start = Date.parse(cp.orderBackfillFloor ?? cp.orderHistoryStart)
     const end = Date.parse(cp.orderTargetEnd)
-    const covered = Date.parse(cp.orderWindowStart ?? cp.orderHistoryStart)
+    const covered = cp.orderTraversal === 'recent_first'
+      ? end - Date.parse(cp.orderWindowEnd ?? cp.orderTargetEnd)
+      : Date.parse(cp.orderWindowStart ?? cp.orderHistoryStart) - start
     if (Number.isFinite(start) && Number.isFinite(end) && end > start && Number.isFinite(covered)) {
-      const percent = Math.min(100, Math.max(0, Math.round(((covered - start) / (end - start)) * 100)))
+      const percent = Math.min(100, Math.max(0, Math.round((covered / (end - start)) * 100)))
       // basis 'time_window': percent é fração do PERÍODO já varrido, não da
       // quantidade de pedidos — o total real de pedidos só é conhecido ao
       // final. `processed` (contagem real) é reportado separadamente.

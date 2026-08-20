@@ -68,15 +68,11 @@ export default function Relatorios() {
 
   return (
     <div className="report-center">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-text-primary">Relatórios</h1>
-          <p className="mt-0.5 text-[13px] text-text-secondary">Consolide resultados, compare períodos e analise sua operação.</p>
-        </div>
+      <div className="flex justify-end">
         <button type="button" onClick={() => window.print()} className="report-toolbar control-inactive motion-chip inline-flex h-9 items-center gap-1.5 self-start rounded-lg border px-3 text-xs font-semibold sm:self-auto">
           <Printer className="h-3.5 w-3.5" /> Imprimir relatório
         </button>
-      </header>
+      </div>
 
       <div className="enterprise-toolbar enterprise-filter-surface rounded-lg border border-border-subtle" aria-label="Tipos de relatório">
         <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Relatório</span>

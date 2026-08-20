@@ -50,7 +50,7 @@ describe('Teste A — checkpoint legado de produção nunca vira catalogStatus c
 // windowEnd/targetEnd/orderPage ficam exatamente como estavam).
 // -----------------------------------------------------------------------
 describe('Teste B — normalização de catálogo preserva o checkpoint de pedidos intocado', () => {
-  it('order window fields that are already internally consistent are untouched by catalogStatus normalization', () => {
+  it('migra a janela v2 para recent-first preservando o limite inferior e o target', () => {
     const historyStart = '2026-05-19T00:00:00.000Z'
     const windowStart = '2026-08-11T00:00:00.000Z'
     const windowEnd = '2026-08-18T00:00:00.000Z'
@@ -68,10 +68,12 @@ describe('Teste B — normalização de catálogo preserva o checkpoint de pedid
     }
     const result = normalizeVtexCheckpoint(checkpoint, fallback, new Date('2026-08-18T12:00:00.000Z'))
     expect(result.checkpoint.orderHistoryStart).toBe(historyStart)
-    expect(result.checkpoint.orderWindowStart).toBe(windowStart)
-    expect(result.checkpoint.orderWindowEnd).toBe(windowEnd)
+    expect(result.checkpoint.orderBackfillFloor).toBe(windowStart)
+    expect(result.checkpoint.orderWindowStart).toBe('2026-08-11T12:00:00.000Z')
+    expect(result.checkpoint.orderWindowEnd).toBe(targetEnd)
     expect(result.checkpoint.orderTargetEnd).toBe(targetEnd)
-    expect(result.checkpoint.orderPage).toBe(4)
+    expect(result.checkpoint.orderPage).toBe(1)
+    expect(result.checkpoint.orderTraversal).toBe('recent_first')
     expect(result.checkpoint.catalogStatus).toBe('unknown')
   })
 })
@@ -105,9 +107,10 @@ describe('catalogStatus=empty de versão de descoberta antiga é revalidado com 
     expect(result.checkpoint.catalogStatus).toBe('empty')
   })
 
-  it('completed não é afetado pela versão de descoberta — só empty depende da estratégia de "não achei nada"', () => {
+  it('completed antigo volta para unknown para reparar preço/estoque uma vez', () => {
     const result = normalizeVtexCheckpoint({ catalogStatus: 'completed', catalogSkuTotal: 40 } as VtexSyncCheckpoint, fallback)
-    expect(result.checkpoint.catalogStatus).toBe('completed')
+    expect(result.checkpoint.catalogStatus).toBe('unknown')
+    expect(result.checkpoint.skuOffset).toBe(0)
   })
 })
 

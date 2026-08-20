@@ -6,7 +6,7 @@ import type { ShopeeOrder } from './types.js'
 import { getItemBaseInfoBatch, searchShopItemIds, searchOrders, ShopeeApiError } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
-import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
+import { claimSyncLock, heartbeatSyncLock, releaseSyncLock } from '../syncLock.js'
 import { directCanonicalOrderKey, persistCanonicalOrder } from '../orderIdentity.js'
 
 export class ConnectionMissingError extends Error {}
@@ -86,7 +86,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
   const startedAt = new Date()
   const supabase = await getSupabaseAdmin()
   const connection = await loadConnection(companyId)
-  await claimSyncLock(supabase, companyId, connection.id, startedAt)
+  const lease = await claimSyncLock(supabase, companyId, connection.id, startedAt)
 
   await logSyncEvent({
     companyId,
@@ -104,8 +104,11 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
 
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
+    await heartbeatSyncLock(supabase, lease)
     const shopId = connection.seller_id!
-    const itemIds = await searchShopItemIds(accessToken, shopId)
+    const itemSearch = await searchShopItemIds(accessToken, shopId)
+    const itemIds = itemSearch.records
+    if (itemSearch.partial) errors.push(itemSearch.reason ?? 'Catálogo Shopee parcialmente importado.')
 
     for (let i = 0; i < itemIds.length; i += ITEM_BATCH_SIZE) {
       const batch = itemIds.slice(i, i + ITEM_BATCH_SIZE)
@@ -141,11 +144,14 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
           : batchErr instanceof Error ? batchErr.message : 'Unknown error fetching item batch'
         errors.push(message)
       }
+      await heartbeatSyncLock(supabase, lease)
     }
 
     let orders: ShopeeOrder[] = []
     try {
-      orders = await searchOrders(accessToken, shopId)
+      const orderSearch = await searchOrders(accessToken, shopId)
+      orders = orderSearch.records
+      if (orderSearch.partial) errors.push(orderSearch.reason ?? 'Pedidos Shopee parcialmente importados.')
     } catch (searchErr) {
       const message = searchErr instanceof ShopeeApiError
         ? searchErr.message
@@ -173,15 +179,13 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
 
     const finishedAt = new Date()
     const durationMs = finishedAt.getTime() - startedAt.getTime()
-    const hadPartialFailures = errors.length > 0 && productsImported > 0
+    const hadPartialFailures = errors.length > 0 && (productsImported > 0 || ordersImported > 0)
 
     await supabase
       .from('marketplace_connections')
-      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: errors[0] ?? null })
+      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: errors.length > 1 ? `${errors.length} avisos/erros: ${errors.slice(0, 5).join(' | ')}` : errors[0] ?? null })
       .eq('id', connection.id)
       .eq('company_id', companyId)
-    await releaseSyncLock(supabase, companyId, connection.id)
-
     await logSyncEvent({
       companyId,
       connectionId: connection.id,
@@ -189,7 +193,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
       eventType: errors.length === 0 ? 'sync_success' : hadPartialFailures ? 'sync_partial' : 'sync_error',
       status: errors.length === 0 ? 'success' : hadPartialFailures ? 'success' : 'error',
       message: errors.length === 0 ? `Synced ${productsImported} products, ${ordersImported} orders` : `${errors.length} item(s) failed during sync`,
-      payload: { productsImported, inventoryUpdated, ordersImported, errorCount: errors.length },
+      payload: { productsImported, inventoryUpdated, ordersImported, errorCount: errors.length, partial: errors.length > 0 },
       startedAt,
       finishedAt,
     })
@@ -200,8 +204,6 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
     await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id).eq('company_id', companyId)
-    await releaseSyncLock(supabase, companyId, connection.id)
-
     await logSyncEvent({
       companyId,
       connectionId: connection.id,
@@ -214,5 +216,7 @@ export async function runShopeeSync(companyId: string): Promise<SyncSummary> {
     })
 
     return { productsImported, inventoryUpdated, ordersImported, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
+  } finally {
+    await releaseSyncLock(supabase, lease)
   }
 }

@@ -154,7 +154,8 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
   const stalledCount = enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
   const curvaA = items.filter((i) => i.abcClass === 'A')
-  const totalValue = items.reduce((sum, i) => sum + (i.price ?? 0) * (i.availableQuantity ?? 0), 0)
+  const pricedItems = items.filter((item) => item.price !== null && item.availableQuantity !== null)
+  const totalValue = pricedItems.reduce((sum, item) => sum + item.price! * item.availableQuantity!, 0)
 
   const filtered = enriched.filter(({ item, cov, giro }) => {
     if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
@@ -182,7 +183,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
 
   const kpis: { key: string; label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean }[] = [
-    { key: 'value', label: 'Valor Estimado em Estoque', value: `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}`, sub: 'estoque × preço', icon: Wallet, primary: '#6366F1' },
+    { key: 'value', label: 'Valor Estimado em Estoque', value: pricedItems.length > 0 ? `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}` : 'N/D', sub: pricedItems.length === items.length ? 'estoque × preço' : `${pricedItems.length}/${items.length} itens com preço`, icon: Wallet, primary: '#6366F1' },
     { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
     { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
     { key: 'curveA', label: 'Produtos Curva A', value: String(curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
@@ -279,7 +280,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                   <div><p className="text-text-muted">Estoque</p><p className="mt-0.5 font-mono text-text-primary">{item.availableQuantity ?? 'N/D'}</p></div>
                   <div><p className="text-text-muted">Vendas 30d</p><p className="mt-0.5 font-mono text-text-secondary">{item.soldQuantity ?? '—'}</p></div>
                   <div><p className="text-text-muted">Cobertura</p><p className="mt-0.5 font-mono font-semibold" style={{ color: covStyle.color }}>{cov !== null ? `${Math.round(cov)}d · ${covStyle.label}` : covStyle.label}</p></div>
-                  <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">{item.availableQuantity === null ? 'N/D' : `R$ ${brl((item.price ?? 0) * item.availableQuantity)}`}</p></div>
+                  <div><p className="text-text-muted">Valor em Estoque</p><p className="mt-0.5 font-mono text-text-secondary">{item.availableQuantity === null || item.price === null ? 'N/D' : `R$ ${brl(item.price * item.availableQuantity)}`}</p></div>
                   <div><p className="text-text-muted">Giro</p><p className="mt-0.5 font-semibold" style={{ color: giro.color }}>{giro.label}</p></div>
                 </div>
               </div>
@@ -314,7 +315,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
               <tbody>
                 {sorted.map(({ item, cov, giro }) => {
                   const covStyle = coveragePresentation(cov)
-                  const stockValue = item.availableQuantity === null ? null : (item.price ?? 0) * item.availableQuantity
+                  const stockValue = item.availableQuantity === null || item.price === null ? null : item.price * item.availableQuantity
                   const avgTicket = item.soldQuantity && item.soldQuantity > 0 ? item.revenue30d / item.soldQuantity : 0
                   const share = totalRevenue > 0 ? (item.revenue30d / totalRevenue) * 100 : 0
                   return (

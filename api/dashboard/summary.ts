@@ -25,7 +25,7 @@ function pctChange(current: number, previous: number): number | null {
 // (Mercado Livre, Shopee, ...) pro período pedido — não filtra por um
 // provider fixo, senão a empresa com 2+ marketplaces conectados nunca veria
 // o segundo no resumo. Nunca fabrica número — sem conexão/sem pedido
-// sincronizado ainda, devolve zerado com source:'demo'.
+// sincronizado ainda, devolve zerado preservando a origem real.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const missing = getMissingEnvVars(CORE_ENV_VARS)
@@ -80,9 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (ordersError) throw new Error(ordersError.message)
 
     if (!orders || orders.length === 0) {
-      // Conectado mas sem pedido sincronizado ainda nesse período — segue
-      // demo, nunca finge que teve venda.
-      const response: SummaryApiResponse = { ok: true, source: 'demo', ...EMPTY, lastSyncAt }
+      // Conectado mas sem pedido no período é um snapshot real vazio, não demo.
+      const response: SummaryApiResponse = { ok: true, source: 'real', ...EMPTY, lastSyncAt }
       res.status(200).json(response)
       return
     }

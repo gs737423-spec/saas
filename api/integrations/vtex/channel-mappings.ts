@@ -7,7 +7,8 @@ import { getSupabaseAdmin } from '../../../src/server/integrations/supabaseAdmin
 import { loadVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
 import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
 import { normalizeVtexCanonicalChannel, normalizeVtexChannelDisplayName, normalizeVtexChannelMappings, normalizeVtexExternalChannelKey } from '../../../src/server/integrations/vtex/validation.js'
-import { describeVtexIdentifier, findCanonicalChannel, humanizeCanonicalKey, parseVtexExternalKey } from '../../../src/server/integrations/vtex/channelResolution.js'
+import { CANONICAL_CHANNELS, describeVtexIdentifier, findCanonicalChannel, humanizeCanonicalKey, parseVtexExternalKey } from '../../../src/server/integrations/vtex/channelResolution.js'
+import { reclassifyVtexOrdersForIdentifier } from '../../../src/server/integrations/vtex/channelRegistry.js'
 
 function safeText(value: unknown, maxLength = 160): string | null {
   if (typeof value !== 'string') return null
@@ -71,13 +72,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           resolved: identifiers.filter((item) => item.resolutionStatus === 'resolved').length,
           unresolved: identifiers.filter((item) => item.resolutionStatus === 'unresolved').length,
         },
-        canonicalChannels: (channels ?? [])
-          .filter((channel) => !String(channel.canonical_key).startsWith('external:vtex:'))
-          .map((channel) => ({
+        canonicalChannels: [...new Map([
+          ...CANONICAL_CHANNELS.map((channel) => [channel.key, {
+            canonicalKey: channel.key, displayName: channel.displayName, channelType: channel.channelType,
+          }] as const),
+          ...(channels ?? [])
+            .filter((channel) => !String(channel.canonical_key).startsWith('external:vtex:'))
+            .map((channel) => [String(channel.canonical_key), {
             canonicalKey: String(channel.canonical_key),
             displayName: safeText(channel.display_name) ?? String(channel.canonical_key),
             channelType: channel.channel_type,
-          })),
+            }] as const),
+        ]).values()],
       })
       return
     }
@@ -92,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const requestedChannel = normalizeVtexCanonicalChannel(req.body.canonicalChannel)
       const canonicalChannel = findCanonicalChannel(requestedChannel)?.key ?? requestedChannel
       const { data: mapping, error: mappingError } = await supabase.from('vtex_channel_mappings')
-        .select('id')
+        .select('id, identifier_type, identifier_value, affiliate_id, external_sales_channel')
         .eq('company_id', auth.companyId)
         .eq('connection_id', current.id)
         .eq('source_provider', 'vtex')
@@ -123,16 +129,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { error: updateError } = await supabase.from('vtex_channel_mappings').update({
         canonical_channel: canonicalChannel,
         resolution_status: 'resolved',
+        resolution_source: 'mapping',
         updated_at: new Date().toISOString(),
       }).eq('id', mapping.id).eq('company_id', auth.companyId).eq('connection_id', current.id)
       if (updateError) throw new Error(updateError.message)
 
+      const parsed = parseVtexExternalKey(externalKey)
+      if (parsed.type === 'affiliate_id' || parsed.type === 'sales_channel') {
+        await reclassifyVtexOrdersForIdentifier(
+          supabase, auth.companyId, current.id, parsed.type,
+          safeText(parsed.type === 'affiliate_id' ? mapping.affiliate_id : mapping.external_sales_channel)
+            ?? safeText(mapping.identifier_value) ?? parsed.value,
+          canonicalChannel,
+        )
+      }
+
       await writeSecurityAudit({
         requestId: getRequestId(req, res), actorUserId: auth.userId, companyId: auth.companyId,
         action: 'vtex.channel_mapping_resolved', targetType: 'vtex_channel_mapping', targetId: mapping.id,
-        metadata: { canonicalChannel, requiresFullSync: true },
+        metadata: { canonicalChannel, requiresFullSync: false },
       })
-      res.status(200).json({ ok: true, canonicalChannel, requiresFullSync: true })
+      res.status(200).json({ ok: true, canonicalChannel, requiresFullSync: false })
       return
     }
 

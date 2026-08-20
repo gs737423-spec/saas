@@ -5,6 +5,7 @@ import { securityLog } from '../security/logger.js'
 import { writeSecurityAudit } from '../security/auditLog.js'
 import { getRequestId } from '../security/requestContext.js'
 import { getBearerToken, requireUser } from './requireUser.js'
+import { requirePlatformAdminMfa } from './requireAdmin.js'
 
 const UNDEFINED_TABLE = '42P01'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -90,6 +91,7 @@ export async function requireCompany(req: VercelRequest, res: VercelResponse): P
   }
   const explicitCompanyId = requested.value
   if (adminRow) {
+    if (!(await requirePlatformAdminMfa(req, res, user.id))) return null
     if (!explicitCompanyId) {
       res.status(409).json({ ok: false, error: { code: 'COMPANY_CONTEXT_REQUIRED', message: 'Administrador precisa escolher uma empresa explicitamente.' }, requestId })
       return null

@@ -38,7 +38,7 @@ export default function Produtos() {
       body: JSON.stringify({ externalProductId: product.id, costPrice }),
     })
     if (res.ok) {
-      setReal((prev) => prev ? { ...prev, items: prev.items.map((p) => p.id === product.id ? { ...p, costPrice, margin: p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null } : p) } : prev)
+      setReal((prev) => prev ? { ...prev, items: prev.items.map((p) => p.id === product.id ? { ...p, costPrice, margin: p.price !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null } : p) } : prev)
     }
   }
 
@@ -70,7 +70,11 @@ export default function Produtos() {
     )
   }
 
-  // Sem conexão/sync ainda — nenhum produto ilustrativo aparece.
+  if (real?.source === 'real' && real.items.length === 0) {
+    return <ConnectMarketplacePrompt title="Catálogo ainda não disponível" description="A conexão está ativa e o catálogo real está sendo sincronizado. Nenhum produto ilustrativo será exibido enquanto isso." />
+  }
+
+  // Sem conexão — nenhum produto ilustrativo aparece fora do modo demo.
   if (!real || (real.source !== 'real' && real.source !== 'demo') || real.items.length === 0) {
     return <ConnectMarketplacePrompt title="Conecte um marketplace pra ver seu catálogo" description="Assim que sincronizar o Mercado Livre, seus produtos reais aparecem aqui — com estoque, vendas e tendência." />
   }

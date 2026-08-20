@@ -64,7 +64,7 @@ function demoInterceptFor(url: string): unknown | null {
     // muda com o período e a lista de marketplace (Marketplaces/Financeiro)
     // fica parada, dois números que não batem na mesma sessão de demo.
     const { overview, byMarketplace } = demoFinanceOverview(days)
-    return { ok: true, overview, byMarketplace, transactions: demoFinanceTransactions() }
+    return { ok: true, overview, byMarketplace, transactions: demoFinanceTransactions(), lastSyncAt: new Date().toISOString() }
   }
   return null
 }

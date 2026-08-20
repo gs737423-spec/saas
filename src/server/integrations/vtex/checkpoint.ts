@@ -32,7 +32,7 @@
 
 import type { VtexSyncCheckpoint } from './types.js'
 
-export const VTEX_CHECKPOINT_VERSION = 2
+export const VTEX_CHECKPOINT_VERSION = 3
 
 /** Versão da estratégia de DESCOBERTA de catálogo (não confundir com
  *  `VTEX_CHECKPOINT_VERSION`, que versiona o checkpoint inteiro). 1 = só
@@ -56,10 +56,13 @@ export const VTEX_CHECKPOINT_VERSION = 2
  *  e terminado `catalogStatus='completed'`/`catalogSkuTotal=0` no lote
  *  seguinte por causa do bug. Sem este bump ela ficaria "completed" errada
  *  pra sempre (não bate no gate de `'empty'`).
+ *  6 = reprocessa o catálogo uma vez com persistência não destrutiva de
+ *  preço/estoque. A engine anterior aceitava falha de Pricing/Logistics via
+ *  `Promise.allSettled` e gravava null sem deixar uma fase de reparo.
  *  Bump aqui sempre que a estratégia de descoberta mudar OU quando for
  *  necessário forçar uma revalidação por causa de mudança externa conhecida
  *  (permissão liberada, etc). */
-export const VTEX_CATALOG_DISCOVERY_VERSION = 5
+export const VTEX_CATALOG_DISCOVERY_VERSION = 6
 
 export const VTEX_ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -147,23 +150,14 @@ export function normalizeVtexCheckpoint(
     // estratégia atual (que já tenta sales channel) decide de verdade.
     reasons.push('catalog_empty_needs_revalidation_with_current_discovery_strategy')
     checkpoint.catalogStatus = 'unknown'
-  } else if (
-    checkpoint.catalogStatus === 'completed' &&
-    (checkpoint.catalogSkuTotal ?? 0) === 0 &&
-    Number(checkpoint.skuOffset ?? 0) > 0 &&
-    (checkpoint.catalogDiscoveryVersion ?? 1) < VTEX_CATALOG_DISCOVERY_VERSION
-  ) {
-    // Prova de bug real de produção (ver catalogSkuIds em types.ts): a
-    // descoberta paginada achava a lista inteira, mas ela não era
-    // persistida entre lotes — no lote seguinte (`skuOffset>0`) a lista
-    // recalculada vinha vazia, o lote virava `[]`, e o estágio terminava
-    // `'completed'` com `catalogSkuTotal=0` mesmo tendo processado só o
-    // primeiro lote. Essa combinação (`completed` + `skuTotal=0` +
-    // `skuOffset>0`) é logicamente impossível pra uma descoberta que
-    // funcionou de verdade — é a assinatura exata do bug. Rebaixa pra
-    // 'unknown' UMA vez pra reentrar em catalog com a lista persistida.
-    reasons.push('catalog_completed_with_zero_total_needs_revalidation')
+  } else if (checkpoint.catalogStatus === 'completed' && (checkpoint.catalogDiscoveryVersion ?? 1) < VTEX_CATALOG_DISCOVERY_VERSION) {
+    // A estratégia de enriquecimento mudou: rebaixa UMA vez e zera somente
+    // o cursor de catálogo. Produtos/estoque/pedidos persistidos permanecem;
+    // os upserts apenas atualizam o mesmo SKU e reparam campos ausentes.
+    reasons.push('catalog_completed_needs_revalidation_with_current_enrichment_strategy')
     checkpoint.catalogStatus = 'unknown'
+    checkpoint.skuOffset = 0
+    checkpoint.catalogSkuIds = undefined
   }
 
   // Ponteiros numéricos: nunca abaixo do mínimo válido.
@@ -203,13 +197,31 @@ export function normalizeVtexCheckpoint(
       reasons.push('impossible_order_window')
       historyStart = historyStartDefault
       targetEnd = targetEndDefault
-      windowStart = historyStartDefault
-      windowEnd = Math.min(historyStartDefault + config.windowMs, targetEndDefault)
+      windowEnd = targetEndDefault
+      windowStart = Math.max(historyStartDefault, targetEndDefault - config.windowMs)
       checkpoint.orderPage = 1
       checkpoint.orderHistoryStart = new Date(historyStart).toISOString()
       checkpoint.orderTargetEnd = new Date(targetEnd).toISOString()
       checkpoint.orderWindowStart = new Date(windowStart).toISOString()
       checkpoint.orderWindowEnd = new Date(windowEnd).toISOString()
+      checkpoint.orderTraversal = 'recent_first'
+      checkpoint.orderBackfillFloor = new Date(historyStart).toISOString()
+    }
+
+    // v3 muda o bootstrap para RECENT-FIRST. Para uma run v2 em andamento,
+    // tudo antes de `windowStart` já foi confirmado; o início dessa janela
+    // é o limite inferior seguro que ainda precisa ser revisitado. Saltamos
+    // para a janela mais recente e, depois, voltamos até esse limite. Upserts
+    // tornam a eventual repetição da janela parcial idempotente.
+    if (checkpoint.orderTraversal !== 'recent_first') {
+      const floor = windowStart ?? historyStart ?? historyStartDefault
+      const end = targetEnd ?? targetEndDefault
+      checkpoint.orderTraversal = 'recent_first'
+      checkpoint.orderBackfillFloor = new Date(floor).toISOString()
+      checkpoint.orderWindowEnd = new Date(end).toISOString()
+      checkpoint.orderWindowStart = new Date(Math.max(floor, end - config.windowMs)).toISOString()
+      checkpoint.orderPage = 1
+      reasons.push('order_traversal_migrated_to_recent_first')
     }
   }
 

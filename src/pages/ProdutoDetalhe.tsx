@@ -7,7 +7,7 @@ import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
 import { useTheme } from '@/contexts/ThemeContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
-import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
+import type { DashboardProduct, DashboardProductsResponse, ProductSalesResponse } from '@/server/dashboardProducts'
 import SalesTrendChart from '@/components/produto-detalhe/SalesTrendChart'
 import ProdutoHealthScore, { computeHealthBreakdown } from '@/components/produto-detalhe/ProdutoHealthScore'
 import MarketplacePerformanceBreakdown from '@/components/produto-detalhe/MarketplacePerformanceBreakdown'
@@ -131,7 +131,7 @@ function buildSummary(product: DashboardProduct, status: ProductStatus, cov: num
 // cada `matches[i]` é um anúncio (1 linha em marketplace_products). A tela
 // usa o de maior faturamento como "principal" pro header/KPIs e detalha o
 // breakdown por marketplace embaixo.
-function ProdutoDetalheReal({ matches, periodDays }: { matches: DashboardProduct[]; periodDays: number }) {
+function ProdutoDetalheReal({ matches, periodDays, sales }: { matches: DashboardProduct[]; periodDays: number; sales: ProductSalesResponse | null }) {
   const sorted = [...matches].sort((a, b) => b.revenue - a.revenue)
   const main = sorted[0]
   const cov = coverageDays(main, periodDays)
@@ -145,7 +145,7 @@ function ProdutoDetalheReal({ matches, periodDays }: { matches: DashboardProduct
       <ProdutoKPIs product={main} cov={cov} />
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <SalesTrendChart product={main} periodDays={periodDays} />
+        <SalesTrendChart product={main} periodDays={periodDays} points={sales?.points ?? []} source={sales?.source === 'demo' ? 'demo' : 'real'} unavailable={!sales?.ok} />
         <ProdutoHealthScore status={status} score={score} breakdown={breakdown} coverageDays={cov} stock={main.stock} />
       </div>
 
@@ -159,6 +159,7 @@ export default function ProdutoDetalhe() {
   const { period } = usePeriod()
   const [real, setReal] = useState<DashboardProductsResponse | null>(null)
   const [loadingReal, setLoadingReal] = useState(true)
+  const [sales, setSales] = useState<ProductSalesResponse | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -172,6 +173,18 @@ export default function ProdutoDetalhe() {
       cancelled = true
     }
   }, [period.days])
+
+  useEffect(() => {
+    if (!real?.ok) return
+    if (real.source === 'demo') {
+      setSales({ ok: true, source: 'demo', points: [], lastSyncAt: new Date().toISOString() })
+      return
+    }
+    const productMatches = real.items.filter((product) => (product.sku && product.sku === sku) || product.id === sku)
+    if (productMatches.length === 0) return
+    const refs = productMatches.map((product) => ({ connectionId: product.connectionId, externalProductId: product.id }))
+    void apiFetchJson<ProductSalesResponse>(`/api/dashboard/product-sales?days=${period.days}&refs=${encodeURIComponent(JSON.stringify(refs))}`).then(setSales)
+  }, [period.days, real, sku])
 
   if (loadingReal) {
     return (
@@ -188,7 +201,7 @@ export default function ProdutoDetalhe() {
   const matches = (real?.items ?? []).filter((p) => (p.sku && p.sku === sku) || p.id === sku)
 
   if (matches.length > 0) {
-    return <ProdutoDetalheReal matches={matches} periodDays={period.days} />
+    return <ProdutoDetalheReal matches={matches} periodDays={period.days} sales={sales} />
   }
 
   return (

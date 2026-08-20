@@ -47,6 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
+    const { data: existingMembership, error: membershipLookupError } = await supabase
+      .from('company_members')
+      .select('user_id, role')
+      .eq('company_id', companyId)
+      .eq('role', 'owner')
+      .maybeSingle()
+    if (membershipLookupError) throw new Error(membershipLookupError.message)
+
     let userId: string | null = null
 
     const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
@@ -65,6 +73,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userId = existingId
     } else {
       userId = inviteData.user.id
+    }
+
+    if (existingMembership?.user_id === userId) {
+      res.status(200).json({ ok: true, userId, invited: false, role: 'owner' })
+      return
     }
 
     const { error: memberError } = await supabase

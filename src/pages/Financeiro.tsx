@@ -7,7 +7,6 @@ import MarketplaceFinanceTable from '@/components/financeiro/MarketplaceFinanceT
 import TransactionsLedger from '@/components/financeiro/TransactionsLedger'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance, type FinanceTransaction } from '@/data/financeShapes'
-import type { Marketplace } from '@/data/mockData'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 
@@ -16,11 +15,20 @@ interface FinanceApiResponse {
   overview: FinanceOverview
   byMarketplace: MarketplaceFinance[]
   transactions: FinanceTransaction[]
+  lastSyncAt: string | null
+}
+
+function freshnessLabel(response: FinanceApiResponse): string {
+  if (response.overview.source === 'demo') return 'dados demonstrativos'
+  if (!response.lastSyncAt) return 'sem sincronização registrada'
+  const value = new Date(response.lastSyncAt)
+  if (Number.isNaN(value.getTime())) return 'em horário indisponível'
+  return `em ${value.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
 }
 
 export default function Financeiro() {
   const { period } = usePeriod()
-  const [marketplaceFilter, setMarketplaceFilter] = useState<Marketplace | 'all'>('all')
+  const [marketplaceFilter, setMarketplaceFilter] = useState<string | 'all'>('all')
   const [real, setReal] = useState<FinanceApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -38,9 +46,16 @@ export default function Financeiro() {
     }
   }, [period.days])
 
+  const marketplaceOptions = useMemo(() => [...new Set([
+    ...(real?.byMarketplace ?? []).map((row) => row.marketplace),
+    ...(real?.transactions ?? []).map((row) => row.marketplace),
+  ])].sort((a, b) => a.localeCompare(b, 'pt-BR')), [real])
+
+  useEffect(() => {
+    if (marketplaceFilter !== 'all' && !marketplaceOptions.includes(marketplaceFilter)) setMarketplaceFilter('all')
+  }, [marketplaceFilter, marketplaceOptions])
+
   const filtered = useMemo(() => {
-    // Sempre os 4 canais, na ordem canônica — canal sem pedido no período
-    // vem zerado, nunca some da tela (ver decisão 2026-08-06).
     const source = fillAllMarketplaces(real?.byMarketplace ?? [])
     return marketplaceFilter === 'all' ? source : source.filter((m) => m.marketplace === marketplaceFilter)
   }, [real, marketplaceFilter])
@@ -67,9 +82,9 @@ export default function Financeiro() {
     <div className="enterprise-page">
       <FinanceHeader
         marketplaceFilter={marketplaceFilter}
+        marketplaceOptions={marketplaceOptions}
         onMarketplaceFilterChange={setMarketplaceFilter}
-        lastUpdated="há poucos minutos"
-        isDemo={false}
+        lastUpdated={freshnessLabel(real)}
       />
 
       <div className="motion-block-in">

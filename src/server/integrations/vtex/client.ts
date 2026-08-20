@@ -145,5 +145,4 @@ export class VtexClient {
   getOrder(orderId: string) { return this.request<VtexOrder>(`/api/oms/pvt/orders/${encodeURIComponent(orderId)}`) }
   getFeedConfig() { return this.request<Record<string, unknown>>('/api/orders/feed/config') }
   retrieveFeed(maxLot = 10) { return this.request<Array<{ eventId: string; handle: string; domain: string; orderId: string; state?: string }>>(`/api/orders/feed?maxLot=${maxLot}`) }
-  commitFeed(handles: string[]) { return this.request<void>('/api/orders/feed', { method: 'POST', body: JSON.stringify({ handles }) }) }
 }

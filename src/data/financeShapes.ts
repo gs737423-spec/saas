@@ -1,5 +1,3 @@
-import { ALL_MARKETPLACES } from '@/data/mockData'
-
 export type FinanceSource = 'demo' | 'real' | 'estimated'
 
 /** Faturamento do dia de hoje vs faturamento de exatamente N dias atrás
@@ -34,26 +32,10 @@ export interface FinanceOverview {
   source: FinanceSource
 }
 
-const ZERO_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
-
-/** Sempre devolve os 4 canais, na ordem canônica — canal sem pedido no
- *  período vem zerado, nunca fica de fora. Estrutura da tela nunca varia
- *  por quantidade de marketplace conectado (ver decisão 2026-08-06). */
+/** A fixture demo já entrega seus próprios canais. Esta camada nunca cria
+ * linhas: vazio real continua vazio e tenant sem Amazon não recebe Amazon. */
 export function fillAllMarketplaces(rows: MarketplaceFinance[]): MarketplaceFinance[] {
-  const byMarketplace = new Map(rows.map((r) => [r.marketplace, r]))
-  const baseline = ALL_MARKETPLACES.map((marketplace) => byMarketplace.get(marketplace) ?? {
-    marketplace,
-    grossRevenue: 0,
-    fees: 0,
-    refunds: 0,
-    netValue: 0,
-    ordersCount: 0,
-    averageTicket: 0,
-    growth: ZERO_GROWTH,
-    source: rows[0]?.source ?? 'real',
-  })
-  const baselineNames = new Set<string>(ALL_MARKETPLACES)
-  return [...baseline, ...rows.filter((row) => !baselineNames.has(row.marketplace))]
+  return rows
 }
 
 export type FinanceTransactionType = 'Venda' | 'Tarifa' | 'Estorno' | 'Devolução' | 'Ajuste'

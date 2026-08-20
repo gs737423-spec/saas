@@ -68,8 +68,8 @@ export default function VtexChannelMappingCard() {
   const [showAllPending, setShowAllPending] = useState(false)
   const connected = Boolean(vtex && ['connected', 'syncing', 'requires_attention'].includes(vtex.status))
 
-  const loadChannels = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true)
+  const loadChannels = useCallback(async (signal?: AbortSignal, silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const response = await fetch(withViewAsCompanyId('/api/integrations/vtex/channel-mappings'), {
         headers: await authorizationHeader(),
@@ -84,7 +84,7 @@ export default function VtexChannelMappingCard() {
       if (signal?.aborted) return
       setMessage({ ok: false, text: error instanceof Error ? error.message : 'Não foi possível consultar os canais VTEX.' })
     } finally {
-      if (!signal?.aborted) setLoading(false)
+      if (!signal?.aborted && !silent) setLoading(false)
     }
   }, [])
 
@@ -94,6 +94,12 @@ export default function VtexChannelMappingCard() {
     void loadChannels(controller.signal)
     return () => controller.abort()
   }, [connected, loadChannels])
+
+  useEffect(() => {
+    if (!connected || !syncingVtex) return
+    const interval = window.setInterval(() => { void loadChannels(undefined, true) }, 10_000)
+    return () => window.clearInterval(interval)
+  }, [connected, syncingVtex, loadChannels])
 
   const counters = useMemo(() => ({
     total: identifiers.length,
@@ -160,7 +166,9 @@ export default function VtexChannelMappingCard() {
       const result = await response.json().catch(() => null)
       if (!response.ok || !result?.ok) throw new Error(result?.message ?? 'Não foi possível salvar o mapeamento.')
       setNeedsReprocess(Boolean(result.requiresFullSync))
-      setMessage({ ok: true, text: 'Mapeamento salvo. Sincronize novamente para reclassificar o histórico.' })
+      setMessage({ ok: true, text: result.requiresFullSync
+        ? 'Mapeamento salvo. Sincronize novamente para reclassificar o histórico.'
+        : 'Mapeamento salvo e pedidos locais reclassificados.' })
       await loadChannels()
     } catch (error) {
       setMessage({ ok: false, text: error instanceof Error ? error.message : 'Não foi possível salvar o mapeamento.' })
@@ -191,7 +199,7 @@ export default function VtexChannelMappingCard() {
           <div>
             <h3 className="text-sm font-semibold text-text-primary">Canais encontrados na VTEX</h3>
             <p className="mt-0.5 text-[10.5px] leading-relaxed text-text-muted">
-              Cada linha é um identificador que a VTEX enviou nos pedidos. Ele só vira um canal depois que você indicar a qual canal pertence. Os pedidos continuam contando nos totais enquanto isso.
+              A MKTONLINE usa os nomes confiáveis da própria VTEX para identificar os canais automaticamente. Somente casos sem nome confiável ficam pendentes para revisão.
             </p>
           </div>
         </div>

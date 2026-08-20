@@ -6,19 +6,34 @@ import { persistCanonicalOrder } from '../orderIdentity.js'
 import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
-import { autoResolveVtexAffiliatesFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
+import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
+import { findCanonicalChannel } from './channelResolution.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
 import type { VtexSyncCheckpoint, VtexSyncCounts } from './types.js'
 
 const SKU_BATCH_SIZE = 40
 const ORDER_PAGE_SIZE = 30
-const MAX_ORDER_PAGES_PER_RUN = 30
+// Offset pagination is unsafe while OMS rows can move after `lastChange`.
+// Every temporal micro-window must fit in one page; the worker processes as
+// many one-page windows as its internal time budget permits.
+const MAX_ORDER_PAGES_PER_RUN = 1
 const ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
-const MIN_ORDER_WINDOW_MS = 60 * 60 * 1000
+const MIN_ORDER_WINDOW_MS = 1
 const INCREMENTAL_OVERLAP_MS = 15 * 60 * 1000
+export const VTEX_CHANNEL_DISCOVERY_VERSION = 2
+
+export function vtexOrderQueryMode(mode: 'full' | 'incremental'): {
+  filterName: 'f_creationDate' | 'f_lastChange'
+  filterField: 'creationDate' | 'lastChange'
+  orderBy: 'creationDate,asc' | 'lastChange,asc'
+} {
+  return mode === 'incremental'
+    ? { filterName: 'f_lastChange', filterField: 'lastChange', orderBy: 'lastChange,asc' }
+    : { filterName: 'f_creationDate', filterField: 'creationDate', orderBy: 'creationDate,asc' }
+}
 
 /** Histórico da primeira sincronização — nunca mais 12 meses de uma vez
  *  (era `HISTORY_DAYS = 365`, causa raiz de primeiras cargas gigantes).
@@ -183,6 +198,7 @@ export async function runBudgetedBatches<T>(
   deadline: number,
   handler: (item: T) => Promise<void>,
   onBatch: (processedInThisCall: number) => Promise<void>,
+  shouldStop?: () => boolean,
 ): Promise<{ processedCount: number; timedOut: boolean }> {
   let processedCount = 0
   for (let i = 0; i < items.length; i += concurrency) {
@@ -190,7 +206,7 @@ export async function runBudgetedBatches<T>(
     await Promise.allSettled(chunk.map((item) => handler(item)))
     processedCount += chunk.length
     await onBatch(processedCount)
-    if (Date.now() >= deadline) return { processedCount, timedOut: true }
+    if (shouldStop?.() || Date.now() >= deadline) return { processedCount, timedOut: true }
   }
   return { processedCount, timedOut: false }
 }
@@ -373,7 +389,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
   const run = data as SyncRunRow
   if ((VTEX_SYNC_TERMINAL_STATUSES as readonly string[]).includes(run.status)) return run
 
-  await claimSyncLock(supabase, companyId, connection.id, new Date())
+  const syncLease = await claimSyncLock(supabase, companyId, connection.id, new Date())
   const counts = mergeCounts(run.counts)
   // Invariantes do checkpoint ANTES de processar qualquer coisa: migra
   // checkpoint sem versão, congela o snapshot de config e recalcula janelas
@@ -570,20 +586,40 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         const batch = skuIds.slice(start)
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch started', payload: { code: 'CATALOG_SKU_IDS_LOADED', stage: 'catalog', batchSize: batch.length, offset: start, total: skuIds.length } })
         const batchStartedAt = Date.now()
+        let priceFailures = 0
+        let inventoryFailures = 0
+        let catalogPermissionDenied = false
         const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
         try {
           const sku = await client.getSku(skuId)
           const [priceResult, inventoryResult] = await Promise.allSettled([client.getPrice(skuId), client.getInventory(skuId)])
           const price = priceResult.status === 'fulfilled' ? priceResult.value : null
           const inventory = inventoryResult.status === 'fulfilled' ? inventoryResult.value : null
+          if (priceResult.status === 'rejected') {
+            if (!(priceResult.reason instanceof VtexApiError && priceResult.reason.status === 404)) priceFailures += 1
+            if (priceResult.reason instanceof VtexApiError && [401, 403].includes(priceResult.reason.status)) catalogPermissionDenied = true
+          }
+          if (inventoryResult.status === 'rejected') {
+            if (!(inventoryResult.reason instanceof VtexApiError && inventoryResult.reason.status === 404)) inventoryFailures += 1
+            if (inventoryResult.reason instanceof VtexApiError && [401, 403].includes(inventoryResult.reason.status)) catalogPermissionDenied = true
+          }
           if (price) counts.pricesFetched += 1
           if (inventory) counts.inventoriesFetched += 1
           const normalized = normalizeVtexSku(sku, price, inventory)
-          const { error: productError } = await supabase.from('marketplace_products').upsert({ company_id: companyId, connection_id: connection.id, provider: 'vtex', ...normalized.product }, { onConflict: 'company_id,connection_id,external_product_id' })
+          // Falha de Pricing/Logistics não pode apagar um valor real obtido
+          // numa sync anterior. Campos cujo request falhou são omitidos do
+          // UPDATE; null só é persistido quando a resposta válida da VTEX
+          // realmente não contém valor.
+          const productPayload: Record<string, unknown> = { company_id: companyId, connection_id: connection.id, provider: 'vtex', ...normalized.product }
+          if (priceResult.status === 'rejected') delete productPayload.price
+          if (inventoryResult.status === 'rejected') delete productPayload.available_quantity
+          const { error: productError } = await supabase.from('marketplace_products').upsert(productPayload, { onConflict: 'company_id,connection_id,external_product_id' })
           if (productError) throw new Error(productError.message)
-          const { error: inventoryError } = await supabase.from('marketplace_inventory').upsert({ company_id: companyId, connection_id: connection.id, provider: 'vtex', last_sync_at: new Date().toISOString(), ...normalized.inventory }, { onConflict: 'company_id,connection_id,external_product_id' })
-          if (inventoryError) throw new Error(inventoryError.message)
-          if (normalized.warehouseRows.length > 0) {
+          if (inventoryResult.status === 'fulfilled') {
+            const { error: inventoryError } = await supabase.from('marketplace_inventory').upsert({ company_id: companyId, connection_id: connection.id, provider: 'vtex', last_sync_at: new Date().toISOString(), ...normalized.inventory }, { onConflict: 'company_id,connection_id,external_product_id' })
+            if (inventoryError) throw new Error(inventoryError.message)
+          }
+          if (inventoryResult.status === 'fulfilled' && normalized.warehouseRows.length > 0) {
             const { error: warehouseError } = await supabase.from('marketplace_inventory_sources').upsert(normalized.warehouseRows.map((row) => ({ company_id: companyId, connection_id: connection.id, provider: 'vtex', last_sync_at: new Date().toISOString(), ...row })), { onConflict: 'company_id,connection_id,external_product_id,warehouse_id' })
             if (warehouseError) throw new Error(warehouseError.message)
           }
@@ -598,12 +634,23 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         // no meio, o offset avança só até onde de fato processou, nunca fica
         // "processando" sem nada persistido.
         await updateRun(supabase, run, { checkpoint: { ...checkpoint, skuOffset: start + processedInThisCall }, counts, errors: errors.slice(-100) })
-      })
+      }, () => catalogPermissionDenied)
         checkpoint.skuOffset = start + processedCount
-        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog batch completed', payload: { code: 'CATALOG_BATCH_PROGRESS', stage: 'catalog', processed: processedCount, totalProcessed: checkpoint.skuOffset, durationMs: Date.now() - batchStartedAt } })
+        if (priceFailures > 0 || inventoryFailures > 0) {
+          counts.errors += priceFailures + inventoryFailures
+          errors.push(`Catalog enrichment incomplete: ${priceFailures} price request(s) and ${inventoryFailures} inventory request(s) failed.`)
+        }
+        await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: catalogPermissionDenied ? 'error' : 'info', message: 'VTEX catalog batch completed', payload: { code: 'CATALOG_BATCH_PROGRESS', stage: 'catalog', processed: processedCount, totalProcessed: checkpoint.skuOffset, priceFailures, inventoryFailures, durationMs: Date.now() - batchStartedAt } })
+        if (catalogPermissionDenied) {
+          checkpoint.catalogStatus = 'blocked'
+          await supabase.from('marketplace_connections').update({ status: 'requires_attention', last_error: 'VTEX_CATALOG_ENRICHMENT_PERMISSION_REQUIRED' }).eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
+          run.stage = 'orders'
+          await updateRun(supabase, run, { status: 'queued', stage: run.stage, checkpoint, counts, errors: errors.slice(-100) })
+          return { ...run, status: 'queued', checkpoint, counts, errors }
+        }
         if (timedOut || checkpoint.skuOffset < skuIds.length) {
           // Yield controlado (orçamento de tempo, não travamento) — devolve
-          // `queued` em vez de `running`: o cron roda a cada 15min, bem acima
+          // `queued` em vez de `running`: o cron pode rodar acima do TTL,
           // de HEARTBEAT_STALE_MINUTES=5, então uma run `running` recém-yieldada
           // seria erroneamente vista como stale pelo próximo `reclaimStaleVtexRun`
           // antes do cron legítimo conseguir retomá-la. `queued` fica fora do
@@ -613,12 +660,12 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           // terminou — enquanto há mais SKUs pra processar, fica 'partial'
           // (nunca terminal, pra reentrar sozinho pelo `stage==='catalog'` já
           // persistido, sem precisar do gate de revalidação).
-          if (checkpoint.catalogStatus !== 'empty') checkpoint.catalogStatus = 'partial'
+          if (!['empty', 'blocked'].includes(checkpoint.catalogStatus ?? '')) checkpoint.catalogStatus = 'partial'
           await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
           return { ...run, checkpoint, counts, errors, status: 'queued' }
         }
         checkpoint.catalogSkuIds = undefined
-        if (checkpoint.catalogStatus !== 'empty') {
+        if (!['empty', 'blocked'].includes(checkpoint.catalogStatus ?? '')) {
           checkpoint.catalogStatus = 'completed'
           checkpoint.catalogValidatedAt = new Date().toISOString()
           checkpoint.catalogDiscoveryVersion = VTEX_CATALOG_DISCOVERY_VERSION
@@ -637,14 +684,18 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       // sincronização nunca precisa inventar canal pra satisfazer a FK de
       // `orders.sales_channel`.
       await ensureBaseSalesChannels(supabase, companyId)
-      if (!checkpoint.affiliateRegistryChecked) {
+      if ((checkpoint.affiliateRegistryVersion ?? 0) < VTEX_CHANNEL_DISCOVERY_VERSION) {
         // Best-effort, uma vez por run: tenta resolver affiliateId -> canal
         // canônico usando o NOME real cadastrado na VTEX, sem exigir clique
         // manual do cliente. Nunca falha a run por causa disso.
-        const registryResult = await autoResolveVtexAffiliatesFromRegistry(client, supabase, companyId, connection.id)
+        const [affiliateResult, salesChannelResult] = await Promise.all([
+          autoResolveVtexAffiliatesFromRegistry(client, supabase, companyId, connection.id),
+          autoResolveVtexSalesChannelsFromRegistry(client, supabase, companyId, connection.id),
+        ])
         checkpoint.affiliateRegistryChecked = true
-        if (registryResult.checked > 0) {
-          await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX affiliate registry auto-resolution checked', payload: { code: 'AFFILIATE_REGISTRY_CHECKED', stage: 'orders', checked: registryResult.checked, resolved: registryResult.resolved } })
+        checkpoint.affiliateRegistryVersion = VTEX_CHANNEL_DISCOVERY_VERSION
+        if (affiliateResult.checked + salesChannelResult.checked > 0) {
+          await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX channel registries auto-resolution checked', payload: { code: 'CHANNEL_REGISTRIES_CHECKED', stage: 'orders', affiliatesChecked: affiliateResult.checked, affiliatesResolved: affiliateResult.resolved, salesChannelsChecked: salesChannelResult.checked, salesChannelsResolved: salesChannelResult.resolved } })
         }
       }
       const mappings = await loadVtexChannelMappings(supabase, companyId, connection.id, configuredMappings)
@@ -656,33 +707,57 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         ? new Date(new Date(connection.last_success_at).getTime() - INCREMENTAL_OVERLAP_MS)
         : new Date(Date.now() - runConfig.historyMonths * 30 * DAY_MS)
       const targetEnd = checkpoint.orderTargetEnd ? new Date(checkpoint.orderTargetEnd) : new Date()
-      const windowStart = checkpoint.orderWindowStart ? new Date(checkpoint.orderWindowStart) : initialFrom
-      let windowEnd = checkpoint.orderWindowEnd
-        ? new Date(checkpoint.orderWindowEnd)
-        : new Date(Math.min(windowStart.getTime() + runConfig.windowMs, targetEnd.getTime()))
+      const backfillFloor = checkpoint.orderBackfillFloor
+        ? new Date(checkpoint.orderBackfillFloor)
+        : checkpoint.orderHistoryStart
+          ? new Date(checkpoint.orderHistoryStart)
+          : initialFrom
+      let windowEnd = checkpoint.orderWindowEnd ? new Date(checkpoint.orderWindowEnd) : targetEnd
+      let windowStart = checkpoint.orderWindowStart
+        ? new Date(checkpoint.orderWindowStart)
+        : new Date(Math.max(backfillFloor.getTime(), windowEnd.getTime() - runConfig.windowMs))
+      checkpoint.orderTraversal = 'recent_first'
+      checkpoint.orderBackfillFloor = backfillFloor.toISOString()
       checkpoint.orderWindowStart = windowStart.toISOString()
       checkpoint.orderWindowEnd = windowEnd.toISOString()
       checkpoint.orderTargetEnd = targetEnd.toISOString()
       checkpoint.orderHistoryStart = checkpoint.orderHistoryStart ?? initialFrom.toISOString()
-      let page = Number(checkpoint.orderPage ?? 1)
-      let pagesProcessed = 0
-      let totalPages = page
-      let sourceTotalPages = page
-      let ranOutOfTime = false
-      let ordersPermissionDenied = false
-      do {
-        const filterName = run.mode === 'incremental' ? 'f_lastChange' : 'f_creationDate'
-        const filterField = run.mode === 'incremental' ? 'lastChange' : 'creationDate'
+      while (true) {
+        // Nunca solicita página 2. A lista OMS pode mudar entre requests;
+        // dividir por tempo até caber em uma página elimina o offset mutável.
+        let page = 1
+        checkpoint.orderPage = 1
+        let totalPages = page
+        let sourceTotalPages = page
+        let ranOutOfTime = false
+        let ordersPermissionDenied = false
+        do {
+        const { filterName, filterField, orderBy } = vtexOrderQueryMode(run.mode)
         const dateFilter = `${filterField}:[${windowStart.toISOString()} TO ${windowEnd.toISOString()}]`
         const pageStartedAt = Date.now()
-        const list = await client.listOrders(`orderBy=creationDate,asc&page=${page}&per_page=${ORDER_PAGE_SIZE}&${filterName}=${encodeURIComponent(dateFilter)}`)
+        const list = await client.listOrders(`orderBy=${orderBy}&page=${page}&per_page=${ORDER_PAGE_SIZE}&${filterName}=${encodeURIComponent(dateFilter)}`)
         sourceTotalPages = Number(list.paging?.pages ?? page)
         if (page === 1 && sourceTotalPages > MAX_ORDER_PAGES_PER_RUN && windowEnd.getTime() - windowStart.getTime() > MIN_ORDER_WINDOW_MS) {
-          windowEnd = new Date(windowStart.getTime() + Math.floor((windowEnd.getTime() - windowStart.getTime()) / 2))
+          // Mantém a metade MAIS RECENTE e tenta de novo nesta mesma
+          // invocação. Antes, cada halving devolvia `queued` e desperdiçava
+          // um ciclo inteiro do cron (5-15 min) sem importar um pedido.
+          windowStart = new Date(windowEnd.getTime() - Math.floor((windowEnd.getTime() - windowStart.getTime()) / 2))
+          checkpoint.orderWindowStart = windowStart.toISOString()
           checkpoint.orderWindowEnd = windowEnd.toISOString()
           checkpoint.orderPage = 1
-          await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
-          return { ...run, checkpoint, counts, errors, status: 'queued' }
+          await updateRun(supabase, run, { checkpoint, counts, errors: errors.slice(-100) })
+          await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX order window reduced inside the current invocation', payload: { code: 'ORDER_WINDOW_SHRUNK', stage: 'orders', windowStart: checkpoint.orderWindowStart, windowEnd: checkpoint.orderWindowEnd, sourceTotalPages } })
+          if (Date.now() >= deadline) {
+            await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
+            return { ...run, checkpoint, counts, errors, status: 'queued' }
+          }
+          continue
+        }
+        if (page === 1 && sourceTotalPages > MAX_ORDER_PAGES_PER_RUN) {
+          // Mais de 30 pedidos no mesmo milissegundo não oferece cursor
+          // temporal seguro na OMS. Falhar preservando o checkpoint é melhor
+          // do que pular linhas por paginação mutável entre invocações.
+          throw new Error('VTEX_ORDER_WINDOW_DENSE_TIMESTAMP_UNSUPPORTED')
         }
         totalPages = Math.min(sourceTotalPages, MAX_ORDER_PAGES_PER_RUN)
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX order page started', payload: { stage: 'orders', windowStart: checkpoint.orderWindowStart, windowEnd: checkpoint.orderWindowEnd, page, items: (list.list ?? []).length } })
@@ -700,6 +775,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             const order = await client.getOrder(summary.orderId)
             const normalized = normalizeVtexOrder(order, mappings)
             const channel = await persistVtexChannelResolution(supabase, companyId, connection.id, normalized, channelResolutionCache)
+            const effectiveDefinition = findCanonicalChannel(channel.canonicalChannel)
             if (channel.discovered) {
               counts.channelsDiscovered += 1
               if (channel.resolved) counts.channelsResolved += 1
@@ -720,9 +796,11 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
               externalOrderId: normalized.externalOrderId, marketplaceOrderId: normalized.marketplaceOrderId,
               affiliateId: normalized.affiliateId, externalSalesChannel: normalized.externalSalesChannel,
               externalMarketplaceName: normalized.externalMarketplaceName,
-              channelResolutionStatus: normalized.channelResolutionStatus, canonicalOrderKey: normalized.canonicalOrderKey,
-              salesChannel: normalized.channel, salesChannelDisplayName: normalized.channelDisplayName,
-              salesChannelType: normalized.channelType, status: normalized.status, totalAmount: normalized.totalAmount,
+              channelResolutionStatus: channel.resolutionStatus, canonicalOrderKey: normalized.canonicalOrderKey,
+              salesChannel: channel.canonicalChannel,
+              salesChannelDisplayName: effectiveDefinition?.displayName ?? (channel.canonicalChannel === normalized.channel ? normalized.channelDisplayName : channel.canonicalChannel),
+              salesChannelType: effectiveDefinition?.channelType ?? (channel.canonicalChannel === normalized.channel ? normalized.channelType : 'marketplace'),
+              status: normalized.status, totalAmount: normalized.totalAmount,
               feeAmount: normalized.feeAmount, currency: normalized.currency, orderedAt: normalized.orderedAt,
               sourceUpdatedAt: normalized.sourceUpdatedAt, analyticsIncluded: normalized.analyticsIncluded,
               unavailableReason: normalized.unavailableReason,
@@ -759,31 +837,40 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             payload: { code: 'ORDERS_PERMISSION_DENIED', stage: 'orders', page },
           })
           await supabase.from('marketplace_connections').update({ status: 'requires_attention', last_error: 'VTEX_ORDERS_PERMISSION_REQUIRED' }).eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
-          ranOutOfTime = true
-          break
+          const completedAt = new Date().toISOString()
+          await updateRun(supabase, run, { status: 'partial', stage: 'complete', checkpoint, counts, errors: errors.slice(-100), completed_at: completedAt })
+          return { ...run, status: 'partial', stage: 'complete', checkpoint, counts, errors }
         }
         if (timedOut) { ranOutOfTime = true; break }
 
         page += 1
-        pagesProcessed += 1
-        checkpoint.orderPage = page
+        checkpoint.orderPage = 1
         await updateRun(supabase, run, { checkpoint, counts, errors: errors.slice(-100) })
-      } while (page <= totalPages && pagesProcessed < MAX_ORDER_PAGES_PER_RUN)
-      if (ranOutOfTime) {
-        await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
-        return { ...run, checkpoint, counts, errors, status: 'queued' }
-      }
-      if (sourceTotalPages > MAX_ORDER_PAGES_PER_RUN) {
-        counts.errors += 1
-        errors.push(`An hourly order window exceeded the VTEX ${MAX_ORDER_PAGES_PER_RUN}-page API limit and was preserved as partial.`)
-      } else if (windowEnd.getTime() < targetEnd.getTime()) {
-        const nextStart = windowEnd
-        const nextEnd = new Date(Math.min(nextStart.getTime() + runConfig.windowMs, targetEnd.getTime()))
-        checkpoint.orderWindowStart = nextStart.toISOString()
-        checkpoint.orderWindowEnd = nextEnd.toISOString()
+        } while (page <= totalPages)
+        if (ranOutOfTime) {
+        // A lista ordenada por lastChange pode mudar entre crons. Nunca
+        // persiste offset de página de um result set mutável: reinicia a
+        // pequena subjanela e deixa os upserts deduplicarem o que já entrou.
         checkpoint.orderPage = 1
         await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
-        return { ...run, checkpoint, counts, errors, status: 'queued' }
+          return { ...run, checkpoint, counts, errors, status: 'queued' }
+        }
+        if (windowStart.getTime() > backfillFloor.getTime()) {
+          const nextEnd = windowStart
+          const nextStart = new Date(Math.max(backfillFloor.getTime(), nextEnd.getTime() - runConfig.windowMs))
+          windowEnd = nextEnd
+          windowStart = nextStart
+          checkpoint.orderWindowStart = nextStart.toISOString()
+          checkpoint.orderWindowEnd = nextEnd.toISOString()
+          checkpoint.orderPage = 1
+          await updateRun(supabase, run, { checkpoint, counts, errors: errors.slice(-100) })
+          if (Date.now() >= deadline) {
+            await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
+            return { ...run, checkpoint, counts, errors, status: 'queued' }
+          }
+          continue
+        }
+        break
       }
       run.stage = 'finalize'
       await updateRun(supabase, run, { stage: 'finalize', checkpoint, counts, errors: errors.slice(-100) })
@@ -811,6 +898,6 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_error', status: 'error', message: 'VTEX sync failed', payload: { code: error instanceof VtexApiError ? error.code : 'VTEX_SYNC_FAILED', stage: run.stage } })
     throw error
   } finally {
-    await releaseSyncLock(supabase, companyId, connection.id)
+    await releaseSyncLock(supabase, syncLease)
   }
 }

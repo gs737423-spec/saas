@@ -29,7 +29,7 @@ Todas as rotas exigem sessão, capability e `company_id` derivado do contexto au
 
 ## Limites atuais
 
-- Migration `019_vtex_native_integration.sql` aplicada manualmente e verificada segundo o usuário; o histórico da Supabase CLI ainda precisa ser conferido e reconciliado antes de qualquer `db push`.
+- Migrations 001–023 fisicamente auditadas e histórico da Supabase CLI reconciliado em 2026-08-20; `supabase migration list --linked` confirmou correspondência integral local/remota.
 - Smoke test real pendente por ausência de credenciais VTEX autorizadas.
 - Mapeamentos de `affiliateId` são tenant-scoped. Affiliate novo é registrado como canal externo unresolved, não bloqueia o sync e não exige migration.
 - O classifier e a API aceitam qualquer canonical channel válido. Magalu permanece canal explícito conhecido; nenhuma integração, credencial ou endpoint Magalu direto foi criado nesta fase.

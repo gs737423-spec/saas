@@ -240,8 +240,17 @@ export interface VtexSyncCheckpoint {
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */
   orderHistoryStart?: string
+  /** Sentido da navegação do backfill. A engine atual começa no presente
+   *  e anda para trás, disponibilizando dashboard/financeiro rapidamente. */
+  orderTraversal?: 'recent_first'
+  /** Limite inferior imutável do backfill. Em runs v2 migradas, recebe o
+   *  início da janela antiga ainda não confirmada, preservando o trabalho já
+   *  concluído sem voltar ao início nem perder o restante. */
+  orderBackfillFloor?: string
   /** Marca que `autoResolveVtexAffiliatesFromRegistry` já rodou nesta run —
    *  é uma chamada extra à VTEX, então roda UMA vez por run (não a cada
    *  tick do estágio `orders`, que pode durar dezenas de invocações). */
   affiliateRegistryChecked?: boolean
+  /** Versão da estratégia de descoberta automática de canais. */
+  affiliateRegistryVersion?: number
 }

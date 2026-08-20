@@ -136,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (productsError) throw new Error(productsError.message)
 
     if (!products || products.length === 0) {
-      res.status(200).json({ ok: true, source: 'demo', items: [] } satisfies ProductsApiResponse)
+      res.status(200).json({ ok: true, source: 'real', items: [] } satisfies ProductsApiResponse)
       return
     }
 
@@ -191,16 +191,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const prevAgg = previousByProduct.get(key)
         const trend = prevAgg && prevAgg.revenue > 0 ? ((agg.revenue - prevAgg.revenue) / prevAgg.revenue) * 100 : null
         const costPrice = p.cost_price === null || p.cost_price === undefined ? null : Number(p.cost_price)
-        const margin = costPrice !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null
+        const productPrice = p.price === null || p.price === undefined ? null : Number(p.price)
+        const margin = costPrice !== null && productPrice !== null && productPrice > 0 ? ((productPrice - costPrice) / productPrice) * 100 : null
 
         return {
           id: p.external_product_id,
+          connectionId: p.connection_id,
           sku: p.sku,
           name: p.title,
           marketplace,
           categoryId: p.category_id,
           category: p.category_name,
-          price: Number(p.price ?? 0),
+          price: productPrice,
           costPrice,
           margin,
           stock: stockByExternalId.get(key) ?? 0,

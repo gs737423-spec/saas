@@ -6,7 +6,7 @@ import type { MLOrder } from './types.js'
 import { getItemDetail, getCategory, searchUserItemIds, searchOrders, MercadoLivreApiError, MAX_ITEMS_FIRST_SYNC } from './client.js'
 import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItems } from './mapper.js'
 import { refreshAccessToken } from './auth.js'
-import { claimSyncLock, releaseSyncLock } from '../syncLock.js'
+import { claimSyncLock, heartbeatSyncLock, releaseSyncLock } from '../syncLock.js'
 import { directCanonicalOrderKey, persistCanonicalOrder } from '../orderIdentity.js'
 
 export class ConnectionMissingError extends Error {}
@@ -103,7 +103,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   const supabase = await getSupabaseAdmin()
   const connection = await loadConnection(companyId)
 
-  await claimSyncLock(supabase, companyId, connection.id, startedAt)
+  const lease = await claimSyncLock(supabase, companyId, connection.id, startedAt)
 
   await logSyncEvent({
     companyId,
@@ -130,6 +130,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
 
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
+    await heartbeatSyncLock(supabase, lease)
     const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
     // Teto de segurança atingido — catálogo real tem mais itens do que o sync
     // trouxe. Não é um erro (sync continua normalmente pros itens buscados),
@@ -189,6 +190,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         errors.push(message)
       }
     })
+    await heartbeatSyncLock(supabase, lease)
 
     let orders: MLOrder[] = []
     try {
@@ -245,8 +247,6 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary })
       .eq('id', connection.id)
       .eq('company_id', companyId)
-    await releaseSyncLock(supabase, companyId, connection.id)
-
     await logSyncEvent({
       companyId,
       connectionId: connection.id,
@@ -265,8 +265,6 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
     await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id).eq('company_id', companyId)
-    await releaseSyncLock(supabase, companyId, connection.id)
-
     await logSyncEvent({
       companyId,
       connectionId: connection.id,
@@ -279,5 +277,7 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     })
 
     return { productsImported, inventoryUpdated, ordersImported, errors: [message], durationMs: finishedAt.getTime() - startedAt.getTime(), source: 'real' }
+  } finally {
+    await releaseSyncLock(supabase, lease)
   }
 }

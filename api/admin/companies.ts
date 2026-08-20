@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
+import { findUserIdByEmail, getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 import { checkRateLimit } from '../../src/server/auth/rateLimit.js'
 import { getRequestId } from '../../src/server/security/requestContext.js'
+import { COMPANY_PROVISION_RPC, normalizeOwnerEmail, ownerProvisionParams } from '../../src/server/auth/ownerProvisioning.js'
 
 const DELETE_LIMIT = { max: 10, windowSeconds: 1800 }
 const COMPANY_COLUMNS = 'id, name, created_at, contact_email, contact_phone, notes, cnpj, whatsapp, website, status, receita_data, logo_url'
@@ -95,25 +96,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const name = typeof req.body?.name === 'string' ? req.body.name.trim() : ''
       const contactEmail = typeof req.body?.contactEmail === 'string' ? req.body.contactEmail.trim() || null : null
+      const ownerEmail = normalizeOwnerEmail(req.body?.ownerEmail ?? contactEmail)
       const contactPhone = typeof req.body?.contactPhone === 'string' ? req.body.contactPhone.trim() || null : null
       const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() || null : null
       const cnpj = typeof req.body?.cnpj === 'string' ? req.body.cnpj.trim() || null : null
       const whatsapp = typeof req.body?.whatsapp === 'string' ? req.body.whatsapp.trim() || null : null
       const website = typeof req.body?.website === 'string' ? req.body.website.trim() || null : null
       const receitaData = req.body?.receitaData && typeof req.body.receitaData === 'object' ? (req.body.receitaData as ReceitaData) : null
-      if (!name) {
-        res.status(400).json({ ok: false, message: 'Nome da empresa é obrigatório.' })
+      if (!name || !ownerEmail) {
+        res.status(400).json({ ok: false, error: { code: 'OWNER_REQUIRED', message: 'Nome e e-mail válido do primeiro owner são obrigatórios.' }, requestId })
         return
       }
-
-      const { data, error } = await supabase
-        .from('companies')
-        .insert({ name, contact_email: contactEmail, contact_phone: contactPhone, notes, cnpj, whatsapp, website, receita_data: receitaData })
-        .select(COMPANY_COLUMNS)
-        .single()
-      if (error) throw new Error(error.message)
-
-      res.status(200).json({ ok: true, company: mapCompany({ ...data, company_members: [{ count: 0 }] }) })
+      const appBaseUrl = process.env.APP_BASE_URL
+      let ownerUserId = await findUserIdByEmail(supabase, ownerEmail)
+      let invitedUserId: string | null = null
+      if (!ownerUserId) {
+        const { data: invite, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(ownerEmail, {
+          redirectTo: appBaseUrl ? `${appBaseUrl}/redefinir-senha` : undefined,
+        })
+        if (inviteError) throw new Error(inviteError.message)
+        ownerUserId = invite.user.id
+        invitedUserId = ownerUserId
+      }
+      const companyPayload = { name, contact_email: contactEmail ?? ownerEmail, contact_phone: contactPhone, notes, cnpj, whatsapp, website, receita_data: receitaData }
+      const { data, error } = await supabase.rpc(COMPANY_PROVISION_RPC, ownerProvisionParams({ company: companyPayload, ownerUserId, actorUserId: admin.user.id, requestId }))
+      if (error) {
+        if (invitedUserId) await supabase.auth.admin.deleteUser(invitedUserId)
+        if (error.code === '42883') {
+          res.status(503).json({ ok: false, error: { code: 'SECURITY_MIGRATION_REQUIRED', message: 'Provisionamento bloqueado até a migration de segurança ser aplicada.' }, requestId })
+          return
+        }
+        throw new Error(error.message)
+      }
+      const company = data as Parameters<typeof mapCompany>[0]
+      res.status(200).json({ ok: true, company: mapCompany({ ...company, company_members: [{ count: 1 }] }), ownerUserId, invited: Boolean(invitedUserId) })
     } catch (err) {
       console.error('[api/admin/companies:POST]', err)
       res.status(500).json({ ok: false, message: 'Erro ao criar empresa.' })

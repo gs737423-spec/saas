@@ -23,7 +23,11 @@ function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_
   const updates: Array<{ id: string; payload: Record<string, unknown> }> = []
   const supabase = {
     from(table: string) {
-      expect(['vtex_channel_mappings', 'sales_channels']).toContain(table)
+      expect(['vtex_channel_mappings', 'sales_channels', 'order_source_refs', 'orders']).toContain(table)
+      if (table === 'order_source_refs') {
+        return { select() { return this }, eq() { return this }, neq() { return this }, limit: async () => ({ data: [], error: null }) }
+      }
+      if (table === 'orders') return { update() { return { eq() { return this }, in: async () => ({ error: null }) } } }
       if (table === 'sales_channels') {
         return {
           async upsert(payload: Record<string, unknown>) {
@@ -32,7 +36,7 @@ function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_
           },
         }
       }
-      return {
+      const builder = {
         select() {
           return this
         },
@@ -54,7 +58,14 @@ function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_
           upserts.push(payload)
           return { error: null }
         },
+        then(resolve: (value: unknown) => void) {
+          resolve({ data: [
+            { identifier_value: 'MLB' }, { identifier_value: 'XYZ' },
+            { identifier_value: 'AMZ' },
+          ], error: null })
+        },
       }
+      return builder
     },
   }
   void existingRows
@@ -83,8 +94,8 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
     expect(result.resolved).toBe(2)
     expect(upserts).toHaveLength(2)
     expect(upserts.find((row) => row.affiliate_id === 'MLB')).toMatchObject({ canonical_channel: 'mercadolivre', resolution_source: 'vtex_affiliate_registry', resolution_status: 'resolved' })
-    expect(upserts.find((row) => row.affiliate_id === 'XYZ')).toMatchObject({ canonical_channel: 'kabum marketplace', external_marketplace_name: 'Kabum Marketplace', resolution_source: 'vtex_affiliate_registry' })
-    expect(salesChannelUpserts).toContainEqual(expect.objectContaining({ canonical_key: 'kabum marketplace', display_name: 'Kabum Marketplace' }))
+    expect(upserts.find((row) => row.affiliate_id === 'XYZ')).toMatchObject({ canonical_channel: 'kabum-marketplace', external_marketplace_name: 'Kabum Marketplace', resolution_source: 'vtex_affiliate_registry' })
+    expect(salesChannelUpserts).toContainEqual(expect.objectContaining({ canonical_key: 'kabum-marketplace', display_name: 'Kabum Marketplace' }))
   })
 
   it('casa nome real de texto livre da VTEX por substring, não só igualdade exata', async () => {
@@ -118,6 +129,7 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
       return {
         select() { return this },
         eq() { return this },
+        then(resolve: (value: unknown) => void) { resolve({ data: [{ identifier_value: 'MLB' }], error: null }) },
         async maybeSingle() { return { data: { id: 'row-1', resolution_source: 'mapping' }, error: null } },
         update() { throw new Error('não deveria atualizar linha mapeada manualmente') },
         async upsert() { throw new Error('não deveria inserir sobre linha mapeada manualmente') },
