@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import type { AbcClass, DashboardInventoryItem, DashboardInventoryResponse, Provider } from '../../src/server/integrations/types.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { Marketplace } from '../../src/data/mockData.js'
@@ -79,11 +79,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return latest
     }, null)
 
-    const { data: inventoryRows, error: invError } = await supabase
-      .from('marketplace_inventory')
-      .select('connection_id, external_product_id, sku, title, available_quantity, last_sync_at')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
+    const { data: inventoryRows, error: invError } = await fetchAllRows((from, to) =>
+      supabase
+        .from('marketplace_inventory')
+        .select('connection_id, external_product_id, sku, title, available_quantity, last_sync_at')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .range(from, to)
+    )
 
     if (invError) throw new Error(invError.message)
 
@@ -95,11 +98,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const { data: productRows } = await supabase
-      .from('marketplace_products')
-      .select('connection_id, external_product_id, price, status, category_id, category_name')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
+    const { data: productRows } = await fetchAllRows((from, to) =>
+      supabase
+        .from('marketplace_products')
+        .select('connection_id, external_product_id, price, status, category_id, category_name')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .range(from, to)
+    )
 
     // Chave conexão+id externo — dois marketplaces diferentes podem
     // coincidentemente usar o mesmo id.
@@ -108,13 +114,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Vendas dos últimos 30 dias por produto, pra Giro de Estoque e Curva
     // ABC — nunca fabricado, vem de order_items de pedidos pagos de verdade.
     const since30d = new Date(Date.now() - THIRTY_DAYS_MS).toISOString()
-    const { data: recentItems } = await supabase
-      .from('order_items')
-      .select('quantity, unit_price, external_product_id, orders!inner(status, ordered_at, connection_id)')
-      .eq('company_id', auth.companyId)
-      .eq('orders.status', 'paid')
-      .eq('orders.analytics_included', true)
-      .gte('orders.ordered_at', since30d)
+    const { data: recentItems } = await fetchAllRows((from, to) =>
+      supabase
+        .from('order_items')
+        .select('quantity, unit_price, external_product_id, orders!inner(status, ordered_at, connection_id)')
+        .eq('company_id', auth.companyId)
+        .eq('orders.status', 'paid')
+        .eq('orders.analytics_included', true)
+        .gte('orders.ordered_at', since30d)
+        .range(from, to)
+    )
 
     const salesByKey = new Map<string, { units: number; revenue: number }>()
     for (const row of (recentItems ?? []) as unknown as OrderItemAgg[]) {

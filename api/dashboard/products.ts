@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { DashboardProduct, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
 import type { Marketplace } from '../../src/data/mockData.js'
@@ -125,11 +125,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
-    const { data: products, error: productsError } = await supabase
-      .from('marketplace_products')
-      .select('connection_id, external_product_id, sku, title, price, status, category_id, category_name, cost_price')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
+    const { data: products, error: productsError } = await fetchAllRows((from, to) =>
+      supabase
+        .from('marketplace_products')
+        .select('connection_id, external_product_id, sku, title, price, status, category_id, category_name, cost_price')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .range(from, to)
+    )
     if (productsError) throw new Error(productsError.message)
 
     if (!products || products.length === 0) {
@@ -137,30 +140,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const { data: inventoryRows } = await supabase
-      .from('marketplace_inventory')
-      .select('connection_id, external_product_id, available_quantity')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
+    const { data: inventoryRows } = await fetchAllRows((from, to) =>
+      supabase
+        .from('marketplace_inventory')
+        .select('connection_id, external_product_id, available_quantity')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .range(from, to)
+    )
     const stockByExternalId = new Map((inventoryRows ?? []).map((r) => [productKey(r.connection_id, r.external_product_id), r.available_quantity]))
 
-    const { data: currentItems } = await supabase
-      .from('order_items')
-      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
-      .eq('company_id', auth.companyId)
-      .eq('orders.status', 'paid')
-      .eq('orders.analytics_included', true)
-      .gte('orders.ordered_at', since)
+    const { data: currentItems } = await fetchAllRows((from, to) =>
+      supabase
+        .from('order_items')
+        .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
+        .eq('company_id', auth.companyId)
+        .eq('orders.status', 'paid')
+        .eq('orders.analytics_included', true)
+        .gte('orders.ordered_at', since)
+        .range(from, to)
+    )
     const currentByProduct = aggregateByProduct((currentItems ?? []) as unknown as OrderItemAgg[])
 
-    const { data: previousItems } = await supabase
-      .from('order_items')
-      .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
-      .eq('company_id', auth.companyId)
-      .eq('orders.status', 'paid')
-      .eq('orders.analytics_included', true)
-      .gte('orders.ordered_at', prevSince)
-      .lt('orders.ordered_at', since)
+    const { data: previousItems } = await fetchAllRows((from, to) =>
+      supabase
+        .from('order_items')
+        .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
+        .eq('company_id', auth.companyId)
+        .eq('orders.status', 'paid')
+        .eq('orders.analytics_included', true)
+        .gte('orders.ordered_at', prevSince)
+        .lt('orders.ordered_at', since)
+        .range(from, to)
+    )
     const previousByProduct = aggregateByProduct((previousItems ?? []) as unknown as OrderItemAgg[])
 
     const totalRevenue = [...currentByProduct.values()].reduce((s, v) => s + v.revenue, 0)

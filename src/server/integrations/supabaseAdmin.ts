@@ -95,6 +95,40 @@ export async function getSupabaseAdmin(): Promise<SupabaseClient> {
  * cadastrado falhar com "usuário não encontrado na listagem" mesmo ele
  * existindo, só porque caiu numa página seguinte.
  */
+/** Teto de segurança pra `fetchAllRows` — 200 páginas de 1000 = 200k linhas,
+ *  bem acima de qualquer volume real esperado por empresa hoje. */
+const FETCH_ALL_ROWS_MAX_PAGES = 200
+
+/**
+ * PostgREST (Supabase) limita a 1000 linhas por resposta por padrão — uma
+ * query sem `.range()` numa tabela maior que isso volta silenciosamente
+ * TRUNCADA, sem erro. Bug real de produção: `marketplace_products` de uma
+ * conta com 17k+ SKUs (VTEX) aparecia com só os primeiros 1000 nas telas de
+ * Produtos/Estoque, sem nenhum aviso.
+ *
+ * `fetchPage(from, to)` deve devolver a MESMA query (filtros já aplicados)
+ * com `.range(from, to)` aplicado por cima — esta função só cuida de
+ * encadear as páginas até a última (página menor que `pageSize` = fim).
+ */
+export async function fetchAllRows<T>(
+  // `PromiseLike`, não `Promise`: o builder do Supabase (PostgrestFilterBuilder)
+  // é "thenable" mas não uma Promise real (não tem `.catch`/`.finally`) —
+  // exigir `Promise` aqui rejeitava passar o builder direto, sem `await`
+  // explícito nem cast, no callsite.
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  pageSize = 1000,
+): Promise<{ data: T[]; error: { message: string } | null }> {
+  const rows: T[] = []
+  for (let page = 0; page < FETCH_ALL_ROWS_MAX_PAGES; page += 1) {
+    const from = page * pageSize
+    const { data, error } = await fetchPage(from, from + pageSize - 1)
+    if (error) return { data: rows, error }
+    rows.push(...(data ?? []))
+    if (!data || data.length < pageSize) return { data: rows, error: null }
+  }
+  return { data: rows, error: null }
+}
+
 export async function findUserIdByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {
   const target = email.toLowerCase()
   for (let page = 1; page <= LIST_USERS_MAX_PAGES; page += 1) {
