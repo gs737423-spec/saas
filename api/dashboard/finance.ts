@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { FinanceOverview, MarketplaceFinance, MarketplaceGrowth, FinanceTransaction } from '../../src/data/financeShapes.js'
 import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
@@ -43,14 +43,17 @@ async function computeGrowthByChannel(
   trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
   const since366 = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: yearOrders } = await supabase
-    .from('orders')
-    .select('connection_id, sales_channel, total_amount, ordered_at')
-    .in('connection_id', connectionIds)
-    .eq('company_id', companyId)
-    .eq('status', 'paid')
-    .eq('analytics_included', true)
-    .gte('ordered_at', since366)
+  const { data: yearOrders } = await fetchAllRows((from, to) =>
+    supabase
+      .from('orders')
+      .select('connection_id, sales_channel, total_amount, ordered_at')
+      .in('connection_id', connectionIds)
+      .eq('company_id', companyId)
+      .eq('status', 'paid')
+      .eq('analytics_included', true)
+      .gte('ordered_at', since366)
+      .range(from, to)
+  )
 
   // provider -> dateKey -> revenue naquele dia
   const revenueByChannelDay = new Map<StoredSalesChannel, Map<string, number>>()
@@ -121,14 +124,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (channelError) throw new Error(channelError.message)
     const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
 
-    const { data: orders, error: ordersError } = await supabase
-      .from('orders')
-      .select('connection_id, external_order_id, status, sales_channel, total_amount, fee_amount, ordered_at')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
-      .eq('analytics_included', true)
-      .gte('ordered_at', since)
-      .order('ordered_at', { ascending: false })
+    const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
+      supabase
+        .from('orders')
+        .select('connection_id, external_order_id, status, sales_channel, total_amount, fee_amount, ordered_at')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .eq('analytics_included', true)
+        .gte('ordered_at', since)
+        .order('ordered_at', { ascending: false })
+        .range(from, to)
+    )
     if (ordersError) throw new Error(ordersError.message)
 
     if (!orders || orders.length === 0) {

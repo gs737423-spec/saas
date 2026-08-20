@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import type { DashboardSummary } from '../../src/server/integrations/types.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 
@@ -66,13 +66,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return latest
     }, null)
 
-    const { data: orders, error: ordersError } = await supabase
-      .from('orders')
-      .select('status, total_amount, fee_amount')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
-      .eq('analytics_included', true)
-      .gte('ordered_at', since)
+    const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
+      supabase
+        .from('orders')
+        .select('status, total_amount, fee_amount')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .eq('analytics_included', true)
+        .gte('ordered_at', since)
+        .range(from, to)
+    )
 
     if (ordersError) throw new Error(ordersError.message)
 
@@ -99,15 +102,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ordersCount = paid.length
     const averageTicket = ordersCount > 0 ? grossRevenue / ordersCount : 0
 
-    const { data: previousOrders } = await supabase
-      .from('orders')
-      .select('status, total_amount')
-      .in('connection_id', connectionIds)
-      .eq('company_id', auth.companyId)
-      .eq('status', 'paid')
-      .eq('analytics_included', true)
-      .gte('ordered_at', prevSince)
-      .lt('ordered_at', since)
+    const { data: previousOrders } = await fetchAllRows((from, to) =>
+      supabase
+        .from('orders')
+        .select('status, total_amount')
+        .in('connection_id', connectionIds)
+        .eq('company_id', auth.companyId)
+        .eq('status', 'paid')
+        .eq('analytics_included', true)
+        .gte('ordered_at', prevSince)
+        .lt('ordered_at', since)
+        .range(from, to)
+    )
     const previousGross = (previousOrders ?? []).reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0)
     const previousOrdersCount = (previousOrders ?? []).length
 

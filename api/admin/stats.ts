@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
+import { fetchAllRows, getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireAdmin } from '../../src/server/auth/requireAdmin.js'
 
 // Totais reais somados de TODOS os clientes (nunca por período — é o
@@ -17,10 +17,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('status', 'paid')
     if (ordersError) throw new Error(ordersError.message)
 
-    const { data: revenueRows, error: revenueError } = await supabase
-      .from('orders')
-      .select('total_amount')
-      .eq('status', 'paid')
+    const { data: revenueRows, error: revenueError } = await fetchAllRows((from, to) =>
+      supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('status', 'paid')
+        .range(from, to)
+    )
     if (revenueError) throw new Error(revenueError.message)
 
     const totalGmv = (revenueRows ?? []).reduce((s, o) => s + Number(o.total_amount ?? 0), 0)
