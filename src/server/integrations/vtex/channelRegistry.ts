@@ -81,10 +81,12 @@ export async function reclassifyVtexOrdersForIdentifier(
   identifierType: 'affiliate_id' | 'sales_channel',
   identifierValue: string,
   canonicalKey: string,
-): Promise<number> {
+  deadline = Number.POSITIVE_INFINITY,
+): Promise<{ updated: number; completed: boolean }> {
   let updated = 0
   const column = identifierType === 'affiliate_id' ? 'affiliate_id' : 'external_sales_channel'
   while (true) {
+    if (Date.now() >= deadline) return { updated, completed: false }
     let refsQuery = supabase.from('order_source_refs')
       .select('id, order_id')
       .eq('company_id', companyId).eq('connection_id', connectionId).eq('provider', 'vtex')
@@ -94,9 +96,9 @@ export async function reclassifyVtexOrdersForIdentifier(
     // affiliate; do contrário, uma policy comercial compartilhada poderia
     // sobrescrever Amazon/ML/etc. já identificados pelo affiliate.
     if (identifierType === 'sales_channel') refsQuery = refsQuery.is('affiliate_id', null)
-    const { data: refs, error } = await refsQuery.limit(500)
+    const { data: refs, error } = await refsQuery.limit(250)
     if (error) throw new Error(`Failed to load VTEX orders for channel reclassification: ${error.message}`)
-    if (!refs || refs.length === 0) break
+    if (!refs || refs.length === 0) return { updated, completed: true }
     const refIds = refs.map((row) => row.id)
     const orderIds = [...new Set(refs.map((row) => row.order_id))]
     // Pedido primeiro, provenance depois: se a segunda escrita falhar, a
@@ -111,9 +113,8 @@ export async function reclassifyVtexOrdersForIdentifier(
     }).eq('company_id', companyId).eq('connection_id', connectionId).in('id', refIds)
     if (refsError) throw new Error(`Failed to update VTEX order provenance channel: ${refsError.message}`)
     updated += orderIds.length
-    if (refs.length < 500) break
+    if (refs.length < 250) return { updated, completed: true }
   }
-  return updated
 }
 
 /** Persiste a resolução de canal de UM pedido.
@@ -296,12 +297,13 @@ export async function autoResolveVtexAffiliatesFromRegistry(
   supabase: SupabaseClient,
   companyId: string,
   connectionId: string,
-): Promise<{ resolved: number; checked: number }> {
+  deadline = Number.POSITIVE_INFINITY,
+): Promise<{ resolved: number; checked: number; completed: boolean }> {
   const { data: observed, error: observedError } = await supabase.from('vtex_channel_mappings')
     .select('identifier_value')
     .eq('company_id', companyId).eq('connection_id', connectionId).eq('source_provider', 'vtex')
     .eq('identifier_type', 'affiliate_id')
-  if (observedError) return { resolved: 0, checked: 0 }
+  if (observedError) return { resolved: 0, checked: 0, completed: false }
   const observedIds = new Set((observed ?? []).map((row) => normalizeForComparison(row.identifier_value)).filter(Boolean))
   let affiliates: Array<{ affiliateId?: unknown; id?: unknown; name?: unknown; Name?: unknown }> = []
   try {
@@ -311,12 +313,14 @@ export async function autoResolveVtexAffiliatesFromRegistry(
       affiliates = (raw as { items: typeof affiliates }).items
     }
   } catch {
-    return { resolved: 0, checked: 0 }
+    return { resolved: 0, checked: 0, completed: false }
   }
 
   let resolved = 0
   let checked = 0
+  let completed = true
   for (const affiliate of affiliates) {
+    if (Date.now() >= deadline) { completed = false; break }
     const code = affiliate.affiliateId ?? affiliate.id
     const name = affiliate.name ?? affiliate.Name
     if (typeof code !== 'string' && typeof code !== 'number') continue
@@ -344,7 +348,6 @@ export async function autoResolveVtexAffiliatesFromRegistry(
         .eq('external_key', externalKey).maybeSingle()
       if (existingError) throw new Error(existingError.message)
       if (existing && existing.resolution_source === 'mapping') {
-        await reclassifyVtexOrdersForIdentifier(supabase, companyId, connectionId, 'affiliate_id', String(code), existing.canonical_channel)
         continue
       }
 
@@ -362,22 +365,34 @@ export async function autoResolveVtexAffiliatesFromRegistry(
         external_sales_channel: null, canonical_channel: canonicalKey,
         resolution_status: 'resolved', last_seen_at: new Date().toISOString(),
       }
+      let persisted = false
       if (existing) {
-        const { error } = await supabase.from('vtex_channel_mappings').update(payload).eq('id', existing.id)
+        const { data: updated, error } = await supabase.from('vtex_channel_mappings').update(payload)
+          .eq('id', existing.id).eq('company_id', companyId).eq('connection_id', connectionId)
+          .neq('resolution_source', 'mapping').select('id')
         if (error) throw new Error(error.message)
+        persisted = Boolean(updated?.length)
       } else {
-        const { error } = await supabase.from('vtex_channel_mappings').upsert(payload, { onConflict: 'company_id,connection_id,source_provider,external_key' })
+        const { data: inserted, error } = await supabase.from('vtex_channel_mappings').upsert(
+          payload, { onConflict: 'company_id,connection_id,source_provider,external_key', ignoreDuplicates: true },
+        ).select('id')
         if (error) throw new Error(error.message)
+        persisted = Boolean(inserted?.length)
       }
-      await reclassifyVtexOrdersForIdentifier(supabase, companyId, connectionId, 'affiliate_id', String(code), canonicalKey)
+      if (!persisted) continue
+      const reclassification = await reclassifyVtexOrdersForIdentifier(
+        supabase, companyId, connectionId, 'affiliate_id', String(code), canonicalKey, deadline,
+      )
+      if (!reclassification.completed) completed = false
       resolved += 1
     } catch (error) {
+      completed = false
       // Falha isolada num affiliate (rede, conflito) não derruba os demais —
       // mesmo padrão de isolamento usado em discoverVtexSkuIdsBySalesChannel.
       await logRegistryFailure(supabase, companyId, connectionId, 'affiliate_id', String(code), error)
     }
   }
-  return { resolved, checked }
+  return { resolved, checked, completed }
 }
 
 async function logRegistryFailure(
@@ -407,28 +422,30 @@ export async function autoResolveVtexSalesChannelsFromRegistry(
   supabase: SupabaseClient,
   companyId: string,
   connectionId: string,
-): Promise<{ resolved: number; checked: number }> {
+  deadline = Number.POSITIVE_INFINITY,
+): Promise<{ resolved: number; checked: number; completed: boolean }> {
   const { data: observed, error: observedError } = await supabase.from('vtex_channel_mappings')
     .select('id, identifier_value, resolution_source, canonical_channel')
     .eq('company_id', companyId).eq('connection_id', connectionId).eq('source_provider', 'vtex')
     .eq('identifier_type', 'sales_channel')
-  if (observedError) return { resolved: 0, checked: 0 }
+  if (observedError) return { resolved: 0, checked: 0, completed: false }
   const byId = new Map((observed ?? []).map((row) => [normalizeForComparison(row.identifier_value), row]))
   let channels: Array<{ Id: number | string; Name?: string; IsActive?: boolean }> = []
   try {
     const raw = await client.getSalesChannels()
     channels = Array.isArray(raw) ? raw : []
   } catch {
-    return { resolved: 0, checked: byId.size }
+    return { resolved: 0, checked: byId.size, completed: false }
   }
   let resolved = 0
+  let completed = true
   for (const channel of channels) {
+    if (Date.now() >= deadline) { completed = false; break }
     const identifierValue = normalizeForComparison(String(channel.Id))
     const existing = byId.get(identifierValue)
     const realName = typeof channel.Name === 'string' ? channel.Name.trim() : ''
     if (!existing || !realName) continue
     if (existing.resolution_source === 'mapping') {
-      await reclassifyVtexOrdersForIdentifier(supabase, companyId, connectionId, 'sales_channel', String(channel.Id), existing.canonical_channel)
       continue
     }
     const known = findCanonicalChannelByNameContains(realName)
@@ -440,18 +457,184 @@ export async function autoResolveVtexSalesChannelsFromRegistry(
         channel_type: known?.channelType ?? 'external', status: 'active',
       }, { onConflict: 'company_id,canonical_key', ignoreDuplicates: true })
       if (channelError) throw new Error(channelError.message)
-      const { error: mappingError } = await supabase.from('vtex_channel_mappings').update({
+      const { data: updated, error: mappingError } = await supabase.from('vtex_channel_mappings').update({
         canonical_channel: canonicalKey, resolution_status: 'resolved', resolution_source: 'vtex_affiliate_registry',
         external_marketplace_name: realName, external_sales_channel: String(channel.Id), last_seen_at: new Date().toISOString(),
-      }).eq('id', existing.id)
+      }).eq('id', existing.id).eq('company_id', companyId).eq('connection_id', connectionId)
+        .neq('resolution_source', 'mapping').select('id')
       if (mappingError) throw new Error(mappingError.message)
-      await reclassifyVtexOrdersForIdentifier(supabase, companyId, connectionId, 'sales_channel', String(channel.Id), canonicalKey)
+      if (!updated || updated.length === 0) continue
+      const reclassification = await reclassifyVtexOrdersForIdentifier(
+        supabase, companyId, connectionId, 'sales_channel', String(channel.Id), canonicalKey, deadline,
+      )
+      if (!reclassification.completed) completed = false
       resolved += 1
     } catch (error) {
+      completed = false
       await logRegistryFailure(supabase, companyId, connectionId, 'sales_channel', String(channel.Id), error)
     }
   }
-  return { resolved, checked: byId.size }
+  return { resolved, checked: byId.size, completed }
+}
+
+/** Resolve affiliates usando uma relação já observada em pedidos reais:
+ * `affiliate_id -> external_sales_channel -> nome oficial da VTEX`.
+ *
+ * A sigla do affiliate nunca participa da classificação. Só há resolução
+ * quando todas as referências daquele affiliate apontam para um único
+ * salesChannel (ou para canais oficiais com o mesmo nome). Ambiguidade,
+ * ausência no registry e mapping manual permanecem intocados. */
+export async function autoResolveVtexAffiliatesFromSalesChannels(
+  client: VtexClient,
+  supabase: SupabaseClient,
+  companyId: string,
+  connectionId: string,
+  deadline = Number.POSITIVE_INFINITY,
+): Promise<{ resolved: number; checked: number; ambiguous: number; completed: boolean }> {
+  const { data: mappings, error: mappingsError } = await supabase.from('vtex_channel_mappings')
+    .select('id, identifier_value, affiliate_id, external_sales_channel, resolution_source, resolution_status, canonical_channel')
+    .eq('company_id', companyId).eq('connection_id', connectionId).eq('source_provider', 'vtex')
+    .eq('identifier_type', 'affiliate_id')
+  if (mappingsError) return { resolved: 0, checked: 0, ambiguous: 0, completed: false }
+
+  const candidates = (mappings ?? []).filter((row) => row.resolution_source !== 'mapping' && (
+    row.resolution_status === 'unresolved'
+    || (row.resolution_status === 'resolved' && row.resolution_source === 'vtex_affiliate_registry' && row.external_sales_channel)
+  ))
+  if (candidates.length === 0) return { resolved: 0, checked: 0, ambiguous: 0, completed: true }
+
+  let officialChannels: Array<{ Id: number | string; Name?: string; IsActive?: boolean }> = []
+  try {
+    const raw = await client.getSalesChannels()
+    officialChannels = Array.isArray(raw) ? raw : []
+  } catch {
+    return { resolved: 0, checked: candidates.length, ambiguous: 0, completed: false }
+  }
+
+  // Um ID duplicado com nomes oficiais divergentes é inválido para
+  // auto-resolução: nunca escolhemos o primeiro por acaso.
+  const namesById = new Map<string, Set<string>>()
+  const displayById = new Map<string, string>()
+  for (const channel of officialChannels) {
+    const id = normalizeForComparison(String(channel.Id))
+    const name = typeof channel.Name === 'string' ? channel.Name.trim() : ''
+    if (!id || !name || channel.IsActive === false) continue
+    const normalizedName = normalizeForComparison(name)
+    const names = namesById.get(id) ?? new Set<string>()
+    names.add(normalizedName)
+    namesById.set(id, names)
+    displayById.set(id, name)
+  }
+
+  let resolved = 0
+  let ambiguous = 0
+  let completed = true
+  for (const mapping of candidates) {
+    if (Date.now() >= deadline) { completed = false; break }
+    const rawAffiliate = String(mapping.affiliate_id ?? mapping.identifier_value ?? '').trim()
+    if (!rawAffiliate) continue
+    const observedSalesChannels = new Set<string>()
+    let from = 0
+    while (true) {
+      if (Date.now() >= deadline) { completed = false; break }
+      const { data: refs, error: refsError } = await supabase.from('order_source_refs')
+        .select('external_sales_channel')
+        .eq('company_id', companyId).eq('connection_id', connectionId).eq('provider', 'vtex')
+        .eq('affiliate_id', rawAffiliate).not('external_sales_channel', 'is', null)
+        .range(from, from + 999)
+      if (refsError) {
+        observedSalesChannels.clear()
+        completed = false
+        break
+      }
+      for (const ref of refs ?? []) {
+        const id = normalizeForComparison(String(ref.external_sales_channel ?? ''))
+        if (id) observedSalesChannels.add(id)
+      }
+      if (!refs || refs.length < 1000) break
+      from += 1000
+    }
+    if (observedSalesChannels.size === 0) continue
+
+    const officialNames = new Set<string>()
+    let registryComplete = true
+    for (const salesChannelId of observedSalesChannels) {
+      const names = namesById.get(salesChannelId)
+      if (!names || names.size !== 1) {
+        registryComplete = false
+        break
+      }
+      officialNames.add([...names][0])
+    }
+    if (!registryComplete || officialNames.size !== 1) {
+      ambiguous += 1
+      continue
+    }
+
+    const salesChannelId = [...observedSalesChannels][0]
+    const realName = displayById.get(salesChannelId)
+    if (!realName) continue
+    const known = findCanonicalChannelByNameContains(realName)
+    const canonicalKey = known?.key ?? canonicalKeyFromTrustedName(realName)
+    if (!canonicalKey) continue
+
+    try {
+      // Releitura imediatamente antes da escrita: uma escolha manual feita
+      // enquanto o sync trabalhava sempre vence a automação.
+      const { data: current, error: currentError } = await supabase.from('vtex_channel_mappings')
+        .select('id, resolution_source, resolution_status, canonical_channel, external_sales_channel')
+        .eq('id', mapping.id).eq('company_id', companyId).eq('connection_id', connectionId)
+        .maybeSingle()
+      if (currentError) throw new Error(currentError.message)
+      if (!current || current.resolution_source === 'mapping') continue
+      if (current.resolution_status === 'resolved') {
+        if (current.resolution_source === 'vtex_affiliate_registry'
+          && current.canonical_channel === canonicalKey
+          && current.external_sales_channel) {
+          const retry = await reclassifyVtexOrdersForIdentifier(
+            supabase, companyId, connectionId, 'affiliate_id', rawAffiliate, canonicalKey, deadline,
+          )
+          if (!retry.completed) completed = false
+        }
+        continue
+      }
+
+      const { error: channelError } = await supabase.from('sales_channels').upsert({
+        company_id: companyId, canonical_key: canonicalKey,
+        display_name: known?.displayName ?? realName,
+        channel_type: known?.channelType ?? 'external', status: 'active',
+      }, { onConflict: 'company_id,canonical_key', ignoreDuplicates: true })
+      if (channelError) throw new Error(channelError.message)
+
+      const { data: updated, error: mappingError } = await supabase.from('vtex_channel_mappings').update({
+        canonical_channel: canonicalKey, resolution_status: 'resolved',
+        // A origem continua sendo o registry oficial VTEX; o vínculo com o
+        // salesChannel apenas seleciona deterministicamente qual entrada
+        // oficial pertence a este affiliate.
+        resolution_source: 'vtex_affiliate_registry',
+        external_marketplace_name: realName,
+        external_sales_channel: salesChannelId,
+        last_seen_at: new Date().toISOString(),
+      }).eq('id', mapping.id).eq('company_id', companyId).eq('connection_id', connectionId)
+        .eq('resolution_status', 'unresolved')
+        .or('resolution_source.is.null,resolution_source.neq.mapping')
+        .select('id')
+      if (mappingError) throw new Error(mappingError.message)
+      // Compare-and-set: se o usuário salvou um mapping manual entre a
+      // releitura e este UPDATE, zero linhas são alteradas e a automação não
+      // reclassifica pedido algum.
+      if (!updated || updated.length === 0) continue
+      const reclassification = await reclassifyVtexOrdersForIdentifier(
+        supabase, companyId, connectionId, 'affiliate_id', rawAffiliate, canonicalKey, deadline,
+      )
+      if (!reclassification.completed) completed = false
+      resolved += 1
+    } catch (error) {
+      completed = false
+      await logRegistryFailure(supabase, companyId, connectionId, 'affiliate_id', rawAffiliate, error)
+    }
+  }
+  return { resolved, checked: candidates.length, ambiguous, completed }
 }
 
 /** Reexport utilitário — quem lê uma linha de mapping legada (sem as

@@ -6,7 +6,7 @@ import { persistCanonicalOrder } from '../orderIdentity.js'
 import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
-import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
+import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexAffiliatesFromSalesChannels, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
@@ -23,7 +23,7 @@ const MAX_ORDER_PAGES_PER_RUN = 1
 const ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const MIN_ORDER_WINDOW_MS = 1
 const INCREMENTAL_OVERLAP_MS = 15 * 60 * 1000
-export const VTEX_CHANNEL_DISCOVERY_VERSION = 2
+export const VTEX_CHANNEL_DISCOVERY_VERSION = 3
 
 export function vtexOrderQueryMode(mode: 'full' | 'incremental'): {
   filterName: 'f_creationDate' | 'f_lastChange'
@@ -59,7 +59,12 @@ export function resolveVtexHistoryMonths(providerMetadata: Record<string, unknow
 // breaker (CIRCUIT_FAILURE_THRESHOLD) já protege contra 429 sustentado,
 // então esse é o teto seguro pra tentar antes de precisar recuar.
 const ORDER_CONCURRENCY = 8
-const SKU_CONCURRENCY = 10
+// Produção comprovou ~7 SKUs/s com 10 workers. A conta real de 17,7 mil
+// SKUs levava ~45 min. 32 mantém concorrência limitada, muito abaixo do
+// teto oficial do endpoint de catálogo, e reduz o estágio sem disparar uma
+// avalanche de centenas de requests/round-trips simultâneos.
+const SKU_CONCURRENCY = 32
+const CHANNEL_RESOLUTION_BUDGET_MS = 25_000
 
 /** Orçamento de tempo por invocação — bem abaixo do `maxDuration: 300` da
  *  function (api/cron/sync-vtex.ts, api/integrations/vtex/sync.ts), pra
@@ -435,6 +440,52 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       await updateRun(supabase, run, { stage: run.stage, checkpoint })
     }
 
+    // Descoberta de canais é independente do estágio pesado de catálogo.
+    // Antes ficava dentro de `stage === 'orders'`: numa conta com 17k SKUs,
+    // os nomes oficiais podiam ficar pendentes por dezenas de minutos mesmo
+    // já existindo relações reais affiliate -> salesChannel no banco.
+    await ensureBaseSalesChannels(supabase, companyId)
+    if ((checkpoint.affiliateRegistryVersion ?? 0) < VTEX_CHANNEL_DISCOVERY_VERSION) {
+      const channelDeadline = Math.min(deadline, Date.now() + CHANNEL_RESOLUTION_BUDGET_MS)
+      // Registry direto primeiro; a relação affiliate -> salesChannel só
+      // examina o que continuou unresolved. Evita duas fontes confiáveis
+      // disputarem a mesma linha em paralelo com last-write-wins.
+      const [affiliateResult, salesChannelResult] = await Promise.all([
+        autoResolveVtexAffiliatesFromRegistry(client, supabase, companyId, connection.id, channelDeadline),
+        autoResolveVtexSalesChannelsFromRegistry(client, supabase, companyId, connection.id, channelDeadline),
+      ])
+      const relationshipResult = await autoResolveVtexAffiliatesFromSalesChannels(
+        client, supabase, companyId, connection.id,
+        channelDeadline,
+      )
+      // Falha/transbordo do enriquecimento não vira "checado". A versão só
+      // avança quando a fonte oficial e todas as relações candidatas foram
+      // examinadas; caso contrário, o próximo tick tenta novamente.
+      const registriesCompleted = affiliateResult.completed && salesChannelResult.completed && relationshipResult.completed
+      checkpoint.affiliateRegistryChecked = registriesCompleted
+      if (registriesCompleted) checkpoint.affiliateRegistryVersion = VTEX_CHANNEL_DISCOVERY_VERSION
+      await updateRun(supabase, run, { checkpoint })
+      if (affiliateResult.checked + salesChannelResult.checked + relationshipResult.checked > 0) {
+        await logSyncEvent({
+          companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+          message: 'VTEX trusted channel registries auto-resolution checked',
+          payload: {
+            code: 'CHANNEL_REGISTRIES_CHECKED', stage: run.stage,
+            affiliatesChecked: affiliateResult.checked,
+            affiliatesResolved: affiliateResult.resolved,
+            affiliatesCompleted: affiliateResult.completed,
+            salesChannelsChecked: salesChannelResult.checked,
+            salesChannelsResolved: salesChannelResult.resolved,
+            salesChannelsCompleted: salesChannelResult.completed,
+            relationshipsChecked: relationshipResult.checked,
+            relationshipsResolved: relationshipResult.resolved,
+            relationshipsAmbiguous: relationshipResult.ambiguous,
+            relationshipsCompleted: relationshipResult.completed,
+          },
+        })
+      }
+    }
+
     if (run.stage === 'validate') {
       await client.getCategoryTree(1)
       run.stage = 'categories'
@@ -680,24 +731,6 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     if (run.stage === 'orders') {
       const providerMetadata = connection.provider_metadata ?? {}
       const configuredMappings = normalizeVtexChannelMappings(providerMetadata.channelMappings ?? {})
-      // Canais canônicos base existem antes de qualquer pedido — a
-      // sincronização nunca precisa inventar canal pra satisfazer a FK de
-      // `orders.sales_channel`.
-      await ensureBaseSalesChannels(supabase, companyId)
-      if ((checkpoint.affiliateRegistryVersion ?? 0) < VTEX_CHANNEL_DISCOVERY_VERSION) {
-        // Best-effort, uma vez por run: tenta resolver affiliateId -> canal
-        // canônico usando o NOME real cadastrado na VTEX, sem exigir clique
-        // manual do cliente. Nunca falha a run por causa disso.
-        const [affiliateResult, salesChannelResult] = await Promise.all([
-          autoResolveVtexAffiliatesFromRegistry(client, supabase, companyId, connection.id),
-          autoResolveVtexSalesChannelsFromRegistry(client, supabase, companyId, connection.id),
-        ])
-        checkpoint.affiliateRegistryChecked = true
-        checkpoint.affiliateRegistryVersion = VTEX_CHANNEL_DISCOVERY_VERSION
-        if (affiliateResult.checked + salesChannelResult.checked > 0) {
-          await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX channel registries auto-resolution checked', payload: { code: 'CHANNEL_REGISTRIES_CHECKED', stage: 'orders', affiliatesChecked: affiliateResult.checked, affiliatesResolved: affiliateResult.resolved, salesChannelsChecked: salesChannelResult.checked, salesChannelsResolved: salesChannelResult.resolved } })
-        }
-      }
       const mappings = await loadVtexChannelMappings(supabase, companyId, connection.id, configuredMappings)
       const channelResolutionCache: VtexChannelResolutionCache = new Map()
       // `runConfig.historyMonths` vem do SNAPSHOT da run, não da config

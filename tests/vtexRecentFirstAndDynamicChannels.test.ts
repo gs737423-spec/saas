@@ -69,6 +69,15 @@ describe('VTEX recent-first bootstrap', () => {
 })
 
 describe('canais reais e marketplace dinâmico', () => {
+  it('executa resolução de canais antes do catálogo, sem depender do estágio orders', async () => {
+    const source = await readFile(new URL('../src/server/integrations/vtex/sync.ts', import.meta.url), 'utf8')
+    const registryGate = source.indexOf('CHANNEL_REGISTRIES_CHECKED')
+    const catalogStage = source.indexOf("if (run.stage === 'catalog')")
+    const ordersStage = source.indexOf("if (run.stage === 'orders')")
+    expect(registryGate).toBeGreaterThan(-1)
+    expect(registryGate).toBeLessThan(catalogStage)
+    expect(catalogStage).toBeLessThan(ordersStage)
+  })
   it('nome confiável da VTEX gera canonical_key válida sem espaço', () => {
     expect(canonicalKeyFromTrustedName('  Käbum Marketplace  ')).toBe('kabum-marketplace')
     expect(canonicalKeyFromTrustedName('Canal / B2B')).toBe('canal-b2b')
@@ -109,16 +118,20 @@ describe('canais reais e marketplace dinâmico', () => {
         if (table === 'order_source_refs') return { select() { return this }, eq() { return this }, neq() { return this }, is() { return this }, limit: async () => ({ data: [], error: null }) }
         if (table === 'orders') return { update() { return { eq() { return this }, in: async () => ({ error: null }) } } }
         const builder = {
-          select() { return this }, eq() { return this },
+          select() { return this }, eq() { return this }, neq() { return this },
           then(resolve: (value: unknown) => void) { resolve({ data: [{ id: 'mapping-1', identifier_value: '1', resolution_source: 'unresolved' }], error: null }) },
-          update(payload: Record<string, unknown>) { updates.push(payload); return { eq: async () => ({ error: null }) } },
+          update(payload: Record<string, unknown>) {
+            updates.push(payload)
+            const chain = { eq() { return chain }, neq() { return chain }, async select() { return { data: [{ id: 'mapping-1' }], error: null } } }
+            return chain
+          },
         }
         return builder
       },
     }
     const client = { getSalesChannels: async () => [{ Id: 1, Name: 'Loja Clima Rio', IsActive: true }] }
     const result = await autoResolveVtexSalesChannelsFromRegistry(client as never, supabase as never, 'company-1', 'conn-1')
-    expect(result).toEqual({ resolved: 1, checked: 1 })
+    expect(result).toEqual({ resolved: 1, checked: 1, completed: true })
     expect(updates[0]).toMatchObject({ canonical_channel: 'loja-clima-rio', resolution_status: 'resolved', external_marketplace_name: 'Loja Clima Rio' })
   })
 
@@ -138,7 +151,7 @@ describe('canais reais e marketplace dinâmico', () => {
       },
     }
     const updated = await reclassifyVtexOrdersForIdentifier(supabase as never, 'company-1', 'conn-1', 'affiliate_id', 'MZN', 'amazon')
-    expect(updated).toBe(1)
+    expect(updated).toEqual({ updated: 1, completed: true })
     expect(orderUpdates).toEqual([{ sales_channel: 'amazon', channel_resolution_status: 'resolved', unavailable_reason: null }])
   })
 
@@ -155,7 +168,7 @@ describe('canais reais e marketplace dinâmico', () => {
       },
     }
     const updated = await reclassifyVtexOrdersForIdentifier(supabase as never, 'company-1', 'conn-1', 'sales_channel', '1', 'loja_propria')
-    expect(updated).toBe(0)
+    expect(updated).toEqual({ updated: 0, completed: true })
     expect(affiliateNullFilterApplied).toBe(true)
   })
 })

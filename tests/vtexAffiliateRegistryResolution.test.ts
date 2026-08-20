@@ -47,16 +47,16 @@ function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_
           return { data: null, error: null }
         },
         update(payload: Record<string, unknown>) {
-          return {
-            eq: async (_column: string, id: string) => {
-              updates.push({ id, payload })
-              return { error: null }
-            },
+          const chain = {
+            eq(_column: string, id: string) { updates.push({ id, payload }); return chain },
+            neq() { return chain },
+            async select() { return { data: [{ id: 'row-new' }], error: null } },
           }
+          return chain
         },
-        async upsert(payload: Record<string, unknown>) {
+        upsert(payload: Record<string, unknown>) {
           upserts.push(payload)
-          return { error: null }
+          return { async select() { return { data: [{ id: 'row-new' }], error: null } } }
         },
         then(resolve: (value: unknown) => void) {
           resolve({ data: [
@@ -91,7 +91,7 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
     // MLB bate com canônico conhecido; XYZ não bate com nenhum dos 5, mas
     // ainda resolve -- cria um canal NOVO a partir do nome real "Kabum
     // Marketplace" (nunca da sigla XYZ, nunca fica pendente à toa).
-    expect(result.resolved).toBe(2)
+    expect(result).toMatchObject({ resolved: 2, checked: 2, completed: true })
     expect(upserts).toHaveLength(2)
     expect(upserts.find((row) => row.affiliate_id === 'MLB')).toMatchObject({ canonical_channel: 'mercadolivre', resolution_source: 'vtex_affiliate_registry', resolution_status: 'resolved' })
     expect(upserts.find((row) => row.affiliate_id === 'XYZ')).toMatchObject({ canonical_channel: 'kabum-marketplace', external_marketplace_name: 'Kabum Marketplace', resolution_source: 'vtex_affiliate_registry' })
@@ -107,7 +107,7 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
 
     const result = await autoResolveVtexAffiliatesFromRegistry(client, supabase as never, 'company-1', 'conn-1')
 
-    expect(result).toEqual({ resolved: 2, checked: 2 })
+    expect(result).toEqual({ resolved: 2, checked: 2, completed: true })
     expect(upserts.map((row) => row.canonical_channel).sort()).toEqual(['amazon', 'mercadolivre'])
   })
 
@@ -117,7 +117,7 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
 
     const result = await autoResolveVtexAffiliatesFromRegistry(client, supabase as never, 'company-1', 'conn-1')
 
-    expect(result).toEqual({ resolved: 0, checked: 0 })
+    expect(result).toEqual({ resolved: 0, checked: 0, completed: false })
     expect(upserts).toHaveLength(0)
   })
 
@@ -138,7 +138,7 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
 
     const result = await autoResolveVtexAffiliatesFromRegistry(client, supabase as never, 'company-1', 'conn-1')
 
-    expect(result).toEqual({ resolved: 0, checked: 1 })
+    expect(result).toEqual({ resolved: 0, checked: 1, completed: true })
     expect(upserts).toHaveLength(0)
     expect(updates).toHaveLength(0)
   })
