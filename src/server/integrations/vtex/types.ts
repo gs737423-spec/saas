@@ -240,4 +240,8 @@ export interface VtexSyncCheckpoint {
    *  `orderWindowStart`/`orderTargetEnd`, dá progresso real do estágio
    *  `orders`: fração do intervalo já coberta por janelas concluídas. */
   orderHistoryStart?: string
+  /** Marca que `autoResolveVtexAffiliatesFromRegistry` já rodou nesta run —
+   *  é uma chamada extra à VTEX, então roda UMA vez por run (não a cada
+   *  tick do estágio `orders`, que pode durar dezenas de invocações). */
+  affiliateRegistryChecked?: boolean
 }

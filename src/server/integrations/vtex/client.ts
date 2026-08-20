@@ -132,6 +132,15 @@ export class VtexClient {
   getInventory(skuId: number | string) { return this.request<VtexInventoryResponse>(`/api/logistics/pvt/inventory/skus/${encodeURIComponent(String(skuId))}`) }
   listWarehouses() { return this.request<Array<{ id?: string; name?: string }>>('/api/logistics/pvt/configuration/warehouses') }
   getPricingConfig() { return this.request<Record<string, unknown>>('/pricing/config', {}, 0, this.pricingBaseUrl) }
+  /** Registro real de affiliates cadastrados pela loja na VTEX (Marketplace
+   *  API, endpoint novo de 2025) — cada affiliate tem o NOME que o próprio
+   *  vendedor digitou no painel VTEX ao configurar o marketplace (ex.:
+   *  affiliateId "MLB" com name "Mercado Livre"). É dado de origem VTEX, não
+   *  suposição sobre a sigla — ver channelRegistry.ts. Best-effort: conta
+   *  pode não ter essa API habilitada (endpoint recente); o chamador trata
+   *  qualquer erro como "sem registro disponível", nunca falha a run por
+   *  causa disso. */
+  getAffiliates() { return this.request<unknown>('/api/fulfillment/pvt/affiliates') }
   listOrders(query: string) { return this.request<VtexOrderListResponse>(`/api/oms/pvt/orders?${query}`) }
   getOrder(orderId: string) { return this.request<VtexOrder>(`/api/oms/pvt/orders/${encodeURIComponent(orderId)}`) }
   getFeedConfig() { return this.request<Record<string, unknown>>('/api/orders/feed/config') }

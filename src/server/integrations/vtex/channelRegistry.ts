@@ -1,9 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { VtexClient } from './client.js'
 import type { VtexChannelMappings, VtexNormalizedOrder } from './types.js'
 import {
   CANONICAL_CHANNELS,
   UNRESOLVED_CHANNEL_DISPLAY_NAME,
   UNRESOLVED_CHANNEL_KEY,
+  buildVtexExternalKey,
   findCanonicalChannel,
   normalizeForComparison,
   parseVtexExternalKey,
@@ -192,6 +194,82 @@ export async function ensureBaseSalesChannels(
   ]
   const { error } = await supabase.from('sales_channels').upsert(rows, { onConflict: 'company_id,canonical_key', ignoreDuplicates: true })
   if (error) throw new Error(`Failed to ensure base sales channels: ${error.message}`)
+}
+
+/** Resolve automaticamente identificadores `affiliateId` usando o NOME real
+ *  que a própria VTEX guarda pra cada affiliate (Marketplace API) — nunca
+ *  chuta a partir da sigla. Se o nome bate com um canal canônico conhecido
+ *  (Mercado Livre, Amazon, Shopee, Magalu), grava a resolução direto em
+ *  `vtex_channel_mappings` com `resolution_source: 'vtex_affiliate_registry'`
+ *  — na próxima leitura de `loadVtexChannelMappings` (mesma run ou a
+ *  seguinte) os pedidos desse affiliate resolvem sozinhos, sem o cliente
+ *  precisar abrir a tela de canais.
+ *
+ *  Nunca sobrescreve uma linha já resolvida por `'mapping'` (escolha
+ *  explícita do usuário) — essa sempre vence. Se o endpoint não existir pra
+ *  essa conta/plano (API nova, pode não estar habilitada) ou devolver algo
+ *  inesperado, devolve `{ resolved: 0, checked: 0 }` em vez de derrubar a
+ *  run — é um enriquecimento best-effort, nunca um requisito pra sincronizar. */
+export async function autoResolveVtexAffiliatesFromRegistry(
+  client: VtexClient,
+  supabase: SupabaseClient,
+  companyId: string,
+  connectionId: string,
+): Promise<{ resolved: number; checked: number }> {
+  let affiliates: Array<{ affiliateId?: unknown; id?: unknown; name?: unknown; Name?: unknown }> = []
+  try {
+    const raw = await client.getAffiliates()
+    if (Array.isArray(raw)) affiliates = raw
+    else if (raw && typeof raw === 'object' && Array.isArray((raw as { items?: unknown }).items)) {
+      affiliates = (raw as { items: typeof affiliates }).items
+    }
+  } catch {
+    return { resolved: 0, checked: 0 }
+  }
+
+  let resolved = 0
+  for (const affiliate of affiliates) {
+    const code = affiliate.affiliateId ?? affiliate.id
+    const name = affiliate.name ?? affiliate.Name
+    if (typeof code !== 'string' && typeof code !== 'number') continue
+    if (typeof name !== 'string' || !name.trim()) continue
+    const canonical = findCanonicalChannel(name)
+    if (!canonical) continue
+
+    const identifierValue = normalizeForComparison(String(code))
+    if (!identifierValue) continue
+    const externalKey = buildVtexExternalKey('affiliate_id', identifierValue)
+
+    try {
+      const { data: existing, error: existingError } = await supabase.from('vtex_channel_mappings')
+        .select('id, resolution_source')
+        .eq('company_id', companyId).eq('connection_id', connectionId).eq('source_provider', 'vtex')
+        .eq('external_key', externalKey).maybeSingle()
+      if (existingError) throw new Error(existingError.message)
+      if (existing && existing.resolution_source === 'mapping') continue
+
+      const payload = {
+        company_id: companyId, connection_id: connectionId, source_provider: 'vtex',
+        external_key: externalKey, identifier_type: 'affiliate_id', identifier_value: identifierValue,
+        resolution_source: 'vtex_affiliate_registry', affiliate_id: String(code),
+        external_marketplace_id: null, external_marketplace_name: String(name),
+        external_sales_channel: null, canonical_channel: canonical.key,
+        resolution_status: 'resolved', last_seen_at: new Date().toISOString(),
+      }
+      if (existing) {
+        const { error } = await supabase.from('vtex_channel_mappings').update(payload).eq('id', existing.id)
+        if (error) throw new Error(error.message)
+      } else {
+        const { error } = await supabase.from('vtex_channel_mappings').upsert(payload, { onConflict: 'company_id,connection_id,source_provider,external_key' })
+        if (error) throw new Error(error.message)
+      }
+      resolved += 1
+    } catch {
+      // Falha isolada num affiliate (rede, conflito) não derruba os demais —
+      // mesmo padrão de isolamento usado em discoverVtexSkuIdsBySalesChannel.
+    }
+  }
+  return { resolved, checked: affiliates.length }
 }
 
 /** Reexport utilitário — quem lê uma linha de mapping legada (sem as

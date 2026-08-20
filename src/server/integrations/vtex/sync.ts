@@ -6,7 +6,7 @@ import { persistCanonicalOrder } from '../orderIdentity.js'
 import { VtexApiError } from './errors.js'
 import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
-import { ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
+import { autoResolveVtexAffiliatesFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
 import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
@@ -39,8 +39,12 @@ export function resolveVtexHistoryMonths(providerMetadata: Record<string, unknow
  *  Mercado Livre (8): cada pedido VTEX já dispara ~1 chamada HTTP externa +
  *  vários round-trips de Supabase (resolução de canal + reconciliação
  *  canônica), então o gargalo real é o Postgres, não só a API da VTEX. */
-const ORDER_CONCURRENCY = 4
-const SKU_CONCURRENCY = 5
+// Subido de 4/5 pra 8/10 (throughput real, ver commit b8837b2) — VTEX não
+// documenta um limite fixo de requisições simultâneas por conta; o circuit
+// breaker (CIRCUIT_FAILURE_THRESHOLD) já protege contra 429 sustentado,
+// então esse é o teto seguro pra tentar antes de precisar recuar.
+const ORDER_CONCURRENCY = 8
+const SKU_CONCURRENCY = 10
 
 /** Orçamento de tempo por invocação — bem abaixo do `maxDuration: 300` da
  *  function (api/cron/sync-vtex.ts, api/integrations/vtex/sync.ts), pra
@@ -633,6 +637,16 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       // sincronização nunca precisa inventar canal pra satisfazer a FK de
       // `orders.sales_channel`.
       await ensureBaseSalesChannels(supabase, companyId)
+      if (!checkpoint.affiliateRegistryChecked) {
+        // Best-effort, uma vez por run: tenta resolver affiliateId -> canal
+        // canônico usando o NOME real cadastrado na VTEX, sem exigir clique
+        // manual do cliente. Nunca falha a run por causa disso.
+        const registryResult = await autoResolveVtexAffiliatesFromRegistry(client, supabase, companyId, connection.id)
+        checkpoint.affiliateRegistryChecked = true
+        if (registryResult.checked > 0) {
+          await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX affiliate registry auto-resolution checked', payload: { code: 'AFFILIATE_REGISTRY_CHECKED', stage: 'orders', checked: registryResult.checked, resolved: registryResult.resolved } })
+        }
+      }
       const mappings = await loadVtexChannelMappings(supabase, companyId, connection.id, configuredMappings)
       const channelResolutionCache: VtexChannelResolutionCache = new Map()
       // `runConfig.historyMonths` vem do SNAPSHOT da run, não da config
