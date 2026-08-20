@@ -103,6 +103,26 @@ export function findCanonicalChannel(value: unknown): CanonicalChannelDefinition
   return CANONICAL_BY_KEY.get(normalized) ?? CANONICAL_BY_ALIAS.get(normalized) ?? null
 }
 
+/** Casamento por SUBSTRING contra os aliases conhecidos — só usado quando a
+ *  fonte é um NOME real registrado pelo vendedor na própria VTEX (nunca a
+ *  sigla do affiliateId). Esse nome é texto livre ("Mercado Livre - Loja
+ *  Oficial", "MeliFull", "Amazon BR Fulfillment") e raramente bate igual ao
+ *  alias canônico — `findCanonicalChannel` (comparação exata) quase nunca
+ *  resolveria nada nesse caso, mesmo quando o marketplace é óbvio pro nome
+ *  inteiro. Continua nunca "chutando" a partir do código: só resolve quando
+ *  o NOME real de verdade contém um alias inteiro. */
+export function findCanonicalChannelByNameContains(value: unknown): CanonicalChannelDefinition | null {
+  const normalized = normalizeForComparison(value)
+  if (!normalized) return null
+  for (const channel of CANONICAL_CHANNELS) {
+    for (const alias of [channel.key, channel.displayName, ...channel.aliases]) {
+      const normalizedAlias = normalizeForComparison(alias)
+      if (normalizedAlias && normalized.includes(normalizedAlias)) return channel
+    }
+  }
+  return null
+}
+
 /** Chave externa estável do identificador bruto — é ela que garante o
  *  dedupe de mapping (unique em company/connection/source_provider/
  *  external_key, migration 019). `identifier_type` + `identifier_value`

@@ -65,6 +65,7 @@ export default function VtexChannelMappingCard() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FilterMode>('pending')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+  const [showAllPending, setShowAllPending] = useState(false)
   const connected = Boolean(vtex && ['connected', 'syncing', 'requires_attention'].includes(vtex.status))
 
   const loadChannels = useCallback(async (signal?: AbortSignal) => {
@@ -107,10 +108,17 @@ export default function VtexChannelMappingCard() {
       .some((value) => value.toLowerCase().includes(normalizedQuery))
   }, [normalizedQuery])
 
-  const pending = useMemo(
+  const allPending = useMemo(
     () => identifiers.filter((item) => item.resolutionStatus !== 'resolved' && matches(item)),
     [identifiers, matches],
   )
+  // Igual ao agrupamento de resolvidos: nunca deixa a lista crescer
+  // linearmente com o número de identificadores pendentes — uma conta com
+  // dezenas deles não pode dominar a tela inteira (relato real: painel
+  // ocupando ~90% da altura visível). Mostra só os primeiros N por padrão.
+  const PENDING_PAGE_SIZE = 4
+  const pending = showAllPending ? allPending : allPending.slice(0, PENDING_PAGE_SIZE)
+  const hiddenPendingCount = allPending.length - pending.length
 
   /** Agrupamento por canal canônico — é isso que impede a lista de crescer
    *  linearmente com o número de identificadores já resolvidos. */
@@ -200,7 +208,7 @@ export default function VtexChannelMappingCard() {
             <input
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => { setQuery(event.target.value); setShowAllPending(false) }}
               placeholder="Buscar identificador ou canal"
               aria-label="Buscar identificador ou canal"
               className="w-full rounded-lg border border-border-default bg-bg-primary py-2 pl-8 pr-3 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-accent-blue"
@@ -269,6 +277,16 @@ export default function VtexChannelMappingCard() {
             </div>
           )
         })}
+
+        {!loading && showPending && hiddenPendingCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAllPending(true)}
+            className="control-inactive rounded-lg px-3 py-2 text-[11px] font-semibold"
+          >
+            Ver mais {hiddenPendingCount} pendentes
+          </button>
+        )}
 
         {!loading && showPending && pending.length === 0 && counters.total > 0 && filter === 'pending' && (
           <p className="rounded-lg border border-border-subtle px-3 py-3 text-[11px] text-text-muted">

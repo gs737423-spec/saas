@@ -7,6 +7,7 @@ import {
   UNRESOLVED_CHANNEL_KEY,
   buildVtexExternalKey,
   findCanonicalChannel,
+  findCanonicalChannelByNameContains,
   normalizeForComparison,
   parseVtexExternalKey,
 } from './channelResolution.js'
@@ -233,7 +234,7 @@ export async function autoResolveVtexAffiliatesFromRegistry(
     const name = affiliate.name ?? affiliate.Name
     if (typeof code !== 'string' && typeof code !== 'number') continue
     if (typeof name !== 'string' || !name.trim()) continue
-    const canonical = findCanonicalChannel(name)
+    const canonical = findCanonicalChannelByNameContains(name)
     if (!canonical) continue
 
     const identifierValue = normalizeForComparison(String(code))

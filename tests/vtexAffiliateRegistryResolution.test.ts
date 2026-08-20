@@ -71,6 +71,19 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
     expect(upserts[0]).toMatchObject({ canonical_channel: 'mercadolivre', resolution_source: 'vtex_affiliate_registry', resolution_status: 'resolved' })
   })
 
+  it('casa nome real de texto livre da VTEX por substring, não só igualdade exata', async () => {
+    const client = makeClient(() => new Response(JSON.stringify([
+      { affiliateId: 'MLB', name: 'Mercado Livre - Loja Oficial' },
+      { affiliateId: 'AMZ', name: 'AmazonBRFulfillment' },
+    ]), { status: 200 }))
+    const { supabase, upserts } = makeFakeSupabase()
+
+    const result = await autoResolveVtexAffiliatesFromRegistry(client, supabase as never, 'company-1', 'conn-1')
+
+    expect(result).toEqual({ resolved: 2, checked: 2 })
+    expect(upserts.map((row) => row.canonical_channel).sort()).toEqual(['amazon', 'mercadolivre'])
+  })
+
   it('endpoint indisponível (conta sem essa API habilitada) não derruba a run — devolve zero', async () => {
     const client = makeClient(() => new Response('{}', { status: 404 }))
     const { supabase, upserts } = makeFakeSupabase()
