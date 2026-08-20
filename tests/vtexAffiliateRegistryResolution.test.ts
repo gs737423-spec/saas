@@ -12,15 +12,26 @@ const credentials = { accountName: 'climario', appKey: 'k', appToken: 't' }
 // -- risco de atribuição financeira errada se resolvido por heurística sobre
 // a sigla (`channelResolution.ts` proíbe isso explicitamente). A VTEX expõe o
 // NOME real que o vendedor cadastrou pra cada affiliate; usamos ESSE nome
-// (dado de origem VTEX, não suposição) pra casar com um canal canônico já
-// conhecido -- só quando bate de verdade, nunca um "parece que é".
+// (dado de origem VTEX, não suposição) pra resolver -- bate com um canônico
+// já conhecido (Mercado Livre/Amazon/Shopee/Magalu) quando possível, e cria
+// um canônico NOVO a partir do nome real quando não bate com nenhum -- nunca
+// fica pendente esperando clique manual, e nunca chuta a partir da sigla.
 // ---------------------------------------------------------------------------
 function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_source: string } | null> = {}) {
   const upserts: Array<Record<string, unknown>> = []
+  const salesChannelUpserts: Array<Record<string, unknown>> = []
   const updates: Array<{ id: string; payload: Record<string, unknown> }> = []
   const supabase = {
     from(table: string) {
-      expect(table).toBe('vtex_channel_mappings')
+      expect(['vtex_channel_mappings', 'sales_channels']).toContain(table)
+      if (table === 'sales_channels') {
+        return {
+          async upsert(payload: Record<string, unknown>) {
+            salesChannelUpserts.push(payload)
+            return { error: null }
+          },
+        }
+      }
       return {
         select() {
           return this
@@ -47,7 +58,7 @@ function makeFakeSupabase(existingRows: Record<string, { id: string; resolution_
     },
   }
   void existingRows
-  return { supabase, upserts, updates }
+  return { supabase, upserts, updates, salesChannelUpserts }
 }
 
 function makeClient(handler: () => Response) {
@@ -59,16 +70,21 @@ describe('autoResolveVtexAffiliatesFromRegistry (resolução automática por nom
   it('casa affiliateId com canal canônico usando o nome real devolvido pela VTEX', async () => {
     const client = makeClient(() => new Response(JSON.stringify([
       { affiliateId: 'MLB', name: 'Mercado Livre' },
-      { affiliateId: 'XYZ', name: 'Sigla sem marketplace conhecido' },
+      { affiliateId: 'XYZ', name: 'Kabum Marketplace' },
     ]), { status: 200 }))
-    const { supabase, upserts } = makeFakeSupabase()
+    const { supabase, upserts, salesChannelUpserts } = makeFakeSupabase()
 
     const result = await autoResolveVtexAffiliatesFromRegistry(client, supabase as never, 'company-1', 'conn-1')
 
     expect(result.checked).toBe(2)
-    expect(result.resolved).toBe(1) // só MLB bateu com um canônico conhecido — XYZ fica unresolved, nunca chuta
-    expect(upserts).toHaveLength(1)
-    expect(upserts[0]).toMatchObject({ canonical_channel: 'mercadolivre', resolution_source: 'vtex_affiliate_registry', resolution_status: 'resolved' })
+    // MLB bate com canônico conhecido; XYZ não bate com nenhum dos 5, mas
+    // ainda resolve -- cria um canal NOVO a partir do nome real "Kabum
+    // Marketplace" (nunca da sigla XYZ, nunca fica pendente à toa).
+    expect(result.resolved).toBe(2)
+    expect(upserts).toHaveLength(2)
+    expect(upserts.find((row) => row.affiliate_id === 'MLB')).toMatchObject({ canonical_channel: 'mercadolivre', resolution_source: 'vtex_affiliate_registry', resolution_status: 'resolved' })
+    expect(upserts.find((row) => row.affiliate_id === 'XYZ')).toMatchObject({ canonical_channel: 'kabum marketplace', external_marketplace_name: 'Kabum Marketplace', resolution_source: 'vtex_affiliate_registry' })
+    expect(salesChannelUpserts).toContainEqual(expect.objectContaining({ canonical_key: 'kabum marketplace', display_name: 'Kabum Marketplace' }))
   })
 
   it('casa nome real de texto livre da VTEX por substring, não só igualdade exata', async () => {

@@ -199,12 +199,25 @@ export async function ensureBaseSalesChannels(
 
 /** Resolve automaticamente identificadores `affiliateId` usando o NOME real
  *  que a própria VTEX guarda pra cada affiliate (Marketplace API) — nunca
- *  chuta a partir da sigla. Se o nome bate com um canal canônico conhecido
- *  (Mercado Livre, Amazon, Shopee, Magalu), grava a resolução direto em
- *  `vtex_channel_mappings` com `resolution_source: 'vtex_affiliate_registry'`
- *  — na próxima leitura de `loadVtexChannelMappings` (mesma run ou a
- *  seguinte) os pedidos desse affiliate resolvem sozinhos, sem o cliente
- *  precisar abrir a tela de canais.
+ *  chuta a partir da sigla.
+ *
+ *  Dois casos, ambos baseados no nome REAL, nunca inventado:
+ *  1. Nome bate com um canal canônico já conhecido (Mercado Livre, Amazon,
+ *     Shopee, Magalu) — usa esse canônico.
+ *  2. Nome não bate com nenhum conhecido, mas é um nome real de verdade
+ *     (não a sigla) — cria um canônico NOVO a partir desse nome (dedupe por
+ *     nome normalizado, igual ao fluxo "Criar canal..." que o usuário já
+ *     tinha manualmente). Diferente da heurística proibida em
+ *     channelResolution.ts (que tentava adivinhar o MARKETPLACE a partir da
+ *     SIGLA arbitrária): aqui a fonte é o nome que o próprio vendedor
+ *     digitou no painel da VTEX pra identificar aquele affiliate — dado
+ *     real, não suposição sobre 3 letras.
+ *
+ *  Sempre grava também a linha em `sales_channels` (upsert com
+ *  `ignoreDuplicates`, igual `ensureBaseSalesChannels`) pra o nome real
+ *  acentuado aparecer certinho na UI mesmo antes de qualquer pedido chegar
+ *  — sem isso, `humanizeCanonicalKey` reconstituiria o nome a partir da
+ *  chave normalizada (sem acento) só quando o primeiro pedido processasse.
  *
  *  Nunca sobrescreve uma linha já resolvida por `'mapping'` (escolha
  *  explícita do usuário) — essa sempre vence. Se o endpoint não existir pra
@@ -234,8 +247,15 @@ export async function autoResolveVtexAffiliatesFromRegistry(
     const name = affiliate.name ?? affiliate.Name
     if (typeof code !== 'string' && typeof code !== 'number') continue
     if (typeof name !== 'string' || !name.trim()) continue
-    const canonical = findCanonicalChannelByNameContains(name)
-    if (!canonical) continue
+    const realName = name.trim()
+    const canonical = findCanonicalChannelByNameContains(realName)
+    // Sem canônico conhecido: cria um novo a partir do nome REAL (nunca da
+    // sigla). `normalizeForComparison` vira a chave (ASCII, dedupe); o nome
+    // com acento/caixa original vira o display name, gravado abaixo.
+    const canonicalKey = canonical?.key ?? normalizeForComparison(realName)
+    if (!canonicalKey) continue
+    const displayName = canonical?.displayName ?? realName
+    const channelType = canonical?.channelType ?? 'marketplace'
 
     const identifierValue = normalizeForComparison(String(code))
     if (!identifierValue) continue
@@ -249,12 +269,18 @@ export async function autoResolveVtexAffiliatesFromRegistry(
       if (existingError) throw new Error(existingError.message)
       if (existing && existing.resolution_source === 'mapping') continue
 
+      const { error: channelError } = await supabase.from('sales_channels').upsert({
+        company_id: companyId, canonical_key: canonicalKey, display_name: displayName,
+        channel_type: channelType, status: 'active',
+      }, { onConflict: 'company_id,canonical_key', ignoreDuplicates: true })
+      if (channelError) throw new Error(channelError.message)
+
       const payload = {
         company_id: companyId, connection_id: connectionId, source_provider: 'vtex',
         external_key: externalKey, identifier_type: 'affiliate_id', identifier_value: identifierValue,
         resolution_source: 'vtex_affiliate_registry', affiliate_id: String(code),
-        external_marketplace_id: null, external_marketplace_name: String(name),
-        external_sales_channel: null, canonical_channel: canonical.key,
+        external_marketplace_id: null, external_marketplace_name: realName,
+        external_sales_channel: null, canonical_channel: canonicalKey,
         resolution_status: 'resolved', last_seen_at: new Date().toISOString(),
       }
       if (existing) {
