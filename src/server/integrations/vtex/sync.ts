@@ -101,6 +101,17 @@ export function isMissingVtexSku(error: unknown): boolean {
   return error instanceof VtexApiError && error.status === 404
 }
 
+export function clearResolvedVtexSkuErrors(
+  errors: string[],
+  errorCount: number,
+  resolvedSkuIds: Iterable<number>,
+): { errors: string[]; errorCount: number } {
+  const prefixes = new Set([...resolvedSkuIds].map((skuId) => `SKU ${skuId}:`))
+  if (prefixes.size === 0) return { errors, errorCount }
+  const remaining = errors.filter((message) => ![...prefixes].some((prefix) => message.startsWith(prefix)))
+  return { errors: remaining, errorCount: Math.max(0, errorCount - (errors.length - remaining.length)) }
+}
+
 const EMPTY_COUNTS: VtexSyncCounts = {
   categoriesFetched: 0, productsFetched: 0, skusFetched: 0, pricesFetched: 0,
   inventoriesFetched: 0, ordersFetched: 0, ordersInserted: 0, ordersUpdated: 0,
@@ -682,6 +693,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         let inventoryFailures = 0
         let catalogPermissionDenied = false
         const failedSkuIds = new Set<number>()
+        const resolvedRetrySkuIds = new Set<number>()
         const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
         try {
           const sku = await client.getSku(skuId)
@@ -718,13 +730,17 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           }
           counts.skusFetched += 1
           counts.productsFetched += 1
+          if (retryingFailedSkus) resolvedRetrySkuIds.add(skuId)
         } catch (itemError) {
           // A listagem de IDs e o detalhe não são um snapshot atômico na
           // VTEX. Um SKU removido entre as duas chamadas retorna 404: isso é
           // ausência reconciliável, não falha da integração. Ao concluir a
           // travessia sem erro, a reconciliação por last_seen_at desativa o
           // snapshot antigo desse SKU.
-          if (isMissingVtexSku(itemError)) return
+          if (isMissingVtexSku(itemError)) {
+            if (retryingFailedSkus) resolvedRetrySkuIds.add(skuId)
+            return
+          }
           failedSkuIds.add(skuId)
           const permissionDenied = itemError instanceof VtexApiError && [401, 403].includes(itemError.status)
           if (permissionDenied) catalogPermissionDenied = true
@@ -748,6 +764,11 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           errors: errors.slice(-100),
         })
       }, () => catalogPermissionDenied)
+        if (retryingFailedSkus && resolvedRetrySkuIds.size > 0) {
+          const resolved = clearResolvedVtexSkuErrors(errors, counts.errors, resolvedRetrySkuIds)
+          errors.splice(0, errors.length, ...resolved.errors)
+          counts.errors = resolved.errorCount
+        }
         checkpoint.skuOffset = retryingFailedSkus ? start : start + processedCount
         const retryTail = retryingFailedSkus ? batch.slice(processedCount) : []
         checkpoint.catalogFailedSkuIds = [...new Set([...failedSkuIds, ...retryTail])]

@@ -14,7 +14,7 @@ Data: 2026-08-24
 ## Validação local
 
 - TypeScript: passou.
-- Testes: 43 arquivos, 317/317 passaram.
+- Testes: 43 arquivos, 318/318 passaram.
 - Service-role boundary scan: passou.
 - Build: passou; permanece apenas o aviso não bloqueante do chunk principal de aproximadamente 710 kB.
 - `git diff --check`: passou; apenas avisos de normalização LF/CRLF.
@@ -30,6 +30,6 @@ Data: 2026-08-24
 
 ## Status
 
-O primeiro deployment de produção comprovou avanço do checkpoint VTEX de 14.175 para 15.008/17.728 SKUs. Um ID removido entre a listagem e o detalhe retornou 404; a correção complementar classifica esse caso como ausência reconciliável, permitindo que a reconciliação final desative o snapshot antigo sem reprovar a run.
+O primeiro deployment de produção comprovou avanço do checkpoint VTEX de 14.175 para 17.312/17.728 SKUs. Um ID removido entre a listagem e o detalhe retornou 404; a correção complementar classifica esse caso como ausência reconciliável e remove seletivamente o erro antigo quando o retry é resolvido, permitindo que a reconciliação final desative o snapshot antigo sem reprovar a run.
 
 Implementado — correção complementar aguardando rollout e novo ciclo real.

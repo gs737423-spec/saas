@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_HISTORY_MONTHS,
+  clearResolvedVtexSkuErrors,
   HEARTBEAT_STALE_MINUTES,
   isMissingVtexSku,
   MAX_INITIAL_HISTORY_MONTHS,
@@ -335,6 +336,18 @@ describe('VTEX catalog churn', () => {
     expect(isMissingVtexSku(new VtexApiError('VTEX_VALIDATION_ERROR', 'missing', 404, '/api/catalog_system/pvt/sku/stockkeepingunitbyid/19162'))).toBe(true)
     expect(isMissingVtexSku(new VtexApiError('VTEX_UNAVAILABLE', 'upstream', 503, '/api/catalog_system/pvt/sku/stockkeepingunitbyid/19162'))).toBe(false)
     expect(isMissingVtexSku(new Error('database failure'))).toBe(false)
+  })
+
+  it('removes only retry errors whose SKU was resolved and keeps unrelated failures', () => {
+    const result = clearResolvedVtexSkuErrors(
+      ['SKU 19162: missing', 'SKU 42: timeout', 'Catalog enrichment incomplete'],
+      3,
+      [19162],
+    )
+    expect(result).toEqual({
+      errors: ['SKU 42: timeout', 'Catalog enrichment incomplete'],
+      errorCount: 2,
+    })
   })
 })
 
