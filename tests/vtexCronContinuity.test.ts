@@ -18,4 +18,17 @@ describe('VTEX cron fairness', () => {
     expect(sync).toContain('const retryTail = retryingFailedSkus ? batch.slice(processedCount) : []')
     expect(sync).toContain('catalogFailedSkuIds: [...new Set([...failedSkuIds, ...retryTail])]')
   })
+
+  it('starts full before the first success and self-heals the removed dense-window failure', () => {
+    expect(cron).toContain("recoveringDenseFullRun || !connection.last_success_at ? 'full' : 'incremental'")
+    expect(cron).toContain("connection.last_error === 'VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT'")
+    expect(cron).toMatch(/failure_count:\s*0[\s\S]{0,100}circuit_open_until:\s*null/)
+    expect(cron).toMatch(/\.eq\('id', connection\.id\)\.eq\('company_id', connection\.company_id\)\.eq\('provider', 'vtex'\)/)
+  })
+
+  it('does not require a closed breaker to select or resume an already active run', () => {
+    expect(cron).toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(lockAvailable\)/)
+    expect(cron).not.toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(circuitClosed\)/)
+    expect(sync.indexOf('if (active)')).toBeLessThan(sync.indexOf('assertVtexCircuitClosed(connection.circuit_open_until)'))
+  })
 })

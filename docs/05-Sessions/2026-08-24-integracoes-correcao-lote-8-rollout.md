@@ -14,7 +14,7 @@ Data: 2026-08-24
 ## Validação local
 
 - TypeScript: passou.
-- Testes: 43 arquivos, 319/319 passaram.
+- Testes: 43 arquivos, 321/321 passaram.
 - Service-role boundary scan: passou.
 - Build: passou; permanece apenas o aviso não bloqueante do chunk principal de aproximadamente 710 kB.
 - `git diff --check`: passou; apenas avisos de normalização LF/CRLF.
@@ -33,5 +33,7 @@ Data: 2026-08-24
 O primeiro deployment de produção comprovou avanço do checkpoint VTEX de 14.175 para 17.312/17.728 SKUs. Um ID removido entre a listagem e o detalhe retornou 404; a correção complementar classifica esse caso como ausência reconciliável e remove seletivamente o erro antigo quando o retry é resolvido, permitindo que a reconciliação final desative o snapshot antigo sem reprovar a run.
 
 Após 17.728/17.728 SKUs, a primeira janela de pedidos expôs o teto artificial `VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT`. A carga full agora persiste e retoma a página da microjanela congelada, cuja ordenação por `creationDate` é imutável; incremental não reaproveita página porque `lastChange` pode reordenar o conjunto.
+
+O erro antigo havia acumulado `failure_count=59` e aberto o breaker. O cron agora se recupera automaticamente apenas desse código obsoleto, força full nessa recuperação mesmo se existir sucesso anterior, escolhe full enquanto não há sucesso e deixa runs já ativas retomarem seu checkpoint sem serem bloqueadas pelo cooldown de novas execuções.
 
 Implementado — correção complementar aguardando rollout e novo ciclo real.

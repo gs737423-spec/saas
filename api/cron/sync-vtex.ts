@@ -12,7 +12,7 @@ const AUTO_SYNC_STATUSES = ['connected', 'syncing', 'requires_attention', 'error
 
 function eligibleConnections(supabase: SupabaseClient, options?: { count: 'exact'; head: true }) {
   return supabase.from('marketplace_connections')
-    .select('company_id', options)
+    .select('id,company_id,last_success_at,last_error', options)
     .eq('provider', 'vtex')
     .in('status', AUTO_SYNC_STATUSES)
     .not('credential_key_encrypted', 'is', null)
@@ -32,6 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const staleBefore = getStaleSyncLockCutoff(now)
     const due = `next_sync_at.is.null,next_sync_at.lte.${nowIso}`
     const circuitClosed = `circuit_open_until.is.null,circuit_open_until.lte.${nowIso}`
+    const circuitRecoverable = `${circuitClosed},last_error.eq.VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT`
     const lockAvailable = `sync_started_at.is.null,sync_started_at.lt.${staleBefore}`
 
     // Conexões com uma run `queued`/`running` já existente precisam ser
@@ -51,10 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       eligibleConnections(supabase, { count: 'exact', head: true }).gt('next_sync_at', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).gt('circuit_open_until', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).or(circuitClosed).gte('sync_started_at', staleBefore),
-      eligibleConnections(supabase).or(due).or(circuitClosed).or(lockAvailable)
+      eligibleConnections(supabase).or(due).or(circuitRecoverable).or(lockAvailable)
         .order('next_sync_at', { ascending: true, nullsFirst: true }).order('company_id', { ascending: true }).limit(1),
       activeRunCompanyIds.length > 0
-        ? eligibleConnections(supabase).in('company_id', activeRunCompanyIds).or(circuitClosed).or(lockAvailable)
+        ? eligibleConnections(supabase).in('company_id', activeRunCompanyIds).or(lockAvailable)
         : Promise.resolve({ data: [], error: null }),
     ])
     for (const result of [checked, notDue, circuitOpen, locked, dueConnections, resumableConnections]) {
@@ -86,7 +87,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     for (const connection of nextConnection ? [nextConnection] : []) {
       try {
-        const queued = await queueVtexSync(connection.company_id, 'incremental', 'auto')
+        const recoveringDenseFullRun = connection.last_error === 'VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT'
+        if (recoveringDenseFullRun) {
+          const { error: recoveryError } = await supabase.from('marketplace_connections').update({
+            last_error: null,
+            failure_count: 0,
+            circuit_open_until: null,
+          }).eq('id', connection.id).eq('company_id', connection.company_id).eq('provider', 'vtex')
+          if (recoveryError) throw new Error(recoveryError.message)
+        }
+        const mode = recoveringDenseFullRun || !connection.last_success_at ? 'full' : 'incremental'
+        const queued = await queueVtexSync(connection.company_id, mode, 'auto')
         summary.syncsStarted += 1
         const run = await processVtexSyncRun(connection.company_id, queued.id)
         if (run.status === 'success') summary.syncsSucceeded += 1

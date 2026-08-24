@@ -81,7 +81,8 @@ describe('VTEX integration security boundaries', () => {
     expect(cron).toContain('next_sync_at.is.null,next_sync_at.lte.')
     expect(cron).toContain('circuit_open_until.is.null,circuit_open_until.lte.')
     expect(cron).toContain('sync_started_at.is.null,sync_started_at.lt.')
-    expect(cron).toContain("queueVtexSync(connection.company_id, 'incremental', 'auto')")
+    expect(cron).toContain("const mode = recoveringDenseFullRun || !connection.last_success_at ? 'full' : 'incremental'")
+    expect(cron).toContain("queueVtexSync(connection.company_id, mode, 'auto')")
     expect(cron).not.toContain('results:')
   })
 

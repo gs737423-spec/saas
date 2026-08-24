@@ -9,7 +9,8 @@
 - Mercado Livre não sobrescreve preço/estoque válidos quando a origem omite campos. Shopee falha fechada sem host oficial e não classifica retorno como cancelamento financeiro.
 - Smoke remoto comprovou avanço VTEX de 14.175 para 17.312/17.728 SKUs. Um SKU removido entre listagem e detalhe retornou 404; o runtime agora trata esse churn como ausência reconciliável e limpa seletivamente a mensagem antiga quando o retry é resolvido.
 - A conclusão do catálogo revelou `VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT` na primeira janela de pedidos. O teto fixo foi removido: full sync retoma paginação por `creationDate` imutável; incremental mantém reinício seguro por `lastChange` mutável.
-- Gates locais finais: TypeScript passou; 319/319 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
+- Auto-recuperação: conexão sem `last_success_at` inicia full sync; recuperação do erro de janela densa também preserva full mesmo se houver sucesso antigo; run ativa retoma mesmo com breaker; o breaker é zerado apenas para esse `last_error` removido.
+- Gates locais finais: TypeScript passou; 321/321 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
 - Bloqueios externos conhecidos: nenhuma variável `SHOPEE_*` configurada no Vercel Pro; Amazon/Magalu/Loja Própria ainda não possuem conector nativo no repositório; VTEX Pricing depende de permissão da chave da conta.
 - Status desta entrada: migrations aplicadas; commit/push/deploy e smoke de produção ainda em execução.
 

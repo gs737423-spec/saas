@@ -387,7 +387,6 @@ export async function discoverVtexSkuIdsByPagination(
 export async function queueVtexSync(companyId: string, mode: 'full' | 'incremental', trigger: 'auto' | 'manual'): Promise<SyncRunRow> {
   const supabase = await getSupabaseAdmin()
   const connection = await loadVtexConnection(companyId)
-  assertVtexCircuitClosed(connection.circuit_open_until)
   await reclaimStaleVtexRun(supabase, companyId, connection.id)
   // Uma run `queued` já existente (yield por orçamento de tempo, aguardando
   // o próximo tick) tem PRIORIDADE sobre a checagem de "due": ela não é uma
@@ -413,6 +412,10 @@ export async function queueVtexSync(companyId: string, mode: 'full' | 'increment
     }
     return activeRun
   }
+  // O breaker impede uma NOVA execução. Uma run já criada e yieldada precisa
+  // conseguir retomar o próprio checkpoint; bloqueá-la aqui deixava estado
+  // ativo preso até o cooldown e contrariava a continuidade do cron.
+  assertVtexCircuitClosed(connection.circuit_open_until)
   if (trigger === 'auto' && !isVtexSyncDue(connection.next_sync_at)) throw new VtexSyncNotDueError()
   // Snapshot da configuração NO MOMENTO DA CRIAÇÃO da run — a partir daqui
   // essa run usa esses valores até terminar. Mudar `historyMonths` na
