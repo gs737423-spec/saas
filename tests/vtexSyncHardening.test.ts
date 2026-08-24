@@ -2,12 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_HISTORY_MONTHS,
   HEARTBEAT_STALE_MINUTES,
+  isMissingVtexSku,
   MAX_INITIAL_HISTORY_MONTHS,
   reclaimStaleVtexRun,
   resolveVtexHistoryMonths,
   runBudgetedBatches,
   VTEX_MAX_RUNTIME_MS,
 } from '../src/server/integrations/vtex/sync'
+import { VtexApiError } from '../src/server/integrations/vtex/errors'
 import { computeVtexSyncProgress } from '../src/server/integrations/vtex/progress'
 import { normalizeVtexHistoryMonths } from '../src/server/integrations/vtex/validation'
 
@@ -325,6 +327,14 @@ describe('orders stage stops on VTEX 401/403 instead of retrying item by item (s
     // Same terminal treatment already used by the catalog stage: mark the
     // connection requires_attention instead of retrying forever.
     expect(source).toMatch(/ordersPermissionDenied[\s\S]{0,700}requires_attention/)
+  })
+})
+
+describe('VTEX catalog churn', () => {
+  it('treats a SKU-detail 404 as reconciliable absence instead of a sync failure', () => {
+    expect(isMissingVtexSku(new VtexApiError('VTEX_VALIDATION_ERROR', 'missing', 404, '/api/catalog_system/pvt/sku/stockkeepingunitbyid/19162'))).toBe(true)
+    expect(isMissingVtexSku(new VtexApiError('VTEX_UNAVAILABLE', 'upstream', 503, '/api/catalog_system/pvt/sku/stockkeepingunitbyid/19162'))).toBe(false)
+    expect(isMissingVtexSku(new Error('database failure'))).toBe(false)
   })
 })
 

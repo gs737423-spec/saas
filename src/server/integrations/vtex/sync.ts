@@ -97,6 +97,10 @@ export type VtexSyncStage = typeof VTEX_SYNC_STAGES[number]
 export const VTEX_SYNC_TERMINAL_STATUSES = ['success', 'partial', 'failed', 'cancelled'] as const
 export type VtexSyncTerminalStatus = typeof VTEX_SYNC_TERMINAL_STATUSES[number]
 
+export function isMissingVtexSku(error: unknown): boolean {
+  return error instanceof VtexApiError && error.status === 404
+}
+
 const EMPTY_COUNTS: VtexSyncCounts = {
   categoriesFetched: 0, productsFetched: 0, skusFetched: 0, pricesFetched: 0,
   inventoriesFetched: 0, ordersFetched: 0, ordersInserted: 0, ordersUpdated: 0,
@@ -715,6 +719,12 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           counts.skusFetched += 1
           counts.productsFetched += 1
         } catch (itemError) {
+          // A listagem de IDs e o detalhe não são um snapshot atômico na
+          // VTEX. Um SKU removido entre as duas chamadas retorna 404: isso é
+          // ausência reconciliável, não falha da integração. Ao concluir a
+          // travessia sem erro, a reconciliação por last_seen_at desativa o
+          // snapshot antigo desse SKU.
+          if (isMissingVtexSku(itemError)) return
           failedSkuIds.add(skuId)
           const permissionDenied = itemError instanceof VtexApiError && [401, 403].includes(itemError.status)
           if (permissionDenied) catalogPermissionDenied = true

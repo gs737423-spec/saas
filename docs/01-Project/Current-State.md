@@ -23,7 +23,8 @@ updated: 2026-08-14
 - Reconciliação de produto/estoque VTEX também é transacional e só roda após travessia comprovadamente completa, sem erro. SKUs falhos, a descoberta completa e a cauda ainda não processada são preservados em timeout para retry, inclusive em catálogos de até 40 SKUs; catálogo parcial não é promovido para completo.
 - Descoberta VTEX por sales channel propaga incompletude para o fallback global; 401/403 não fica mais indefinidamente em `queued`. A conexão precisa ser atualizada com escopo de tenant antes de a run registrar sucesso.
 - O stale threshold VTEX é maior que o runtime máximo da função, evitando reclaim de um worker ainda válido. Falhas precoces do cron persistem backoff para não bloquear as demais conexões. O cron VTEX processa uma conexão por tick, priorizando run ativa e depois a mais vencida.
-- Gates finais locais: TypeScript passou; 316/316 testes passaram; scan da fronteira de service role passou; build passou com o aviso conhecido do chunk principal (~710 kB); `git diff --check` passou com avisos LF/CRLF. Não existe script de lint.
+- Smoke remoto encontrou um SKU removido entre a listagem VTEX e a leitura de detalhe (`404`). Esse churn agora é tratado como ausência reconciliável: não entra em retry/erro e o snapshot antigo é desativado pela reconciliação ao final da travessia completa.
+- Gates finais locais: TypeScript passou; 317/317 testes passaram; scan da fronteira de service role passou; build passou com o aviso conhecido do chunk principal (~710 kB); `git diff --check` passou com avisos LF/CRLF. Não existe script de lint.
 - Infraestrutura: migrations 001–029 alinhadas no remoto. Shopee continua externamente bloqueada porque as variáveis `SHOPEE_*` não existem no Vercel Pro; o runtime agora expõe `config_missing` e nunca usa sandbox silenciosamente.
 
 ## Correção de integrações — lote 6, reembolsos Mercado Livre (2026-08-24)

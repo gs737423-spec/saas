@@ -7,7 +7,8 @@
 - Checkpoints VTEX preservam descoberta completa, falhas e cauda ainda não processada mesmo quando um catálogo de até 40 SKUs estoura o deadline durante o primeiro lote.
 - Cron VTEX processa uma conexão por tick e prioriza run retomável; cron geral grava backoff em falhas precoces para não causar starvation.
 - Mercado Livre não sobrescreve preço/estoque válidos quando a origem omite campos. Shopee falha fechada sem host oficial e não classifica retorno como cancelamento financeiro.
-- Gates locais finais: TypeScript passou; 316/316 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
+- Smoke remoto comprovou avanço VTEX de 14.175 para 15.008/17.728 SKUs. Um SKU removido entre listagem e detalhe retornou 404; o runtime agora trata esse churn como ausência reconciliável, sem retry/erro artificial.
+- Gates locais finais: TypeScript passou; 317/317 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
 - Bloqueios externos conhecidos: nenhuma variável `SHOPEE_*` configurada no Vercel Pro; Amazon/Magalu/Loja Própria ainda não possuem conector nativo no repositório; VTEX Pricing depende de permissão da chave da conta.
 - Status desta entrada: migrations aplicadas; commit/push/deploy e smoke de produção ainda em execução.
 
