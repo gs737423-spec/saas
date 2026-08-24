@@ -23,7 +23,6 @@ const ORDER_PAGE_SIZE = 30
 // nunca e persistido entre crons: timeout reinicia a microjanela e os upserts
 // canonicos deduplicam o que ja entrou.
 const SINGLE_PAGE_ORDER_WINDOW = 1
-const MAX_DENSE_ORDER_PAGES_PER_INVOCATION = 20
 const ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const MIN_ORDER_WINDOW_MS = 1
 const INCREMENTAL_OVERLAP_MS = 15 * 60 * 1000
@@ -99,6 +98,15 @@ export type VtexSyncTerminalStatus = typeof VTEX_SYNC_TERMINAL_STATUSES[number]
 
 export function isMissingVtexSku(error: unknown): boolean {
   return error instanceof VtexApiError && error.status === 404
+}
+
+export function vtexOrderResumePage(mode: 'full' | 'incremental', checkpointPage: number | undefined): number {
+  // creationDate é imutável: na carga full, a paginação de uma janela
+  // congelada pode continuar com segurança entre invocações. lastChange é
+  // mutável: incremental reinicia a microjanela e confia nos upserts.
+  if (mode !== 'full') return 1
+  const page = Number(checkpointPage ?? 1)
+  return Number.isInteger(page) && page > 0 ? page : 1
 }
 
 export function clearResolvedVtexSkuErrors(
@@ -856,10 +864,12 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       checkpoint.orderTargetEnd = targetEnd.toISOString()
       checkpoint.orderHistoryStart = checkpoint.orderHistoryStart ?? initialFrom.toISOString()
       while (true) {
-        // Primeiro divide por tempo ate caber em uma pagina. Apenas um bucket
-        // indivisivel pode usar pagina 2+, sempre dentro desta invocacao.
-        let page = 1
-        checkpoint.orderPage = 1
+        // Primeiro divide por tempo até caber em uma página. Se um bucket de
+        // creationDate for indivisível e denso, a carga full pode continuar
+        // da página persistida porque a ordenação é imutável.
+        const initialPage = vtexOrderResumePage(run.mode, checkpoint.orderPage)
+        let page = initialPage
+        checkpoint.orderPage = page
         let totalPages = page
         let sourceTotalPages = page
         let ranOutOfTime = false
@@ -886,12 +896,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           }
           continue
         }
-        if (page === 1 && sourceTotalPages > MAX_DENSE_ORDER_PAGES_PER_INVOCATION) {
-          // Um bucket acima do teto nao cabe com margem na function. Mantemos
-          // o checkpoint no inicio da microjanela em vez de truncar pedidos.
-          throw new Error('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
-        }
-        if (page === 1) totalPages = sourceTotalPages
+        if (page === initialPage) totalPages = sourceTotalPages
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX order page started', payload: { stage: 'orders', windowStart: checkpoint.orderWindowStart, windowEnd: checkpoint.orderWindowEnd, page, items: (list.list ?? []).length } })
 
         // Concorrência limitada (era 100% sequencial: 1 pedido = 1 chamada
@@ -977,14 +982,14 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         if (timedOut) { ranOutOfTime = true; break }
 
         page += 1
-        checkpoint.orderPage = 1
+        checkpoint.orderPage = page
         await updateRun(supabase, run, { checkpoint, counts, errors: errors.slice(-100) })
         } while (page <= totalPages)
         if (ranOutOfTime) {
-        // A lista ordenada por lastChange pode mudar entre crons. Nunca
-        // persiste offset de página de um result set mutável: reinicia a
-        // pequena subjanela e deixa os upserts deduplicarem o que já entrou.
-        checkpoint.orderPage = 1
+        // Full usa creationDate imutável e retoma a mesma página (refazê-la
+        // quando o timeout ocorreu no meio é idempotente). Incremental usa
+        // lastChange mutável e reinicia a microjanela para não pular shifts.
+        checkpoint.orderPage = run.mode === 'full' ? page : 1
         await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
           return { ...run, checkpoint, counts, errors, status: 'queued' }
         }

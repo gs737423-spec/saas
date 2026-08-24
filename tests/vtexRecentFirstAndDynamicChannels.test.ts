@@ -4,7 +4,7 @@ import { buildVtexRunConfig, normalizeVtexCheckpoint, VTEX_CHECKPOINT_VERSION } 
 import { canonicalKeyFromTrustedName } from '../src/server/integrations/vtex/channelResolution'
 import { autoResolveVtexSalesChannelsFromRegistry, reclassifyVtexOrdersForIdentifier } from '../src/server/integrations/vtex/channelRegistry'
 import { computeVtexSyncProgress } from '../src/server/integrations/vtex/progress'
-import { vtexOrderQueryMode } from '../src/server/integrations/vtex/sync'
+import { vtexOrderQueryMode, vtexOrderResumePage } from '../src/server/integrations/vtex/sync'
 
 describe('VTEX recent-first bootstrap', () => {
   it('migra run v2 em andamento para a janela mais recente sem perder o piso ainda pendente', () => {
@@ -46,14 +46,18 @@ describe('VTEX recent-first bootstrap', () => {
     const source = await readFile(new URL('../src/server/integrations/vtex/sync.ts', import.meta.url), 'utf8')
     expect(source).toMatch(/ORDER_WINDOW_SHRUNK[\s\S]{0,700}continue/)
     expect(source).toMatch(/const nextEnd = windowStart[\s\S]{0,300}Math\.max\(backfillFloor/)
-    expect(source).toMatch(/if \(ranOutOfTime\) \{[\s\S]{0,400}checkpoint\.orderPage = 1/)
-    expect(source).toContain('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
-    expect(source).not.toMatch(/if \(page <= sourceTotalPages\)[\s\S]{0,300}checkpoint\.orderPage = page/)
-    expect(source).toMatch(/while \(true\) \{[\s\S]{0,300}let page = 1[\s\S]{0,100}checkpoint\.orderPage = 1/)
-    expect(source).not.toContain('checkpoint.orderPage = page')
-    expect(source).toContain('const MAX_DENSE_ORDER_PAGES_PER_INVOCATION = 20')
-    expect(source).toContain('if (page === 1) totalPages = sourceTotalPages')
+    expect(source).toMatch(/if \(ranOutOfTime\) \{[\s\S]{0,500}checkpoint\.orderPage = run\.mode === 'full' \? page : 1/)
+    expect(source).not.toContain('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
+    expect(source).toContain('const initialPage = vtexOrderResumePage(run.mode, checkpoint.orderPage)')
+    expect(source).toContain('checkpoint.orderPage = page')
+    expect(source).toContain('if (page === initialPage) totalPages = sourceTotalPages')
     expect(source).not.toMatch(/listOrders\([\s\S]{0,150}page=2/)
+  })
+
+  it('retoma página somente na carga full, cujo creationDate é imutável', () => {
+    expect(vtexOrderResumePage('full', 21)).toBe(21)
+    expect(vtexOrderResumePage('full', 0)).toBe(1)
+    expect(vtexOrderResumePage('incremental', 21)).toBe(1)
   })
 
   it('incremental usa lastChange no filtro e na ordenação', () => {
