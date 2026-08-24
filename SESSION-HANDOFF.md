@@ -2,6 +2,8 @@
 
 ## Retomada atual — integrações, lote 8 e rollout (2026-08-24)
 
+- Código publicado: `a9a943a`; Vercel Pro `ia-center/saas`, deployment `dpl_CRTzQiK8vPQ4WiBRRPepcLnHF2tf`, `www.mktonline.com.br` Ready.
+- Produção: auto-recuperação comprovada (`failure_count 59 -> 0`, breaker removido, `error -> syncing`). Full sync avançou 992 -> 3.072/17.729 SKUs com zero erros; permanece em execução pelos crons de 5 minutos.
 - Migrations `027`, `028` e `029` aplicadas e confirmadas no Supabase `dnaykdoehbwmbsufcrxk`; histórico local/remoto alinhado de `001` a `029` e `db lint --linked` sem erro.
 - Persistência canônica de pedidos e reconciliação VTEX agora usam RPCs transacionais e tenant-scoped da migration `029`.
 - Checkpoints VTEX preservam descoberta completa, falhas e cauda ainda não processada mesmo quando um catálogo de até 40 SKUs estoura o deadline durante o primeiro lote.
@@ -12,7 +14,7 @@
 - Auto-recuperação: conexão sem `last_success_at` inicia full sync; recuperação do erro de janela densa também preserva full mesmo se houver sucesso antigo; run ativa retoma mesmo com breaker; o breaker é zerado apenas para esse `last_error` removido.
 - Gates locais finais: TypeScript passou; 321/321 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
 - Bloqueios externos conhecidos: nenhuma variável `SHOPEE_*` configurada no Vercel Pro; Amazon/Magalu/Loja Própria ainda não possuem conector nativo no repositório; VTEX Pricing depende de permissão da chave da conta.
-- Status desta entrada: migrations aplicadas; commit/push/deploy e smoke de produção ainda em execução.
+- Status desta entrada: migrations e rollout concluídos; VTEX em full sync real, ainda não terminal. Shopee/Amazon/ML não podem ser declarados operacionais sem, respectivamente, configuração, conector e conexão reais.
 
 ## Estado atual
 - Branch de trabalho: `wip/vintec-institutional-redesign-v2` (criada de `main` = `b1f14aa`).

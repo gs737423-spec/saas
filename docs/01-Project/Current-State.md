@@ -19,6 +19,8 @@ updated: 2026-08-14
 
 ## Correção de integrações — lote 8, concorrência e conclusão VTEX (2026-08-24)
 
+- Rollout final do runtime: commit `a9a943a`, deployment Vercel Pro `dpl_CRTzQiK8vPQ4WiBRRPepcLnHF2tf`, domínio `https://www.mktonline.com.br` em estado Ready.
+- Evidência pós-deploy: a auto-recuperação alterou a conexão de `error` para `syncing`, zerou `failure_count` de 59 para 0, removeu o breaker e iniciou uma run `full`. Dois checkpoints observados avançaram de 992 para 3.072/17.729 SKUs com `errors=[]`; a conclusão do catálogo/pedidos depende dos próximos ticks de 5 minutos.
 - A migration `029_atomic_canonical_orders_and_catalog_reconciliation.sql` foi aplicada e confirmada no Supabase; `db lint --linked` não encontrou erros. A persistência de pedido canônico, precedência do conector direto, proveniência e itens agora ocorre em uma RPC única, serializada por tenant + chave canônica.
 - Reconciliação de produto/estoque VTEX também é transacional e só roda após travessia comprovadamente completa, sem erro. SKUs falhos, a descoberta completa e a cauda ainda não processada são preservados em timeout para retry, inclusive em catálogos de até 40 SKUs; catálogo parcial não é promovido para completo.
 - Descoberta VTEX por sales channel propaga incompletude para o fallback global; 401/403 não fica mais indefinidamente em `queued`. A conexão precisa ser atualizada com escopo de tenant antes de a run registrar sucesso.
@@ -27,7 +29,7 @@ updated: 2026-08-14
 - A carga full VTEX não falha mais quando uma microjanela indivisível ultrapassa 20 páginas. Como `creationDate` é imutável, a página é persistida e retomada entre invocações; o modo incremental, baseado em `lastChange` mutável, continua reiniciando a microjanela para não pular deslocamentos.
 - O cron VTEX inicia `full` enquanto não existe `last_success_at`, preserva `full` ao recuperar o erro removido de janela densa mesmo se houver sucesso antigo, permite retomar runs ativas independentemente do breaker e limpa automaticamente o breaker somente para `VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT`. O reset é tenant/provider-scoped e não afeta falhas externas vigentes.
 - Gates finais locais: TypeScript passou; 321/321 testes passaram; scan da fronteira de service role passou; build passou com o aviso conhecido do chunk principal (~710 kB); `git diff --check` passou com avisos LF/CRLF. Não existe script de lint.
-- Infraestrutura: migrations 001–029 alinhadas no remoto. Shopee continua externamente bloqueada porque as variáveis `SHOPEE_*` não existem no Vercel Pro; o runtime agora expõe `config_missing` e nunca usa sandbox silenciosamente.
+- Infraestrutura: migrations 001–029 alinhadas no remoto. Produção possui somente uma conexão real VTEX. Shopee continua externamente bloqueada porque as variáveis `SHOPEE_*` não existem no Vercel Pro; Mercado Livre está configurado no ambiente, mas não possui conexão real nesta base; Amazon não possui conector nativo. O runtime Shopee expõe `config_missing` e nunca usa sandbox silenciosamente.
 
 ## Correção de integrações — lote 6, reembolsos Mercado Livre (2026-08-24)
 

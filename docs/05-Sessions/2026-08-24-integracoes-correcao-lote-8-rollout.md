@@ -36,4 +36,10 @@ Após 17.728/17.728 SKUs, a primeira janela de pedidos expôs o teto artificial 
 
 O erro antigo havia acumulado `failure_count=59` e aberto o breaker. O cron agora se recupera automaticamente apenas desse código obsoleto, força full nessa recuperação mesmo se existir sucesso anterior, escolhe full enquanto não há sucesso e deixa runs já ativas retomarem seu checkpoint sem serem bloqueadas pelo cooldown de novas execuções.
 
-Implementado — correção complementar aguardando rollout e novo ciclo real.
+Rollout do runtime concluído no commit `a9a943a`, deployment `dpl_CRTzQiK8vPQ4WiBRRPepcLnHF2tf` da equipe Pro `ia-center`.
+
+Smoke real: a conexão VTEX saiu de `error` para `syncing`; `failure_count` caiu de 59 para 0; o breaker foi removido; a nova run foi criada em modo `full` e avançou de 992 para 3.072/17.729 SKUs com `errors=[]`. A run permanece não terminal e continuará nos crons de 5 minutos.
+
+Lacunas que não podem ser mascaradas como sucesso: não há variáveis `SHOPEE_*`; não há conexão Mercado Livre na base atual; Amazon não possui conector nativo; leitura de Pricing VTEX depende das permissões e dados expostos pela conta.
+
+Implementado e publicado — VTEX sincronizando; demais conectores aguardam pré-requisitos externos/produto.
