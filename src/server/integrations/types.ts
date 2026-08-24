@@ -28,6 +28,11 @@ export interface MarketplaceConnectionRow {
   scopes: string | null
   sync_interval_minutes: number
   last_sync_at: string | null
+  catalog_last_sync_at?: string | null
+  inventory_last_sync_at?: string | null
+  orders_last_sync_at?: string | null
+  catalog_checkpoint?: Record<string, unknown>
+  orders_checkpoint?: Record<string, unknown>
   last_error: string | null
   last_success_at?: string | null
   next_sync_at?: string | null
@@ -40,6 +45,11 @@ export interface SanitizedConnectionStatusResponse {
   provider: Provider
   status: SanitizedConnectionStatus
   lastSyncAt: string | null
+  catalogLastSyncAt?: string | null
+  inventoryLastSyncAt?: string | null
+  ordersLastSyncAt?: string | null
+  catalogComplete?: boolean
+  ordersHistoryComplete?: boolean
   externalAccountId: string | null
   productsCount: number
   inventoryCount: number
@@ -159,17 +169,19 @@ export interface DashboardInventoryResponse {
 
 export type DashboardSummarySource = 'real' | 'demo' | 'config_missing' | 'error'
 
-/** Agregado real de `orders`/`order_items` no período pedido — nunca inclui
- *  pedido cancelado no faturamento/ticket (cancelado vira `returnsCount`/
- *  `returnsAmount`, ver api/dashboard/summary.ts). */
+/** Agregado real de `orders`/`order_items` no período pedido. Pedido
+ * cancelado não entra no faturamento e também não prova reembolso: devoluções
+ * só podem ser exibidas quando houver uma fonte financeira explícita. */
 export interface DashboardSummary {
   source: DashboardSummarySource
   grossRevenue: number
   ordersCount: number
   averageTicket: number
   feesTotal: number
+  feeDataStatus: 'known' | 'partial' | 'unknown'
   returnsCount: number
   returnsAmount: number
+  refundDataStatus: 'known' | 'partial' | 'unknown'
   lastSyncAt: string | null
   /** % vs período anterior de mesma duração — null quando não há pedido
    *  pago no período anterior pra comparar (sem base, não é 0% de verdade). */

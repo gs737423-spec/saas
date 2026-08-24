@@ -10,9 +10,15 @@ describe('shared sync cron continuity', () => {
     expect(source).toContain("continuation: remainingCount > 0 ? 'next_scheduled_tick' : null")
   })
 
-  it('prioriza conexão mais antiga e mede quantas ficam para ticks seguintes', () => {
-    expect(source).toContain(".order('last_sync_at', { ascending: true, nullsFirst: true })")
-    expect(source).toContain(".select('company_id, provider, last_sync_at', { count: 'exact' })")
+  it('prioriza a conexão vencida mais antiga e mede quantas ficam para ticks seguintes', () => {
+    expect(source).toContain(".order('next_sync_at', { ascending: true, nullsFirst: true })")
+    expect(source).toContain('next_sync_at.is.null,next_sync_at.lte.')
+    expect(source).toContain(".select('id, company_id, provider, last_sync_at, failure_count', { count: 'exact' })")
     expect(source).toContain('const remainingCount = Math.max(0, (count ?? orderedConnections.length) - results.length)')
+  })
+
+  it('adia falha precoce para a mesma conexão não causar starvation', () => {
+    expect(source).toContain('nextIntegrationFailureState(conn.failure_count)')
+    expect(source).toContain(".eq('id', conn.id).eq('company_id', conn.company_id).eq('provider', provider)")
   })
 })

@@ -9,6 +9,7 @@ import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import { loadVtexConnection, testVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
 import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
 import { normalizeVtexAccountName, normalizeVtexChannelMappings, validateVtexCredential } from '../../../src/server/integrations/vtex/validation.js'
+import { isExternalAccountSwitch } from '../../../src/server/integrations/accountIdentity.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'PUT') return void res.status(405).json({ ok: false, error: 'method_not_allowed' })
@@ -22,6 +23,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       accountName: normalizeVtexAccountName(req.body?.accountName ?? current.external_account_id),
       appKey: validateVtexCredential(req.body?.appKey, 'appKey'),
       appToken: validateVtexCredential(req.body?.appToken, 'appToken'),
+    }
+    if (isExternalAccountSwitch(current.external_account_id, credentials.accountName)) {
+      res.status(409).json({ ok: false, error: 'VTEX_ACCOUNT_MISMATCH', message: 'A rotação de credenciais não pode trocar a conta VTEX. A conexão anterior foi preservada.' })
+      return
     }
     const channelMappings = normalizeVtexChannelMappings(req.body?.channelMappings ?? current.provider_metadata?.channelMappings)
     const test = await testVtexConnection(credentials)

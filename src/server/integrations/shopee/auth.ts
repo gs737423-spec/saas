@@ -1,10 +1,15 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { ShopeeOAuthStatePayload, ShopeeTokenResponse } from './types.js'
 
-// Sandbox por padrão até a MKTOnline ter aprovação de produção — troca pra
-// 'https://partner.shopeemobile.com' quando o app for aprovado.
-const HOST = process.env.SHOPEE_API_HOST || 'https://partner.test-stable.shopeemobile.com'
+const PRODUCTION_HOST = 'https://partner.shopeemobile.com'
 const STATE_MAX_AGE_MS = 10 * 60 * 1000
+
+export function resolveShopeeApiHost(configuredHost = process.env.SHOPEE_API_HOST): string {
+  if (configuredHost !== PRODUCTION_HOST) {
+    throw new Error(`SHOPEE_API_HOST must be explicitly set to ${PRODUCTION_HOST}.`)
+  }
+  return configuredHost
+}
 
 function base64url(input: Buffer | string): string {
   return Buffer.from(input).toString('base64url')
@@ -75,7 +80,7 @@ export function getAuthorizationUrl(state: string): string {
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = sign(path, timestamp)
 
-  const url = new URL(`${HOST}${path}`)
+  const url = new URL(`${resolveShopeeApiHost()}${path}`)
   url.searchParams.set('partner_id', partnerId)
   url.searchParams.set('timestamp', String(timestamp))
   url.searchParams.set('sign', signature)
@@ -90,7 +95,7 @@ export async function exchangeCodeForToken(code: string, shopId: string): Promis
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = sign(path, timestamp)
 
-  const url = new URL(`${HOST}${path}`)
+  const url = new URL(`${resolveShopeeApiHost()}${path}`)
   url.searchParams.set('partner_id', partnerId)
   url.searchParams.set('timestamp', String(timestamp))
   url.searchParams.set('sign', signature)
@@ -115,7 +120,7 @@ export async function refreshAccessToken(refreshToken: string, shopId: string): 
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = sign(path, timestamp)
 
-  const url = new URL(`${HOST}${path}`)
+  const url = new URL(`${resolveShopeeApiHost()}${path}`)
   url.searchParams.set('partner_id', partnerId)
   url.searchParams.set('timestamp', String(timestamp))
   url.searchParams.set('sign', signature)
@@ -141,5 +146,3 @@ export function signShopRequest(path: string, accessToken: string, shopId: strin
   const timestamp = Math.floor(Date.now() / 1000)
   return { timestamp, sign: sign(path, timestamp, accessToken, shopId), partnerId }
 }
-
-export { HOST as SHOPEE_API_HOST }

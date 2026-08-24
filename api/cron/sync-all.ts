@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getSupabaseAdmin, getMissingEnvVars, CORE_ENV_VARS, MERCADOLIVRE_ENV_VARS, SHOPEE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { runMercadoLivreSync } from '../../src/server/integrations/mercadolivre/sync.js'
 import { runShopeeSync } from '../../src/server/integrations/shopee/sync.js'
+import { nextIntegrationFailureState } from '../../src/server/integrations/syncSchedule.js'
 import type { Provider } from '../../src/server/integrations/types.js'
 
 // Sync recorrente automático — antes só existia o botão manual em cada
@@ -23,9 +24,11 @@ interface SyncResult {
 }
 
 interface CronConnection {
+  id: string
   company_id: string
   provider: Provider
   last_sync_at: string | null
+  failure_count: number
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -64,12 +67,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const supabase = await getSupabaseAdmin()
+    const nowIso = new Date().toISOString()
     const { data: connections, error, count } = await supabase
       .from('marketplace_connections')
-      .select('company_id, provider, last_sync_at', { count: 'exact' })
-      .eq('status', 'connected')
+      .select('id, company_id, provider, last_sync_at, failure_count', { count: 'exact' })
+      .in('status', ['connected', 'requires_attention', 'error'])
       .in('provider', availableProviders)
-      .order('last_sync_at', { ascending: true, nullsFirst: true })
+      .or(`next_sync_at.is.null,next_sync_at.lte.${nowIso}`)
+      .or(`circuit_open_until.is.null,circuit_open_until.lte.${nowIso}`)
+      .order('next_sync_at', { ascending: true, nullsFirst: true })
       .order('company_id', { ascending: true })
       .order('provider', { ascending: true })
       // Uma conexão por tick é deliberado: cada sync individual pode consumir
@@ -92,13 +98,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 1 empresa falhando (token expirado, sync já em andamento, API fora
         // do ar) não pode abortar as demais — mesmo isolamento por item que
         // os syncs individuais já usam internamente.
-        results.push({ companyId: conn.company_id, provider, ok: false, message: err instanceof Error ? err.message : 'Erro desconhecido' })
+        const failure = nextIntegrationFailureState(conn.failure_count)
+        const { error: deferError } = await supabase.from('marketplace_connections').update({
+          failure_count: failure.failureCount,
+          next_sync_at: failure.nextSyncAt,
+          circuit_open_until: failure.circuitOpenUntil,
+        }).eq('id', conn.id).eq('company_id', conn.company_id).eq('provider', provider)
+        const message = err instanceof Error ? err.message : 'Erro desconhecido'
+        results.push({
+          companyId: conn.company_id,
+          provider,
+          ok: false,
+          message: deferError ? `${message}; falha ao adiar conexão: ${deferError.message}` : message,
+        })
       }
     }
 
     const remainingCount = Math.max(0, (count ?? orderedConnections.length) - results.length)
     res.status(200).json({
-      ok: true,
+      ok: results.every((result) => result.ok),
       partial: remainingCount > 0,
       syncedCount: results.length,
       remainingCount,

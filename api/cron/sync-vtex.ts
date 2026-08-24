@@ -42,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // voltar a ficar "due", mesmo o cron rodando a cada poucos minutos.
     const { data: activeRuns, error: activeRunsError } = await supabase.from('integration_sync_runs')
       .select('company_id').eq('provider', 'vtex').in('status', ['queued', 'running'])
+      .order('created_at', { ascending: true }).limit(1)
     if (activeRunsError) throw new Error(activeRunsError.message)
     const activeRunCompanyIds = [...new Set((activeRuns ?? []).map((row) => String(row.company_id)))]
 
@@ -50,7 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       eligibleConnections(supabase, { count: 'exact', head: true }).gt('next_sync_at', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).gt('circuit_open_until', nowIso),
       eligibleConnections(supabase, { count: 'exact', head: true }).or(due).or(circuitClosed).gte('sync_started_at', staleBefore),
-      eligibleConnections(supabase).or(due).or(circuitClosed).or(lockAvailable).order('next_sync_at', { ascending: true, nullsFirst: true }),
+      eligibleConnections(supabase).or(due).or(circuitClosed).or(lockAvailable)
+        .order('next_sync_at', { ascending: true, nullsFirst: true }).order('company_id', { ascending: true }).limit(1),
       activeRunCompanyIds.length > 0
         ? eligibleConnections(supabase).in('company_id', activeRunCompanyIds).or(circuitClosed).or(lockAvailable)
         : Promise.resolve({ data: [], error: null }),
@@ -59,10 +61,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (result.error) throw new Error(result.error.message)
     }
 
-    // União due + resumable, sem processar a mesma conexão duas vezes.
-    const connectionsToProcess = new Map<string, { company_id: string }>()
-    for (const connection of dueConnections.data ?? []) connectionsToProcess.set(String(connection.company_id), connection)
-    for (const connection of resumableConnections.data ?? []) connectionsToProcess.set(String(connection.company_id), connection)
+    // Uma conexão por tick: uma run já iniciada vence a fila; sem run ativa,
+    // entra a conexão mais vencida. Cada processamento pode consumir 210s do
+    // teto de 300s, então iniciar uma segunda conexão criaria starvation e
+    // workers abandonados entre tenants.
+    const nextConnection = resumableConnections.data?.[0] ?? dueConnections.data?.[0] ?? null
 
     const summary = {
       connectionsChecked: checked.count ?? 0,
@@ -81,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       syncsYielded: 0,
     }
 
-    for (const connection of connectionsToProcess.values()) {
+    for (const connection of nextConnection ? [nextConnection] : []) {
       try {
         const queued = await queueVtexSync(connection.company_id, 'incremental', 'auto')
         summary.syncsStarted += 1

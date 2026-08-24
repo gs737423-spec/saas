@@ -25,7 +25,7 @@ function buildRealKpis(s: DashboardSummary): OverviewKpi[] {
     { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct, context: '', tag, tone: 'cyan', hero: true },
     { key: 'orders', label: 'Pedidos', value: s.ordersCount.toLocaleString('pt-BR'), raw: s.ordersCount, scalesWithPeriod: true, change: s.ordersCountChangePct, context: 'Volume consolidado', tag, tone: 'blue' },
     { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket), raw: s.averageTicket, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tag, tone: 'violet' },
-    { key: 'returns', label: 'Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: `${s.returnsCount.toLocaleString('pt-BR')} pedidos`, tag, tone: 'neutral' },
+    { key: 'returns', label: 'Estornos e Devoluções', value: brl(s.returnsAmount), raw: s.returnsAmount, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.refundDataStatus === 'known' ? `${s.returnsCount.toLocaleString('pt-BR')} pedidos` : 'A integração não informou reembolsos', tag, tone: 'neutral', unavailable: s.refundDataStatus !== 'known' },
   ]
 }
 
@@ -37,7 +37,7 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`).then((data) => {
+    apiFetchJson<DashboardSummary>(`/api/dashboard/summary?${period.query}`).then((data) => {
       if (!cancelled) {
         setSummary(data)
         setLoading(false)
@@ -46,7 +46,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
-  }, [period.days])
+  }, [period.query])
 
   if (loading) {
     return (

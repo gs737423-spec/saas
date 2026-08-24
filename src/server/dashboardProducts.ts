@@ -44,3 +44,15 @@ export interface DashboardProductsResponse {
   items: DashboardProduct[]
   message?: string
 }
+
+export function selectDashboardProductMatches(
+  items: DashboardProduct[],
+  legacyIdentifier: string | undefined,
+  exact?: { connectionId: string | null; externalProductId: string | null },
+): DashboardProduct[] {
+  if (exact?.connectionId && exact.externalProductId) {
+    return items.filter((product) => product.connectionId === exact.connectionId && product.id === exact.externalProductId)
+  }
+  if (!legacyIdentifier) return []
+  return items.filter((product) => (product.sku && product.sku === legacyIdentifier) || product.id === legacyIdentifier)
+}

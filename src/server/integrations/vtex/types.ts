@@ -39,6 +39,8 @@ export interface VtexSkuContext {
   IsActive?: boolean
   ProductCategories?: Record<string, string>
   DetailUrl?: string | null
+  BrandId?: number | null
+  BrandName?: string | null
 }
 
 export interface VtexPrice {
@@ -152,7 +154,7 @@ export interface VtexNormalizedOrder {
   affiliateId: string | null
   status: string
   totalAmount: number
-  feeAmount: number
+  feeAmount: number | null
   currency: string | null
   orderedAt: string
   sourceUpdatedAt: string | null
@@ -227,6 +229,10 @@ export interface VtexSyncCheckpoint {
    *  invocação que estourou o orçamento de tempo no meio da paginação
    *  continuar exatamente de onde parou, nunca do zero. */
   catalogPaginationFrom?: number
+  /** IDs acumulados durante a paginação resumível. Separado de
+   * `catalogSkuIds`, pois este último sinaliza que a descoberta terminou e
+   * já pode entrar no processamento do catálogo. */
+  catalogPaginationSkuIds?: number[]
   /** Lista completa de SKU ids descoberta por um dos fallbacks (sales
    *  channel ou paginação) — persistida pra os lotes seguintes de `catalog`
    *  reusarem em vez de rechamar `getSkuIds()` global a cada tick. Sem isso,

@@ -71,9 +71,11 @@ function HeroCard({ kpi }: { kpi: ResolvedKpi }) {
       <div>
         <div className="mt-2.5 flex items-center gap-2">
           <div className="num-glow font-mono text-[28px] font-bold leading-none text-text-primary" style={{ letterSpacing: '-0.035em' }}>
-            {kpi.prefix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.prefix} </span>}
-            <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
-            {kpi.suffix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.suffix}</span>}
+            {kpi.unavailable ? <span className="text-[18px] text-text-secondary">Indisponível</span> : <>
+              {kpi.prefix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.prefix} </span>}
+              <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
+              {kpi.suffix && <span className="text-[13px] font-semibold text-text-secondary" style={{ letterSpacing: '-0.01em' }}>{kpi.suffix}</span>}
+            </>}
           </div>
           {kpi.tag && (
             <span className="rounded border border-border-default/70 bg-bg-primary/50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-text-muted">
@@ -101,9 +103,11 @@ function StatCard({ kpi }: { kpi: ResolvedKpi }) {
       </div>
       <div className="flex h-5 items-baseline gap-1.5">
         <div className="font-mono text-[22px] font-bold leading-[1.1] text-text-primary" style={{ letterSpacing: '-0.035em' }}>
-          {kpi.prefix && <span className="text-xs font-semibold text-text-secondary">{kpi.prefix} </span>}
-          <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
-          {kpi.suffix && <span className="text-xs font-semibold text-text-secondary">{kpi.suffix}</span>}
+          {kpi.unavailable ? <span className="text-[15px] text-text-secondary">Indisponível</span> : <>
+            {kpi.prefix && <span className="text-xs font-semibold text-text-secondary">{kpi.prefix} </span>}
+            <AnimatedNumber value={kpi.resolvedRaw} format={(v) => formatKpiValue(kpi, v)} />
+            {kpi.suffix && <span className="text-xs font-semibold text-text-secondary">{kpi.suffix}</span>}
+          </>}
         </div>
         {kpi.tag && (
           <span className="rounded border border-border-default/60 bg-bg-primary/50 px-1 py-0.5 text-[8px] font-medium uppercase tracking-wide text-text-muted">

@@ -29,6 +29,26 @@ export interface ShopeeItem {
   item_status: string
   item_sku?: string
   category_id?: number
+  price_info?: Array<{
+    current_price?: number | null
+    original_price?: number | null
+  }>
+  stock_info_v2?: {
+    summary_info?: {
+      total_available_stock?: number | null
+      total_reserved_stock?: number | null
+    }
+  }
+  stock_info?: Array<{
+    current_stock?: number | null
+    normal_stock?: number | null
+  }>
+  sold?: number | null
+  brand?: {
+    brand_id?: number | null
+    original_brand_name?: string | null
+    display_brand_name?: string | null
+  }
 }
 
 export interface ShopeeItemListResponse {

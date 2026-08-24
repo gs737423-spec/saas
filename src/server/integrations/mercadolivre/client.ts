@@ -7,7 +7,8 @@ const BASE_URL = 'https://api.mercadolibre.com'
  *  pra cobrir a esmagadora maioria dos catálogos reais sem estourar o rate
  *  limit de 1500 req/min por vendedor (a paginação já tem backoff em 429). */
 export const MAX_ITEMS_FIRST_SYNC = 2000
-const ITEMS_PAGE_SIZE = 50
+const MAX_ITEM_IDS_SCAN = 50000
+const ITEMS_PAGE_SIZE = 100
 // Teto de segurança bem mais alto que o de itens — pedido é o dado que o
 // cliente mais precisa completo (histórico de faturamento/produto campeão
 // depende disso), e o filtro por data abaixo já limita o volume real na
@@ -17,7 +18,6 @@ const ORDERS_PAGE_SIZE = 50
 // Garante pelo menos 1 ano de histórico mesmo se o vendedor tiver volume
 // alto — sem isso, "só os N pedidos mais recentes" podia cortar antes de
 // chegar em meses anteriores num catálogo com muito movimento.
-const ORDERS_HISTORY_DAYS = 365
 const MAX_429_RETRIES = 3
 const MAX_TRANSIENT_RETRIES = 2
 // Sem isso uma chamada travada (rede degradada, ML sem responder) prendia a
@@ -83,25 +83,34 @@ async function mlFetch<T>(path: string, accessToken: string, attempt = 0, transi
 }
 
 /**
- * Paginates GET /users/{user_id}/items/search up to MAX_ITEMS_FIRST_SYNC.
- * TODO: validate paging.total behavior against a real large catalog — the
- * official docs example only covers small result sets.
+ * Uses the provider's scan cursor because offset pagination is not supported
+ * past 1,000 seller items. The cursor expires quickly, so the whole ID scan is
+ * intentionally completed inside one invocation.
  */
-export async function searchUserItemIds(userId: string, accessToken: string): Promise<string[]> {
-  const ids: string[] = []
-  let offset = 0
+export interface SearchItemIdsResult {
+  ids: string[]
+  complete: boolean
+}
 
-  while (ids.length < MAX_ITEMS_FIRST_SYNC) {
-    const page = await mlFetch<MLItemSearchResponse>(
-      `/users/${userId}/items/search?offset=${offset}&limit=${ITEMS_PAGE_SIZE}`,
+export async function searchUserItemIds(userId: string, accessToken: string): Promise<SearchItemIdsResult> {
+  const ids: string[] = []
+  let scrollId: string | null = null
+
+  while (ids.length < MAX_ITEM_IDS_SCAN) {
+    const scrollQuery: string = scrollId ? `&scroll_id=${encodeURIComponent(scrollId)}` : ''
+    const page: MLItemSearchResponse = await mlFetch<MLItemSearchResponse>(
+      `/users/${userId}/items/search?search_type=scan&limit=${ITEMS_PAGE_SIZE}${scrollQuery}`,
       accessToken
     )
     ids.push(...page.results)
-    offset += page.results.length
-    if (page.results.length === 0 || offset >= page.paging.total) break
+    scrollId = page.scroll_id ?? null
+    if (page.results.length === 0 || !scrollId) break
   }
 
-  return ids.slice(0, MAX_ITEMS_FIRST_SYNC)
+  return {
+    ids: ids.slice(0, MAX_ITEM_IDS_SCAN),
+    complete: ids.length < MAX_ITEM_IDS_SCAN || !scrollId,
+  }
 }
 
 export async function getItemDetail(itemId: string, accessToken: string): Promise<MLItemDetail> {
@@ -130,11 +139,9 @@ export interface SearchOrdersResult {
  * the search response already contains the full order (items, amounts,
  * buyer, status) — no per-order detail call needed.
  */
-export async function searchOrders(sellerId: string, accessToken: string): Promise<SearchOrdersResult> {
+export async function searchOrders(sellerId: string, accessToken: string, dateFrom: string, dateTo: string): Promise<SearchOrdersResult> {
   const orders: MLOrder[] = []
   let offset = 0
-  const dateFrom = new Date(Date.now() - ORDERS_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString()
-  const dateTo = new Date().toISOString()
   let total = 0
 
   while (orders.length < MAX_ORDERS_FIRST_SYNC) {

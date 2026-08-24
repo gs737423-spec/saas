@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = await getSupabaseAdmin()
     const { data: connection, error } = await supabase
       .from('marketplace_connections')
-      .select('id, status, external_account_id, last_sync_at, last_success_at, next_sync_at, last_error, token_expires_at, permissions, provider_metadata')
+      .select('id, status, external_account_id, last_sync_at, last_success_at, next_sync_at, last_error, token_expires_at, permissions, provider_metadata, catalog_last_sync_at, inventory_last_sync_at, orders_last_sync_at, catalog_checkpoint, orders_checkpoint')
       .eq('provider', provider)
       .eq('company_id', auth.companyId)
       .maybeSingle()
@@ -95,8 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isExpired = connection.status === 'connected' && connection.token_expires_at && new Date(connection.token_expires_at) < new Date()
 
     const [{ count: productsCount }, { count: inventoryCount }, { count: ordersCount }, { data: activeSync }] = await Promise.all([
-      supabase.from('marketplace_products').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
-      supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
+      supabase.from('marketplace_products').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId).eq('active', true),
+      supabase.from('marketplace_inventory').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId).eq('active', true),
       supabase.from('orders').select('id', { count: 'exact', head: true }).eq('connection_id', connection.id).eq('company_id', auth.companyId),
       provider === 'vtex'
         ? supabase.from('integration_sync_runs').select('id, status, stage, checkpoint, counts, errors, mode, last_heartbeat_at, started_at').eq('connection_id', connection.id).eq('company_id', auth.companyId).in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(1).maybeSingle()
@@ -113,6 +113,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       provider,
       status: finalStatus,
       lastSyncAt: connection.last_sync_at,
+      catalogLastSyncAt: connection.catalog_last_sync_at,
+      inventoryLastSyncAt: connection.inventory_last_sync_at,
+      ordersLastSyncAt: connection.orders_last_sync_at,
+      catalogComplete: connection.catalog_checkpoint?.reconciled === true,
+      ordersHistoryComplete: connection.orders_checkpoint?.complete === true,
       externalAccountId: connection.external_account_id,
       productsCount: productsCount ?? 0,
       inventoryCount: inventoryCount ?? 0,

@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import type { FinanceOverview } from '@/data/financeShapes'
+import { hasKnownNetValue, type FinanceOverview } from '@/data/financeShapes'
 
 /* Composição do valor líquido — substitui o waterfall anterior (base
  * transparente + delta em BarChart do Recharts, depois uma variante
@@ -30,7 +30,9 @@ function buildSegments(overview: FinanceOverview): BarSegment[] {
 }
 
 export default function FinancialComposition({ overview }: { overview: FinanceOverview }) {
-  if (import.meta.env.DEV) {
+  const netAvailable = hasKnownNetValue(overview)
+
+  if (import.meta.env.DEV && netAvailable) {
     const expected = overview.grossRevenue - overview.fees - overview.refunds
     if (Math.round(expected) !== Math.round(overview.netValue)) {
       // eslint-disable-next-line no-console
@@ -54,6 +56,17 @@ export default function FinancialComposition({ overview }: { overview: FinanceOv
       {overview.grossRevenue <= 0 ? (
         <div className="flex h-24 items-center justify-center text-sm text-text-muted">
           Sem faturamento no período selecionado.
+        </div>
+      ) : !netAvailable ? (
+        <div className="rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-4 py-4">
+          <p className="text-sm font-medium text-text-primary">Composição indisponível</p>
+          <p className="mt-1 text-xs leading-relaxed text-text-muted">
+            {overview.refundDataStatus !== 'known'
+              ? 'A integração ainda não fornece eventos confirmados de reembolso. Cancelamentos não são tratados como estornos, e o valor líquido permanece indisponível.'
+              : overview.feeDataStatus === 'partial'
+                ? 'A integração informou taxas apenas para parte dos pedidos. O valor líquido não é exibido para evitar uma estimativa incompleta.'
+                : 'A integração não informou as taxas dos pedidos. O valor líquido não é exibido como se as taxas fossem zero.'}
+          </p>
         </div>
       ) : (
         <>

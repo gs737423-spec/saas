@@ -3,6 +3,7 @@ import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { Provider } from '../../src/server/integrations/types.js'
 import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
+import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
 
 export interface DailyRevenuePoint {
   date: string
@@ -27,10 +28,11 @@ function dateKey(iso: string): string {
   return iso.slice(0, 10)
 }
 
-function emptyDays(totalDays: number): DailyRevenuePoint[] {
+function emptyDays(totalDays: number, endExclusive = new Date()): DailyRevenuePoint[] {
   const out: DailyRevenuePoint[] = []
+  const lastIncludedInstant = endExclusive.getTime() - 1
   for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const d = new Date(lastIncludedInstant - i * 24 * 60 * 60 * 1000)
     out.push({
       date: d.toISOString().slice(0, 10),
       label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
@@ -60,12 +62,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await requireCompany(req, res)
     if (!auth) return
 
-    const periodDays = Math.min(180, Math.max(1, Number(req.query.days) || 30))
+    const range = resolveAnalyticsDateRange(req.query, 180)
+    const periodDays = range.days
     // +30 sempre, não só *2 — "Mês passado" desloca 30 dias pra trás, e um
     // período curto (ex. 13 dias) buscando só o dobro (26) fica sem janela
     // suficiente pra achar o par de comparação (linha tracejada some).
     const totalDays = periodDays + Math.max(periodDays, 30)
-    const since = new Date(Date.now() - totalDays * 24 * 60 * 60 * 1000).toISOString()
+    const until = range.to.toISOString()
+    const since = new Date(range.from.getTime() - Math.max(periodDays, 30) * 24 * 60 * 60 * 1000).toISOString()
 
     const supabase = await getSupabaseAdmin()
 
@@ -77,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (connError) throw new Error(connError.message)
 
     if (!connections || connections.length === 0) {
-      res.status(200).json({ ok: true, source: 'demo', days: emptyDays(totalDays), channels: [] } satisfies DailyApiResponse)
+      res.status(200).json({ ok: true, source: 'demo', days: emptyDays(totalDays, range.to), channels: [] } satisfies DailyApiResponse)
       return
     }
 
@@ -100,12 +104,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('status', 'paid')
         .eq('analytics_included', true)
         .gte('ordered_at', since)
+        .lt('ordered_at', until)
         .range(from, to)
     )
     if (ordersError) throw new Error(ordersError.message)
 
     const byDay = new Map<string, DailyRevenuePoint>()
-    const template = emptyDays(totalDays)
+    const template = emptyDays(totalDays, range.to)
     for (const t of template) byDay.set(t.date, t)
 
     const displayNameByEffectiveKey = new Map<string, string>()

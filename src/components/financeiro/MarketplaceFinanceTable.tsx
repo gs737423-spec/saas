@@ -1,17 +1,20 @@
-import type { MarketplaceFinance } from '@/data/financeShapes'
+import { hasKnownNetValue, type MarketplaceFinance } from '@/data/financeShapes'
 import { getMarketplaceColor } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
 
 export default function MarketplaceFinanceTable({ items }: { items: MarketplaceFinance[] }) {
-  const sorted = [...items].sort((a, b) => b.netValue - a.netValue)
+  const sorted = [...items].sort((a, b) => b.grossRevenue - a.grossRevenue)
+
+  const netLabel = (row: MarketplaceFinance) => hasKnownNetValue(row) ? `R$ ${brl(row.netValue)}` : 'Indisponível'
+  const refundLabel = (row: MarketplaceFinance) => row.refundDataStatus === 'known' ? `R$ ${brl(row.refunds)}` : 'Indisponível'
 
   return (
     <div className="glass-panel motion-panel enterprise-section rounded-2xl">
       <div className="mb-2.5">
         <h3 className="text-base font-semibold tracking-tight text-text-primary">Comparativo por Marketplace</h3>
-        <p className="mt-0.5 text-xs text-text-muted">{sorted.length} {sorted.length === 1 ? 'canal' : 'canais'} · faturamento, estornos e valor líquido estimado</p>
+        <p className="mt-0.5 text-xs text-text-muted">{sorted.length} {sorted.length === 1 ? 'canal' : 'canais'} · deduções incompletas permanecem indisponíveis</p>
       </div>
 
       {/* Mobile: stacked cards */}
@@ -31,11 +34,11 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Estornos</p>
-                  <p className="mt-0.5 font-mono text-[13px] text-text-secondary">R$ {brl(m.refunds)}</p>
+                  <p className="mt-0.5 font-mono text-[13px] text-text-secondary">{refundLabel(m)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Líquido estimado</p>
-                  <p className="mt-0.5 font-mono text-[13px] font-semibold text-accent-emerald">R$ {brl(m.netValue)}</p>
+                  <p className={`mt-0.5 font-mono text-[13px] font-semibold ${hasKnownNetValue(m) ? 'text-accent-emerald' : 'text-text-muted'}`}>{netLabel(m)}</p>
                 </div>
               </div>
             </div>
@@ -67,8 +70,8 @@ export default function MarketplaceFinanceTable({ items }: { items: MarketplaceF
                       </span>
                     </td>
                     <td className="py-2 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.grossRevenue)}</td>
-                    <td className="py-2 pr-4 text-center font-mono text-text-secondary">R$ {brl(m.refunds)}</td>
-                    <td className="py-2 text-center font-mono font-semibold text-accent-emerald">R$ {brl(m.netValue)}</td>
+                    <td className="py-2 pr-4 text-center font-mono text-text-secondary">{refundLabel(m)}</td>
+                    <td className={`py-2 text-center font-mono font-semibold ${hasKnownNetValue(m) ? 'text-accent-emerald' : 'text-text-muted'}`}>{netLabel(m)}</td>
                   </tr>
                 )
               })}

@@ -190,9 +190,11 @@ describe('Teste H — sync.ts usa catalogStatus (não stage) para decidir reentr
     // A reentrada nunca deve resetar campos de pedido — greps garantindo que
     // o bloco do gate não contém nenhuma atribuição a orderWindowStart/End,
     // orderTargetEnd, orderHistoryStart ou reset de orderPage para 1.
-    const gateBlockMatch = source.match(/GATE DE REVALIDAÇÃO DE CATÁLOGO[\s\S]*?\n\s*\}\n\n\s*if \(run\.stage === 'validate'\)/)
-    expect(gateBlockMatch).not.toBeNull()
-    const gateBlock = gateBlockMatch![0]
+    const gateStart = source.indexOf('GATE DE REVALIDAÇÃO DE CATÁLOGO')
+    const gateEnd = source.indexOf('// Descoberta de canais', gateStart)
+    expect(gateStart).toBeGreaterThanOrEqual(0)
+    expect(gateEnd).toBeGreaterThan(gateStart)
+    const gateBlock = source.slice(gateStart, gateEnd)
     expect(gateBlock).not.toMatch(/orderWindowStart\s*=/)
     expect(gateBlock).not.toMatch(/orderWindowEnd\s*=/)
     expect(gateBlock).not.toMatch(/orderTargetEnd\s*=/)

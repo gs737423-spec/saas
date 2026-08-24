@@ -24,7 +24,8 @@ describe('analytics reais e freshness rastreável', () => {
       readFile(new URL('../src/pages/Financeiro.tsx', import.meta.url), 'utf8'),
     ])
 
-    expect(endpoint).toContain(".select('id, provider, status, last_sync_at')")
+    expect(endpoint).toContain(".select('id, provider, status, last_sync_at, orders_last_sync_at')")
+    expect(endpoint).toContain('connection.orders_last_sync_at ?? connection.last_sync_at')
     expect(endpoint).toContain('lastSyncAt')
     expect(page).toContain('response.lastSyncAt')
     expect(page).toContain('dados demonstrativos')

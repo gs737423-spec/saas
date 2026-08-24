@@ -99,6 +99,13 @@ export default function VtexConnectionCard() {
             </div>
             <div className="mt-3 flex gap-4 text-[11px]"><Metric label="Produtos" value={vtex?.productsCount} /><Metric label="Estoque" value={vtex?.inventoryCount} /><Metric label="Pedidos" value={vtex?.ordersCount} /></div>
 
+            {vtex?.permissions?.pricing === false && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-accent-amber/25 bg-accent-amber/10 px-3 py-2.5 text-[11px] text-text-secondary">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-amber" />
+                <p><span className="font-medium text-text-primary">Permissão de preços ausente.</span> Produtos podem chegar sem preço até a chave VTEX receber acesso de leitura ao Pricing.</p>
+              </div>
+            )}
+
             {vtex?.activeSync && <VtexSyncProgressPanel activeSync={vtex.activeSync} onResume={() => syncVtex('incremental')} />}
 
             {justCompleted && !vtex?.activeSync && (

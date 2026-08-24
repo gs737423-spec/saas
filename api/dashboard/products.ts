@@ -4,6 +4,7 @@ import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { DashboardProduct, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
 import type { Marketplace } from '../../src/data/mockData.js'
 import type { Provider } from '../../src/server/integrations/types.js'
+import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
 
 type ProductsApiResponse = DashboardProductsResponse
 
@@ -52,20 +53,13 @@ function aggregateByProduct(rows: OrderItemAgg[]): Map<string, { revenue: number
 // marketplace_inventory (estoque) + order_items de pedidos pagos
 // (receita/unidades no período, e no período anterior pra tendência real
 // por comparação). Nunca fabrica margem/tendência quando falta base.
-// LIMITAÇÃO CONHECIDA: filtra só por company_id + external_product_id, sem
-// connection_id — se a empresa tiver 2 marketplaces conectados e, por
-// coincidência, um produto Shopee e um produto Mercado Livre tiverem
-// exatamente o mesmo external_product_id, o update de custo atualizaria os
-// dois. Risco baixo na prática (formatos de id divergem entre os
-// marketplaces hoje), mas documentado — resolver plumbing o connectionId
-// até aqui se algum dia isso colidir de verdade.
 async function handlePatchCost(req: VercelRequest, res: VercelResponse) {
   const auth = await requireCompany(req, res)
   if (!auth) return
 
-  const { externalProductId, costPrice } = (req.body ?? {}) as { externalProductId?: string; costPrice?: number | null }
-  if (!externalProductId) {
-    res.status(400).json({ ok: false, message: 'externalProductId é obrigatório.' })
+  const { connectionId, externalProductId, costPrice } = (req.body ?? {}) as { connectionId?: string; externalProductId?: string; costPrice?: number | null }
+  if (!connectionId || !externalProductId) {
+    res.status(400).json({ ok: false, message: 'connectionId e externalProductId são obrigatórios.' })
     return
   }
   if (costPrice !== null && (typeof costPrice !== 'number' || !Number.isFinite(costPrice) || costPrice < 0)) {
@@ -78,6 +72,7 @@ async function handlePatchCost(req: VercelRequest, res: VercelResponse) {
     .from('marketplace_products')
     .update({ cost_price: costPrice })
     .eq('company_id', auth.companyId)
+    .eq('connection_id', connectionId)
     .eq('external_product_id', externalProductId)
 
   if (error) {
@@ -103,10 +98,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await requireCompany(req, res)
     if (!auth) return
 
-    const days = Math.min(365, Math.max(1, Number(req.query.days) || 30))
-    const now = Date.now()
-    const since = new Date(now - days * 24 * 60 * 60 * 1000).toISOString()
-    const prevSince = new Date(now - 2 * days * 24 * 60 * 60 * 1000).toISOString()
+    const range = resolveAnalyticsDateRange(req.query, 365)
+    const since = range.from.toISOString()
+    const until = range.to.toISOString()
+    const prevSince = new Date(range.from.getTime() - (range.to.getTime() - range.from.getTime())).toISOString()
 
     const supabase = await getSupabaseAdmin()
 
@@ -131,6 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('connection_id, external_product_id, sku, title, price, status, category_id, category_name, cost_price')
         .in('connection_id', connectionIds)
         .eq('company_id', auth.companyId)
+        .eq('active', true)
         .range(from, to)
     )
     if (productsError) throw new Error(productsError.message)
@@ -140,17 +136,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const { data: inventoryRows } = await fetchAllRows((from, to) =>
+    const { data: inventoryRows, error: inventoryError } = await fetchAllRows((from, to) =>
       supabase
         .from('marketplace_inventory')
         .select('connection_id, external_product_id, available_quantity')
         .in('connection_id', connectionIds)
         .eq('company_id', auth.companyId)
+        .eq('active', true)
         .range(from, to)
     )
+    if (inventoryError) throw new Error(inventoryError.message)
     const stockByExternalId = new Map((inventoryRows ?? []).map((r) => [productKey(r.connection_id, r.external_product_id), r.available_quantity]))
 
-    const { data: currentItems } = await fetchAllRows((from, to) =>
+    const { data: currentItems, error: currentItemsError } = await fetchAllRows((from, to) =>
       supabase
         .from('order_items')
         .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
@@ -158,11 +156,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('orders.status', 'paid')
         .eq('orders.analytics_included', true)
         .gte('orders.ordered_at', since)
+        .lt('orders.ordered_at', until)
         .range(from, to)
     )
+    if (currentItemsError) throw new Error(currentItemsError.message)
     const currentByProduct = aggregateByProduct((currentItems ?? []) as unknown as OrderItemAgg[])
 
-    const { data: previousItems } = await fetchAllRows((from, to) =>
+    const { data: previousItems, error: previousItemsError } = await fetchAllRows((from, to) =>
       supabase
         .from('order_items')
         .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
@@ -173,6 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .lt('orders.ordered_at', since)
         .range(from, to)
     )
+    if (previousItemsError) throw new Error(previousItemsError.message)
     const previousByProduct = aggregateByProduct((previousItems ?? []) as unknown as OrderItemAgg[])
 
     const totalRevenue = [...currentByProduct.values()].reduce((s, v) => s + v.revenue, 0)
@@ -205,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           price: productPrice,
           costPrice,
           margin,
-          stock: stockByExternalId.get(key) ?? 0,
+          stock: stockByExternalId.has(key) ? stockByExternalId.get(key) ?? null : null,
           revenue: agg.revenue,
           units: agg.units,
           trend,

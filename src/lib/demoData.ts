@@ -24,8 +24,10 @@ export function demoDashboardSummary(days = 30): DashboardSummary {
     ordersCount: Math.round(612 * scale),
     averageTicket: 306.26,
     feesTotal: Math.round(21384.12 * scale * 100) / 100,
+    feeDataStatus: 'known',
     returnsCount: Math.round(14 * scale),
     returnsAmount: Math.round(3120.4 * scale * 100) / 100,
+    refundDataStatus: 'known',
     lastSyncAt: new Date().toISOString(),
     grossRevenueChangePct: 12.4,
     ordersCountChangePct: 8.1,
@@ -87,7 +89,9 @@ function demoFinanceByMarketplace(totalGross: number): MarketplaceFinance[] {
       marketplace,
       grossRevenue,
       fees,
+      feeDataStatus: 'known',
       refunds,
+      refundDataStatus: 'known',
       netValue: Math.round((grossRevenue - fees - refunds) * 100) / 100,
       ordersCount,
       averageTicket: ordersCount > 0 ? Math.round((grossRevenue / ordersCount) * 100) / 100 : 0,
@@ -103,7 +107,9 @@ export function demoFinanceOverview(days = 30): { overview: FinanceOverview; byM
   const overview: FinanceOverview = {
     grossRevenue: summary.grossRevenue,
     fees: summary.feesTotal,
+    feeDataStatus: 'known',
     refunds: summary.returnsAmount,
+    refundDataStatus: 'known',
     netValue: Math.round((summary.grossRevenue - summary.feesTotal - summary.returnsAmount) * 100) / 100,
     source: 'demo',
   }
@@ -184,6 +190,6 @@ export function demoFinanceTransactions(): FinanceTransaction[] {
     const gross = Math.round((80 + (i * 37) % 420) * 100) / 100
     const discount = type === 'Tarifa' ? Math.round(gross * 0.11 * 100) / 100 : 0
     const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)
-    return { date, marketplace, type, identifier: `DEMO-${1000 + i}`, gross, discount, net: Math.round((gross - discount) * 100) / 100 }
+    return { date, marketplace, type, identifier: `DEMO-${1000 + i}`, gross, discount, net: Math.round((gross - discount) * 100) / 100, feeDataStatus: 'known' }
   })
 }

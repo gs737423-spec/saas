@@ -1,5 +1,16 @@
 # SESSION-HANDOFF — Vintec home institucional
 
+## Retomada atual — integrações, lote 8 e rollout (2026-08-24)
+
+- Migrations `027`, `028` e `029` aplicadas e confirmadas no Supabase `dnaykdoehbwmbsufcrxk`; histórico local/remoto alinhado de `001` a `029` e `db lint --linked` sem erro.
+- Persistência canônica de pedidos e reconciliação VTEX agora usam RPCs transacionais e tenant-scoped da migration `029`.
+- Checkpoints VTEX preservam descoberta completa, falhas e cauda ainda não processada mesmo quando um catálogo de até 40 SKUs estoura o deadline durante o primeiro lote.
+- Cron VTEX processa uma conexão por tick e prioriza run retomável; cron geral grava backoff em falhas precoces para não causar starvation.
+- Mercado Livre não sobrescreve preço/estoque válidos quando a origem omite campos. Shopee falha fechada sem host oficial e não classifica retorno como cancelamento financeiro.
+- Gates locais finais: TypeScript passou; 316/316 testes passaram; scan de service role passou; build passou; `git diff --check` passou. Não há script de lint.
+- Bloqueios externos conhecidos: nenhuma variável `SHOPEE_*` configurada no Vercel Pro; Amazon/Magalu/Loja Própria ainda não possuem conector nativo no repositório; VTEX Pricing depende de permissão da chave da conta.
+- Status desta entrada: migrations aplicadas; commit/push/deploy e smoke de produção ainda em execução.
+
 ## Estado atual
 - Branch de trabalho: `wip/vintec-institutional-redesign-v2` (criada de `main` = `b1f14aa`).
 - `main` local e `origin/main` = `b1f14aa` (recuperada por fast-forward).
@@ -178,3 +189,79 @@ em stagger (delays CSS). Nenhuma lib de animação.
 - Micro-refino possível após revisão: whitespace inferior do card no mobile (altura
   fixa aberta); tamanho/curvas da assinatura V; timing fino do stagger.
 - Login válido ponta a ponta ainda depende de ambiente Supabase com credencial real.
+
+---
+
+## Sessão — Correção de integrações, lote 3 (2026-08-24)
+
+- Implementados checkpoints persistentes para catálogo e histórico de pedidos em Mercado Livre/Shopee.
+- Reconciliação de catálogo agora é tenant-scoped, não destrutiva e condicionada a ciclo completo sem erros acumulados.
+- Freshness foi separada por catálogo, estoque e pedidos; leituras operacionais ignoram registros inativos.
+- A migration `026_integration_continuity_and_product_identity.sql` foi aplicada e verificada no `vintec-production` em 2026-08-24.
+- Nenhum commit, push, deploy ou alteração de dados reais foi realizado.
+- A conexão VTEX remota permanece em `error`, sem sync concluído, por `VTEX_ORDER_WINDOW_DENSE_TIMESTAMP_UNSUPPORTED`.
+- Próximo passo: corrigir a continuidade da OMS VTEX em microjanelas densas, depois fazer deploy controlado e smoke real.
+
+---
+
+## Sessão — Correção de integrações, lote 4 (2026-08-24)
+
+- Corrigido localmente o bloqueio `VTEX_ORDER_WINDOW_DENSE_TIMESTAMP_UNSUPPORTED`: a divisão temporal continua sendo a primeira estratégia; no menor bucket, a OMS pode percorrer até 20 páginas na mesma invocação, sem persistir offset mutável entre crons.
+- Em timeout, a microjanela reinicia e os upserts canônicos idempotentes impedem duplicação. Bucket acima do teto falha explicitamente com `VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT`, sem truncar pedidos.
+- Criado contrato de cobertura de taxas `known/partial/unknown`; APIs financeiras somam somente valores informados e a UI não apresenta taxa ou líquido incompletos como zero/exatos.
+- A tela VTEX agora alerta quando `permissions.pricing === false`; conceder a permissão continua sendo ação externa na conta VTEX.
+- Validação local: TypeScript passou; 284/284 testes passaram; scan da service role passou; build passou com o aviso já conhecido do chunk principal (~709 kB). Não existe script de lint.
+- Deploy realizado no projeto correto `ia-center/saas`: `dpl_9ayTQ5GRUmCnjnCw7cVQvoo1qeke`, promovido para `https://www.mktonline.com.br` em 2026-08-24.
+- Smoke pós-deploy: login carregou a marca MKTOnline; API de dashboard exige sessão; crons VTEX e geral exigem `CRON_SECRET`; nenhum erro encontrado nos logs iniciais.
+- Nenhum commit ou push foi realizado.
+- Próxima ação: observar o próximo ciclo do cron e confirmar no Supabase se a VTEX saiu do erro denso; depois corrigir a permissão Pricing e reprocessar catálogo.
+
+---
+
+## Sessão — Correção de integrações, lote 5 financeiro P0 (2026-08-24)
+
+- Cancelamento deixou de ser tratado como prova de reembolso nas APIs `summary` e `finance`; valores e contagens de devolução reais permanecem indisponíveis até existir ingestão explícita de eventos financeiros.
+- Contratos financeiros agora expõem `refundDataStatus`. KPIs, composição, tabela por marketplace e rankings só apresentam líquido quando taxas e reembolsos têm cobertura completa.
+- Lançamentos de estorno fabricados a partir de pedidos cancelados foram removidos do extrato real.
+- Mercado Livre grava `sale_fee` como cobertura `partial`; dados históricos previamente marcados como `known` dependem de ressincronização ou backfill autorizado.
+- Regressões adicionadas para impedir retorno do erro. Validação: typecheck passou; 287/287 testes passaram; build passou com aviso conhecido do chunk principal (~710 kB). Não há script de lint.
+- Nenhuma migration, escrita em dados reais, commit, push ou deploy foi realizada neste lote.
+- Monitoramento Supabase não foi repetido ao final porque a aba autenticada anterior já não estava disponível no navegador integrado.
+- Próximo passo: auditar/integrar eventos reais de refunds por provedor e definir backfill seguro para o `fee_status` histórico do Mercado Livre.
+
+---
+
+## Sessão — Correção de integrações, lote 6 — reembolsos Mercado Livre (2026-08-24)
+
+- Confirmado na documentação oficial que o payload de orders Mercado Livre contém `payments[].transaction_amount_refunded` e o status `partially_refunded`; esses dados estavam sendo descartados pelos tipos/mappers locais.
+- Criada migration expand-only `027_order_refund_quality.sql` com `refund_amount`, `refund_status` e `refund_updated_at`, constraints de status/valor e sem backfill inventado. A migration não foi aplicada.
+- Persistência canônica e syncs foram preparados: Mercado Livre grava a cobertura real; VTEX/Shopee gravam `unknown` explicitamente.
+- APIs `summary` e `finance` agregam reembolsos apenas dos pedidos de receita com cobertura informada. O extrato só cria `Estorno` para valor conhecido e positivo; cancelamento continua sem qualquer papel no cálculo.
+- Validação: typecheck passou; 295/295 testes passaram; service-role scan passou; build passou com aviso conhecido do chunk principal (~710 kB). Não há script de lint.
+- Rollout obrigatório: migration 027 → verificação do schema → deploy → ressync Mercado Livre → smoke read-only. Rollback: reverter primeiro o runtime; remover colunas somente em etapa posterior explicitamente autorizada.
+- Nenhuma migration, escrita em dados reais, commit, push ou deploy foi realizada.
+- Próxima ação: revisar/aplicar a migration 027 com autorização; depois implementar a fonte VTEX via `GET /api/oms/pvt/orders/{orderId}/payment-transaction` com orçamento e permissão próprios.
+
+---
+
+## Sessão — Correção de integrações, lote 7 — rollout financeiro (2026-08-24)
+
+- O vínculo Supabase foi restaurado para `dnaykdoehbwmbsufcrxk`; o histórico remoto confirmou 001–026 antes do rollout.
+- A migration `027_order_refund_quality.sql` foi aplicada e verificada no remoto.
+- Criada e aplicada a migration idempotente `028_correct_mercadolivre_fee_quality.sql`: pedidos históricos do Mercado Livre marcados como taxa `known` passam para `partial`, sem alterar `fee_amount`.
+- A documentação oficial VTEX confirma o endpoint de transação por pedido, mas o contrato público consultado não comprova uma regra inequívoca para estornos. VTEX e Shopee permanecem `refund_status=unknown`; nenhum zero foi fabricado.
+- Validação local após as migrations: typecheck passou; 296/296 testes passaram; service-role scan passou; build passou com aviso conhecido do chunk principal (~710 kB). Não existe script de lint.
+- Vercel confirmado antes do deploy: equipe Pro `IA Center`, projeto `ia-center/saas`, project id `prj_b149YDjuDCPQ73H0xxbw0QljIIzm`.
+- Próximo passo desta sessão: concluir revisão independente, commit/push, deploy no projeto correto, ressincronizar e validar logs/agregados.
+
+---
+
+## Sessão — Correção de integrações, lote 8 — bloqueios de qualidade (2026-08-24)
+
+- O primeiro quality gate bloqueou o deploy com quatro P1 confirmados e riscos concorrentes. Todos os confirmados foram corrigidos antes da publicação.
+- VTEX: finalize da conexão é comprovado antes do sucesso; 401/403 sai do fallback; descoberta parcial força paginação global; SKUs falhos e cauda não processada permanecem no retry; reconciliação exige travessia completa; stale threshold 6min > runtime 300s.
+- Persistência canônica: migration `029` aplicada; pedido, precedência direct-provider, proveniência e itens são gravados em RPC transacional com advisory lock tenant-scoped. Reconciliação produto/estoque usa RPC transacional separada.
+- Cron: falha precoce persiste backoff; o cron VTEX processa uma conexão por tick, priorizando run ativa e depois a conexão mais vencida.
+- ML/Shopee: ausência de preço/estoque não vira zero; retorno Shopee não vira cancelamento; host Shopee de produção é obrigatório. Reconciliação destrutiva por ausência foi suspensa nesses dois conectores enquanto a paginação não representar snapshot estável.
+- Produção Vercel possui Supabase, Mercado Livre e `CRON_SECRET`; não possui nenhuma variável `SHOPEE_*`. Shopee deve permanecer `config_missing` até receber credenciais reais.
+- Validação final pré-deploy: typecheck PASS; 315/315 testes PASS; service-role scan PASS; build PASS; diff check PASS; migrations 001–029 alinhadas; Supabase db lint sem erros.

@@ -9,6 +9,62 @@ updated: 2026-08-14
 
 > Este documento deve conter apenas fatos confirmados no código, nos testes ou na infraestrutura.
 
+## Correção de integridade Mercado Livre/Shopee — lote 7 (2026-08-24)
+
+- Shopee agora exige `SHOPEE_API_HOST=https://partner.shopeemobile.com` explicitamente. Não existe fallback silencioso para sandbox; authorize, callback, sync manual e cron usam a validação compartilhada e falham fechados quando o host está ausente ou não é o de produção.
+- Mercado Livre preserva preço e estoque ausentes como `null` na normalização e omite esses campos no upsert, evitando converter ausência em zero ou sobrescrever um snapshot válido anterior. Zero explícito continua válido.
+- Shopee mantém `TO_RETURN` e `RETURNED` na classificação financeira `paid` enquanto a cobertura de refund permanece `unknown`; o status original continua disponível no payload normalizado. Cancelamentos explícitos continuam `cancelled`.
+- Checkpoints de catálogo ML/Shopee continuam baseados em listagens mutáveis entre invocações: ML recompõe IDs e retoma por índice; Shopee retoma por offset. Para impedir falso negativo, esses conectores não desativam mais produtos ausentes até existir snapshot/cursor estável comprovado; travessia íntegra ainda atualiza freshness.
+- Validação local: 45/45 testes direcionados passaram e TypeScript passou. Sem deploy, migração ou alteração de ambiente.
+
+## Correção de integrações — lote 8, concorrência e conclusão VTEX (2026-08-24)
+
+- A migration `029_atomic_canonical_orders_and_catalog_reconciliation.sql` foi aplicada e confirmada no Supabase; `db lint --linked` não encontrou erros. A persistência de pedido canônico, precedência do conector direto, proveniência e itens agora ocorre em uma RPC única, serializada por tenant + chave canônica.
+- Reconciliação de produto/estoque VTEX também é transacional e só roda após travessia comprovadamente completa, sem erro. SKUs falhos, a descoberta completa e a cauda ainda não processada são preservados em timeout para retry, inclusive em catálogos de até 40 SKUs; catálogo parcial não é promovido para completo.
+- Descoberta VTEX por sales channel propaga incompletude para o fallback global; 401/403 não fica mais indefinidamente em `queued`. A conexão precisa ser atualizada com escopo de tenant antes de a run registrar sucesso.
+- O stale threshold VTEX é maior que o runtime máximo da função, evitando reclaim de um worker ainda válido. Falhas precoces do cron persistem backoff para não bloquear as demais conexões. O cron VTEX processa uma conexão por tick, priorizando run ativa e depois a mais vencida.
+- Gates finais locais: TypeScript passou; 316/316 testes passaram; scan da fronteira de service role passou; build passou com o aviso conhecido do chunk principal (~710 kB); `git diff --check` passou com avisos LF/CRLF. Não existe script de lint.
+- Infraestrutura: migrations 001–029 alinhadas no remoto. Shopee continua externamente bloqueada porque as variáveis `SHOPEE_*` não existem no Vercel Pro; o runtime agora expõe `config_missing` e nunca usa sandbox silenciosamente.
+
+## Correção de integrações — lote 6, reembolsos Mercado Livre (2026-08-24)
+
+- Implementado contrato order-level de reembolso com `refund_amount`, `refund_status` e `refund_updated_at`. A migration aditiva `027_order_refund_quality.sql` foi aplicada e confirmada no histórico remoto em 2026-08-24.
+- O mapper Mercado Livre passou a consumir `payments[].transaction_amount_refunded`, campo documentado oficialmente. Ausência continua `unknown`; cobertura mista vira `partial`; zero só é conhecido quando o campo vem explicitamente.
+- Pedidos `partially_refunded` ou com valor reembolsado continuam classificados como receita capturada (`paid`), enquanto a dedução é registrada separadamente. APIs financeiras agregam somente snapshots comprovados e criam lançamento de estorno apenas para `refund_status=known` com valor positivo.
+- VTEX e Shopee permanecem com reembolso `unknown`: VTEX exige consulta adicional à transação de pagamento por pedido; o contrato Shopee disponível no projeto ainda não foi confirmado contra documentação oficial autenticada.
+- A migration `028_correct_mercadolivre_fee_quality.sql` corrigiu registros históricos do Mercado Livre de `known` para `partial`, preservando os valores importados; `sale_fee` por item não comprova todas as deduções do pedido.
+- Validação local posterior: TypeScript passou; 296/296 testes passaram; scan da fronteira de service role passou; build passou com aviso conhecido do chunk principal em aproximadamente 710 kB. Não existe script de lint.
+- Status: **migrations 027/028 aplicadas e verificadas; runtime aguardando commit/deploy e smoke real.**
+
+## Correção de integrações — lote 5 financeiro P0 (2026-08-24)
+
+- Implementado localmente: pedidos `cancelled` não são mais convertidos em estornos/devoluções. Sem evento financeiro explícito de reembolso, APIs e interface retornam cobertura `unknown` e exibem `Indisponível`, nunca `R$ 0` como se fosse valor confirmado.
+- O valor líquido só é apresentado quando taxas e reembolsos possuem cobertura `known`; rankings por canal voltam ao faturamento bruto enquanto qualquer dedução estiver incompleta.
+- A taxa `sale_fee` do Mercado Livre passou a ser persistida como cobertura `partial`, pois não comprova todas as deduções do pedido. Registros históricos já salvos como `known` só serão corrigidos por nova sincronização ou por backfill futuro autorizado.
+- O extrato real deixou de fabricar lançamentos de estorno a partir de cancelamentos. Fixtures do Modo Demonstração preservam cobertura conhecida e permanecem isoladas dos dados reais.
+- Validação local: TypeScript passou; 287/287 testes passaram; build passou com o aviso não bloqueante já conhecido do chunk principal em aproximadamente 710 kB. Não existe script de lint no `package.json`.
+- Status: **implementado localmente — sem commit, push ou deploy; aguardando próximo lote e smoke real posterior. Não pronto para produção.**
+
+## Correção de integrações — lote 1 (2026-08-24)
+
+- Implementado localmente, ainda sem deploy: Shopee não fabrica mais preço, estoque ou taxas zero; data e status de pedidos são normalizados; tokens renovados só são declarados persistidos após sucesso no banco.
+- VTEX acumula SKUs entre retomadas da paginação e grava como watermark o fim realmente consultado.
+- Mercado Livre/Shopee não avançam `last_sync_at` em execução parcial; falhas entram em retry com backoff e o cron respeita `next_sync_at`.
+- Custo de produto é isolado por `connection_id`; itens de pedido são substituídos por RPC transacional.
+- Consultas analíticas deixam de aceitar truncamento/falha parcial como zero; períodos usam datas reais e a tabela de produtos não fabrica D-1/D-7/D-365.
+- Migrations `024`, `025` e `026` aplicadas e verificadas no `vintec-production`.
+- Status: **implementado localmente — aguardando conclusão dos próximos lotes e validação em ambiente real. Não pronto para produção.**
+
+## Correção de integrações — lote 3 (2026-08-24)
+
+- Implementados localmente checkpoints persistentes de catálogo e histórico de pedidos para Mercado Livre e Shopee. O Mercado Livre refaz o scan efêmero de IDs e retoma o lote de detalhes por índice persistido; a Shopee retoma pelo `next_offset` oficial.
+- Pedidos avançam por janelas congeladas (Mercado Livre: 30 dias até 365 dias; Shopee: 15 dias até 90 dias). Janelas truncadas reduzem progressivamente até uma hora sem avançar o período; erros também não avançam o checkpoint. Depois do backfill completo, as execuções mantêm a atualização da janela recente sem perder o marcador histórico.
+- Reconciliação de catálogo é não destrutiva (`active=false`), isolada por `company_id + connection_id` e só ocorre após travessia completa sem erro em nenhum lote do ciclo. Respostas parciais de detalhe também bloqueiam reconciliação.
+- Freshness independente (`catalog_last_sync_at`, `inventory_last_sync_at`, `orders_last_sync_at`) passou a ser gravada pelos syncs e exposta pela API de status. Produtos e estoque inativos deixam de entrar em contagens e leituras operacionais; analytics financeiro usa freshness de pedidos.
+- Validação deste lote: TypeScript passou; 279/279 testes passaram; scan da fronteira de service role passou; build passou com o aviso não bloqueante já conhecido do chunk principal em aproximadamente 707 kB. Não existe script de lint no `package.json`.
+- A migration `026_integration_continuity_and_product_identity.sql` foi aplicada e verificada no `vintec-production`: histórico 1/1, colunas 11/11, índices 2/2 e zero `NULL` inválido nos campos obrigatórios.
+- Status: **implementado localmente — aguardando deploy e smoke real. Não pronto para produção.**
+
 ## Stack confirmada
 - [x] Framework: React 19 + Vite 8 + React Router 7
 - [x] Linguagem: TypeScript
@@ -20,6 +76,8 @@ updated: 2026-08-14
 - [x] Concorrência de sync: Mercado Livre e Shopee usam a mesma trava atômica por conexão (`sync_started_at`). Sem a migration `015_connection_sync_lock.sql`, os endpoints respondem `503 migration_pending` e não gravam sem essa proteção.
 
 ## Funcionalidades confirmadas
+- [x] Migrations `024`, `025` e `026` aplicadas e verificadas no `vintec-production` em 2026-08-24: taxas/estoque preservam ausência como `NULL`, `orders.fee_status` diferencia valor conhecido/desconhecido/parcial, e `replace_order_items_atomic(text, uuid, jsonb)` substitui itens transacionalmente. A função usa `SECURITY DEFINER`, `search_path` vazio e concede execução somente à `service_role`; `anon` e `authenticated` não possuem execução. A `026` registrou histórico, 11 colunas e 2 índices, sem `NULL` inválido nos campos obrigatórios.
+- [x] Integridade de conexão e identidade de catálogo — lote 2 local (2026-08-24): callbacks Mercado Livre/Shopee e endpoints VTEX bloqueiam troca silenciosa da conta externa por trás de uma conexão existente, preservando o histórico do tenant; reconexão da mesma conta continua permitida. Produtos normalizam marca oficial quando a origem fornece, registram `last_seen_at`/`active`, e o Produto 360 usa referência exata `connection_id + external_product_id` nos links novos, mantendo fallback legado por SKU. O catálogo Mercado Livre passou a usar o `search_type=scan`/`scroll_id` oficial para atravessar o limite de 1.000 itens. A migration aditiva `026` foi aplicada e verificada.
 - [x] Resolução automática VTEX por relação oficial (2026-08-20): identifiers `affiliate_id` ainda pendentes podem ser associados ao nome oficial do `salesChannel` retornado pela própria VTEX quando os pedidos reais comprovam uma relação inequívoca. Siglas não são inferidas; ambiguidade permanece pendente; mapping manual vence por compare-and-set. A descoberta roda antes do catálogo, com orçamento próprio, e o catálogo usa concorrência limitada de 32 workers. Validação local: typecheck PASS, 256/256 testes PASS e build PASS.
 - [x] Gate técnico de prontidão local (2026-08-20, working tree): locks ML/Shopee usam lease com compare-on-release; cron compartilhado processa uma conexão por tick de 5 minutos e continua pela mais antiga; Shopee possui retry/backoff/Retry-After e sinaliza truncamento; analytics de Produto 360 e freshness financeiro usam dados reais; MFA de platform admin e provisionamento atômico do primeiro owner foram implementados; CI, `/api/health` e runbook de incidentes foram adicionados. A migration aditiva `023` foi aplicada e verificada no projeto `vintec-production`; uma auditoria read-only comprovou 23/23 contratos físicos e o histórico remoto foi reconciliado com 001–023. Validação do mesmo snapshot: typecheck PASS, 250/250 testes PASS, 75/75 testes de segurança PASS, service-role scan PASS, build PASS e `npm audit --omit=dev` sem vulnerabilidades. Ainda requer commit/push/deploy e smokes reais antes de produção; os 3 platform admins existentes precisam cadastrar TOTP antes de usar as APIs administrativas protegidas.
 - [x] Freshness e analytics sem fabricação (2026-08-20, working tree): Produto 360 consulta série diária real de `orders`/`order_items`, isolada por tenant e pelos pares conexão/produto; vazio e falha têm estados explícitos. Curva sintética existe somente no Modo Demonstração e é rotulada como ilustrativa. Financeiro usa `marketplace_connections.last_sync_at` retornado pelo backend, sem texto de atualização hardcoded. Validação local: 245/246 testes passaram (2/2 novos passaram); 1 falha preexistente em `tests/security/tenantScope.test.ts`/`syncLock.ts`. Typecheck bloqueado por erro preexistente em `src/server/integrations/vtex/sync.ts:897`, fora do escopo desta alteração.
@@ -58,6 +116,11 @@ updated: 2026-08-14
 ## Problemas conhecidos
 | Problema | Evidência | Impacto | Status |
 |---|---|---|---|
+| Primeira carga VTEX bloqueada por janela OMS densa | Conexão remota estava em `error`, `last_error=VTEX_ORDER_WINDOW_DENSE_TIMESTAMP_UNSUPPORTED`, sem freshness em catálogo/estoque/pedidos (2026-08-24) | Alto — nenhuma sincronização real concluída | **Correção implantada em 2026-08-24** (`dpl_9ayTQ5GRUmCnjnCw7cVQvoo1qeke`) — aguarda comprovação no ciclo real do cron |
+| Maioria do catálogo VTEX sem preço | 11.477/17.727 produtos com `price IS NULL`, todos com `source_metadata.priceAvailable=false`; conexão registra `pricing:false` | Alto — produto aparece sem preço e análises de margem ficam incompletas | **Bloqueio externo agora explícito em produção** — conceder leitura de Pricing à chave VTEX e reprocessar catálogo ainda depende da conta VTEX |
+| Taxas VTEX desconhecidas não chegam como qualidade explícita ao Financeiro | 22.951/22.951 pedidos com `fee_status <> 'known'`; leitores financeiros agregavam `fee_amount NULL` como zero | Alto — podia aparentar taxa zero quando a origem não forneceu taxa | **Corrigido e implantado em 2026-08-24** — API propaga cobertura `known/partial/unknown`; Financeiro oculta tarifa/líquido incompletos e exibe indisponibilidade |
+| Marcadores de continuidade ainda não preenchidos nos dados antigos | 17.727 produtos e 17.727 estoques com `last_seen_at IS NULL` logo após a 026 | Médio — reconciliação/freshness ainda não comprovadas em produção | Aberto — requer deploy do runtime novo e ciclo completo bem-sucedido |
+| Contratos de payload Shopee ainda não validados contra resposta real da conta parceira | `src/server/integrations/shopee/types.ts` mantém TODO explícito | Alto — preço/estoque/pedidos podem divergir do payload real | Aberto — validar com documentação autenticada e fixture anonimizada |
 | Isolamento multiempresa nunca testado com dados reais (só auditoria estática de código) | — | Médio | Aberto — fica pra fase de testes |
 | MFA de admin ainda não validado com conta real TOTP | Enforcement estático no login + `requireAdmin` (2026-08-13) | Médio | Aberto — requer teste ponta a ponta |
 | Hashes SHA-256 do login antigo no histórico do git | Commits anteriores a 2026-07-23 | Baixo/médio | Aberto — ninguém externo teve acesso ao repo até 2026-08-12; rewrite adiado por decisão do usuário até haver colaborador externo/repo público |

@@ -3,6 +3,7 @@ import { getMissingEnvVars, getSupabaseAdmin, SHOPEE_ENV_VARS } from '../../../s
 import { exchangeCodeForToken, verifyState } from '../../../src/server/integrations/shopee/auth.js'
 import { encryptSecret } from '../../../src/server/integrations/crypto.js'
 import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
+import { isExternalAccountSwitch } from '../../../src/server/integrations/accountIdentity.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const appBaseUrl = process.env.APP_BASE_URL
@@ -36,6 +37,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const companyId = statePayload.companyId
     const tokenResponse = await exchangeCodeForToken(code, shopId)
     const supabase = await getSupabaseAdmin()
+
+    const { data: currentConnection, error: currentConnectionError } = await supabase
+      .from('marketplace_connections')
+      .select('id, external_account_id')
+      .eq('company_id', companyId)
+      .eq('provider', 'shopee')
+      .maybeSingle()
+    if (currentConnectionError) throw new Error(`Failed to validate existing connection: ${currentConnectionError.message}`)
+    if (isExternalAccountSwitch(currentConnection?.external_account_id, shopId)) {
+      await logSyncEvent({ companyId, connectionId: currentConnection?.id ?? null, provider: 'shopee', eventType: 'validation_error', status: 'error', message: 'Shopee account switch blocked to protect existing tenant history' })
+      res.redirect(302, `${appBaseUrl}/app/importacoes?connected=shopee&status=account_mismatch`)
+      return
+    }
 
     const { data, error: upsertError } = await supabase
       .from('marketplace_connections')

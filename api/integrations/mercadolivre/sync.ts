@@ -50,7 +50,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!(await checkRateLimit(res, `ml-sync:${auth.companyId}`, 5, 1800, { req, route: '/api/integrations/mercadolivre/sync', policy: 'critical' }))) return
 
     const summary = await runMercadoLivreSync(auth.companyId)
-    res.status(200).json({ ok: true, ...summary })
+    const ok = summary.errors.length === 0
+    const partial = !ok && (summary.productsImported > 0 || summary.inventoryUpdated > 0 || summary.ordersImported > 0)
+    res.status(200).json({ ok, partial, ...summary })
   } catch (err) {
     if (err instanceof ConnectionMissingError) {
       await logSyncEvent({

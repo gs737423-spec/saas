@@ -76,7 +76,7 @@ export const about = {
 // Seção institucional (3ª) — pessoa corporativa à ESQUERDA, conteúdo à direita.
 // Pessoa exclusiva desta seção (não aparece no hero). Linguagem simples.
 export const institutionalSection = {
-  label: 'SOBRE A VINTEC',
+  label: 'SOBRE A MKTONLINE',
   title: 'Feita para organizar operações que vendem em vários marketplaces.',
   paragraphs: [
     'A MKTOnline reúne os principais canais da operação para sua equipe acompanhar vendas, pedidos, estoque e desempenho com mais clareza e menos controles paralelos.',

@@ -1,4 +1,4 @@
-import { signShopRequest, SHOPEE_API_HOST } from './auth.js'
+import { resolveShopeeApiHost, signShopRequest } from './auth.js'
 import type {
   ShopeeItem,
   ShopeeItemBaseInfoResponse,
@@ -45,7 +45,7 @@ function sleep(ms: number): Promise<void> {
 
 export async function shopeeFetch<T>(path: string, accessToken: string, shopId: string, extraParams: Record<string, string> = {}, attempt = 0): Promise<T> {
   const { timestamp, sign, partnerId } = signShopRequest(path, accessToken, shopId)
-  const url = new URL(`${SHOPEE_API_HOST}${path}`)
+  const url = new URL(`${resolveShopeeApiHost()}${path}`)
   url.searchParams.set('partner_id', partnerId)
   url.searchParams.set('timestamp', String(timestamp))
   url.searchParams.set('sign', sign)
@@ -88,12 +88,15 @@ export interface ShopeeSearchResult<T> {
   records: T[]
   partial: boolean
   reason?: string
+  nextOffset?: number
+  complete?: boolean
+  truncated?: boolean
 }
 
 /** Paginates GET /api/v2/product/get_item_list. */
-export async function searchShopItemIds(accessToken: string, shopId: string): Promise<ShopeeSearchResult<number>> {
+export async function searchShopItemIds(accessToken: string, shopId: string, startOffset = 0): Promise<ShopeeSearchResult<number>> {
   const ids: number[] = []
-  let offset = 0
+  let offset = startOffset
   let hasMore = false
 
   while (ids.length < MAX_ITEMS_FIRST_SYNC) {
@@ -108,7 +111,7 @@ export async function searchShopItemIds(accessToken: string, shopId: string): Pr
     if (!hasMore || items.length === 0) break
     const nextOffset = page.response.next_offset ?? offset + items.length
     if (nextOffset <= offset) {
-      return { records: ids.slice(0, MAX_ITEMS_FIRST_SYNC), partial: true, reason: `Shopee devolveu offset sem avanço (${nextOffset}).` }
+      return { records: ids.slice(0, MAX_ITEMS_FIRST_SYNC), partial: true, complete: false, nextOffset: offset, reason: `Shopee devolveu offset sem avanço (${nextOffset}).` }
     }
     offset = nextOffset
   }
@@ -117,6 +120,8 @@ export async function searchShopItemIds(accessToken: string, shopId: string): Pr
   return {
     records: ids.slice(0, MAX_ITEMS_FIRST_SYNC),
     partial,
+    complete: !partial,
+    nextOffset: partial ? offset : 0,
     reason: partial ? `Catálogo Shopee excede o limite seguro de ${MAX_ITEMS_FIRST_SYNC} itens por execução.` : undefined,
   }
 }
@@ -133,7 +138,7 @@ export async function getItemBaseInfoBatch(itemIds: number[], accessToken: strin
 
 /** Paginates GET /api/v2/order/get_order_list (por cursor, mais recente
  *  primeiro), depois busca detalhe em lote via get_order_detail. */
-export async function searchOrders(accessToken: string, shopId: string): Promise<ShopeeSearchResult<ShopeeOrder>> {
+export async function searchOrders(accessToken: string, shopId: string, timeFrom: string, timeTo: string): Promise<ShopeeSearchResult<ShopeeOrder>> {
   const orderSns: string[] = []
   let cursor = ''
   let hasMore = false
@@ -141,8 +146,8 @@ export async function searchOrders(accessToken: string, shopId: string): Promise
   while (orderSns.length < MAX_ORDERS_FIRST_SYNC) {
     const page = await shopeeFetch<ShopeeOrderListResponse>('/api/v2/order/get_order_list', accessToken, shopId, {
       time_range_field: 'create_time',
-      time_from: String(Math.floor(Date.now() / 1000) - 90 * 86400),
-      time_to: String(Math.floor(Date.now() / 1000)),
+      time_from: String(Math.floor(new Date(timeFrom).getTime() / 1000)),
+      time_to: String(Math.floor(new Date(timeTo).getTime() / 1000)),
       page_size: String(ORDERS_PAGE_SIZE),
       cursor,
     })
@@ -167,10 +172,15 @@ export async function searchOrders(accessToken: string, shopId: string): Promise
     orders.push(...(detail.response.order_list ?? []))
   }
 
-  const partial = hasMore && orderSns.length >= MAX_ORDERS_FIRST_SYNC
+  const missingDetails = capped.length - new Set(orders.map((order) => order.order_sn)).size
+  const truncated = hasMore && orderSns.length >= MAX_ORDERS_FIRST_SYNC
+  const partial = truncated || missingDetails > 0
   return {
     records: orders,
     partial,
-    reason: partial ? `Pedidos Shopee excedem o limite seguro de ${MAX_ORDERS_FIRST_SYNC} por execução (janela de 90 dias).` : undefined,
+    truncated,
+    reason: missingDetails > 0
+      ? `Shopee não devolveu detalhes de ${missingDetails} pedido(s); checkpoint não avançou.`
+      : partial ? `Pedidos Shopee excedem o limite seguro de ${MAX_ORDERS_FIRST_SYNC} nesta janela histórica.` : undefined,
   }
 }

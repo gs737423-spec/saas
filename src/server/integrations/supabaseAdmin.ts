@@ -42,6 +42,7 @@ export const SHOPEE_ENV_VARS = [
   ...CORE_ENV_VARS,
   'SHOPEE_PARTNER_ID',
   'SHOPEE_PARTNER_KEY',
+  'SHOPEE_API_HOST',
   'SHOPEE_REDIRECT_URI',
   'APP_BASE_URL',
   'OAUTH_STATE_SECRET',
@@ -126,7 +127,10 @@ export async function fetchAllRows<T>(
     rows.push(...(data ?? []))
     if (!data || data.length < pageSize) return { data: rows, error: null }
   }
-  return { data: rows, error: null }
+  return {
+    data: rows,
+    error: { message: `Query excedeu o limite seguro de ${FETCH_ALL_ROWS_MAX_PAGES * pageSize} linhas; resultado não foi retornado parcialmente.` },
+  }
 }
 
 export async function findUserIdByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {

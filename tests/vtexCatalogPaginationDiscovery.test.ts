@@ -98,6 +98,24 @@ describe('discoverVtexSkuIdsByPagination (terceiro fallback — catálogos grand
     expect(result.done).toBe(true)
   })
 
+  it('the run checkpoint accumulates yielded pages before promoting the final SKU list', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+
+    expect(source).toContain('...(checkpoint.catalogPaginationSkuIds ?? [])')
+    expect(source).toContain('checkpoint.catalogPaginationSkuIds = accumulatedPaginationSkuIds')
+    expect(source).toContain('skuIds = accumulatedPaginationSkuIds')
+  })
+
+  it('persists the frozen order target as watermark instead of completion time', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+
+    expect(source).toContain("last_success_at: checkpoint.orderTargetEnd ?? completedAt")
+  })
+
   it('erro transitório no meio da paginação para no offset atual (não avança, não derruba a run) — resume no próximo tick', async () => {
     const client = makeClient(() => new Response('{}', { status: 500 }))
 
@@ -105,5 +123,12 @@ describe('discoverVtexSkuIdsByPagination (terceiro fallback — catálogos grand
 
     expect(result.done).toBe(false)
     expect(result.nextFrom).toBe(0) // não avançou — vai tentar de novo do mesmo lugar
+  })
+
+  it.each([401, 403])('propaga HTTP %s em vez de devolver done:false e enfileirar para sempre', async (status) => {
+    const client = makeClient(() => new Response(null, { status }))
+
+    await expect(discoverVtexSkuIdsByPagination(client, 'company-1', 'conn-1', 0, Date.now() + 60_000))
+      .rejects.toMatchObject({ status })
   })
 })

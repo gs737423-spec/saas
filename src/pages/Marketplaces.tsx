@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Crown, Receipt, ShoppingCart, TrendingUp, Store } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
-import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
+import { fillAllMarketplaces, hasKnownNetValue, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import RevenueByChannelChart from '@/components/marketplaces/RevenueByChannelChart'
 import { apiFetchJson } from '@/lib/apiFetch'
@@ -20,17 +20,18 @@ const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1,
 // KPIs verdicto — mesmo desenho aprovado (borda colorida à esquerda, ícone
 // pequeno), 100% derivado do MarketplaceFinance já carregado.
 function ChannelKPIVerdict({ rows }: { rows: MarketplaceFinance[] }) {
-  const byNet = [...rows].sort((a, b) => b.netValue - a.netValue)
+  const allDeductionsKnown = rows.every(hasKnownNetValue)
+  const byNet = [...rows].sort((a, b) => allDeductionsKnown ? b.netValue - a.netValue : b.grossRevenue - a.grossRevenue)
   const byTicket = [...rows].sort((a, b) => b.averageTicket - a.averageTicket)
   const byOrders = [...rows].sort((a, b) => b.ordersCount - a.ordersCount)
   const byGrowth = [...rows].sort((a, b) => (b.growth.d30 ?? -Infinity) - (a.growth.d30 ?? -Infinity))
-  const totalNet = rows.reduce((s, r) => s + r.netValue, 0)
+  const totalNet = rows.reduce((s, r) => s + (allDeductionsKnown ? r.netValue : r.grossRevenue), 0)
 
   const verdicts = [
-    { label: 'Líder em Líquido', value: `R$ ${brl(byNet[0].netValue)}`, channel: byNet[0].marketplace, sub: `${totalNet > 0 ? pct((byNet[0].netValue / totalNet) * 100) : '0,0'}% do líquido total`, icon: Crown, tone: '#3BE38E' },
+    { label: allDeductionsKnown ? 'Líder em Líquido' : 'Líder em Faturamento', value: `R$ ${brl(allDeductionsKnown ? byNet[0].netValue : byNet[0].grossRevenue)}`, channel: byNet[0].marketplace, sub: `${totalNet > 0 ? pct(((allDeductionsKnown ? byNet[0].netValue : byNet[0].grossRevenue) / totalNet) * 100) : '0,0'}% do ${allDeductionsKnown ? 'líquido' : 'faturamento'} total`, icon: Crown, tone: '#3BE38E' },
     { label: 'Melhor Ticket', value: `R$ ${brl2(byTicket[0].averageTicket)}`, channel: byTicket[0].marketplace, sub: `${brl(byTicket[0].ordersCount)} pedidos`, icon: Receipt, tone: '#194B9B' },
     { label: 'Mais Pedidos', value: brl(byOrders[0].ordersCount), channel: byOrders[0].marketplace, sub: `ticket R$ ${brl2(byOrders[0].averageTicket)}`, icon: ShoppingCart, tone: '#3A8DFF' },
-    { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `+${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: `líquido R$ ${brl(byGrowth[0].netValue)}`, icon: TrendingUp, tone: '#5B8DEF' },
+    { label: 'Maior Crescimento', value: byGrowth[0].growth.d30 !== null ? `${byGrowth[0].growth.d30 >= 0 ? '+' : ''}${pct(byGrowth[0].growth.d30)}%` : '—', channel: byGrowth[0].marketplace, sub: allDeductionsKnown ? `líquido R$ ${brl(byGrowth[0].netValue)}` : `faturamento R$ ${brl(byGrowth[0].grossRevenue)}`, icon: TrendingUp, tone: '#5B8DEF' },
   ]
 
   return (
@@ -92,7 +93,7 @@ function MiniBarChart({ title, question, data, maxValue }: MiniChartProps) {
 function ChannelMiniCharts({ rows }: { rows: MarketplaceFinance[] }) {
   const totalGross = rows.reduce((s, r) => s + r.grossRevenue, 0)
 
-  const byShare = [...rows].sort((a, b) => b.netValue - a.netValue).map((m) => ({
+  const byShare = [...rows].sort((a, b) => b.grossRevenue - a.grossRevenue).map((m) => ({
     marketplace: m.marketplace,
     value: totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0,
     display: `${pct(totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0)}%`,
@@ -107,7 +108,7 @@ function ChannelMiniCharts({ rows }: { rows: MarketplaceFinance[] }) {
   return (
     <div className="workspace-channel-summary overview-glass motion-panel rounded-2xl p-3.5 sm:p-4">
       <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
-        <MiniBarChart title="Participação" question="De quem depende o líquido?" data={byShare} maxValue={100} />
+        <MiniBarChart title="Participação" question="De quem depende o faturamento?" data={byShare} maxValue={100} />
         <MiniBarChart title="Ticket Médio" question="Quem tem o maior ticket médio?" data={byTicket} />
         <MiniBarChart title="Pedidos" question="Quem traz mais volume?" data={byOrders} />
       </div>
@@ -123,7 +124,7 @@ export default function Marketplaces() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?days=${period.days}`).then((res) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((res) => {
       if (!cancelled) {
         setData(res)
         setLoading(false)
@@ -132,7 +133,7 @@ export default function Marketplaces() {
     return () => {
       cancelled = true
     }
-  }, [period.days])
+  }, [period.query])
 
   if (loading) {
     return (

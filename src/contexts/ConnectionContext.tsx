@@ -9,6 +9,11 @@ export interface MercadoLivreStatus {
   provider: 'mercadolivre'
   status: IntegrationStatus
   lastSyncAt: string | null
+  catalogLastSyncAt?: string | null
+  inventoryLastSyncAt?: string | null
+  ordersLastSyncAt?: string | null
+  catalogComplete?: boolean
+  ordersHistoryComplete?: boolean
   externalAccountId: string | null
   productsCount: number
   inventoryCount: number
@@ -20,6 +25,11 @@ export interface ShopeeStatus {
   provider: 'shopee'
   status: IntegrationStatus
   lastSyncAt: string | null
+  catalogLastSyncAt?: string | null
+  inventoryLastSyncAt?: string | null
+  ordersLastSyncAt?: string | null
+  catalogComplete?: boolean
+  ordersHistoryComplete?: boolean
   externalAccountId: string | null
   productsCount: number
   inventoryCount: number
@@ -53,6 +63,11 @@ export interface VtexStatus {
   provider: 'vtex'
   status: IntegrationStatus
   lastSyncAt: string | null
+  catalogLastSyncAt?: string | null
+  inventoryLastSyncAt?: string | null
+  ordersLastSyncAt?: string | null
+  catalogComplete?: boolean
+  ordersHistoryComplete?: boolean
   lastSuccessAt?: string | null
   nextSyncAt?: string | null
   externalAccountId: string | null

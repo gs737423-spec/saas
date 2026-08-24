@@ -20,7 +20,7 @@ export default function Produtos() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`).then((data) => {
+    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`).then((data) => {
       if (!cancelled) {
         setReal(data)
         setLoading(false)
@@ -29,16 +29,16 @@ export default function Produtos() {
     return () => {
       cancelled = true
     }
-  }, [period.days])
+  }, [period.query])
 
   async function handleSetCost(product: DashboardProduct, costPrice: number) {
     const res = await apiFetch('/api/dashboard/products', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ externalProductId: product.id, costPrice }),
+      body: JSON.stringify({ connectionId: product.connectionId, externalProductId: product.id, costPrice }),
     })
     if (res.ok) {
-      setReal((prev) => prev ? { ...prev, items: prev.items.map((p) => p.id === product.id ? { ...p, costPrice, margin: p.price !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null } : p) } : prev)
+      setReal((prev) => prev ? { ...prev, items: prev.items.map((p) => p.id === product.id && p.connectionId === product.connectionId ? { ...p, costPrice, margin: p.price !== null && p.price > 0 ? ((p.price - costPrice) / p.price) * 100 : null } : p) } : prev)
     }
   }
 

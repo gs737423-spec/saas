@@ -32,6 +32,7 @@ export interface OAuthStatePayload {
 export interface MLItemSearchResponse {
   results: string[]
   paging: { total: number; offset: number; limit: number }
+  scroll_id?: string | null
 }
 
 /** GET /items/{item_id} response (subset used — full response has far more fields).
@@ -87,4 +88,11 @@ export interface MLOrder {
   currency_id: string
   buyer: { id: number } | null
   order_items: MLOrderItem[]
+  payments?: Array<{
+    id: number
+    status?: string | null
+    transaction_amount?: number | null
+    transaction_amount_refunded?: number | null
+    date_last_modified?: string | null
+  }>
 }

@@ -39,7 +39,11 @@ describe('service-role tenant scope regressions', () => {
     }
 
     const canonical = readFileSync(resolve('src/server/integrations/orderIdentity.ts'), 'utf8')
-    expect(canonical.match(/\.eq\('company_id', input\.companyId\)/g)?.length).toBeGreaterThanOrEqual(4)
+    expect(canonical).toContain("supabase.rpc('persist_canonical_order_atomic'")
+    const migration = readFileSync(resolve('supabase/migrations/029_atomic_canonical_orders_and_catalog_reconciliation.sql'), 'utf8')
+    expect(migration).toContain("company_id = v_company_id and canonical_order_key = v_canonical_key")
+    expect(migration).toMatch(/company_id = v_company_id\s+and connection_id = v_connection_id/)
+    expect(migration).toContain("where id = v_order_id and company_id = v_company_id")
   })
 
   it('does not trust company identifiers from mutation bodies', () => {

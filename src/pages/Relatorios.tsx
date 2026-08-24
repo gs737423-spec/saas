@@ -31,8 +31,8 @@ export default function Relatorios() {
     setLoading(true)
     setLoadError(false)
     Promise.all([
-      apiFetchJson<DashboardSummary>(`/api/dashboard/summary?days=${period.days}`),
-      apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`),
+      apiFetchJson<DashboardSummary>(`/api/dashboard/summary?${period.query}`),
+      apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`),
     ]).then(([summaryResponse, productsResponse]) => {
       if (cancelled) return
       setSummary(summaryResponse)
@@ -41,7 +41,7 @@ export default function Relatorios() {
       setLoading(false)
     })
     return () => { cancelled = true }
-  }, [period.days])
+  }, [period.query])
 
   const productItems = useMemo(() => products?.items ?? [], [products])
   const topProducts = useMemo(

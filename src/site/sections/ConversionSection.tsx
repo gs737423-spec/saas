@@ -254,7 +254,7 @@ export default function ConversionSection() {
         <div className="grid gap-5 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-5">
             <span className="site-label mb-1.5" style={{ color: '#78CAFF' }}>CONVERSA INICIAL</span>
-            <h2 className="vt-ink text-[24px] font-extrabold leading-tight tracking-tight md:text-[28px]">Vamos entender a operação do seu e‑commerce.</h2>
+            <h2 className="vt-ink text-[24px] font-extrabold leading-tight tracking-tight md:text-[28px]">Vamos conhecer seu negócio e definir uma estratégia para crescer de forma estruturada nos marketplaces.</h2>
             <p className="mt-2 text-[14px] leading-relaxed vt-muted">Conte um pouco sobre o seu cenário atual. Nossa equipe responde diretamente pelo WhatsApp.</p>
 
             <ul className="mt-3.5 flex flex-col gap-2">

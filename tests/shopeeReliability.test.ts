@@ -5,6 +5,7 @@ describe('Shopee reliability', () => {
   beforeEach(() => {
     process.env.SHOPEE_PARTNER_ID = '123'
     process.env.SHOPEE_PARTNER_KEY = 'test-key'
+    process.env.SHOPEE_API_HOST = 'https://partner.shopeemobile.com'
   })
 
   afterEach(() => vi.unstubAllGlobals())

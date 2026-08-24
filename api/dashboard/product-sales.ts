@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import { CORE_ENV_VARS, fetchAllRows, getMissingEnvVars, getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import type { ProductSalesPoint, ProductSalesResponse } from '../../src/server/dashboardProducts.js'
+import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
 
 interface ProductRef { connectionId: string; externalProductId: string }
 interface SalesRow {
@@ -52,8 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const days = Math.min(365, Math.max(1, Number(req.query.days) || 30))
-    const since = new Date(Date.now() - days * 86400000).toISOString()
+    const range = resolveAnalyticsDateRange(req.query, 365)
+    const since = range.from.toISOString()
+    const until = range.to.toISOString()
     const connectionIds = [...new Set(refs.map((ref) => ref.connectionId))]
     const externalProductIds = [...new Set(refs.map((ref) => ref.externalProductId))]
     const allowedPairs = new Set(refs.map((ref) => `${ref.connectionId}:${ref.externalProductId}`))
@@ -61,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: connections, error: connectionsError } = await supabase
       .from('marketplace_connections')
-      .select('id, last_sync_at')
+      .select('id, last_sync_at, orders_last_sync_at')
       .eq('company_id', auth.companyId)
       .in('id', connectionIds)
     if (connectionsError) throw new Error(connectionsError.message)
@@ -80,6 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('orders.status', 'paid')
       .eq('orders.analytics_included', true)
       .gte('orders.ordered_at', since)
+      .lt('orders.ordered_at', until)
       .range(from, to))
     if (error) throw new Error(error.message)
 
@@ -95,8 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const lastSyncAt = (connections ?? []).reduce<string | null>((latest, connection) => {
-      if (!connection.last_sync_at) return latest
-      return !latest || connection.last_sync_at > latest ? connection.last_sync_at : latest
+      const freshness = connection.orders_last_sync_at ?? connection.last_sync_at
+      if (!freshness) return latest
+      return !latest || freshness > latest ? freshness : latest
     }, null)
     res.status(200).json({ ok: true, source: 'real', points: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)), lastSyncAt } satisfies ProductSalesResponse)
   } catch (err) {

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   DEFAULT_HISTORY_MONTHS,
+  HEARTBEAT_STALE_MINUTES,
   MAX_INITIAL_HISTORY_MONTHS,
   reclaimStaleVtexRun,
   resolveVtexHistoryMonths,
   runBudgetedBatches,
+  VTEX_MAX_RUNTIME_MS,
 } from '../src/server/integrations/vtex/sync'
 import { computeVtexSyncProgress } from '../src/server/integrations/vtex/progress'
 import { normalizeVtexHistoryMonths } from '../src/server/integrations/vtex/validation'
@@ -266,16 +268,14 @@ describe('reclaimStaleVtexRun (self-healing, no manual UPDATE needed)', () => {
 // order's items scoped by order_id, never a bulk delete scoped only by
 // company_id/connection_id run-wide.
 // -----------------------------------------------------------------------
-describe('persistCanonicalOrder never bulk-deletes previous sync data (static source check)', () => {
-  it('the only DELETE in orderIdentity.ts is scoped to a single order_id (item replacement), not a bulk wipe', async () => {
+describe('persistCanonicalOrder is fully atomic', () => {
+  it('delegates canonical row, provenance and items to one transactional database RPC', async () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/orderIdentity.ts'), 'utf-8')
-    const deleteCalls = [...source.matchAll(/\.delete\(\)([^\n]*)/g)].map((match) => match[0])
-    expect(deleteCalls.length).toBeGreaterThan(0)
-    for (const call of deleteCalls) {
-      expect(call).toContain(".eq('order_id'")
-    }
+    expect(source).toContain("supabase.rpc('persist_canonical_order_atomic'")
+    expect(source).not.toContain("supabase.rpc('replace_order_items_atomic'")
+    expect(source).not.toContain("from('order_items').delete()")
   })
 
   it('marketplace_products / marketplace_inventory persistence in sync.ts uses upsert only, never delete', async () => {
@@ -310,7 +310,7 @@ describe('yield vs stale semantics (post-yield status)', () => {
 // Audit gap #5: a 401/403 while fetching an individual order (getOrder)
 // used to be swallowed exactly like any other item-level error — the order
 // stage kept grinding through every remaining item in the page/window with
-// a revoked credential until the time budget or MAX_ORDER_PAGES_PER_RUN ran
+// a revoked credential until the time budget or page traversal ran
 // out, instead of stopping fast like the catalog stage already does.
 // -----------------------------------------------------------------------
 describe('orders stage stops on VTEX 401/403 instead of retrying item by item (static source check)', () => {
@@ -325,5 +325,51 @@ describe('orders stage stops on VTEX 401/403 instead of retrying item by item (s
     // Same terminal treatment already used by the catalog stage: mark the
     // connection requires_attention instead of retrying forever.
     expect(source).toMatch(/ordersPermissionDenied[\s\S]{0,700}requires_attention/)
+  })
+})
+
+describe('stale reclaim split-brain guard', () => {
+  it('keeps the stale threshold strictly above the maximum worker runtime', () => {
+    expect(HEARTBEAT_STALE_MINUTES * 60_000).toBeGreaterThan(VTEX_MAX_RUNTIME_MS)
+  })
+})
+
+describe('catalog completion safety invariants (static source check)', () => {
+  it('only records success after a tenant-scoped connection update returned the target row', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+    const finalizeStart = source.lastIndexOf('const completedAt =')
+    const finalize = source.slice(finalizeStart, source.indexOf('} catch (error)', finalizeStart))
+
+    expect(finalize).toContain(".eq('id', connection.id).eq('company_id', companyId)")
+    expect(finalize).toContain(".select('id').maybeSingle()")
+    expect(finalize).toContain('VTEX_CONNECTION_FINALIZE_NOT_APPLIED')
+    expect(finalize.indexOf('VTEX_CONNECTION_FINALIZE_NOT_APPLIED')).toBeLessThan(finalize.indexOf("status: finalStatus, stage: 'complete'"))
+    expect(finalize.indexOf("status: finalStatus, stage: 'complete'")).toBeLessThan(finalize.indexOf("eventType: errors.length > 0 ? 'sync_partial' : 'sync_success'"))
+  })
+
+  it('persists failed SKU ids for one retry and never reconciles a partial traversal', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+
+    expect(source).toContain('catalogFailedSkuIds')
+    expect(source).toContain('retryingFailedSkus')
+    expect(source).toContain('!salesChannelComplete')
+    expect(source).toContain("checkpoint.catalogStatus = 'partial'")
+    expect(source).toMatch(/\['completed', 'empty'\]\.includes\(checkpoint\.catalogStatus[\s\S]{0,300}reconcileCatalogRows\(/)
+    expect(source).toContain('catalogCycleStartedAt')
+  })
+
+  it('preserves the complete discovery even when a single batch times out before its tail', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const source = fs.readFileSync(path.resolve(__dirname, '../src/server/integrations/vtex/sync.ts'), 'utf-8')
+
+    expect(source).toContain('checkpoint.catalogSkuIds = skuIds.length > 0 ? skuIds : undefined')
+    expect(source).not.toContain('checkpoint.catalogSkuIds = skuIds.length > SKU_BATCH_SIZE ? skuIds : undefined')
+    expect(source).toContain('skuIds = checkpoint.catalogSkuIds ?? checkpoint.catalogFailedSkuIds ?? []')
+    expect(source).toContain('checkpoint.skuOffset < skuIds.length')
   })
 })

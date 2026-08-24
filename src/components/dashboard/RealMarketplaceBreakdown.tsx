@@ -111,14 +111,14 @@ export default function RealMarketplaceBreakdown() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?days=${period.days}`).then((res) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((res) => {
       if (!cancelled) {
         setData(res)
         setLoading(false)
       }
     })
     return () => { cancelled = true }
-  }, [period.days])
+  }, [period.query])
 
   if (loading) {
     return (

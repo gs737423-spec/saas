@@ -3,6 +3,9 @@ import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { FinanceOverview, MarketplaceFinance, MarketplaceGrowth, FinanceTransaction } from '../../src/data/financeShapes.js'
 import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
+import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
+import { summarizeFeeCoverage } from '../../src/server/analytics/feeQuality.js'
+import { summarizeRefundCoverage } from '../../src/server/analytics/refundQuality.js'
 
 interface FinanceApiResponse {
   ok: boolean
@@ -13,7 +16,7 @@ interface FinanceApiResponse {
   message?: string
 }
 
-const EMPTY_OVERVIEW: FinanceOverview = { grossRevenue: 0, fees: 0, refunds: 0, netValue: 0, source: 'demo' }
+const EMPTY_OVERVIEW: FinanceOverview = { grossRevenue: 0, fees: 0, feeDataStatus: 'unknown', refunds: 0, refundDataStatus: 'unknown', netValue: 0, source: 'demo' }
 
 // Rótulo de exibição por provider — mesmo texto usado em toda a UI (cards de
 // conexão, cores etc). Amazon/Loja Própria ainda não têm sync real; ficam de
@@ -44,7 +47,7 @@ async function computeGrowthByChannel(
   trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
   const since366 = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: yearOrders } = await fetchAllRows((from, to) =>
+  const { data: yearOrders, error: yearOrdersError } = await fetchAllRows((from, to) =>
     supabase
       .from('orders')
       .select('connection_id, sales_channel, total_amount, ordered_at')
@@ -55,6 +58,7 @@ async function computeGrowthByChannel(
       .gte('ordered_at', since366)
       .range(from, to)
   )
+  if (yearOrdersError) throw new Error(yearOrdersError.message)
 
   // provider -> dateKey -> revenue naquele dia
   const revenueByChannelDay = new Map<StoredSalesChannel, Map<string, number>>()
@@ -84,7 +88,7 @@ async function computeGrowthByChannel(
 }
 
 // Mesma agregação real de api/dashboard/summary.ts, só que também devolve o
-// extrato (1 linha por pedido pago/cancelado — não temos comissão/tarifa
+// extrato (1 linha por pedido pago — não temos comissão/tarifa
 // decompostas por transação, só o fee_amount agregado do pedido inteiro) e o
 // breakdown por marketplace real (não hardcoded pra um provider só).
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,14 +102,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await requireCompany(req, res)
     if (!auth) return
 
-    const days = Math.min(365, Math.max(1, Number(req.query.days) || 30))
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+    const range = resolveAnalyticsDateRange(req.query, 365)
+    const since = range.from.toISOString()
+    const until = range.to.toISOString()
 
     const supabase = await getSupabaseAdmin()
 
     const { data: connections, error: connError } = await supabase
       .from('marketplace_connections')
-      .select('id, provider, status, last_sync_at')
+      .select('id, provider, status, last_sync_at, orders_last_sync_at')
       .eq('company_id', auth.companyId)
       .in('status', ['connected', 'syncing', 'requires_attention', 'error', 'expired'])
     if (connError) throw new Error(connError.message)
@@ -118,8 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, String(c.provider)]))
     const connectionIds = connections.map((c) => c.id)
     const lastSyncAt = connections.reduce<string | null>((latest, connection) => {
-      if (!connection.last_sync_at) return latest
-      return !latest || connection.last_sync_at > latest ? connection.last_sync_at : latest
+      const freshness = connection.orders_last_sync_at ?? connection.last_sync_at
+      if (!freshness) return latest
+      return !latest || freshness > latest ? freshness : latest
     }, null)
 
     const [{ data: registeredChannels, error: channelError }, trustedChannels] = await Promise.all([
@@ -132,11 +138,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
       supabase
         .from('orders')
-        .select('connection_id, external_order_id, status, sales_channel, total_amount, fee_amount, ordered_at')
+        .select('connection_id, external_order_id, status, sales_channel, total_amount, fee_amount, fee_status, refund_amount, refund_status, refund_updated_at, ordered_at')
         .in('connection_id', connectionIds)
         .eq('company_id', auth.companyId)
         .eq('analytics_included', true)
         .gte('ordered_at', since)
+        .lt('ordered_at', until)
         .order('ordered_at', { ascending: false })
         .range(from, to)
     )
@@ -148,14 +155,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const paid = orders.filter((o) => o.status === 'paid')
-    const cancelled = orders.filter((o) => o.status === 'cancelled')
 
     const grossRevenue = paid.reduce((s, o) => s + Number(o.total_amount ?? 0), 0)
-    const fees = paid.reduce((s, o) => s + Number(o.fee_amount ?? 0), 0)
-    const refunds = cancelled.reduce((s, o) => s + Number(o.total_amount ?? 0), 0)
+    const feeCoverage = summarizeFeeCoverage(paid)
+    const fees = feeCoverage.total
+    const refundCoverage = summarizeRefundCoverage(paid)
+    const refunds = refundCoverage.total
+    const refundDataStatus = refundCoverage.status
     const netValue = grossRevenue - fees - refunds
 
-    const overview: FinanceOverview = { grossRevenue, fees, refunds, netValue, source: 'real' }
+    const overview: FinanceOverview = { grossRevenue, fees, feeDataStatus: feeCoverage.status, refunds, refundDataStatus, netValue, source: 'real' }
 
     // Agrupa por provider real (não mais 1 linha fixa "Mercado Livre") —
     // cada marketplace conectado com pedido no período vira uma linha.
@@ -165,39 +174,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // `orders`/`sales_channels` não são alterados — só a leitura agrega
     // diferente. `resolveEffectiveAnalyticsChannel` nunca usa prefixo:
     // decide por `trustedChannels` (registry + mappings resolvidos).
-    const byChannel = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number; displayName: string }>()
+    const byChannel = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number; feeKnownOrders: number; feePartialOrders: number; refundKnownOrders: number; refundPartialOrders: number; displayName: string }>()
     for (const o of paid) {
       const provider = providerByConnectionId.get(o.connection_id)
       const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
       if (!storedChannel) continue
       const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
-      const acc = byChannel.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, displayName }
+      const acc = byChannel.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, feeKnownOrders: 0, feePartialOrders: 0, refundKnownOrders: 0, refundPartialOrders: 0, displayName }
       acc.grossRevenue += Number(o.total_amount ?? 0)
-      acc.fees += Number(o.fee_amount ?? 0)
+      if (o.fee_status === 'known' && o.fee_amount !== null) {
+        acc.fees += Number(o.fee_amount)
+        acc.feeKnownOrders += 1
+      } else if (o.fee_status === 'partial') {
+        acc.fees += Number(o.fee_amount ?? 0)
+        acc.feePartialOrders += 1
+      }
+      if (o.refund_status === 'known' && o.refund_amount !== null) {
+        acc.refunds += Number(o.refund_amount)
+        acc.refundKnownOrders += 1
+      } else if (o.refund_status === 'partial') {
+        acc.refunds += Number(o.refund_amount ?? 0)
+        acc.refundPartialOrders += 1
+      }
       acc.ordersCount += 1
       byChannel.set(effectiveChannel, acc)
     }
-    for (const o of cancelled) {
-      const provider = providerByConnectionId.get(o.connection_id)
-      const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
-      if (!storedChannel) continue
-      const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
-      const acc = byChannel.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, displayName }
-      acc.refunds += Number(o.total_amount ?? 0)
-      byChannel.set(effectiveChannel, acc)
-    }
-
     const growthByChannel = await computeGrowthByChannel(supabase, auth.companyId, connectionIds, providerByConnectionId, trustedChannels)
     const EMPTY_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
 
     const byMarketplace: MarketplaceFinance[] = Array.from(byChannel.entries())
       .map(([channel, acc]): MarketplaceFinance | null => {
         const marketplace = acc.displayName
+        const feeDataStatus = acc.ordersCount > 0 && acc.feeKnownOrders === acc.ordersCount
+          ? 'known' as const
+          : acc.feeKnownOrders > 0 || acc.feePartialOrders > 0
+            ? 'partial' as const
+            : 'unknown' as const
+        const refundDataStatus = acc.ordersCount > 0 && acc.refundKnownOrders === acc.ordersCount
+          ? 'known' as const
+          : acc.refundKnownOrders > 0 || acc.refundPartialOrders > 0
+            ? 'partial' as const
+            : 'unknown' as const
         return {
           marketplace,
           grossRevenue: acc.grossRevenue,
           fees: acc.fees,
+          feeDataStatus,
           refunds: acc.refunds,
+          refundDataStatus,
           netValue: acc.grossRevenue - acc.fees - acc.refunds,
           ordersCount: acc.ordersCount,
           averageTicket: acc.ordersCount > 0 ? acc.grossRevenue / acc.ordersCount : 0,
@@ -224,21 +248,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           gross: Number(o.total_amount ?? 0),
           discount: Number(o.fee_amount ?? 0),
           net: Number(o.total_amount ?? 0) - Number(o.fee_amount ?? 0),
+          feeDataStatus: o.fee_status === 'known' && o.fee_amount !== null ? 'known' as const : o.fee_status === 'partial' ? 'partial' as const : 'unknown' as const,
         }]
       }),
-      ...cancelled.flatMap((o) => {
+      ...paid.flatMap((o) => {
+        const refundAmount = Number(o.refund_amount ?? 0)
+        if (o.refund_status !== 'known' || refundAmount <= 0) return []
         const provider = providerByConnectionId.get(o.connection_id)
         const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
         const marketplace = storedChannel ? resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel)).displayName : undefined
         if (!marketplace) return []
         return [{
-          date: new Date(o.ordered_at).toISOString().split('T')[0],
+          date: new Date(o.refund_updated_at ?? o.ordered_at).toISOString().split('T')[0],
           marketplace,
           type: 'Estorno' as const,
           identifier: o.external_order_id,
-          gross: -Number(o.total_amount ?? 0),
-          discount: Number(o.total_amount ?? 0),
-          net: -Number(o.total_amount ?? 0),
+          gross: -refundAmount,
+          discount: refundAmount,
+          net: -refundAmount,
+          feeDataStatus: 'known' as const,
         }]
       }),
     ].sort((a, b) => (a.date < b.date ? 1 : -1))

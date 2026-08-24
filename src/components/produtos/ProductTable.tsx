@@ -10,6 +10,7 @@ import CategoryDrawer from '@/components/category/CategoryDrawer'
 import type { CategoryOption } from '@/lib/categoryAnalytics'
 import { categoryKey, categoryLabel } from '@/lib/categoryAnalytics'
 import { categoryItemFromProduct } from '@/lib/categoryAdapters'
+import { exactProductPath } from '@/lib/routes'
 
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
@@ -32,17 +33,6 @@ function TrendBadge({ trend }: { trend: number | null }) {
       {positive ? '+' : ''}{trend.toFixed(1)}%
     </span>
   )
-}
-
-// Deriva D-1/D-7/D-30/D-365 a partir da única tendência real do produto —
-// mesmos multiplicadores fixos do design original, nunca aleatório.
-function bucketGrowth(baseTrend: number): { d1: number; d7: number; d30: number; d365: number } {
-  return {
-    d1: Math.round(baseTrend * 0.4 * 10) / 10,
-    d7: Math.round(baseTrend * 0.7 * 10) / 10,
-    d30: Math.round(baseTrend * 10) / 10,
-    d365: Math.round(baseTrend * 2.6 * 10) / 10,
-  }
 }
 
 function GrowthCell({ label, value }: { label: string; value: number | null }) {
@@ -221,10 +211,10 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
         {sorted.map((p) => {
           const mp = getMarketplaceColor(p.marketplace)
           return (
-            <div key={p.id} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
+            <div key={`${p.connectionId}:${p.id}`} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
               <div className="mb-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[13px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
+                  <Link to={exactProductPath(p)} className="block truncate text-[13px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline">{p.name}</Link>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     <span className="font-mono text-[10px] text-text-muted">{p.sku}</span>
                     <span className="text-text-muted">·</span>
@@ -282,10 +272,10 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
             {sorted.map((p) => {
               const mp = getMarketplaceColor(p.marketplace)
               return (
-                <tr key={p.id} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
+                <tr key={`${p.connectionId}:${p.id}`} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
                   <td className="max-w-[140px] truncate py-3.5 pr-4 font-mono text-[11px] text-text-muted" title={p.sku ?? undefined}>{p.sku}</td>
                   <td className="max-w-[280px] py-3.5 pr-4">
-                    <Link to={`/app/produto/${p.sku ?? p.id}`} className="block truncate text-[14px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
+                    <Link to={exactProductPath(p)} className="block truncate text-[14px] font-semibold leading-relaxed tracking-tight text-text-primary hover:text-accent-blue hover:underline" title={p.name}>{p.name}</Link>
                     <CategoryTrigger product={p} onOpen={setSelectedCategoryKey} className="mt-0.5" />
                   </td>
                   <td className="py-3.5 pr-4">
@@ -303,17 +293,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
                   <td className="py-3.5 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
                   <td className="py-3.5 text-center">
                     <div className="flex items-center justify-center gap-2.5">
-                      {(() => {
-                        const growth = p.trend !== null ? bucketGrowth(p.trend) : { d1: null, d7: null, d30: null, d365: null }
-                        return (
-                          <>
-                            <GrowthCell label="D-1" value={growth.d1} />
-                            <GrowthCell label="D-7" value={growth.d7} />
-                            <GrowthCell label="D-30" value={growth.d30} />
-                            <GrowthCell label="D-365" value={growth.d365} />
-                          </>
-                        )
-                      })()}
+                      <GrowthCell label="Período" value={p.trend === null ? null : Math.round(p.trend * 10) / 10} />
                     </div>
                   </td>
                 </tr>

@@ -8,6 +8,8 @@ import { mapItemToInventoryRow, mapItemToProductRow, mapOrderToRow, mapOrderItem
 import { refreshAccessToken } from './auth.js'
 import { claimSyncLock, heartbeatSyncLock, releaseSyncLock } from '../syncLock.js'
 import { directCanonicalOrderKey, persistCanonicalOrder } from '../orderIdentity.js'
+import { nextIntegrationFailureState, nextScheduledSyncAt } from '../syncSchedule.js'
+import { advanceHistoricalWindow, canReconcileCatalog, catalogCheckpoint, historicalWindow, narrowHistoricalWindow } from '../continuity.js'
 
 export class ConnectionMissingError extends Error {}
 
@@ -35,13 +37,17 @@ interface ConnectionRow {
   access_token_encrypted: string | null
   refresh_token_encrypted: string | null
   token_expires_at: string | null
+  sync_interval_minutes: number
+  failure_count: number
+  catalog_checkpoint: unknown
+  orders_checkpoint: unknown
 }
 
 async function loadConnection(companyId: string): Promise<ConnectionRow> {
   const supabase = await getSupabaseAdmin()
   const { data, error } = await supabase
     .from('marketplace_connections')
-    .select('id, status, seller_id, access_token_encrypted, refresh_token_encrypted, token_expires_at')
+    .select('id, status, seller_id, access_token_encrypted, refresh_token_encrypted, token_expires_at, sync_interval_minutes, failure_count, catalog_checkpoint, orders_checkpoint')
     .eq('provider', 'mercadolivre')
     .eq('company_id', companyId)
     .maybeSingle()
@@ -66,7 +72,7 @@ async function ensureValidAccessToken(connection: ConnectionRow, companyId: stri
   const refreshed = await refreshAccessToken(refreshToken)
 
   const supabase = await getSupabaseAdmin()
-  await supabase
+  const { error: tokenPersistError } = await supabase
     .from('marketplace_connections')
     .update({
       access_token_encrypted: encryptSecret(refreshed.access_token),
@@ -80,6 +86,7 @@ async function ensureValidAccessToken(connection: ConnectionRow, companyId: stri
     })
     .eq('id', connection.id)
     .eq('company_id', companyId)
+  if (tokenPersistError) throw new Error(`Failed to persist refreshed Mercado Livre token: ${tokenPersistError.message}`)
 
   await logSyncEvent({
     companyId,
@@ -131,15 +138,19 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
   try {
     const accessToken = await ensureValidAccessToken(connection, companyId)
     await heartbeatSyncLock(supabase, lease)
-    const itemIds = await searchUserItemIds(connection.seller_id!, accessToken)
-    // Teto de segurança atingido — catálogo real tem mais itens do que o sync
-    // trouxe. Não é um erro (sync continua normalmente pros itens buscados),
-    // mas o cliente precisa saber que o catálogo está incompleto, não achar
-    // que só tem esses produtos. Vira aviso visível em "Atividade recente".
-    if (itemIds.length >= MAX_ITEMS_FIRST_SYNC) {
-      errors.push(`Catálogo tem mais de ${MAX_ITEMS_FIRST_SYNC} produtos — sync trouxe só os primeiros ${MAX_ITEMS_FIRST_SYNC}, o restante não foi importado.`)
+    const catalogCycle = catalogCheckpoint(connection.catalog_checkpoint, startedAt)
+    const itemSearch = await searchUserItemIds(connection.seller_id!, accessToken)
+    // O cursor scan expira em minutos, então a lista de IDs é varrida na mesma
+    // invocação. O checkpoint persistente guarda apenas a posição do lote de
+    // detalhes; nunca tenta reutilizar um cursor externo já expirado.
+    const catalogOffset = Math.min(catalogCycle.nextOffset, itemSearch.ids.length)
+    const itemIds = itemSearch.ids.slice(catalogOffset, catalogOffset + MAX_ITEMS_FIRST_SYNC)
+    const reachedCatalogEnd = itemSearch.complete && catalogOffset + itemIds.length >= itemSearch.ids.length
+    if (!itemSearch.complete) {
+      errors.push('Catálogo Mercado Livre excedeu o limite seguro de varredura de IDs; nenhuma reconciliação foi executada.')
     }
 
+    const catalogErrorStart = errors.length
     await runWithConcurrency(itemIds, 8, async (itemId) => {
       try {
         const detail = await getItemDetail(itemId, accessToken)
@@ -158,27 +169,36 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         // cost_price nunca entra aqui de propósito — é sempre o cliente quem
         // informa (nenhum marketplace expõe o custo do vendedor), e o
         // upsert só sobrescreve as colunas presentes no payload.
+        const productPayload: Record<string, unknown> = {
+          company_id: companyId,
+          connection_id: connection.id,
+          provider: 'mercadolivre',
+          ...productRow,
+          category_name: categoryName,
+          last_seen_at: new Date().toISOString(),
+          active: true,
+        }
+        if (productRow.price === null) delete productPayload.price
+        if (productRow.available_quantity === null) delete productPayload.available_quantity
         const { error: productError } = await supabase.from('marketplace_products').upsert(
-          {
-            company_id: companyId,
-            connection_id: connection.id,
-            provider: 'mercadolivre',
-            ...productRow,
-            category_name: categoryName,
-          },
+          productPayload,
           { onConflict: 'company_id,connection_id,external_product_id' }
         )
         if (productError) throw new Error(`Failed to upsert product ${itemId}: ${productError.message}`)
         productsImported += 1
 
+        const inventoryPayload: Record<string, unknown> = {
+          company_id: companyId,
+          connection_id: connection.id,
+          provider: 'mercadolivre',
+          last_sync_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          active: true,
+          ...inventoryRow,
+        }
+        if (inventoryRow.available_quantity === null) delete inventoryPayload.available_quantity
         const { error: inventoryError } = await supabase.from('marketplace_inventory').upsert(
-          {
-            company_id: companyId,
-            connection_id: connection.id,
-            provider: 'mercadolivre',
-            last_sync_at: new Date().toISOString(),
-            ...inventoryRow,
-          },
+          inventoryPayload,
           { onConflict: 'company_id,connection_id,external_product_id' }
         )
         if (inventoryError) throw new Error(`Failed to upsert inventory ${itemId}: ${inventoryError.message}`)
@@ -192,12 +212,44 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     })
     await heartbeatSyncLock(supabase, lease)
 
+    const catalogErrorCount = errors.length - catalogErrorStart
+    const catalogHadErrors = catalogCycle.hadErrors || catalogErrorCount > 0
+    const catalogTraversalSucceeded = canReconcileCatalog(reachedCatalogEnd, catalogHadErrors ? 1 : 0)
+    // O scan de IDs é reconstruído a cada invocação e o offset persistido não
+    // representa um snapshot congelado. Desativar ausentes nesse conjunto
+    // mutável pode ocultar anúncios válidos; só reativaremos reconciliação
+    // quando o ciclo possuir identidade estável comprovada.
+    const catalogCanReconcile = false
+    const catalogFinishedAt = new Date().toISOString()
+    const { error: catalogCheckpointError } = await supabase.from('marketplace_connections').update({
+      catalog_checkpoint: {
+        cycleStartedAt: catalogCycle.cycleStartedAt,
+        nextOffset: reachedCatalogEnd ? 0 : catalogOffset + itemIds.length,
+        processed: catalogCycle.processed + itemIds.length,
+        complete: reachedCatalogEnd,
+        hadErrors: catalogHadErrors,
+        reconciled: catalogCanReconcile,
+      },
+      ...(catalogTraversalSucceeded ? {
+        catalog_last_sync_at: catalogFinishedAt,
+        inventory_last_sync_at: catalogFinishedAt,
+      } : {}),
+    }).eq('id', connection.id).eq('company_id', companyId)
+    if (catalogCheckpointError) throw new Error(`Failed to persist Mercado Livre catalog checkpoint: ${catalogCheckpointError.message}`)
+
     let orders: MLOrder[] = []
+    const orderWindow = historicalWindow(connection.orders_checkpoint, startedAt, 365, 30)
+    let ordersWindowComplete = false
+    let ordersWindowTruncated = false
+    const orderErrorStart = errors.length
     try {
-      const result = await searchOrders(connection.seller_id!, accessToken)
+      const result = await searchOrders(connection.seller_id!, accessToken, orderWindow.from, orderWindow.to)
       orders = result.orders
       if (result.truncated) {
-        errors.push(`Mais pedidos no último ano do que o sync conseguiu importar de uma vez (limite ${orders.length}) — histórico mais antigo pode estar incompleto, rode o sync de novo em breve.`)
+        ordersWindowTruncated = true
+        errors.push(`A janela de pedidos Mercado Livre excedeu o limite ${orders.length}; checkpoint não avançou para evitar lacuna histórica.`)
+      } else {
+        ordersWindowComplete = true
       }
     } catch (searchErr) {
       const message = searchErr instanceof MercadoLivreApiError
@@ -216,7 +268,11 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
           externalOrderId: orderRow.external_order_id,
           canonicalOrderKey: directCanonicalOrderKey('mercadolivre', orderRow.external_order_id),
           salesChannel: 'mercadolivre', status: orderRow.status,
-          totalAmount: orderRow.total_amount, feeAmount: orderRow.fee_amount,
+          // `sale_fee` cobre a tarifa de venda por item, mas não comprova o
+          // conjunto completo de deduções financeiras do pedido.
+          totalAmount: orderRow.total_amount, feeAmount: orderRow.fee_amount, feeStatus: 'partial',
+          refundAmount: orderRow.refund_amount, refundStatus: orderRow.refund_status,
+          refundUpdatedAt: orderRow.refund_updated_at,
           currency: orderRow.currency, orderedAt: orderRow.ordered_at,
           items: mapOrderItems(order).map((item) => ({ ...item, sku: item.sku ?? skuByProductId.get(item.external_product_id) ?? null })),
         })
@@ -230,6 +286,16 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
       }
     }
 
+    const canAdvanceOrders = ordersWindowComplete && errors.length === orderErrorStart
+    const ordersCheckpoint = canAdvanceOrders
+      ? advanceHistoricalWindow(orderWindow)
+      : ordersWindowTruncated ? narrowHistoricalWindow(orderWindow) : orderWindow.checkpoint
+    const { error: ordersCheckpointError } = await supabase.from('marketplace_connections').update({
+      orders_checkpoint: ordersCheckpoint,
+      ...(canAdvanceOrders && orderWindow.isLatestWindow ? { orders_last_sync_at: new Date().toISOString() } : {}),
+    }).eq('id', connection.id).eq('company_id', companyId)
+    if (ordersCheckpointError) throw new Error(`Failed to persist Mercado Livre orders checkpoint: ${ordersCheckpointError.message}`)
+
     const finishedAt = new Date()
     const durationMs = finishedAt.getTime() - startedAt.getTime()
     const hadPartialFailures = errors.length > 0 && productsImported > 0
@@ -242,11 +308,25 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
         ? errors[0]
         : `${errors.length} erros: ${errors.slice(0, 5).join(' | ')}${errors.length > 5 ? ` (e mais ${errors.length - 5})` : ''}`
 
-    await supabase
+    const connectionPatch = errors.length === 0
+      ? {
+          last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: null,
+          failure_count: 0, circuit_open_until: null,
+          next_sync_at: nextScheduledSyncAt(connection.sync_interval_minutes, finishedAt),
+        }
+      : {
+          status: 'requires_attention', last_error: lastErrorSummary,
+          ...(() => {
+            const failure = nextIntegrationFailureState(connection.failure_count, finishedAt)
+            return { failure_count: failure.failureCount, circuit_open_until: failure.circuitOpenUntil, next_sync_at: failure.nextSyncAt }
+          })(),
+        }
+    const { error: connectionUpdateError } = await supabase
       .from('marketplace_connections')
-      .update({ last_sync_at: finishedAt.toISOString(), status: 'connected', last_error: lastErrorSummary })
+      .update(connectionPatch)
       .eq('id', connection.id)
       .eq('company_id', companyId)
+    if (connectionUpdateError) throw new Error(`Failed to persist Mercado Livre sync outcome: ${connectionUpdateError.message}`)
     await logSyncEvent({
       companyId,
       connectionId: connection.id,
@@ -264,7 +344,11 @@ export async function runMercadoLivreSync(companyId: string): Promise<SyncSummar
     const finishedAt = new Date()
     const message = err instanceof Error ? err.message : 'Unknown sync failure'
 
-    await supabase.from('marketplace_connections').update({ status: 'error', last_error: message }).eq('id', connection.id).eq('company_id', companyId)
+    const failure = nextIntegrationFailureState(connection.failure_count, finishedAt)
+    await supabase.from('marketplace_connections').update({
+      status: 'requires_attention', last_error: message,
+      failure_count: failure.failureCount, circuit_open_until: failure.circuitOpenUntil, next_sync_at: failure.nextSyncAt,
+    }).eq('id', connection.id).eq('company_id', companyId)
     await logSyncEvent({
       companyId,
       connectionId: connection.id,

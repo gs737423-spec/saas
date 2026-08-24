@@ -26,9 +26,10 @@ describe('discoverVtexSkuIdsBySalesChannel (fallback quando a descoberta global 
     })
     const client = new VtexClient(credentials, { fetchImpl: fetchImpl as unknown as typeof fetch })
 
-    const skuIds = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
+    const result = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
 
-    expect(new Set(skuIds)).toEqual(new Set([100, 200, 300])) // deduplicado
+    expect(new Set(result.skuIds)).toEqual(new Set([100, 200, 300])) // deduplicado
+    expect(result.complete).toBe(true)
     expect(fetchImpl).toHaveBeenCalledWith(expect.stringContaining('/saleschannel/list'), expect.anything())
     expect(fetchImpl).toHaveBeenCalledWith(expect.stringContaining('/stockkeepingunitidsbysaleschannel/1'), expect.anything())
     expect(fetchImpl).toHaveBeenCalledWith(expect.stringContaining('/stockkeepingunitidsbysaleschannel/7'), expect.anything())
@@ -45,13 +46,13 @@ describe('discoverVtexSkuIdsBySalesChannel (fallback quando a descoberta global 
     })
     const client = new VtexClient(credentials, { fetchImpl: fetchImpl as unknown as typeof fetch })
 
-    const skuIds = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
+    const result = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
 
-    expect(skuIds).toEqual([42])
+    expect(result).toEqual({ skuIds: [42], complete: true })
     expect(fetchImpl).not.toHaveBeenCalledWith(expect.stringContaining('/stockkeepingunitidsbysaleschannel/9'), expect.anything())
   })
 
-  it('um sales channel com erro não derruba a descoberta dos demais', async () => {
+  it('um sales channel com erro preserva os IDs encontrados, mas marca a descoberta incompleta', async () => {
     const fetchImpl = vi.fn(async (url: string | URL) => {
       const path = String(url)
       if (path.includes('/saleschannel/list')) return new Response(JSON.stringify([{ Id: 1 }, { Id: 2 }]), { status: 200 })
@@ -61,26 +62,26 @@ describe('discoverVtexSkuIdsBySalesChannel (fallback quando a descoberta global 
     })
     const client = new VtexClient(credentials, { fetchImpl: fetchImpl as unknown as typeof fetch, sleep: vi.fn(async () => undefined) })
 
-    const skuIds = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
+    const result = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
 
-    expect(skuIds).toEqual([55]) // canal 1 falhou, canal 2 continuou
+    expect(result).toEqual({ skuIds: [55], complete: false })
   })
 
   it('nenhum sales channel ativo -> retorna vazio sem inventar dado', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify([]), { status: 200 }))
     const client = new VtexClient(credentials, { fetchImpl: fetchImpl as unknown as typeof fetch })
 
-    const skuIds = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
+    const result = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
 
-    expect(skuIds).toEqual([])
+    expect(result).toEqual({ skuIds: [], complete: true })
   })
 
   it('getSalesChannels falhando não lança — degrada pra vazio, chamador decide se é catálogo vazio', async () => {
     const fetchImpl = vi.fn(async () => new Response('{}', { status: 500 }))
     const client = new VtexClient(credentials, { fetchImpl: fetchImpl as unknown as typeof fetch, sleep: vi.fn(async () => undefined) })
 
-    const skuIds = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
+    const result = await discoverVtexSkuIdsBySalesChannel(client, 'company-1', 'conn-1')
 
-    expect(skuIds).toEqual([])
+    expect(result).toEqual({ skuIds: [], complete: false })
   })
 })

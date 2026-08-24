@@ -90,6 +90,7 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
   const cfg = statusConfig[status.status]
   const isConfigMissing = status.status === 'config_missing'
   const isConnected = status.status === 'connected'
+  const canSync = isConnected || status.status === 'requires_attention'
   const needsReconnect = status.status === 'error' || status.status === 'expired' || status.status === 'disconnected'
 
   return (
@@ -129,7 +130,7 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
           </div>
         )}
 
-        {isConnected && (
+        {canSync && (
           <div className="mt-3 flex gap-4 text-[11px]">
             <div>
               <span className="text-text-muted">Produtos importados</span>
@@ -176,7 +177,7 @@ function MarketplaceCard({ name, status, loading, syncing, connectError, onConne
               {status.status === 'disconnected' ? `Conectar ${name}` : 'Reconectar'}
             </button>
           )}
-          {isConnected && (
+          {canSync && (
             <button
               onClick={onSync}
               disabled={syncing}

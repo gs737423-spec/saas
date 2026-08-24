@@ -35,7 +35,7 @@ export default function Financeiro() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?days=${period.days}`).then((data) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((data) => {
       if (!cancelled) {
         setReal(data)
         setLoading(false)
@@ -44,7 +44,7 @@ export default function Financeiro() {
     return () => {
       cancelled = true
     }
-  }, [period.days])
+  }, [period.query])
 
   const marketplaceOptions = useMemo(() => [...new Set([
     ...(real?.byMarketplace ?? []).map((row) => row.marketplace),
@@ -75,7 +75,7 @@ export default function Financeiro() {
   }
 
   if (!real || !real.ok || (real.overview.source !== 'real' && real.overview.source !== 'demo')) {
-    return <ConnectMarketplacePrompt icon={Wallet} title="Conecte um marketplace pra ver o financeiro" description="Faturamento, estornos e extrato reais aparecem aqui assim que houver pedido pago sincronizado." />
+    return <ConnectMarketplacePrompt icon={Wallet} title="Conecte um marketplace pra ver o financeiro" description="Faturamento e extrato aparecem após a sincronização; reembolsos só são exibidos quando a origem os informa explicitamente." />
   }
 
   return (

@@ -9,6 +9,7 @@ import { logSyncEvent } from '../../../src/server/integrations/syncLog.js'
 import { publicVtexError } from '../../../src/server/integrations/vtex/errors.js'
 import { testVtexConnection } from '../../../src/server/integrations/vtex/connection.js'
 import { normalizeVtexAccountName, normalizeVtexChannelMappings, normalizeVtexHistoryMonths, validateVtexCredential } from '../../../src/server/integrations/vtex/validation.js'
+import { isExternalAccountSwitch } from '../../../src/server/integrations/accountIdentity.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return void res.status(405).json({ ok: false, error: 'method_not_allowed' })
@@ -25,12 +26,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const channelMappings = normalizeVtexChannelMappings(req.body?.channelMappings)
     const historyMonths = normalizeVtexHistoryMonths(req.body?.historyMonths)
+    const supabase = await getSupabaseAdmin()
+    const { data: currentConnection, error: currentConnectionError } = await supabase
+      .from('marketplace_connections')
+      .select('id, external_account_id, provider_metadata')
+      .eq('company_id', auth.companyId)
+      .eq('provider', 'vtex')
+      .maybeSingle()
+    if (currentConnectionError) throw new Error(currentConnectionError.message)
+    if (isExternalAccountSwitch(currentConnection?.external_account_id, credentials.accountName)) {
+      res.status(409).json({ ok: false, error: 'VTEX_ACCOUNT_MISMATCH', message: 'A conta VTEX informada é diferente da conexão existente. A conexão e o histórico atuais foram preservados.' })
+      return
+    }
     const test = await testVtexConnection(credentials)
     if (!test.valid || test.missingRequired.length > 0) {
       res.status(200).json({ ok: false, error: test.valid ? 'VTEX_PERMISSION_REQUIRED' : 'VTEX_INVALID_CREDENTIALS', message: test.valid ? 'Credencial válida, mas faltam permissões para concluir a integração.' : 'A credencial VTEX é inválida.', permissions: test.permissions })
       return
     }
-    const supabase = await getSupabaseAdmin()
     const { data, error } = await supabase.from('marketplace_connections').upsert({
       company_id: auth.companyId,
       provider: 'vtex',
@@ -39,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       credential_key_encrypted: encryptSecret(credentials.appKey),
       credential_secret_encrypted: encryptSecret(credentials.appToken),
       permissions: Object.fromEntries(test.permissions.map((permission) => [permission.domain, permission.ok])),
-      provider_metadata: { authMethod: 'application_key', channelMappings, historyMonths },
+      provider_metadata: { ...(currentConnection?.provider_metadata ?? {}), authMethod: 'application_key', channelMappings, historyMonths },
       last_error: null,
       failure_count: 0,
       circuit_open_until: null,

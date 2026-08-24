@@ -42,7 +42,7 @@ export default function RevenueByChannelChart() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<DailyApiResponse>(`/api/dashboard/finance-daily?days=${period.days}`).then((response) => {
+    apiFetchJson<DailyApiResponse>(`/api/dashboard/finance-daily?${period.query}`).then((response) => {
       if (!cancelled) {
         setAllDays(response?.days ?? [])
         setAvailableChannels(response?.channels?.length ? response.channels : fallbackChannels)
@@ -50,7 +50,7 @@ export default function RevenueByChannelChart() {
       }
     })
     return () => { cancelled = true }
-  }, [period.days])
+  }, [period.query])
 
   const compare = compareOptions.find((option) => option.key === compareKey) ?? compareOptions[1]
   const rows = useMemo(() => {

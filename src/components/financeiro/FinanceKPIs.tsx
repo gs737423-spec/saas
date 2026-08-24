@@ -1,5 +1,5 @@
 import { DollarSign, RotateCcw, Wallet } from 'lucide-react'
-import type { FinanceOverview } from '@/data/financeShapes'
+import { hasKnownNetValue, type FinanceOverview } from '@/data/financeShapes'
 import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
@@ -12,6 +12,8 @@ interface CardDef {
   context: string
   icon: typeof DollarSign
   tone: string
+  unavailable?: boolean
+  unavailableContext?: string
 }
 
 export default function FinanceKPIs({ overview }: { overview: FinanceOverview }) {
@@ -36,6 +38,8 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       context: 'Vendas canceladas ou devolvidas',
       icon: RotateCcw,
       tone: '#FF5E7D',
+      unavailable: overview.refundDataStatus !== 'known',
+      unavailableContext: 'A integração não informou reembolsos confirmados',
     },
     {
       key: 'net',
@@ -45,6 +49,8 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       context: 'Após deduções operacionais',
       icon: Wallet,
       tone: '#138A63',
+      unavailable: !hasKnownNetValue(overview),
+      unavailableContext: 'Taxas ou reembolsos ainda estão incompletos',
     },
   ]
 
@@ -61,9 +67,9 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
               </div>
             </div>
             <div className="mt-1.5 font-mono text-[24px] font-bold leading-none tracking-tight text-text-primary">
-              <AnimatedNumber value={c.raw} format={c.format} />
+              {c.unavailable ? <span className="text-[18px] text-text-secondary">Indisponível</span> : <AnimatedNumber value={c.raw} format={c.format} />}
             </div>
-            <div className="mt-auto pt-1.5 text-[11px] text-text-muted">{c.context}</div>
+            <div className="mt-auto pt-1.5 text-[11px] text-text-muted">{c.unavailable ? c.unavailableContext : c.context}</div>
           </div>
         )
       })}

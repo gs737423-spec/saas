@@ -666,6 +666,8 @@ export interface OverviewKpi {
   context: string
   /** Micro-tag de transparência de dado (ex.: "estimado"). */
   tag?: string
+  /** Impede que ausência de cobertura financeira seja renderizada como zero. */
+  unavailable?: boolean
   tone: KpiTone
   /** true = número âncora, ganha mais destaque visual. */
   hero?: boolean

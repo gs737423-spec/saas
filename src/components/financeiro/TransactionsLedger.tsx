@@ -59,7 +59,7 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
           <p className="mt-0.5 text-xs text-text-muted">
-            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · vendas, tarifas, estornos e ajustes
+            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · somente eventos financeiros confirmados
           </p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -150,9 +150,9 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
                       </td>
                       <td className="py-2.5 pr-4 font-mono text-[11px] text-text-muted">{t.identifier}</td>
                       <td className="py-2.5 pr-4 text-center font-mono text-text-secondary">R$ {brl(t.gross)}</td>
-                      <td className="py-2.5 pr-4 text-center font-mono text-text-muted">R$ {brl(t.discount)}</td>
-                      <td className={`py-2.5 text-center font-mono font-medium ${t.net >= 0 ? 'text-text-primary' : 'text-accent-rose'}`}>
-                        R$ {brl(t.net)}
+                      <td className="py-2.5 pr-4 text-center font-mono text-text-muted">{t.feeDataStatus === 'known' ? `R$ ${brl(t.discount)}` : '—'}</td>
+                      <td className={`py-2.5 text-center font-mono font-medium ${t.feeDataStatus !== 'known' ? 'text-text-muted' : t.net >= 0 ? 'text-text-primary' : 'text-accent-rose'}`}>
+                        {t.feeDataStatus === 'known' ? `R$ ${brl(t.net)}` : 'Indisponível'}
                       </td>
                     </tr>
                   )

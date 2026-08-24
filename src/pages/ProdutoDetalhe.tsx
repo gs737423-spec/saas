@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, Loader2, Receipt, ShoppingCart, Tag, Percent, Boxes, Clock, TrendingUp, TrendingDown, PieChart,
 } from 'lucide-react'
@@ -7,7 +7,7 @@ import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
 import { useTheme } from '@/contexts/ThemeContext'
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
-import type { DashboardProduct, DashboardProductsResponse, ProductSalesResponse } from '@/server/dashboardProducts'
+import { selectDashboardProductMatches, type DashboardProduct, type DashboardProductsResponse, type ProductSalesResponse } from '@/server/dashboardProducts'
 import SalesTrendChart from '@/components/produto-detalhe/SalesTrendChart'
 import ProdutoHealthScore, { computeHealthBreakdown } from '@/components/produto-detalhe/ProdutoHealthScore'
 import MarketplacePerformanceBreakdown from '@/components/produto-detalhe/MarketplacePerformanceBreakdown'
@@ -156,6 +156,11 @@ function ProdutoDetalheReal({ matches, periodDays, sales }: { matches: Dashboard
 
 export default function ProdutoDetalhe() {
   const { sku } = useParams<{ sku: string }>()
+  const [searchParams] = useSearchParams()
+  const exactReference = {
+    connectionId: searchParams.get('connection'),
+    externalProductId: searchParams.get('product'),
+  }
   const { period } = usePeriod()
   const [real, setReal] = useState<DashboardProductsResponse | null>(null)
   const [loadingReal, setLoadingReal] = useState(true)
@@ -163,7 +168,7 @@ export default function ProdutoDetalhe() {
 
   useEffect(() => {
     let cancelled = false
-    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?days=${period.days}`).then((data) => {
+    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`).then((data) => {
       if (!cancelled) {
         setReal(data)
         setLoadingReal(false)
@@ -172,7 +177,7 @@ export default function ProdutoDetalhe() {
     return () => {
       cancelled = true
     }
-  }, [period.days])
+  }, [period.query])
 
   useEffect(() => {
     if (!real?.ok) return
@@ -180,11 +185,11 @@ export default function ProdutoDetalhe() {
       setSales({ ok: true, source: 'demo', points: [], lastSyncAt: new Date().toISOString() })
       return
     }
-    const productMatches = real.items.filter((product) => (product.sku && product.sku === sku) || product.id === sku)
+    const productMatches = selectDashboardProductMatches(real.items, sku, exactReference)
     if (productMatches.length === 0) return
     const refs = productMatches.map((product) => ({ connectionId: product.connectionId, externalProductId: product.id }))
-    void apiFetchJson<ProductSalesResponse>(`/api/dashboard/product-sales?days=${period.days}&refs=${encodeURIComponent(JSON.stringify(refs))}`).then(setSales)
-  }, [period.days, real, sku])
+    void apiFetchJson<ProductSalesResponse>(`/api/dashboard/product-sales?${period.query}&refs=${encodeURIComponent(JSON.stringify(refs))}`).then(setSales)
+  }, [period.query, real, sku, exactReference.connectionId, exactReference.externalProductId])
 
   if (loadingReal) {
     return (
@@ -198,7 +203,7 @@ export default function ProdutoDetalhe() {
   // Um SKU vendido em 2+ marketplaces produz 2+ linhas em items (1 por
   // anúncio/conexão) — pega todas, não só a primeira, senão o
   // faturamento/estoque dos outros marketplaces some da tela sem aviso.
-  const matches = (real?.items ?? []).filter((p) => (p.sku && p.sku === sku) || p.id === sku)
+  const matches = selectDashboardProductMatches(real?.items ?? [], sku, exactReference)
 
   if (matches.length > 0) {
     return <ProdutoDetalheReal matches={matches} periodDays={period.days} sales={sales} />

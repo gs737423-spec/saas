@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { apiFetch } from '@/lib/apiFetch'
 import { whatsappAccessHelpUrl } from '@/lib/whatsapp'
-import ExpandingLoginCard from '@/site/components/login-expanding/ExpandingLoginCard'
+import LoginCard from '@/site/components/login-panel/LoginCard'
 import type { LoginBridge } from '@/site/components/login-expanding/expanding-login.types'
 import { contact } from '@/site/content'
 import '@/site/site.css'
@@ -23,7 +23,7 @@ const SOFT_COOLDOWN_MS = 30_000
  * Página /login — "MKTOnline Expanding Access". A lógica de autenticação
  * (Supabase Auth, recuperação de senha, cooldown local, soft-limit, proteção
  * contra enumeração, loading, erro, redirecionamento) vive AQUI e é passada,
- * via `bridge`, para o card visual `ExpandingLoginCard`. O visual não
+ * via `bridge`, para o card visual `LoginCard`. O visual não
  * reimplementa nenhuma regra sensível.
  */
 export default function Login() {
@@ -233,7 +233,7 @@ export default function Login() {
   }
 
   return (
-    <div className="access-page">
+    <div className="access-page login-shell">
       <div className="access-utilities">
         <Link to="/" className="access-utility-link">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao site
@@ -248,7 +248,7 @@ export default function Login() {
         </a>
       </div>
 
-      <ExpandingLoginCard bridge={bridge} />
+      <LoginCard bridge={bridge} />
     </div>
   )
 }
