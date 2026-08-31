@@ -38,3 +38,8 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 
 - O usuário rejeitou a composição enterprise do login. A versão imediatamente anterior foi restaurada como baseline visual, sem alterar regras de autenticação.
 - TypeScript e build passaram após a restauração. A próxima ação é a aprovação visual humana em `/login`.
+
+## Complemento — alinhamento da lista de GMV
+
+- A coluna de faturamento agora é dimensionada uma vez a partir do maior valor renderizado no conjunto.
+- Número, legenda `faturamento`, início da barra e percentual passam a compartilhar a mesma grade, inclusive quando um marketplace possui mais dígitos que os demais.

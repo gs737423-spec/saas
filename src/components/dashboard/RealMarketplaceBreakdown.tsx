@@ -53,9 +53,10 @@ function GrowthCell({ label, value }: { label: string; value: number | null }) {
   )
 }
 
-function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: number }) {
+function Row({ m, rank, share, revenueColumnWidth }: { m: MarketplaceFinance; rank: number; share: number; revenueColumnWidth: string }) {
   const brand = getMarketplaceColor(m.marketplace)
   const isLeader = rank === 1
+  const revenue = `R$ ${brl(m.grossRevenue)}`
 
   return (
     <div className={`group flex flex-1 items-center gap-2.5 rounded-sm px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-5 ${isLeader ? 'overview-marketplace-row-lead' : 'overview-marketplace-row'}`}>
@@ -68,9 +69,9 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
         <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
       </div>
 
-      <div className="shrink-0 text-right">
-        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.grossRevenue)}</div>
-        <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
+      <div className="shrink-0 text-right tabular-nums" style={{ width: revenueColumnWidth }}>
+        <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">{revenue}</div>
+        <div className="text-center font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
       <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 md:flex">
@@ -141,6 +142,7 @@ export default function RealMarketplaceBreakdown() {
   // zerado, nunca some da tela (ver decisão 2026-08-06).
   const rows = fillAllMarketplaces(data!.byMarketplace)
   const totalGross = rows.reduce((sum, r) => sum + r.grossRevenue, 0)
+  const revenueColumnWidth = `calc(${Math.max(...rows.map((row) => `R$ ${brl(row.grossRevenue)}`.length))}ch + 0.75rem)`
 
   const sorted = [...rows].sort((a, b) => {
     if (sort === 'avgTicket') return b.averageTicket - a.averageTicket
@@ -173,7 +175,7 @@ export default function RealMarketplaceBreakdown() {
 
       <div className="workspace-gmv-rows flex flex-1 flex-col gap-2.5 sm:gap-3">
         {sorted.map((m, i) => (
-          <Row key={m.marketplace} m={m} rank={i + 1} share={totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0} />
+          <Row key={m.marketplace} m={m} rank={i + 1} share={totalGross > 0 ? (m.grossRevenue / totalGross) * 100 : 0} revenueColumnWidth={revenueColumnWidth} />
         ))}
       </div>
     </div>
