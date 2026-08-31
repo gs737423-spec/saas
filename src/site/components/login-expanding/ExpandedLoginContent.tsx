@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Lock, Loader2, MessageCircle, ArrowLeft, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Loader2, MessageCircle, ArrowLeft, AlertTriangle, ShieldCheck } from 'lucide-react'
 import LoginField from '@/site/components/login/LoginField'
 import type { LoginBridge } from './expanding-login.types'
 
@@ -28,15 +28,15 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
   // versões do React (algumas ainda não declaram o atributo).
   const inertProps: Record<string, unknown> = revealing ? {} : { inert: true }
   return (
-    <div className="access-content" id="login-access-content" {...inertProps}>
+    <div className="lx-expanded" id="lx-expanded" {...inertProps}>
       {b.view === 'mfa' ? (
         <>
           <div className="flex flex-col items-center gap-1.5 text-center">
             <ShieldCheck className="h-5 w-5 text-accent-primary" aria-hidden="true" />
-            <p className="access-support">Digite o código de 6 dígitos do seu app autenticador.</p>
+            <p className="lx-support">Digite o código de 6 dígitos do seu app autenticador.</p>
           </div>
 
-          <form onSubmit={b.onMfaSubmit} noValidate className="access-form" data-error={b.mfaError ? 'true' : undefined}>
+          <form onSubmit={b.onMfaSubmit} noValidate className="lx-form" data-error={b.mfaError ? 'true' : undefined}>
             <LoginField
               id="login-mfa-code"
               label="Código de verificação"
@@ -63,14 +63,14 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               {b.mfaLoading ? (
                 <Loader2 className="login-submit__icon h-4 w-4 animate-spin" />
               ) : (
-                <ArrowRight className="login-submit__icon h-4 w-4" aria-hidden="true" />
+                <span className="login-submit__icon" aria-hidden="true">→</span>
               )}
             </button>
           </form>
         </>
       ) : b.view === 'login' ? (
         <>
-          <form onSubmit={b.onSubmit} noValidate className="access-form" data-error={b.error && !b.inCooldown ? 'true' : undefined}>
+          <form onSubmit={b.onSubmit} noValidate className="lx-form" data-error={b.error && !b.inCooldown ? 'true' : undefined}>
             <LoginField
               id="login-email"
               label="E-mail"
@@ -78,7 +78,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               value={b.email}
               onChange={b.setEmail}
               icon={Mail}
-              autoComplete="email"
+              autoComplete="username"
               inputMode="email"
               disabled={b.inCooldown}
               inputRef={emailRef}
@@ -133,13 +133,12 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               {b.loading ? (
                 <Loader2 className="login-submit__icon h-4 w-4 animate-spin" />
               ) : (
-                <ArrowRight className="login-submit__icon h-4 w-4" aria-hidden="true" />
+                <span className="login-submit__icon" aria-hidden="true">→</span>
               )}
             </button>
           </form>
 
-          <div className="access-legal">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          <div className="lx-legal">
             <Link to="/privacidade">Política de Privacidade</Link>
             <span aria-hidden="true">·</span>
             <Link to="/termos">Termos de Uso</Link>
@@ -155,7 +154,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao login
           </button>
 
-          <p className="access-support">
+          <p className="lx-support">
             Informe seu e-mail. Se houver uma conta vinculada a ele, enviaremos as instruções de recuperação.
           </p>
 
@@ -164,7 +163,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
               Se existir uma conta vinculada a esse e-mail, você receberá as instruções de recuperação.
             </div>
           ) : (
-            <form onSubmit={b.onForgotSubmit} noValidate className="access-form">
+            <form onSubmit={b.onForgotSubmit} noValidate className="lx-form">
               <LoginField
                 id="forgot-email"
                 label="E-mail"
@@ -172,7 +171,7 @@ export default function ExpandedLoginContent({ bridge, emailRef, revealing }: Pr
                 value={b.forgotEmail}
                 onChange={b.setForgotEmail}
                 icon={Mail}
-                autoComplete="email"
+                autoComplete="username"
                 inputMode="email"
                 disabled={b.forgotLoading}
                 required

@@ -1,5 +1,19 @@
 # SESSION-HANDOFF — Vintec home institucional
 
+## Retomada atual — restauração visual do login (2026-08-31)
+
+- A composição enterprise atual do login foi rejeitada visualmente e substituída pela versão imediatamente anterior: card central estático MKTOnline sobre atmosfera navy, com formulário direto.
+- Restaurados somente `Login.tsx` e os componentes visuais em `login-expanding`; `login-enterprise.css` removido por estar sem consumidores.
+- Autenticação Supabase, MFA, recuperação, cooldown, mensagens de erro, loading, acessibilidade e redirecionamento não foram reescritos.
+- Validações: TypeScript e build passaram. Falta revisão visual humana da rota `/login` antes de qualquer publicação.
+
+## Retomada atual — clareza do cliente e desempenho analítico (2026-08-31)
+
+- Removido o selo `DADO REAL` da visão do cliente; a origem real segue preservada no contrato da API, sem ocupar o espaço de KPIs.
+- Barras financeiras não dependem mais de colunas de valor fixas: texto, faixa e percentual possuem layout independente e a faixa quebra em largura restrita em vez de cruzar números grandes.
+- Desempenho: cache curto, deduplicado e tenant/session-scoped foi adicionado a leituras de dashboard; refresh de integrações o invalida. Financeiro calcula crescimento com cinco dias específicos em vez de trazer 366 dias completos; Dashboard/Marketplaces não requisitam o extrato que não usam.
+- Validações locais: TypeScript passou; 16/16 testes focados passaram; build passou. Falta inspeção visual autenticada e publicação quando autorizada.
+
 ## Retomada atual — VTEX Pricing e pedidos incrementais (2026-08-31)
 
 - Diagnóstico remoto: `permissions.pricing=false` é legado/inconclusivo. A API de preço-base respondeu para 6.260 SKUs e os lotes recentes tiveram `priceFailures=0`; 11.534 SKUs não têm preço-base e chegam como 404, sem evidência de 403 global.

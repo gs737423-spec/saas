@@ -1,7 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { getMarketplaceColor } from '@/data/mockData'
 import { supabase } from '@/lib/supabaseClient'
-import { withViewAsCompanyId } from '@/lib/apiFetch'
+import { invalidateDashboardCache, withViewAsCompanyId } from '@/lib/apiFetch'
 
 export type IntegrationStatus = 'disconnected' | 'pending' | 'connecting' | 'connected' | 'syncing' | 'requires_attention' | 'error' | 'expired' | 'config_missing'
 
@@ -193,6 +193,9 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connectErrorVtex, setConnectErrorVtex] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    // Uma mutação/conclusão de integração pode alterar os agregados do
+    // dashboard. Limpa o cache curto antes de publicar o novo status.
+    invalidateDashboardCache()
     const [{ data: status, message }, { data: shopeeStatus }, { data: vtexStatus }, logsResponse] = await Promise.all([
       fetchJsonWithError<MercadoLivreStatus>('/api/integrations/status'),
       fetchJsonWithError<ShopeeStatus>('/api/integrations/status?provider=shopee'),

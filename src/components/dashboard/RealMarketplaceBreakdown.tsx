@@ -68,13 +68,13 @@ function Row({ m, rank, share }: { m: MarketplaceFinance; rank: number; share: n
         <span className="truncate text-[14px] font-medium text-text-primary sm:text-[15px]">{m.marketplace}</span>
       </div>
 
-      <div className="w-24 shrink-0 text-right sm:w-28">
+      <div className="shrink-0 text-right">
         <div className="whitespace-nowrap font-mono text-[15px] font-bold text-text-primary sm:text-[16.5px]">R$ {brl(m.grossRevenue)}</div>
         <div className="font-mono text-[9.5px] text-text-muted">faturamento</div>
       </div>
 
-      <div className="hidden min-w-[100px] max-w-[920px] flex-1 items-center gap-2 md:flex">
-        <div className="overview-track h-1.5 flex-1 overflow-hidden rounded-full">
+      <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 md:flex">
+        <div className="overview-track h-1.5 min-w-24 flex-1 overflow-hidden rounded-full">
           <div className="h-full rounded-full" style={{ width: `${share}%`, background: `linear-gradient(90deg, ${brand}55, ${brand})` }} />
         </div>
         <span className="w-10 shrink-0 text-right font-mono text-[11.5px] text-text-secondary">{pct(share)}%</span>
@@ -111,7 +111,7 @@ export default function RealMarketplaceBreakdown() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((res) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}&include_transactions=false`).then((res) => {
       if (!cancelled) {
         setData(res)
         setLoading(false)

@@ -75,12 +75,12 @@ function MiniBarChart({ title, question, data, maxValue }: MiniChartProps) {
         {data.map((d) => {
           const brand = getMarketplaceColor(d.marketplace)
           return (
-            <div key={d.marketplace} className="flex items-center gap-2.5">
+            <div key={d.marketplace} className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
               <span className="w-20 shrink-0 truncate text-[11.5px] text-text-secondary">{d.marketplace}</span>
-              <div className="overview-track h-2 flex-1 overflow-hidden rounded-full">
+              <div className="overview-track h-2 min-w-20 flex-1 overflow-hidden rounded-full">
                 <div className="h-full rounded-full" style={{ width: `${(d.value / max) * 100}%`, background: `linear-gradient(90deg, ${brand}66, ${brand})` }} />
               </div>
-              <span className="w-16 shrink-0 text-right font-mono text-[12px] font-semibold text-text-primary">{d.display}</span>
+              <span className="shrink-0 whitespace-nowrap text-right font-mono text-[12px] font-semibold text-text-primary">{d.display}</span>
             </div>
           )
         })}
@@ -124,7 +124,7 @@ export default function Marketplaces() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((res) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}&include_transactions=false`).then((res) => {
       if (!cancelled) {
         setData(res)
         setLoading(false)

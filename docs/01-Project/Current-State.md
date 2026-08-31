@@ -9,6 +9,20 @@ updated: 2026-08-14
 
 > Este documento deve conter apenas fatos confirmados no código, nos testes ou na infraestrutura.
 
+## Restauração visual do login (2026-08-31)
+
+- O layout de acesso introduzido como composição enterprise foi rejeitado visualmente e removido. O login voltou à composição anterior: card central estático MKTOnline, fundo navy atmosférico e formulário direto.
+- A camada de autenticação foi preservada: Supabase Auth, MFA, recuperação anti-enumeração, cooldown, mensagens, loading e redirecionamento continuam em `Login.tsx` sem mudança de lógica.
+- O CSS exclusivo do layout rejeitado (`login-enterprise.css`) foi removido após confirmar que não possuía outro consumidor. Validações locais: TypeScript e build passaram; revisão humana da rota autenticada permanece pendente.
+
+## Correção de leitura do cliente e desempenho analítico (2026-08-31)
+
+- Removido o selo técnico `DADO REAL` dos KPIs da visão do cliente. A origem do dado permanece no contrato da API; não é mais apresentada como rótulo que concorre com a métrica.
+- Barras de participação do Dashboard e rankings de Marketplaces não usam mais coluna monetária de largura fixa. Valor, barra e percentual têm áreas independentes; em falta de espaço, a faixa quebra sem atravessar números, inclusive para valores monetários longos.
+- Leituras `/api/dashboard/*` agora têm cache curto em memória, isolado por usuário e URL/tenant, com deduplicação de requisições em voo. Uma atualização de conexão invalida o cache; nenhuma resposta é compartilhada entre sessões ou empresas.
+- O endpoint financeiro deixou de buscar todo o histórico de 366 dias para calcular D-1/D-7/D-30/D-365: consulta somente os cinco dias necessários. Dashboard e Marketplaces também omitem o extrato de transações que não exibem, reduzindo payload e trabalho de serialização.
+- Validações locais: `npm run typecheck` passou; 16/16 testes focados passaram; `npm run build` passou. Revisão visual autenticada ainda depende de uma sessão de cliente.
+
 ## Correção VTEX — preço calculado e janela incremental (2026-08-31)
 
 - Evidência remota: o conector obteve resposta de preço-base para 6.260 SKUs e zero falhas de Pricing nos últimos lotes; os demais 11.534 SKUs retornaram ausência de preço-base (`404`), não `403`. Portanto, o campo legado `permissions.pricing=false` não comprova falta de permissão e pode estar desatualizado.

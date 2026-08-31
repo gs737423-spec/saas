@@ -9,6 +9,20 @@ import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, de
 // (authorize/sync/callback): "ver como" é sempre leitura, nunca dispara
 // ação em nome de outra empresa.
 const VIEW_AS_URL_PREFIXES = ['/api/dashboard/', '/api/integrations/status', '/api/integrations/logs']
+const DASHBOARD_CACHE_TTL_MS = 15_000
+
+interface CachedDashboardResponse {
+  expiresAt: number
+  value: unknown
+}
+
+// Cache curto, somente em memória do navegador. A chave inclui usuário e URL
+// (que já contém company_id no modo "ver como"), então nenhuma resposta pode
+// ser reaproveitada entre sessões ou tenants. Ele evita baixar o mesmo
+// snapshot ao alternar entre seções e voltar ao filtro recém-consultado.
+const dashboardCache = new Map<string, CachedDashboardResponse>()
+const dashboardInFlight = new Map<string, Promise<unknown | null>>()
+let dashboardCacheGeneration = 0
 
 /** "Acessar Painel do Lojista" — só nas leituras de dashboard/integrações
  *  (GET), nunca em escrita (POST/PATCH/DELETE seguem exigindo membership
@@ -28,17 +42,34 @@ export function withViewAsCompanyId(url: string, init?: RequestInit): string {
   return withParam.pathname + withParam.search
 }
 
+export function invalidateDashboardCache(): void {
+  dashboardCacheGeneration += 1
+  dashboardCache.clear()
+  dashboardInFlight.clear()
+}
+
+async function authenticatedRequest(url: string, init?: RequestInit) {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  return {
+    sessionScope: data.session?.user.id ?? 'anonymous',
+    requestUrl: withViewAsCompanyId(url, init),
+    init: {
+      ...init,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers ?? {}),
+      },
+    },
+  }
+}
+
 /** fetch() com o access_token do Supabase Auth no header Authorization —
  *  todo endpoint de api/** que exige sessão (requireUser/requireCompany/
  *  requireAdmin) depende disso. */
 export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
-  const headers = {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(init?.headers ?? {}),
-  }
-  return fetch(withViewAsCompanyId(url, init), { ...init, headers })
+  const request = await authenticatedRequest(url, init)
+  return fetch(request.requestUrl, request.init)
 }
 
 // Modo Demonstração — intercepta só os 4 endpoints de leitura do dashboard
@@ -74,18 +105,42 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
   if (demo !== null) return demo as T
 
   try {
-    const res = await apiFetch(url, init)
-    if (!res.ok) {
-      // Todo chamador trata `null` como "sem dado ainda" (ex: mostra prompt
-      // de conectar marketplace) — indistinguível de uma falha real (500,
-      // sessão expirada). Log aqui é o mínimo pra não esconder o incidente
-      // por completo; distinguir os dois estados na UI de cada página é uma
-      // mudança maior, por página, que não cabe nesta correção pontual.
-      console.error(`[apiFetchJson] ${res.status} ${url}`)
-      return null
+    const request = await authenticatedRequest(url, init)
+    const isDashboardRead = (init?.method ?? 'GET').toUpperCase() === 'GET'
+      && request.requestUrl.startsWith('/api/dashboard/')
+      && !init?.signal
+
+    const readJson = async (): Promise<T | null> => {
+      const res = await fetch(request.requestUrl, request.init)
+      if (!res.ok) {
+        console.error(`[apiFetchJson] ${res.status} ${url}`)
+        return null
+      }
+      return (await res.json()) as T
     }
-    return (await res.json()) as T
+
+    if (!isDashboardRead) return readJson()
+
+    const cacheKey = `${request.sessionScope}:${request.requestUrl}`
+    const cached = dashboardCache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) return cached.value as T
+
+    const pending = dashboardInFlight.get(cacheKey)
+    if (pending) return (await pending) as T | null
+
+    const generation = dashboardCacheGeneration
+    const pendingRequest = readJson().then((value) => {
+      if (value !== null && generation === dashboardCacheGeneration) {
+        dashboardCache.set(cacheKey, { value, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS })
+      }
+      return value
+    }).finally(() => {
+      dashboardInFlight.delete(cacheKey)
+    })
+    dashboardInFlight.set(cacheKey, pendingRequest)
+    return (await pendingRequest) as T | null
   } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return null
     console.error(`[apiFetchJson] network error ${url}`, err)
     return null
   }

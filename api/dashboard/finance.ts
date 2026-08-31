@@ -34,11 +34,14 @@ function daysAgoKey(n: number): string {
   return dateKey(new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString())
 }
 
-/** D-1/D-7/D-30/D-365 = faturamento pago no dia de hoje vs faturamento pago
- *  exatamente N dias atrás (dia único, não soma de período) — pedido do
- *  usuário explicitamente: "D-7 é hoje comparado com 7 dias atrás". Busca
- *  366 dias pra trás independente do filtro de período da tela, senão D-365
- *  nunca teria dado quando o usuário está olhando os últimos 30 dias. */
+function utcDayBounds(day: string): { from: string; until: string } {
+  const from = new Date(`${day}T00:00:00.000Z`)
+  return { from: from.toISOString(), until: new Date(from.getTime() + 24 * 60 * 60 * 1000).toISOString() }
+}
+
+/** D-1/D-7/D-30/D-365 compara cinco dias exatos. Buscar um ano inteiro de
+ * pedidos para responder quatro comparativos tornava cada troca de filtro
+ * proporcional ao histórico completo da empresa. */
 async function computeGrowthByChannel(
   supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>,
   companyId: string,
@@ -46,23 +49,28 @@ async function computeGrowthByChannel(
   providerByConnectionId: Map<string, string>,
   trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
-  const since366 = new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: yearOrders, error: yearOrdersError } = await fetchAllRows((from, to) =>
-    supabase
-      .from('orders')
-      .select('connection_id, sales_channel, total_amount, ordered_at')
-      .in('connection_id', connectionIds)
-      .eq('company_id', companyId)
-      .eq('status', 'paid')
-      .eq('analytics_included', true)
-      .gte('ordered_at', since366)
-      .range(from, to)
-  )
-  if (yearOrdersError) throw new Error(yearOrdersError.message)
+  const dayKeys = [0, 1, 7, 30, 365].map(daysAgoKey)
+  const snapshots = await Promise.all(dayKeys.map(async (day) => {
+    const bounds = utcDayBounds(day)
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from('orders')
+        .select('connection_id, sales_channel, total_amount, ordered_at')
+        .in('connection_id', connectionIds)
+        .eq('company_id', companyId)
+        .eq('status', 'paid')
+        .eq('analytics_included', true)
+        .gte('ordered_at', bounds.from)
+        .lt('ordered_at', bounds.until)
+        .range(from, to)
+    )
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }))
 
   // provider -> dateKey -> revenue naquele dia
   const revenueByChannelDay = new Map<StoredSalesChannel, Map<string, number>>()
-  for (const o of yearOrders ?? []) {
+  for (const o of snapshots.flat()) {
     const provider = providerByConnectionId.get(o.connection_id)
     const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
     if (!storedChannel) continue
@@ -105,6 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const range = resolveAnalyticsDateRange(req.query, 365)
     const since = range.from.toISOString()
     const until = range.to.toISOString()
+    const includeTransactions = req.query.include_transactions !== 'false'
 
     const supabase = await getSupabaseAdmin()
 
@@ -234,7 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // provider desconhecido/não mapeado nunca vira "Mercado Livre" por
     // fallback — transação de origem indeterminada fica de fora do extrato,
     // não infla o canal errado (mesma regra dos outros endpoints).
-    const transactions: FinanceTransaction[] = [
+    const transactions: FinanceTransaction[] = includeTransactions ? [
       ...paid.flatMap((o) => {
         const provider = providerByConnectionId.get(o.connection_id)
         const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
@@ -269,7 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           feeDataStatus: 'known' as const,
         }]
       }),
-    ].sort((a, b) => (a.date < b.date ? 1 : -1))
+    ].sort((a, b) => (a.date < b.date ? 1 : -1)) : []
 
     res.status(200).json({ ok: true, overview, byMarketplace, transactions, lastSyncAt } satisfies FinanceApiResponse)
   } catch (err) {
