@@ -51,6 +51,18 @@ export interface VtexPrice {
   markup?: number | null
 }
 
+/** Preço final calculado pela VTEX para uma política comercial. É o
+ * fallback de leitura quando o SKU não possui preço-base próprio, mas tem
+ * preço fixo ou regra de tabela. */
+export interface VtexComputedPrice {
+  tradePolicyId?: string | number | null
+  priceTable?: string | null
+  sellingPrice?: number | null
+  listPrice?: number | null
+  costPrice?: number | null
+  priceValidUntil?: string | null
+}
+
 export interface VtexInventoryBalance {
   warehouseId: string
   warehouseName?: string | null

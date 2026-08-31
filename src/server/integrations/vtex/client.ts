@@ -1,6 +1,6 @@
 import { VtexApiError } from './errors.js'
 import { buildVtexBaseUrl, buildVtexPricingBaseUrl, sanitizeVtexPath } from './validation.js'
-import type { VtexCategoryNode, VtexCredentials, VtexInventoryResponse, VtexOrder, VtexOrderListResponse, VtexPrice, VtexSkuContext } from './types.js'
+import type { VtexCategoryNode, VtexComputedPrice, VtexCredentials, VtexInventoryResponse, VtexOrder, VtexOrderListResponse, VtexPrice, VtexSkuContext } from './types.js'
 
 const REQUEST_TIMEOUT_MS = 15_000
 const MAX_TRANSIENT_RETRIES = 3
@@ -129,6 +129,11 @@ export class VtexClient {
   }
   getSku(skuId: number | string) { return this.request<VtexSkuContext>(`/api/catalog_system/pvt/sku/stockkeepingunitbyid/${encodeURIComponent(String(skuId))}`) }
   getPrice(skuId: number | string) { return this.request<VtexPrice>(`/pricing/prices/${encodeURIComponent(String(skuId))}`, {}, 0, this.pricingBaseUrl) }
+  /** Alguns catálogos não configuram basePrice por SKU e usam exclusivamente
+   * tabelas/políticas comerciais. A rota calculada é oficial e devolve as
+   * políticas aplicáveis; o sync escolhe apenas a política padrão `1` para
+   * não atribuir ao produto um preço específico de outro marketplace. */
+  getComputedPrices(skuId: number | string) { return this.request<VtexComputedPrice[]>(`/pricing/prices/${encodeURIComponent(String(skuId))}/computed`, {}, 0, this.pricingBaseUrl) }
   getInventory(skuId: number | string) { return this.request<VtexInventoryResponse>(`/api/logistics/pvt/inventory/skus/${encodeURIComponent(String(skuId))}`) }
   listWarehouses() { return this.request<Array<{ id?: string; name?: string }>>('/api/logistics/pvt/configuration/warehouses') }
   getPricingConfig() { return this.request<Record<string, unknown>>('/pricing/config', {}, 0, this.pricingBaseUrl) }

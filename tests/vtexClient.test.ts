@@ -32,4 +32,11 @@ describe('VTEX client resilience', () => {
       expect(String(error)).not.toContain(credentials.appToken)
     }
   })
+
+  it('uses the Pricing host for computed prices too', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify([]), { status: 200 }))
+    const client = new VtexClient(credentials, { fetchImpl: fetchImpl as typeof fetch })
+    await client.getComputedPrices(123)
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.vtex.com/minha-loja/pricing/prices/123/computed', expect.any(Object))
+  })
 })

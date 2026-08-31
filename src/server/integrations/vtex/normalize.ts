@@ -1,4 +1,4 @@
-import type { VtexAnalyticChannel, VtexCategoryNode, VtexChannelMappings, VtexChannelResolution, VtexInventoryResponse, VtexNormalizedOrder, VtexOrder, VtexPrice, VtexSkuContext } from './types.js'
+import type { VtexAnalyticChannel, VtexCategoryNode, VtexChannelMappings, VtexChannelResolution, VtexComputedPrice, VtexInventoryResponse, VtexNormalizedOrder, VtexOrder, VtexPrice, VtexSkuContext } from './types.js'
 import { resolveVtexChannel as resolveCanonicalVtexChannel, resolveVtexChannelIdentity } from './channelResolution.js'
 
 const PAID_STATUSES = new Set([
@@ -13,6 +13,19 @@ export function normalizeVtexOrderStatus(status: string): string {
   if (CANCELLED_STATUSES.has(normalized)) return 'cancelled'
   if (PAID_STATUSES.has(normalized)) return 'paid'
   return normalized || 'unknown'
+}
+
+/** A tabela/política `1` é a política comercial padrão da VTEX. Como a
+ * entidade interna possui um único preço por SKU, nunca escolhemos o preço
+ * de uma política específica de marketplace por heurística. */
+export function priceFromDefaultVtexPolicy(prices: VtexComputedPrice[]): VtexPrice | null {
+  const defaultPrice = prices.find((price) => String(price.tradePolicyId ?? '') === '1')
+  if (!defaultPrice || !Number.isFinite(Number(defaultPrice.sellingPrice))) return null
+  return {
+    basePrice: Number(defaultPrice.sellingPrice),
+    listPrice: Number.isFinite(Number(defaultPrice.listPrice)) ? Number(defaultPrice.listPrice) : null,
+    costPrice: Number.isFinite(Number(defaultPrice.costPrice)) ? Number(defaultPrice.costPrice) : null,
+  }
 }
 
 /** Identidade externa do pedido — delega para o resolvedor central

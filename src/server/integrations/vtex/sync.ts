@@ -9,7 +9,7 @@ import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
 import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexAffiliatesFromSalesChannels, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
-import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku } from './normalize.js'
+import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku, priceFromDefaultVtexPolicy } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { findCanonicalChannel } from './channelResolution.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -24,7 +24,9 @@ const ORDER_PAGE_SIZE = 30
 // canonicos deduplicam o que ja entrou.
 const SINGLE_PAGE_ORDER_WINDOW = 1
 const ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
-const MIN_ORDER_WINDOW_MS = 1
+// A OMS rejeita intervalos de `lastChange` de 1 ms (400). Um segundo ainda
+// permite isolar picos densos sem gerar filtro de data inválido.
+const MIN_ORDER_WINDOW_MS = 1_000
 const INCREMENTAL_OVERLAP_MS = 15 * 60 * 1000
 export const VTEX_CHANNEL_DISCOVERY_VERSION = 3
 
@@ -703,13 +705,37 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         let priceFailures = 0
         let inventoryFailures = 0
         let catalogPermissionDenied = false
+        let pricingReadConfirmed = false
         const failedSkuIds = new Set<number>()
         const resolvedRetrySkuIds = new Set<number>()
         const { processedCount, timedOut } = await runBudgetedBatches(batch, SKU_CONCURRENCY, deadline, async (skuId) => {
         try {
           const sku = await client.getSku(skuId)
           const [priceResult, inventoryResult] = await Promise.allSettled([client.getPrice(skuId), client.getInventory(skuId)])
-          const price = priceResult.status === 'fulfilled' ? priceResult.value : null
+          let price = priceResult.status === 'fulfilled' ? priceResult.value : null
+          let priceRequestFailed = priceResult.status === 'rejected'
+          // `GET /pricing/prices/{id}` devolve 404 quando não existe preço
+          // base, mesmo que a política padrão tenha preço calculado. Só nesse
+          // caso tentamos a rota calculada; 401/403/5xx preservam o erro
+          // original e não disfarçam problema de credencial ou disponibilidade.
+          if (
+            (priceResult.status === 'rejected' && priceResult.reason instanceof VtexApiError && priceResult.reason.status === 404) ||
+            (priceResult.status === 'fulfilled' && priceResult.value.basePrice == null)
+          ) {
+            const computedResult = await Promise.allSettled([client.getComputedPrices(skuId)])
+            const computed = computedResult[0]
+            if (computed.status === 'fulfilled') {
+              const computedPrice = priceFromDefaultVtexPolicy(computed.value)
+              if (computedPrice) {
+                price = computedPrice
+                priceRequestFailed = false
+              }
+              pricingReadConfirmed = true
+            } else if (!(computed.reason instanceof VtexApiError && computed.reason.status === 404)) {
+              priceFailures += 1
+              if (computed.reason instanceof VtexApiError && [401, 403].includes(computed.reason.status)) catalogPermissionDenied = true
+            }
+          }
           const inventory = inventoryResult.status === 'fulfilled' ? inventoryResult.value : null
           if (priceResult.status === 'rejected') {
             if (!(priceResult.reason instanceof VtexApiError && priceResult.reason.status === 404)) priceFailures += 1
@@ -720,6 +746,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             if (inventoryResult.reason instanceof VtexApiError && [401, 403].includes(inventoryResult.reason.status)) catalogPermissionDenied = true
           }
           if (price) counts.pricesFetched += 1
+          if (priceResult.status === 'fulfilled') pricingReadConfirmed = true
           if (inventory) counts.inventoriesFetched += 1
           const normalized = normalizeVtexSku(sku, price, inventory)
           // Falha de Pricing/Logistics não pode apagar um valor real obtido
@@ -727,7 +754,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           // UPDATE; null só é persistido quando a resposta válida da VTEX
           // realmente não contém valor.
           const productPayload: Record<string, unknown> = { company_id: companyId, connection_id: connection.id, provider: 'vtex', last_seen_at: new Date().toISOString(), active: true, ...normalized.product }
-          if (priceResult.status === 'rejected') delete productPayload.price
+          if (priceRequestFailed) delete productPayload.price
           if (inventoryResult.status === 'rejected') delete productPayload.available_quantity
           const { error: productError } = await supabase.from('marketplace_products').upsert(productPayload, { onConflict: 'company_id,connection_id,external_product_id' })
           if (productError) throw new Error(productError.message)
@@ -810,6 +837,17 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           if (!['empty', 'blocked'].includes(checkpoint.catalogStatus ?? '')) checkpoint.catalogStatus = 'partial'
           await updateRun(supabase, run, { status: 'queued', checkpoint, counts, errors: errors.slice(-100) })
           return { ...run, checkpoint, counts, errors, status: 'queued' }
+        }
+        // `permissions.pricing` pode ter sido gravado antes da correção do
+        // host da API de Pricing. Uma leitura autenticada atual é evidência
+        // mais forte que esse probe legado e evita exibir falso "sem acesso".
+        if (pricingReadConfirmed && connection.permissions?.pricing !== true) {
+          const permissions = { ...(connection.permissions ?? {}), pricing: true }
+          const { error: permissionUpdateError } = await supabase.from('marketplace_connections')
+            .update({ permissions })
+            .eq('id', connection.id).eq('company_id', companyId)
+          if (permissionUpdateError) throw new Error(`Failed to persist VTEX pricing permission: ${permissionUpdateError.message}`)
+          connection.permissions = permissions
         }
         if (failedSkuIds.size > 0 && !retryingFailedSkus) {
           checkpoint.catalogStatus = 'partial'

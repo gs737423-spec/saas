@@ -1,5 +1,13 @@
 # SESSION-HANDOFF — Vintec home institucional
 
+## Retomada atual — VTEX Pricing e pedidos incrementais (2026-08-31)
+
+- Diagnóstico remoto: `permissions.pricing=false` é legado/inconclusivo. A API de preço-base respondeu para 6.260 SKUs e os lotes recentes tiveram `priceFailures=0`; 11.534 SKUs não têm preço-base e chegam como 404, sem evidência de 403 global.
+- Patch local pronto: `GET /pricing/prices/{sku}/computed` é usado apenas como fallback de 404/preço-base vazio, lendo exclusivamente a política padrão `1`; nunca mistura preço de marketplace específico no preço geral do produto. A flag persistida passa a refletir leitura autenticada atual de Pricing.
+- Patch local também eleva a janela mínima incremental de pedidos de 1 ms para 1 segundo. A produção registrou `VTEX_VALIDATION_ERROR:400` no filtro `lastChange` após redução excessiva; com o piso, o conector pagina o intervalo denso em vez de gerar uma consulta inválida.
+- Validação: `npm run typecheck` passou; 29/29 testes VTEX focados passaram; `npx vite build` passou (aviso conhecido do chunk ~710 kB). A suíte completa foi iniciada, mas o executor não devolveu o resumo final.
+- Próximo passo: commit/push da correção na branch `integration/consultoria-production`, deploy no Vercel Pro `ia-center/saas` e checar o primeiro cron VTEX para confirmar `permissions.pricing=true`, recuperação de preço calculado e ausência do HTTP 400.
+
 ## Retomada atual — integrações, lote 8 e rollout (2026-08-24)
 
 - Código publicado: `a9a943a`; Vercel Pro `ia-center/saas`, deployment `dpl_CRTzQiK8vPQ4WiBRRPepcLnHF2tf`, `www.mktonline.com.br` Ready.

@@ -48,6 +48,7 @@ describe('VTEX recent-first bootstrap', () => {
     expect(source).toMatch(/const nextEnd = windowStart[\s\S]{0,300}Math\.max\(backfillFloor/)
     expect(source).toMatch(/if \(ranOutOfTime\) \{[\s\S]{0,500}checkpoint\.orderPage = run\.mode === 'full' \? page : 1/)
     expect(source).not.toContain('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
+    expect(source).toContain('const MIN_ORDER_WINDOW_MS = 1_000')
     expect(source).toContain('const initialPage = vtexOrderResumePage(run.mode, checkpoint.orderPage)')
     expect(source).toContain('checkpoint.orderPage = page')
     expect(source).toContain('if (page === initialPage) totalPages = sourceTotalPages')
@@ -67,7 +68,9 @@ describe('VTEX recent-first bootstrap', () => {
 
   it('falha de preço ou estoque não sobrescreve valor real anterior com null', async () => {
     const source = await readFile(new URL('../src/server/integrations/vtex/sync.ts', import.meta.url), 'utf8')
-    expect(source).toMatch(/priceResult\.status === 'rejected'\) delete productPayload\.price/)
+    expect(source).toContain('let priceRequestFailed = priceResult.status === \'rejected\'')
+    expect(source).toContain('if (priceRequestFailed) delete productPayload.price')
+    expect(source).toContain('client.getComputedPrices(skuId)')
     expect(source).toMatch(/inventoryResult\.status === 'rejected'\) delete productPayload\.available_quantity/)
     expect(source).toMatch(/if \(inventoryResult\.status === 'fulfilled'\) \{[\s\S]{0,500}marketplace_inventory/)
   })

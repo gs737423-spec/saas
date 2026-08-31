@@ -9,6 +9,15 @@ updated: 2026-08-14
 
 > Este documento deve conter apenas fatos confirmados no código, nos testes ou na infraestrutura.
 
+## Correção VTEX — preço calculado e janela incremental (2026-08-31)
+
+- Evidência remota: o conector obteve resposta de preço-base para 6.260 SKUs e zero falhas de Pricing nos últimos lotes; os demais 11.534 SKUs retornaram ausência de preço-base (`404`), não `403`. Portanto, o campo legado `permissions.pricing=false` não comprova falta de permissão e pode estar desatualizado.
+- Implementado localmente: quando `GET /pricing/prices/{sku}` não possui preço-base, o conector consulta o endpoint oficial de preços calculados e aceita somente a política comercial padrão `1`. Preço específico de outro marketplace não é escolhido por heurística; quando nenhuma fonte válida existe, o valor continua `null`.
+- Implementado localmente: uma leitura autenticada bem-sucedida de Pricing atualiza a flag de permissão persistida para evitar falso alerta na UI.
+- Implementado localmente: a janela incremental de pedidos não é mais reduzida a 1 ms. A OMS rejeitou esse intervalo com HTTP 400 em 2026-08-31; o piso agora é 1 segundo e a paginação continua quando houver densidade acima disso.
+- Validações locais: TypeScript passou; 29/29 testes VTEX focados passaram; build Vite passou com o aviso conhecido do chunk principal (~710 kB). A suíte completa foi iniciada, mas o executor local não retornou seu resumo antes desta atualização.
+- Status: **commitado e validado localmente — aguardando deploy e smoke remoto.**
+
 ## Correção de integridade Mercado Livre/Shopee — lote 7 (2026-08-24)
 
 - Shopee agora exige `SHOPEE_API_HOST=https://partner.shopeemobile.com` explicitamente. Não existe fallback silencioso para sandbox; authorize, callback, sync manual e cron usam a validação compartilhada e falham fechados quando o host está ausente ou não é o de produção.
