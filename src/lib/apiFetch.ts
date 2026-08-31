@@ -9,7 +9,11 @@ import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, de
 // (authorize/sync/callback): "ver como" é sempre leitura, nunca dispara
 // ação em nome de outra empresa.
 const VIEW_AS_URL_PREFIXES = ['/api/dashboard/', '/api/integrations/status', '/api/integrations/logs']
-const DASHBOARD_CACHE_TTL_MS = 15_000
+// O usuário navega entre seções usando a mesma sessão autenticada. Cinco
+// minutos cobrem esse retorno sem transformar a troca de rota em tela vazia;
+// mudanças de integração limpam o cache imediatamente.
+const DASHBOARD_CACHE_TTL_MS = 5 * 60_000
+const DASHBOARD_SESSION_CACHE_PREFIX = 'mktonline:dashboard-cache:'
 
 interface CachedDashboardResponse {
   expiresAt: number
@@ -23,6 +27,37 @@ interface CachedDashboardResponse {
 const dashboardCache = new Map<string, CachedDashboardResponse>()
 const dashboardInFlight = new Map<string, Promise<unknown | null>>()
 let dashboardCacheGeneration = 0
+
+function canPersistDashboardResponse(url: string): boolean {
+  return url.startsWith('/api/dashboard/summary')
+    || url.startsWith('/api/dashboard/finance-daily')
+    || (url.startsWith('/api/dashboard/finance') && url.includes('include_transactions=false'))
+}
+
+function readSessionDashboardCache(cacheKey: string): CachedDashboardResponse | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(`${DASHBOARD_SESSION_CACHE_PREFIX}${cacheKey}`)
+    if (!raw) return null
+    const cached = JSON.parse(raw) as CachedDashboardResponse
+    if (cached.expiresAt <= Date.now()) {
+      window.sessionStorage.removeItem(`${DASHBOARD_SESSION_CACHE_PREFIX}${cacheKey}`)
+      return null
+    }
+    return cached
+  } catch {
+    return null
+  }
+}
+
+function writeSessionDashboardCache(cacheKey: string, cached: CachedDashboardResponse): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.setItem(`${DASHBOARD_SESSION_CACHE_PREFIX}${cacheKey}`, JSON.stringify(cached))
+  } catch {
+    // Quota/storage desabilitado não pode bloquear leitura operacional.
+  }
+}
 
 /** "Acessar Painel do Lojista" — só nas leituras de dashboard/integrações
  *  (GET), nunca em escrita (POST/PATCH/DELETE seguem exigindo membership
@@ -46,6 +81,16 @@ export function invalidateDashboardCache(): void {
   dashboardCacheGeneration += 1
   dashboardCache.clear()
   dashboardInFlight.clear()
+  if (typeof window !== 'undefined') {
+    try {
+      for (let index = window.sessionStorage.length - 1; index >= 0; index -= 1) {
+        const key = window.sessionStorage.key(index)
+        if (key?.startsWith(DASHBOARD_SESSION_CACHE_PREFIX)) window.sessionStorage.removeItem(key)
+      }
+    } catch {
+      // Storage opcional; o cache em memória já foi invalidado.
+    }
+  }
 }
 
 async function authenticatedRequest(url: string, init?: RequestInit) {
@@ -124,6 +169,11 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
     const cacheKey = `${request.sessionScope}:${request.requestUrl}`
     const cached = dashboardCache.get(cacheKey)
     if (cached && cached.expiresAt > Date.now()) return cached.value as T
+    const persisted = canPersistDashboardResponse(request.requestUrl) ? readSessionDashboardCache(cacheKey) : null
+    if (persisted) {
+      dashboardCache.set(cacheKey, persisted)
+      return persisted.value as T
+    }
 
     const pending = dashboardInFlight.get(cacheKey)
     if (pending) return (await pending) as T | null
@@ -131,7 +181,9 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
     const generation = dashboardCacheGeneration
     const pendingRequest = readJson().then((value) => {
       if (value !== null && generation === dashboardCacheGeneration) {
-        dashboardCache.set(cacheKey, { value, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS })
+        const cached = { value, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS }
+        dashboardCache.set(cacheKey, cached)
+        if (canPersistDashboardResponse(request.requestUrl)) writeSessionDashboardCache(cacheKey, cached)
       }
       return value
     }).finally(() => {

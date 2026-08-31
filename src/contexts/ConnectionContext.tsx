@@ -130,7 +130,7 @@ interface ConnectionContextValue {
   connectError: string | null
   connectErrorShopee: string | null
   connectErrorVtex: string | null
-  refresh: () => Promise<void>
+  refresh: (options?: { invalidateDashboard?: boolean }) => Promise<void>
   connectMercadoLivre: () => void
   connectShopee: () => void
   syncMercadoLivre: () => Promise<SyncSummary | null>
@@ -192,10 +192,10 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connectErrorShopee, setConnectErrorShopee] = useState<string | null>(null)
   const [connectErrorVtex, setConnectErrorVtex] = useState<string | null>(null)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async ({ invalidateDashboard = true }: { invalidateDashboard?: boolean } = {}) => {
     // Uma mutação/conclusão de integração pode alterar os agregados do
     // dashboard. Limpa o cache curto antes de publicar o novo status.
-    invalidateDashboardCache()
+    if (invalidateDashboard) invalidateDashboardCache()
     const [{ data: status, message }, { data: shopeeStatus }, { data: vtexStatus }, logsResponse] = await Promise.all([
       fetchJsonWithError<MercadoLivreStatus>('/api/integrations/status'),
       fetchJsonWithError<ShopeeStatus>('/api/integrations/status?provider=shopee'),
@@ -214,7 +214,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refresh()
+    refresh({ invalidateDashboard: false })
   }, [refresh])
 
   const connectMercadoLivre = useCallback(async () => {
