@@ -47,6 +47,13 @@ updated: 2026-08-14
 - Auditoria read-only: 17.810 produtos e 17.810 estoques ativos estão pareados; nenhum item de estoque está sem produto, nenhum pedido está sem itens, e nenhum pedido pago elegível está sem total. Dos produtos, 6.260 têm preço e 11.550 estão explicitamente marcados pela origem como preço indisponível; não há preço zero fabricado. A permissão de Pricing está ativa.
 - Validações locais: TypeScript passou; 63/63 testes VTEX focados passaram. Falta deploy e smoke do próximo cron para confirmar recuperação do circuito e avanço de `orders_last_sync_at`.
 
+## Correção VTEX — leitura parcial e cache de período aberto (2026-09-01)
+
+- Evidência read-only: durante uma execução incremental em andamento, a conexão VTEX tinha apenas uma parcela dos pedidos do dia persistida. O Dashboard podia apresentar essa parcela como total; em uma captura exibiu 8 pedidos/R$ 22 mil, enquanto a mesma base já continha 224 pedidos pagos/R$ 616,9 mil no dia. A origem externa ainda tinha mais pedidos a percorrer.
+- Incrementais novos agora percorrem `categories → orders → catalog → finalize`; a carga completa mantém `categories → catalog → orders → finalize`. Ao terminar pedidos, `orders_last_sync_at` é atualizado sem avançar o watermark definitivo antes do finalize. Nenhum pedido é removido; os upserts seguem idempotentes.
+- O cache de dashboard de períodos abertos (fim próximo ao presente) foi reduzido de cinco minutos para 20 segundos. Períodos fechados preservam cinco minutos de cache, deduplicação e isolamento por sessão/tenant.
+- Validações locais: TypeScript passou; 51/51 testes focados passaram; build gerou `dist/` sem erro. Aguarda deploy e verificação do próximo incremental real.
+
 ## Correção de integridade Mercado Livre/Shopee — lote 7 (2026-08-24)
 
 - Shopee agora exige `SHOPEE_API_HOST=https://partner.shopeemobile.com` explicitamente. Não existe fallback silencioso para sandbox; authorize, callback, sync manual e cron usam a validação compartilhada e falham fechados quando o host está ausente ou não é o de produção.

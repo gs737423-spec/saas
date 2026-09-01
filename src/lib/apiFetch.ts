@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient'
 import { isDemoModeActive } from '@/contexts/DemoModeContext'
 import { getViewAsCompanyId } from '@/contexts/ViewAsContext'
 import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, demoFinanceOverview, demoFinanceTransactions, demoFinanceDaily } from './demoData'
+import { dashboardCacheTtlMs } from './dashboardCachePolicy'
 
 // GETs que requireCompany.ts aceita com ?company_id= explícito quando quem
 // chama é platform_admin — status/logs de integração (Conexões) tanto
@@ -12,7 +13,6 @@ const VIEW_AS_URL_PREFIXES = ['/api/dashboard/', '/api/integrations/status', '/a
 // Resumos pequenos podem permanecer cinco minutos na sessão; respostas de
 // catálogo/estoque nunca entram nesse cache pois uma conta grande não pode
 // ocupar memória ou sessionStorage do navegador só para acelerar o retorno.
-const DASHBOARD_CACHE_TTL_MS = 5 * 60_000
 const DASHBOARD_SESSION_CACHE_PREFIX = 'mktonline:dashboard-cache:'
 
 interface CachedDashboardResponse {
@@ -181,7 +181,7 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
     const generation = dashboardCacheGeneration
     const pendingRequest = readJson().then((value) => {
       if (value !== null && generation === dashboardCacheGeneration) {
-        const cached = { value, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS }
+        const cached = { value, expiresAt: Date.now() + dashboardCacheTtlMs(request.requestUrl) }
         dashboardCache.set(cacheKey, cached)
         writeSessionDashboardCache(cacheKey, cached)
       }

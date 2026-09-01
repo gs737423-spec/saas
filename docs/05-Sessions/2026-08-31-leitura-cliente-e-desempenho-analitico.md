@@ -56,3 +56,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - Confirmado por logs e checkpoint que o redutor de janela incremental persistiu 908 ms; OMS exige no mínimo 1 s e devolveu HTTP 400.
 - Corrigidos o piso em cada redução, a normalização de checkpoint legado e a recuperação automática estritamente limitada a esse erro OMS conhecido.
 - Nenhuma escrita de dado de negócio foi feita na auditoria. Catálogo/estoque e pedidos permanecem íntegros; a recuperação ocorre no próximo cron após deploy.
+
+## Complemento — divergência de totais durante atualização VTEX
+
+- A leitura de 2026-09-01 comprovou que o dashboard podia manter uma resposta de período aberto em cache enquanto uma execução VTEX incremental ainda trazia pedidos. O problema era de frescor/apresentação, não de soma ou de tenant cruzado.
+- Incrementais passam a atualizar pedidos antes do catálogo; a carga full permanece conservadora. O cache de período aberto cai para 20 segundos e o de período fechado mantém cinco minutos.
+- Nenhum dado real foi modificado durante a auditoria; o resultado exige validação após o próximo ciclo de pedidos em produção.

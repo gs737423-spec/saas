@@ -207,6 +207,12 @@ export interface VtexSyncCheckpoint {
   orderWindowStart?: string
   orderWindowEnd?: string
   orderTargetEnd?: string
+  /** Incrementais novos priorizam pedidos antes do catálogo; runs antigas
+   * sem esta marca preservam a sequência em que foram criadas. */
+  ordersPrioritized?: boolean
+  /** Prova de que a etapa de pedidos desta run terminou. Impede o catálogo
+   * posterior de retornar para `orders` e criar um ciclo. */
+  ordersCompleted?: boolean
   lastOrderChange?: string
   /** Contagem de recuperações de run travada (stale) — ver reclaimStaleVtexRun
    *  em sync.ts. Depois de MAX_STALE_RECOVERIES seguidas, a run é marcada

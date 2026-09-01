@@ -4,7 +4,7 @@ import { buildVtexRunConfig, normalizeVtexCheckpoint, VTEX_CHECKPOINT_VERSION } 
 import { canonicalKeyFromTrustedName } from '../src/server/integrations/vtex/channelResolution'
 import { autoResolveVtexSalesChannelsFromRegistry, reclassifyVtexOrdersForIdentifier } from '../src/server/integrations/vtex/channelRegistry'
 import { computeVtexSyncProgress } from '../src/server/integrations/vtex/progress'
-import { vtexOrderQueryMode, vtexOrderResumePage } from '../src/server/integrations/vtex/sync'
+import { nextVtexStageAfterCatalog, nextVtexStageAfterCategories, nextVtexStageAfterOrders, vtexOrderQueryMode, vtexOrderResumePage } from '../src/server/integrations/vtex/sync'
 
 describe('VTEX recent-first bootstrap', () => {
   it('migra run v2 em andamento para a janela mais recente sem perder o piso ainda pendente', () => {
@@ -67,6 +67,15 @@ describe('VTEX recent-first bootstrap', () => {
   it('incremental usa lastChange no filtro e na ordenação', () => {
     expect(vtexOrderQueryMode('incremental')).toEqual({ filterName: 'f_lastChange', filterField: 'lastChange', orderBy: 'lastChange,asc' })
     expect(vtexOrderQueryMode('full')).toEqual({ filterName: 'f_creationDate', filterField: 'creationDate', orderBy: 'creationDate,asc' })
+  })
+
+  it('prioriza pedidos somente no incremental e não cria ciclo após o catálogo', () => {
+    expect(nextVtexStageAfterCategories('incremental')).toBe('orders')
+    expect(nextVtexStageAfterOrders('incremental')).toBe('catalog')
+    expect(nextVtexStageAfterCatalog({ ordersCompleted: true })).toBe('finalize')
+    expect(nextVtexStageAfterCategories('full')).toBe('catalog')
+    expect(nextVtexStageAfterOrders('full')).toBe('finalize')
+    expect(nextVtexStageAfterCatalog({ ordersCompleted: false })).toBe('orders')
   })
 
   it('falha de preço ou estoque não sobrescreve valor real anterior com null', async () => {

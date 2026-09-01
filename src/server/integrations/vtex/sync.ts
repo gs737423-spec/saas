@@ -98,6 +98,21 @@ export type VtexSyncStage = typeof VTEX_SYNC_STAGES[number]
 export const VTEX_SYNC_TERMINAL_STATUSES = ['success', 'partial', 'failed', 'cancelled'] as const
 export type VtexSyncTerminalStatus = typeof VTEX_SYNC_TERMINAL_STATUSES[number]
 
+/** Catálogo completo pode durar dezenas de minutos em contas grandes. Para
+ * incrementais, pedidos são a métrica operacional sensível ao tempo e
+ * precisam chegar antes; a carga full preserva a ordem conservadora atual. */
+export function nextVtexStageAfterCategories(mode: 'full' | 'incremental'): VtexSyncStage {
+  return mode === 'incremental' ? 'orders' : 'catalog'
+}
+
+export function nextVtexStageAfterOrders(mode: 'full' | 'incremental'): VtexSyncStage {
+  return mode === 'incremental' ? 'catalog' : 'finalize'
+}
+
+export function nextVtexStageAfterCatalog(checkpoint: Pick<VtexCatalogCheckpoint, 'ordersCompleted'>): VtexSyncStage {
+  return checkpoint.ordersCompleted ? 'finalize' : 'orders'
+}
+
 export function isMissingVtexSku(error: unknown): boolean {
   return error instanceof VtexApiError && error.status === 404
 }
@@ -475,7 +490,8 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
     // windowStart/windowEnd/targetEnd/orderPage ficam intocados). É uma
     // reentrada única: depois que `catalogStatus` sai de `'unknown'`, este
     // gate nunca mais dispara para esta run.
-    if (['orders', 'finalize', 'complete'].includes(run.stage) && vtexCatalogNeedsRevalidation(checkpoint)) {
+    const intentionalOrdersFirst = run.mode === 'incremental' && checkpoint.ordersPrioritized === true && checkpoint.ordersCompleted !== true
+    if (['orders', 'finalize', 'complete'].includes(run.stage) && vtexCatalogNeedsRevalidation(checkpoint) && !intentionalOrdersFirst) {
       await logSyncEvent({
         companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
         message: 'VTEX run resumed at a post-catalog stage without proof the catalog stage ever ran — reentering catalog validation once before continuing orders',
@@ -548,8 +564,9 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         if (categoryError) throw new Error(`Failed to persist VTEX categories: ${categoryError.message}`)
       }
       counts.categoriesFetched = categories.length
-      run.stage = 'catalog'
-      await updateRun(supabase, run, { stage: run.stage, counts })
+      checkpoint.ordersPrioritized = run.mode === 'incremental'
+      run.stage = nextVtexStageAfterCategories(run.mode)
+      await updateRun(supabase, run, { stage: run.stage, checkpoint, counts })
     }
 
     if (run.stage === 'catalog') {
@@ -818,7 +835,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         if (catalogPermissionDenied) {
           checkpoint.catalogStatus = 'blocked'
           await supabase.from('marketplace_connections').update({ status: 'requires_attention', last_error: 'VTEX_CATALOG_ENRICHMENT_PERMISSION_REQUIRED' }).eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
-          run.stage = 'orders'
+          run.stage = nextVtexStageAfterCatalog(checkpoint)
           await updateRun(supabase, run, { status: 'queued', stage: run.stage, checkpoint, counts, errors: errors.slice(-100) })
           return { ...run, status: 'queued', checkpoint, counts, errors }
         }
@@ -872,7 +889,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         }
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX catalog stage completed', payload: { code: 'CATALOG_COMPLETED', stage: 'catalog', catalogStatus: checkpoint.catalogStatus, total: skuIds.length } })
       }
-      run.stage = 'orders'
+      run.stage = nextVtexStageAfterCatalog(checkpoint)
       checkpoint.orderPage = checkpoint.orderPage ?? 1
       await updateRun(supabase, run, { stage: run.stage, checkpoint, counts, errors: errors.slice(-100) })
     }
@@ -1066,9 +1083,20 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         }
         break
       }
-      run.stage = 'finalize'
-      await updateRun(supabase, run, { stage: 'finalize', checkpoint, counts, errors: errors.slice(-100) })
+      checkpoint.ordersCompleted = true
+      if (run.mode === 'incremental') {
+        // O pedido já foi percorrido por completo, mesmo que catálogo/estoque
+        // continuem enriquecendo. A UI pode reportar freshness de pedidos sem
+        // aguardar 17k SKUs; o watermark definitivo só avança no finalize.
+        await supabase.from('marketplace_connections')
+          .update({ orders_last_sync_at: new Date().toISOString() })
+          .eq('id', connection.id).eq('company_id', companyId).neq('status', 'disconnected')
+      }
+      run.stage = nextVtexStageAfterOrders(run.mode)
+      await updateRun(supabase, run, { stage: run.stage, checkpoint, counts, errors: errors.slice(-100) })
     }
+
+    if (run.stage !== 'finalize') return { ...run, checkpoint, counts, errors }
 
     const completedAt = new Date().toISOString()
     const finalStatus = errors.length > 0 ? 'partial' : 'success'
