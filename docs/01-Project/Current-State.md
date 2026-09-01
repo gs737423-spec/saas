@@ -23,6 +23,13 @@ updated: 2026-08-14
 - O endpoint financeiro deixou de buscar todo o histórico de 366 dias para calcular D-1/D-7/D-30/D-365: consulta somente os cinco dias necessários. Dashboard e Marketplaces também omitem o extrato de transações que não exibem, reduzindo payload e trabalho de serialização.
 - Validações locais: `npm run typecheck` passou; 16/16 testes focados passaram; `npm run build` passou. Revisão visual autenticada ainda depende de uma sessão de cliente.
 
+## Produtos e Estoque — catálogo grande (2026-09-01)
+
+- Evidência read-only no Supabase: a única conexão VTEX possui 17.803 produtos e 17.803 registros de estoque ativos; a conexão está em `error` por uma janela OMS de pedidos, mas o último catálogo/estoque sincronizado permanece persistido.
+- As APIs de Produtos e Estoque ainda liam catálogo, estoque e até 82.431 itens de pedido integralmente, em páginas sequenciais, antes de responder. As páginas são buscadas em lotes pequenos concorrentes e leituras independentes dos endpoints são iniciadas juntas, sem modificar o recorte por tenant nem omitir linhas.
+- Cliente: snapshots autenticados de Produtos/Estoque reutilizam cache de sessão de cinco minutos, e as tabelas renderizam 100 linhas por página; todos os itens e filtros seguem disponíveis. Erros de leitura/configuração deixam de se apresentar como “conecte um marketplace”.
+- Validações locais: TypeScript passou; 19/19 testes focados passaram; build passou. A performance remota requer medição autenticada após deploy.
+
 ## Correção VTEX — preço calculado e janela incremental (2026-08-31)
 
 - Evidência remota: o conector obteve resposta de preço-base para 6.260 SKUs e zero falhas de Pricing nos últimos lotes; os demais 11.534 SKUs retornaram ausência de preço-base (`404`), não `403`. Portanto, o campo legado `permissions.pricing=false` não comprova falta de permissão e pode estar desatualizado.

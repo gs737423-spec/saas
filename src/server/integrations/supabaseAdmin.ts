@@ -99,6 +99,10 @@ export async function getSupabaseAdmin(): Promise<SupabaseClient> {
 /** Teto de segurança pra `fetchAllRows` — 200 páginas de 1000 = 200k linhas,
  *  bem acima de qualquer volume real esperado por empresa hoje. */
 const FETCH_ALL_ROWS_MAX_PAGES = 200
+/** Quatro páginas independentes são suficientes para reduzir a latência de
+ * catálogos grandes sem transformar uma leitura analítica em pico de carga
+ * contra o PostgREST. A ordem original das páginas é preservada ao juntar. */
+const FETCH_ALL_ROWS_CONCURRENCY = 4
 
 /**
  * PostgREST (Supabase) limita a 1000 linhas por resposta por padrão — uma
@@ -120,12 +124,20 @@ export async function fetchAllRows<T>(
   pageSize = 1000,
 ): Promise<{ data: T[]; error: { message: string } | null }> {
   const rows: T[] = []
-  for (let page = 0; page < FETCH_ALL_ROWS_MAX_PAGES; page += 1) {
-    const from = page * pageSize
-    const { data, error } = await fetchPage(from, from + pageSize - 1)
-    if (error) return { data: rows, error }
-    rows.push(...(data ?? []))
-    if (!data || data.length < pageSize) return { data: rows, error: null }
+  for (let firstPage = 0; firstPage < FETCH_ALL_ROWS_MAX_PAGES; firstPage += FETCH_ALL_ROWS_CONCURRENCY) {
+    const pages = await Promise.all(
+      Array.from({ length: Math.min(FETCH_ALL_ROWS_CONCURRENCY, FETCH_ALL_ROWS_MAX_PAGES - firstPage) }, (_, offset) => {
+        const page = firstPage + offset
+        const from = page * pageSize
+        return fetchPage(from, from + pageSize - 1)
+      }),
+    )
+
+    for (const { data, error } of pages) {
+      if (error) return { data: rows, error }
+      rows.push(...(data ?? []))
+      if (!data || data.length < pageSize) return { data: rows, error: null }
+    }
   }
   return {
     data: rows,

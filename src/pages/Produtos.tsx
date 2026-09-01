@@ -74,6 +74,10 @@ export default function Produtos() {
     return <ConnectMarketplacePrompt title="Catálogo ainda não disponível" description="A conexão está ativa e o catálogo real está sendo sincronizado. Nenhum produto ilustrativo será exibido enquanto isso." />
   }
 
+  if (real?.source === 'error' || real?.source === 'config_missing') {
+    return <ConnectMarketplacePrompt title="Não foi possível carregar o catálogo agora" description={real.message ?? 'A conexão pode continuar com dados sincronizados. Tente novamente em instantes; nenhum produto foi removido.'} />
+  }
+
   // Sem conexão — nenhum produto ilustrativo aparece fora do modo demo.
   if (!real || (real.source !== 'real' && real.source !== 'demo') || real.items.length === 0) {
     return <ConnectMarketplacePrompt title="Conecte um marketplace pra ver seu catálogo" description="Assim que sincronizar o Mercado Livre, seus produtos reais aparecem aqui — com estoque, vendas e tendência." />

@@ -30,6 +30,8 @@ let dashboardCacheGeneration = 0
 
 function canPersistDashboardResponse(url: string): boolean {
   return url.startsWith('/api/dashboard/summary')
+    || url.startsWith('/api/dashboard/products')
+    || url.startsWith('/api/dashboard/inventory')
     || url.startsWith('/api/dashboard/finance-daily')
     || (url.startsWith('/api/dashboard/finance') && url.includes('include_transactions=false'))
 }

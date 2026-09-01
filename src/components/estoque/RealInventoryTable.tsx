@@ -4,6 +4,7 @@ import { Search, ChevronDown, ChevronRight, Check, Boxes, PauseCircle, Crown, Wa
 import { getMarketplaceColor, getMarketplaceBadge, type Marketplace } from '@/data/mockData'
 import type { AbcClass, DashboardInventoryItem } from '@/server/integrations/types'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import PaginationBar from '@/components/common/PaginationBar'
 import { useTheme } from '@/contexts/ThemeContext'
 import { coveragePresentation, giroPresentation } from '@/lib/inventoryStatus'
 import CategoryDrawer from '@/components/category/CategoryDrawer'
@@ -130,6 +131,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
   const { theme } = useTheme()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [sort, setSort] = useState<'revenue' | 'stock' | 'units30d' | 'coverage'>('revenue')
+  const [page, setPage] = useState(1)
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
   const categoryProducts = useMemo(() => items.map(categoryItemFromInventory), [items])
   const categoryOptions = useMemo(() => getCategoryOptions(categoryProducts), [categoryProducts])
@@ -179,6 +181,13 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     if (sort === 'units30d') return (b.item.soldQuantity ?? 0) - (a.item.soldQuantity ?? 0)
     return (b.cov ?? 0) - (a.cov ?? 0)
   })
+  const pageSize = 100
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const visibleItems = sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filters, sort])
 
   const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
 
@@ -255,7 +264,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
 
         {/* Mobile: stacked cards */}
         <div className="space-y-2.5 md:hidden">
-          {sorted.map(({ item, cov, giro }) => {
+          {visibleItems.map(({ item, cov, giro }) => {
             const mp = getMarketplaceColor(item.marketplace)
             const covStyle = coveragePresentation(cov)
             return (
@@ -313,7 +322,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
                 </tr>
               </thead>
               <tbody>
-                {sorted.map(({ item, cov, giro }) => {
+                {visibleItems.map(({ item, cov, giro }) => {
                   const covStyle = coveragePresentation(cov)
                   const stockValue = item.availableQuantity === null || item.price === null ? null : item.price * item.availableQuantity
                   const avgTicket = item.soldQuantity && item.soldQuantity > 0 ? item.revenue30d / item.soldQuantity : 0
@@ -357,6 +366,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
             </table>
           </DataTableViewport>
         </div>
+        <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={sorted.length} pageSize={pageSize} onPageChange={setPage} />
       </div>
       <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>

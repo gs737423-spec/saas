@@ -120,15 +120,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
-    const { data: products, error: productsError } = await fetchAllRows((from, to) =>
-      supabase
-        .from('marketplace_products')
-        .select('connection_id, external_product_id, sku, title, price, status, category_id, category_name, cost_price')
-        .in('connection_id', connectionIds)
-        .eq('company_id', auth.companyId)
-        .eq('active', true)
-        .range(from, to)
-    )
+    // Catálogo, estoque e as duas janelas de vendas só compartilham o tenant
+    // já resolvido acima. Rodá-los juntos remove um waterfall que, em contas
+    // com milhares de SKUs, deixava a tela vazia por minutos sem alterar o
+    // conjunto lido nem o escopo de cada consulta.
+    const [productsResult, inventoryResult, currentItemsResult, previousItemsResult] = await Promise.all([
+      fetchAllRows((from, to) =>
+        supabase
+          .from('marketplace_products')
+          .select('connection_id, external_product_id, sku, title, price, status, category_id, category_name, cost_price')
+          .in('connection_id', connectionIds)
+          .eq('company_id', auth.companyId)
+          .eq('active', true)
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from('marketplace_inventory')
+          .select('connection_id, external_product_id, available_quantity')
+          .in('connection_id', connectionIds)
+          .eq('company_id', auth.companyId)
+          .eq('active', true)
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from('order_items')
+          .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
+          .eq('company_id', auth.companyId)
+          .eq('orders.status', 'paid')
+          .eq('orders.analytics_included', true)
+          .gte('orders.ordered_at', since)
+          .lt('orders.ordered_at', until)
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from('order_items')
+          .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
+          .eq('company_id', auth.companyId)
+          .eq('orders.status', 'paid')
+          .eq('orders.analytics_included', true)
+          .gte('orders.ordered_at', prevSince)
+          .lt('orders.ordered_at', since)
+          .range(from, to)
+      ),
+    ])
+
+    const { data: products, error: productsError } = productsResult
     if (productsError) throw new Error(productsError.message)
 
     if (!products || products.length === 0) {
@@ -136,43 +175,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const { data: inventoryRows, error: inventoryError } = await fetchAllRows((from, to) =>
-      supabase
-        .from('marketplace_inventory')
-        .select('connection_id, external_product_id, available_quantity')
-        .in('connection_id', connectionIds)
-        .eq('company_id', auth.companyId)
-        .eq('active', true)
-        .range(from, to)
-    )
+    const { data: inventoryRows, error: inventoryError } = inventoryResult
     if (inventoryError) throw new Error(inventoryError.message)
     const stockByExternalId = new Map((inventoryRows ?? []).map((r) => [productKey(r.connection_id, r.external_product_id), r.available_quantity]))
 
-    const { data: currentItems, error: currentItemsError } = await fetchAllRows((from, to) =>
-      supabase
-        .from('order_items')
-        .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
-        .eq('company_id', auth.companyId)
-        .eq('orders.status', 'paid')
-        .eq('orders.analytics_included', true)
-        .gte('orders.ordered_at', since)
-        .lt('orders.ordered_at', until)
-        .range(from, to)
-    )
+    const { data: currentItems, error: currentItemsError } = currentItemsResult
     if (currentItemsError) throw new Error(currentItemsError.message)
     const currentByProduct = aggregateByProduct((currentItems ?? []) as unknown as OrderItemAgg[])
 
-    const { data: previousItems, error: previousItemsError } = await fetchAllRows((from, to) =>
-      supabase
-        .from('order_items')
-        .select('quantity, unit_price, external_product_id, sku, orders!inner(status, ordered_at, connection_id)')
-        .eq('company_id', auth.companyId)
-        .eq('orders.status', 'paid')
-        .eq('orders.analytics_included', true)
-        .gte('orders.ordered_at', prevSince)
-        .lt('orders.ordered_at', since)
-        .range(from, to)
-    )
+    const { data: previousItems, error: previousItemsError } = previousItemsResult
     if (previousItemsError) throw new Error(previousItemsError.message)
     const previousByProduct = aggregateByProduct((previousItems ?? []) as unknown as OrderItemAgg[])
 

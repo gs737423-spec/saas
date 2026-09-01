@@ -43,3 +43,10 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 
 - A coluna de faturamento agora é dimensionada uma vez a partir do maior valor renderizado no conjunto.
 - Número, legenda `faturamento`, início da barra e percentual passam a compartilhar a mesma grade, inclusive quando um marketplace possui mais dígitos que os demais.
+
+## Complemento — catálogos grandes e retorno às seções
+
+- Diagnóstico read-only em 2026-09-01: a conexão VTEX possui 17.803 produtos e 17.803 estoques ativos; Produtos e Estoque percorriam também até 82.431 itens de pedido antes de responder, em páginas sequenciais.
+- As leituras paginadas agora executam lotes pequenos em paralelo e as consultas independentes de cada endpoint são iniciadas juntas, mantendo tenant, filtros e conjunto de dados originais.
+- Produtos e Estoque reutilizam o snapshot autenticado por cinco minutos na mesma sessão; as tabelas exibem páginas de 100 itens por vez, mantendo todos os itens, filtros e navegação acessíveis sem montar milhares de linhas no DOM.
+- Respostas controladas de erro/configuração agora informam falha temporária de leitura e não sugerem reconectar um marketplace que pode continuar com dados sincronizados.

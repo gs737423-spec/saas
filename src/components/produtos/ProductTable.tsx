@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getMarketplaceColor, getMarketplaceBadge } from '@/data/mockData'
 import type { DashboardProduct as Product } from '@/server/dashboardProducts'
 import ProductFilters, { type ProductFilterState } from './ProductFilters'
 import DataTableViewport from '@/components/common/DataTableViewport'
+import PaginationBar from '@/components/common/PaginationBar'
 import { useTheme } from '@/contexts/ThemeContext'
 import CategoryDrawer from '@/components/category/CategoryDrawer'
 import type { CategoryOption } from '@/lib/categoryAnalytics'
@@ -162,6 +163,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
   const { theme } = useTheme()
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [page, setPage] = useState(1)
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
   const categoryProducts = useMemo(() => allProducts.map(categoryItemFromProduct), [allProducts])
   const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
@@ -176,6 +178,13 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
   }
 
   const sorted = sortProducts(filteredProducts, sortKey, sortDir)
+  const pageSize = 100
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const visibleProducts = sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filters, sortKey, sortDir])
 
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -208,7 +217,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
 
       {/* Mobile: stacked cards */}
       <div className="space-y-2.5 md:hidden">
-        {sorted.map((p) => {
+        {visibleProducts.map((p) => {
           const mp = getMarketplaceColor(p.marketplace)
           return (
             <div key={`${p.connectionId}:${p.id}`} className="rounded-xl border border-border-subtle/60 bg-bg-primary/30 p-3.5">
@@ -269,7 +278,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
             </tr>
           </thead>
           <tbody>
-            {sorted.map((p) => {
+            {visibleProducts.map((p) => {
               const mp = getMarketplaceColor(p.marketplace)
               return (
                 <tr key={`${p.connectionId}:${p.id}`} className="motion-row border-b border-border-subtle/50 hover:border-border-default/70 hover:bg-bg-card-hover/50">
@@ -307,6 +316,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
       {sorted.length === 0 && (
         <div className="py-12 text-center text-sm text-text-muted">Nenhum produto encontrado com os filtros aplicados.</div>
       )}
+      <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={sorted.length} pageSize={pageSize} onPageChange={setPage} />
       <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>
   )

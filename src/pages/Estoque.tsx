@@ -35,6 +35,10 @@ export default function Estoque() {
     return <ConnectMarketplacePrompt icon={Boxes} title="Estoque ainda não disponível" description="A conexão está ativa e o estoque real está sendo sincronizado. Nenhum valor ilustrativo será exibido enquanto isso." />
   }
 
+  if (inventory?.source === 'error' || inventory?.source === 'config_missing') {
+    return <ConnectMarketplacePrompt icon={Boxes} title="Não foi possível carregar o estoque agora" description={'A conexão pode continuar com dados sincronizados. Tente novamente em instantes; nenhum registro foi removido.'} />
+  }
+
   if (!inventory || (inventory.source !== 'real' && inventory.source !== 'demo') || inventory.items.length === 0) {
     return <ConnectMarketplacePrompt icon={Boxes} title="Conecte um marketplace pra ver seu estoque" description="Assim que sincronizar o Mercado Livre, o estoque real de cada produto aparece aqui." />
   }
