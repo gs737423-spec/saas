@@ -39,6 +39,14 @@ updated: 2026-08-14
 - Validações locais: TypeScript passou; 29/29 testes VTEX focados passaram; build Vite passou com o aviso conhecido do chunk principal (~710 kB). A suíte completa foi iniciada, mas o executor local não retornou seu resumo antes desta atualização.
 - Status: **commitado e validado localmente — aguardando deploy e smoke remoto.**
 
+## Correção VTEX — recuperação OMS e auditoria de continuidade (2026-09-01)
+
+- Evidência remota: o redutor de janela incremental podia persistir 908 ms ao dividir uma janela de 1,7 s. A OMS rejeita janelas abaixo de 1 segundo, retornando `VTEX_VALIDATION_ERROR:400` na rota de pedidos; isso acumulou 79 runs incrementais falhas e abriu o circuito, sem apagar o snapshot de catálogo/estoque.
+- Corrigido localmente: toda redução usa `max(1 s, ceil(janela / 2))`; checkpoints legados abaixo de 1 segundo são expandidos para trás antes da consulta. A sobreposição é idempotente e não avança watermark/cursor.
+- Corrigido localmente: o cron libera somente o padrão exato de erro OMS incremental comprovado após esse reparo, sem liberar outros `400`, erros de credencial ou de permissão.
+- Auditoria read-only: 17.810 produtos e 17.810 estoques ativos estão pareados; nenhum item de estoque está sem produto, nenhum pedido está sem itens, e nenhum pedido pago elegível está sem total. Dos produtos, 6.260 têm preço e 11.550 estão explicitamente marcados pela origem como preço indisponível; não há preço zero fabricado. A permissão de Pricing está ativa.
+- Validações locais: TypeScript passou; 63/63 testes VTEX focados passaram. Falta deploy e smoke do próximo cron para confirmar recuperação do circuito e avanço de `orders_last_sync_at`.
+
 ## Correção de integridade Mercado Livre/Shopee — lote 7 (2026-08-24)
 
 - Shopee agora exige `SHOPEE_API_HOST=https://partner.shopeemobile.com` explicitamente. Não existe fallback silencioso para sandbox; authorize, callback, sync manual e cron usam a validação compartilhada e falham fechados quando o host está ausente ou não é o de produção.

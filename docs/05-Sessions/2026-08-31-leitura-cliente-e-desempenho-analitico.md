@@ -50,3 +50,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - As leituras paginadas agora executam lotes pequenos em paralelo e as consultas independentes de cada endpoint são iniciadas juntas, mantendo tenant, filtros e conjunto de dados originais.
 - Produtos e Estoque não persistem catálogos grandes no cache do navegador; as tabelas exibem páginas de 100 itens por vez, mantendo todos os itens, filtros e navegação acessíveis sem montar milhares de linhas no DOM. A paginação no servidor permanece como próxima etapa para reduzir o payload inicial.
 - Respostas controladas de erro/configuração agora informam falha temporária de leitura e não sugerem reconectar um marketplace que pode continuar com dados sincronizados.
+
+## Complemento — varredura VTEX OMS
+
+- Confirmado por logs e checkpoint que o redutor de janela incremental persistiu 908 ms; OMS exige no mínimo 1 s e devolveu HTTP 400.
+- Corrigidos o piso em cada redução, a normalização de checkpoint legado e a recuperação automática estritamente limitada a esse erro OMS conhecido.
+- Nenhuma escrita de dado de negócio foi feita na auditoria. Catálogo/estoque e pedidos permanecem íntegros; a recuperação ocorre no próximo cron após deploy.

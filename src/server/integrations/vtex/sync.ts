@@ -898,6 +898,19 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       let windowStart = checkpoint.orderWindowStart
         ? new Date(checkpoint.orderWindowStart)
         : new Date(Math.max(backfillFloor.getTime(), windowEnd.getTime() - runConfig.windowMs))
+      // Checkpoints gravados por versões anteriores podiam conter uma
+      // janela abaixo do piso OMS: reduzir 1,7s pela metade produzia 850ms.
+      // Recuperamos expandindo para trás, em vez de avançar o cursor: a
+      // pequena sobreposição é idempotente pelos upserts canônicos e nunca
+      // pula pedidos que já estavam dentro do intervalo inválido.
+      if (windowEnd.getTime() - windowStart.getTime() < MIN_ORDER_WINDOW_MS) {
+        windowStart = new Date(windowEnd.getTime() - MIN_ORDER_WINDOW_MS)
+        await logSyncEvent({
+          companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+          message: 'VTEX order window clamped to OMS minimum duration',
+          payload: { code: 'ORDER_WINDOW_CLAMPED', stage: 'orders', minimumMs: MIN_ORDER_WINDOW_MS, windowStart: windowStart.toISOString(), windowEnd: windowEnd.toISOString() },
+        })
+      }
       checkpoint.orderTraversal = 'recent_first'
       checkpoint.orderBackfillFloor = backfillFloor.toISOString()
       checkpoint.orderWindowStart = windowStart.toISOString()
@@ -925,7 +938,9 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           // Mantém a metade MAIS RECENTE e tenta de novo nesta mesma
           // invocação. Antes, cada halving devolvia `queued` e desperdiçava
           // um ciclo inteiro do cron (5-15 min) sem importar um pedido.
-          windowStart = new Date(windowEnd.getTime() - Math.floor((windowEnd.getTime() - windowStart.getTime()) / 2))
+          const currentWindowMs = windowEnd.getTime() - windowStart.getTime()
+          const nextWindowMs = Math.max(MIN_ORDER_WINDOW_MS, Math.ceil(currentWindowMs / 2))
+          windowStart = new Date(windowEnd.getTime() - nextWindowMs)
           checkpoint.orderWindowStart = windowStart.toISOString()
           checkpoint.orderWindowEnd = windowEnd.toISOString()
           checkpoint.orderPage = 1

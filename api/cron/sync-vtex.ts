@@ -10,6 +10,17 @@ export const config = { maxDuration: 300 }
 
 const AUTO_SYNC_STATUSES = ['connected', 'syncing', 'requires_attention', 'error']
 
+/** Erro transitório produzido apenas pela versão que conseguia reduzir uma
+ * janela incremental abaixo do mínimo aceito pela OMS. É seguro recuperar
+ * depois do deploy porque `sync.ts` volta a expandir checkpoints inválidos
+ * e os upserts de pedido continuam idempotentes. Não inclui outros 400. */
+function isRecoverableOmsWindowError(lastError: string | null | undefined): boolean {
+  return Boolean(
+    lastError?.startsWith('VTEX_VALIDATION_ERROR:400:/api/oms/pvt/orders?')
+      && lastError.includes('f_lastChange='),
+  )
+}
+
 function eligibleConnections(supabase: SupabaseClient, options?: { count: 'exact'; head: true }) {
   return supabase.from('marketplace_connections')
     .select('id,company_id,last_success_at,last_error', options)
@@ -88,7 +99,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const connection of nextConnection ? [nextConnection] : []) {
       try {
         const recoveringDenseFullRun = connection.last_error === 'VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT'
-        if (recoveringDenseFullRun) {
+        const recoveringOmsWindowRun = isRecoverableOmsWindowError(connection.last_error)
+        if (recoveringDenseFullRun || recoveringOmsWindowRun) {
           const { error: recoveryError } = await supabase.from('marketplace_connections').update({
             last_error: null,
             failure_count: 0,

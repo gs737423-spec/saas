@@ -26,6 +26,13 @@ describe('VTEX cron fairness', () => {
     expect(cron).toMatch(/\.eq\('id', connection\.id\)\.eq\('company_id', connection\.company_id\)\.eq\('provider', 'vtex'\)/)
   })
 
+  it('recovers only the known OMS incremental-window validation error after its checkpoint fix', () => {
+    expect(cron).toContain('function isRecoverableOmsWindowError')
+    expect(cron).toContain("lastError?.startsWith('VTEX_VALIDATION_ERROR:400:/api/oms/pvt/orders?')")
+    expect(cron).toContain("lastError.includes('f_lastChange=')")
+    expect(cron).toContain('recoveringDenseFullRun || recoveringOmsWindowRun')
+  })
+
   it('does not require a closed breaker to select or resume an already active run', () => {
     expect(cron).toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(lockAvailable\)/)
     expect(cron).not.toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(circuitClosed\)/)
