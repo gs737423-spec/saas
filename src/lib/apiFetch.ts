@@ -9,9 +9,9 @@ import { demoDashboardSummary, demoDashboardProducts, demoDashboardInventory, de
 // (authorize/sync/callback): "ver como" é sempre leitura, nunca dispara
 // ação em nome de outra empresa.
 const VIEW_AS_URL_PREFIXES = ['/api/dashboard/', '/api/integrations/status', '/api/integrations/logs']
-// O usuário navega entre seções usando a mesma sessão autenticada. Cinco
-// minutos cobrem esse retorno sem transformar a troca de rota em tela vazia;
-// mudanças de integração limpam o cache imediatamente.
+// Resumos pequenos podem permanecer cinco minutos na sessão; respostas de
+// catálogo/estoque nunca entram nesse cache pois uma conta grande não pode
+// ocupar memória ou sessionStorage do navegador só para acelerar o retorno.
 const DASHBOARD_CACHE_TTL_MS = 5 * 60_000
 const DASHBOARD_SESSION_CACHE_PREFIX = 'mktonline:dashboard-cache:'
 
@@ -28,10 +28,8 @@ const dashboardCache = new Map<string, CachedDashboardResponse>()
 const dashboardInFlight = new Map<string, Promise<unknown | null>>()
 let dashboardCacheGeneration = 0
 
-function canPersistDashboardResponse(url: string): boolean {
+function isCacheableDashboardResponse(url: string): boolean {
   return url.startsWith('/api/dashboard/summary')
-    || url.startsWith('/api/dashboard/products')
-    || url.startsWith('/api/dashboard/inventory')
     || url.startsWith('/api/dashboard/finance-daily')
     || (url.startsWith('/api/dashboard/finance') && url.includes('include_transactions=false'))
 }
@@ -153,8 +151,8 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
 
   try {
     const request = await authenticatedRequest(url, init)
-    const isDashboardRead = (init?.method ?? 'GET').toUpperCase() === 'GET'
-      && request.requestUrl.startsWith('/api/dashboard/')
+    const isCacheableDashboardRead = (init?.method ?? 'GET').toUpperCase() === 'GET'
+      && isCacheableDashboardResponse(request.requestUrl)
       && !init?.signal
 
     const readJson = async (): Promise<T | null> => {
@@ -166,12 +164,12 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
       return (await res.json()) as T
     }
 
-    if (!isDashboardRead) return readJson()
+    if (!isCacheableDashboardRead) return readJson()
 
     const cacheKey = `${request.sessionScope}:${request.requestUrl}`
     const cached = dashboardCache.get(cacheKey)
     if (cached && cached.expiresAt > Date.now()) return cached.value as T
-    const persisted = canPersistDashboardResponse(request.requestUrl) ? readSessionDashboardCache(cacheKey) : null
+    const persisted = readSessionDashboardCache(cacheKey)
     if (persisted) {
       dashboardCache.set(cacheKey, persisted)
       return persisted.value as T
@@ -185,7 +183,7 @@ export async function apiFetchJson<T>(url: string, init?: RequestInit): Promise<
       if (value !== null && generation === dashboardCacheGeneration) {
         const cached = { value, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS }
         dashboardCache.set(cacheKey, cached)
-        if (canPersistDashboardResponse(request.requestUrl)) writeSessionDashboardCache(cacheKey, cached)
+        writeSessionDashboardCache(cacheKey, cached)
       }
       return value
     }).finally(() => {

@@ -48,5 +48,5 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 
 - Diagnóstico read-only em 2026-09-01: a conexão VTEX possui 17.803 produtos e 17.803 estoques ativos; Produtos e Estoque percorriam também até 82.431 itens de pedido antes de responder, em páginas sequenciais.
 - As leituras paginadas agora executam lotes pequenos em paralelo e as consultas independentes de cada endpoint são iniciadas juntas, mantendo tenant, filtros e conjunto de dados originais.
-- Produtos e Estoque reutilizam o snapshot autenticado por cinco minutos na mesma sessão; as tabelas exibem páginas de 100 itens por vez, mantendo todos os itens, filtros e navegação acessíveis sem montar milhares de linhas no DOM.
+- Produtos e Estoque não persistem catálogos grandes no cache do navegador; as tabelas exibem páginas de 100 itens por vez, mantendo todos os itens, filtros e navegação acessíveis sem montar milhares de linhas no DOM. A paginação no servidor permanece como próxima etapa para reduzir o payload inicial.
 - Respostas controladas de erro/configuração agora informam falha temporária de leitura e não sugerem reconectar um marketplace que pode continuar com dados sincronizados.

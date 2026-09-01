@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { readFile } from 'node:fs/promises'
 
 describe('Produtos e Estoque em catálogos grandes', () => {
-  it('persists snapshots por sessão e evita rebaixar as mesmas telas ao voltar de rota', async () => {
+  it('does not put catalog or inventory payloads in the browser cache', async () => {
     const source = await readFile(new URL('../src/lib/apiFetch.ts', import.meta.url), 'utf8')
 
-    expect(source).toContain("url.startsWith('/api/dashboard/products')")
-    expect(source).toContain("url.startsWith('/api/dashboard/inventory')")
+    expect(source).not.toMatch(/isCacheableDashboardResponse[\s\S]{0,450}dashboard\/products/)
+    expect(source).not.toMatch(/isCacheableDashboardResponse[\s\S]{0,450}dashboard\/inventory/)
   })
 
   it('não apresenta erro de leitura como marketplace desconectado', async () => {

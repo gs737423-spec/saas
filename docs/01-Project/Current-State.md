@@ -27,7 +27,7 @@ updated: 2026-08-14
 
 - Evidência read-only no Supabase: a única conexão VTEX possui 17.803 produtos e 17.803 registros de estoque ativos; a conexão está em `error` por uma janela OMS de pedidos, mas o último catálogo/estoque sincronizado permanece persistido.
 - As APIs de Produtos e Estoque ainda liam catálogo, estoque e até 82.431 itens de pedido integralmente, em páginas sequenciais, antes de responder. As páginas são buscadas em lotes pequenos concorrentes e leituras independentes dos endpoints são iniciadas juntas, sem modificar o recorte por tenant nem omitir linhas.
-- Cliente: snapshots autenticados de Produtos/Estoque reutilizam cache de sessão de cinco minutos, e as tabelas renderizam 100 linhas por página; todos os itens e filtros seguem disponíveis. Erros de leitura/configuração deixam de se apresentar como “conecte um marketplace”.
+- Cliente: Produtos/Estoque não persistem o catálogo no cache do navegador; as tabelas renderizam 100 linhas por página. Todos os itens e filtros seguem disponíveis. Erros de leitura/configuração deixam de se apresentar como “conecte um marketplace”. A próxima etapa é paginação no servidor para reduzir também o payload inicial.
 - Validações locais: TypeScript passou; 19/19 testes focados passaram; build passou. A performance remota requer medição autenticada após deploy.
 
 ## Correção VTEX — preço calculado e janela incremental (2026-08-31)
