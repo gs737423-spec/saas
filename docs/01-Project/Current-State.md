@@ -122,6 +122,13 @@ updated: 2026-08-14
 - Validação local: TypeScript passou; 29/29 testes focados passaram; `git diff --check` sem erro. Não existe script de lint no `package.json`.
 - Status: **implementado localmente — aguardando deploy e smoke real; não equivale à reconciliação retroativa de uma tabela materializada.**
 
+## Correção analítica — snapshot único da Visão Geral (2026-09-01)
+
+- KPIs e ranking GMV da Visão Geral não fazem mais leituras independentes de `summary` e `finance`. A página usa uma única resposta de `finance`, que inclui total, quantidade, ticket e comparativos quando solicitada pelo Dashboard.
+- Isso impede que o topo e as linhas por marketplace sejam renderizados a partir de snapshots diferentes durante sync, atualização de período ou revalidação de cache. A leitura duplicada de pedidos pelo Dashboard também foi removida.
+- Não há migration, alteração em pedidos ou mudança de integração. Relatórios e Financeiro preservam os contratos de leitura existentes.
+- Validação local: TypeScript passou; 16/16 testes focados passaram; build passou com o aviso não bloqueante já conhecido do chunk principal (~711 kB). Smoke autenticado ainda exige uma sessão de cliente.
+
 ## Stack confirmada
 - [x] Framework: React 19 + Vite 8 + React Router 7
 - [x] Linguagem: TypeScript

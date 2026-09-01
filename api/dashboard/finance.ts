@@ -101,6 +101,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const since = range.from.toISOString()
     const until = range.to.toISOString()
     const includeTransactions = req.query.include_transactions !== 'false'
+    // A Visão Geral usa este contrato para montar KPIs e GMV a partir do
+    // mesmo snapshot. Outras telas não pagam pela comparação adicional.
+    const includeDashboardSummary = req.query.include_dashboard_summary === 'true'
 
     const supabase = await getSupabaseAdmin()
 
@@ -160,7 +163,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const refundDataStatus = refundCoverage.status
     const netValue = grossRevenue - fees - refunds
 
-    const overview: FinanceOverview = { grossRevenue, fees, feeDataStatus: feeCoverage.status, refunds, refundDataStatus, netValue, source: 'real' }
+    const ordersCount = paid.length
+    const averageTicket = ordersCount > 0 ? grossRevenue / ordersCount : 0
+    let grossRevenueChangePct: number | null = null
+    let ordersCountChangePct: number | null = null
+
+    if (includeDashboardSummary) {
+      const previousFrom = new Date(range.from.getTime() - (range.to.getTime() - range.from.getTime())).toISOString()
+      const { data: previousOrders, error: previousOrdersError } = await fetchAllRows((from, to) =>
+        supabase
+          .from('orders')
+          .select('total_amount')
+          .in('connection_id', connectionIds)
+          .eq('company_id', auth.companyId)
+          .eq('status', 'paid')
+          .eq('analytics_included', true)
+          .gte('ordered_at', previousFrom)
+          .lt('ordered_at', since)
+          .range(from, to)
+      )
+      if (previousOrdersError) throw new Error(previousOrdersError.message)
+      const previousGrossRevenue = (previousOrders ?? []).reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0)
+      grossRevenueChangePct = pctChange(grossRevenue, previousGrossRevenue)
+      ordersCountChangePct = pctChange(ordersCount, (previousOrders ?? []).length)
+    }
+
+    const overview: FinanceOverview = {
+      grossRevenue,
+      ordersCount: includeDashboardSummary ? ordersCount : undefined,
+      averageTicket: includeDashboardSummary ? averageTicket : undefined,
+      grossRevenueChangePct: includeDashboardSummary ? grossRevenueChangePct : undefined,
+      ordersCountChangePct: includeDashboardSummary ? ordersCountChangePct : undefined,
+      returnsCount: includeDashboardSummary ? refundCoverage.affectedOrders : undefined,
+      fees,
+      feeDataStatus: feeCoverage.status,
+      refunds,
+      refundDataStatus,
+      netValue,
+      source: 'real',
+    }
 
     // Agrupa por provider real (não mais 1 linha fixa "Mercado Livre") —
     // cada marketplace conectado com pedido no período vira uma linha.

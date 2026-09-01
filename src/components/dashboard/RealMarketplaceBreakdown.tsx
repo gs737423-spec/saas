@@ -5,10 +5,11 @@ import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } fr
 import { apiFetchJson } from '@/lib/apiFetch'
 import { usePeriod } from '@/contexts/PeriodContext'
 
-interface FinanceApiResponse {
+export interface FinanceApiResponse {
   ok: boolean
   overview: FinanceOverview
   byMarketplace: MarketplaceFinance[]
+  lastSyncAt?: string | null
 }
 
 type SortKey = 'netRevenue' | 'avgTicket'
@@ -103,13 +104,18 @@ function Row({ m, rank, share, revenueColumnWidth }: { m: MarketplaceFinance; ra
  *  /api/dashboard/finance (ou ilustrativo em Modo Demonstração, mesmo
  *  endpoint, ver apiFetch.ts). Mesmo layout/estrutura do componente
  *  original MarketplaceComparison.tsx. */
-export default function RealMarketplaceBreakdown() {
+export default function RealMarketplaceBreakdown({ data: suppliedData }: { data?: FinanceApiResponse | null }) {
   const [sort, setSort] = useState<SortKey>('netRevenue')
   const { period } = usePeriod()
   const [data, setData] = useState<FinanceApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (suppliedData !== undefined) {
+      setData(suppliedData)
+      setLoading(false)
+      return
+    }
     let cancelled = false
     setLoading(true)
     apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}&include_transactions=false`).then((res) => {
@@ -119,7 +125,7 @@ export default function RealMarketplaceBreakdown() {
       }
     })
     return () => { cancelled = true }
-  }, [period.query])
+  }, [period.query, suppliedData])
 
   if (loading) {
     return (

@@ -104,9 +104,14 @@ function demoFinanceByMarketplace(totalGross: number): MarketplaceFinance[] {
 export function demoFinanceOverview(days = 30): { overview: FinanceOverview; byMarketplace: MarketplaceFinance[] } {
   const summary = demoDashboardSummary(days)
   const byMarketplace = demoFinanceByMarketplace(summary.grossRevenue)
-  const overview: FinanceOverview = {
-    grossRevenue: summary.grossRevenue,
-    fees: summary.feesTotal,
+    const overview: FinanceOverview = {
+      grossRevenue: summary.grossRevenue,
+      ordersCount: summary.ordersCount,
+      averageTicket: summary.averageTicket,
+      grossRevenueChangePct: summary.grossRevenueChangePct,
+      ordersCountChangePct: summary.ordersCountChangePct,
+      returnsCount: summary.returnsCount,
+      fees: summary.feesTotal,
     feeDataStatus: 'known',
     refunds: summary.returnsAmount,
     refundDataStatus: 'known',

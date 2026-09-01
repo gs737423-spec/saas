@@ -29,6 +29,13 @@ export interface MarketplaceFinance {
 
 export interface FinanceOverview {
   grossRevenue: number
+  /** Preenchidos quando o consumidor precisa montar os KPIs do dashboard a
+   * partir do mesmo snapshot que gerou as linhas por marketplace. */
+  ordersCount?: number
+  averageTicket?: number
+  grossRevenueChangePct?: number | null
+  ordersCountChangePct?: number | null
+  returnsCount?: number
   fees: number
   feeDataStatus: FeeDataStatus
   refunds: number

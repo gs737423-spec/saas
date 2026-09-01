@@ -68,3 +68,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - A varredura de consistência encontrou agrupamento UTC divergente entre o resumo e as séries financeira/diária/produto. Pedidos entre 21h00 e 23h59 BRT podiam aparecer no dia seguinte apenas em parte da interface.
 - Foi criado um helper único para chaves, limites e deslocamentos de data em `America/Sao_Paulo`, aplicado a essas três leituras. Não há migration nem escrita nos dados reais.
 - Validação local: TypeScript passou e 29 testes focados passaram. Próxima ação: publicar e comparar os períodos fechados da interface com a origem VTEX.
+
+## Complemento — snapshot único no Dashboard
+
+- A divergência visual de setembro (KPI com R$ 30 mil/11 pedidos versus linhas GMV acima de R$ 900 mil) expôs que a Visão Geral combinava duas respostas independentes, sujeitas a cache e sincronização em momentos diferentes.
+- A rota financeira passou a incluir os campos de KPI somente quando o Dashboard solicita; a página repassa exatamente essa mesma resposta ao ranking GMV. Não há mais segunda leitura de pedidos na Visão Geral.
+- Validação local: TypeScript passou, 16/16 testes focados passaram e build passou. Smoke autenticado permanece pendente por ausência de sessão de cliente no ambiente de diagnóstico.
