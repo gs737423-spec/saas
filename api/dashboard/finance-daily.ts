@@ -3,7 +3,7 @@ import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { Provider } from '../../src/server/integrations/types.js'
 import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
-import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
+import { resolveAnalyticsDateRange, saoPauloDateKey, saoPauloDateLabel, shiftSaoPauloDate } from '../../src/server/analytics/dateRange.js'
 
 export interface DailyRevenuePoint {
   date: string
@@ -24,18 +24,14 @@ interface DailyApiResponse {
   message?: string
 }
 
-function dateKey(iso: string): string {
-  return iso.slice(0, 10)
-}
-
 function emptyDays(totalDays: number, endExclusive = new Date()): DailyRevenuePoint[] {
   const out: DailyRevenuePoint[] = []
-  const lastIncludedInstant = endExclusive.getTime() - 1
+  const lastDay = saoPauloDateKey(new Date(endExclusive.getTime() - 1))
   for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(lastIncludedInstant - i * 24 * 60 * 60 * 1000)
+    const date = shiftSaoPauloDate(lastDay, -i)
     out.push({
-      date: d.toISOString().slice(0, 10),
-      label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+      date,
+      label: saoPauloDateLabel(date),
       mercadolivre: 0,
       shopee: 0,
       amazon: 0,
@@ -124,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // separados. `orders`/`sales_channels` não são alterados.
       const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
       displayNameByEffectiveKey.set(effectiveChannel, displayName)
-      const key = dateKey(o.ordered_at)
+      const key = saoPauloDateKey(o.ordered_at)
       const point = byDay.get(key)
       if (!point) continue
       const amount = Number(o.total_amount ?? 0)

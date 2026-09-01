@@ -3,7 +3,7 @@ import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import type { FinanceOverview, MarketplaceFinance, MarketplaceGrowth, FinanceTransaction } from '../../src/data/financeShapes.js'
 import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
-import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
+import { resolveAnalyticsDateRange, saoPauloDateKey, saoPauloDayBounds, saoPauloDaysAgoKey } from '../../src/server/analytics/dateRange.js'
 import { summarizeFeeCoverage } from '../../src/server/analytics/feeQuality.js'
 import { summarizeRefundCoverage } from '../../src/server/analytics/refundQuality.js'
 
@@ -26,19 +26,6 @@ function pctChange(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
-function dateKey(iso: string): string {
-  return iso.slice(0, 10)
-}
-
-function daysAgoKey(n: number): string {
-  return dateKey(new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString())
-}
-
-function utcDayBounds(day: string): { from: string; until: string } {
-  const from = new Date(`${day}T00:00:00.000Z`)
-  return { from: from.toISOString(), until: new Date(from.getTime() + 24 * 60 * 60 * 1000).toISOString() }
-}
-
 /** D-1/D-7/D-30/D-365 compara cinco dias exatos. Buscar um ano inteiro de
  * pedidos para responder quatro comparativos tornava cada troca de filtro
  * proporcional ao histórico completo da empresa. */
@@ -49,9 +36,9 @@ async function computeGrowthByChannel(
   providerByConnectionId: Map<string, string>,
   trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
-  const dayKeys = [0, 1, 7, 30, 365].map(daysAgoKey)
+  const dayKeys = [0, 1, 7, 30, 365].map((days) => saoPauloDaysAgoKey(days))
   const snapshots = await Promise.all(dayKeys.map(async (day) => {
-    const bounds = utcDayBounds(day)
+    const bounds = saoPauloDayBounds(day)
     const { data, error } = await fetchAllRows((from, to) =>
       supabase
         .from('orders')
@@ -76,20 +63,20 @@ async function computeGrowthByChannel(
     if (!storedChannel) continue
     const channel = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels).effectiveChannel
     const byDay = revenueByChannelDay.get(channel) ?? new Map<string, number>()
-    const key = dateKey(o.ordered_at)
+    const key = saoPauloDateKey(o.ordered_at)
     byDay.set(key, (byDay.get(key) ?? 0) + Number(o.total_amount ?? 0))
     revenueByChannelDay.set(channel, byDay)
   }
 
-  const todayKey = daysAgoKey(0)
+  const todayKey = saoPauloDaysAgoKey(0)
   const result = new Map<StoredSalesChannel, MarketplaceGrowth>()
   for (const [channel, byDay] of revenueByChannelDay.entries()) {
     const today = byDay.get(todayKey) ?? 0
     result.set(channel, {
-      d1: pctChange(today, byDay.get(daysAgoKey(1)) ?? 0),
-      d7: pctChange(today, byDay.get(daysAgoKey(7)) ?? 0),
-      d30: pctChange(today, byDay.get(daysAgoKey(30)) ?? 0),
-      d365: pctChange(today, byDay.get(daysAgoKey(365)) ?? 0),
+      d1: pctChange(today, byDay.get(saoPauloDaysAgoKey(1)) ?? 0),
+      d7: pctChange(today, byDay.get(saoPauloDaysAgoKey(7)) ?? 0),
+      d30: pctChange(today, byDay.get(saoPauloDaysAgoKey(30)) ?? 0),
+      d365: pctChange(today, byDay.get(saoPauloDaysAgoKey(365)) ?? 0),
     })
   }
   return result
@@ -250,7 +237,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const marketplace = storedChannel ? resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel)).displayName : undefined
         if (!marketplace) return []
         return [{
-          date: new Date(o.ordered_at).toISOString().split('T')[0],
+          date: saoPauloDateKey(o.ordered_at),
           marketplace,
           type: 'Venda' as const,
           identifier: o.external_order_id,
@@ -268,7 +255,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const marketplace = storedChannel ? resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel)).displayName : undefined
         if (!marketplace) return []
         return [{
-          date: new Date(o.refund_updated_at ?? o.ordered_at).toISOString().split('T')[0],
+          date: saoPauloDateKey(o.refund_updated_at ?? o.ordered_at),
           marketplace,
           type: 'Estorno' as const,
           identifier: o.external_order_id,

@@ -62,3 +62,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - A leitura de 2026-09-01 comprovou que o dashboard podia manter uma resposta de período aberto em cache enquanto uma execução VTEX incremental ainda trazia pedidos. O problema era de frescor/apresentação, não de soma ou de tenant cruzado.
 - Incrementais passam a atualizar pedidos antes do catálogo; a carga full permanece conservadora. O cache de período aberto cai para 20 segundos e o de período fechado mantém cinco minutos.
 - Nenhum dado real foi modificado durante a auditoria; o resultado exige validação após o próximo ciclo de pedidos em produção.
+
+## Complemento — calendário analítico São Paulo
+
+- A varredura de consistência encontrou agrupamento UTC divergente entre o resumo e as séries financeira/diária/produto. Pedidos entre 21h00 e 23h59 BRT podiam aparecer no dia seguinte apenas em parte da interface.
+- Foi criado um helper único para chaves, limites e deslocamentos de data em `America/Sao_Paulo`, aplicado a essas três leituras. Não há migration nem escrita nos dados reais.
+- Validação local: TypeScript passou e 29 testes focados passaram. Próxima ação: publicar e comparar os períodos fechados da interface com a origem VTEX.

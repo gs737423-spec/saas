@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
 import { CORE_ENV_VARS, fetchAllRows, getMissingEnvVars, getSupabaseAdmin } from '../../src/server/integrations/supabaseAdmin.js'
 import type { ProductSalesPoint, ProductSalesResponse } from '../../src/server/dashboardProducts.js'
-import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
+import { resolveAnalyticsDateRange, saoPauloDateKey } from '../../src/server/analytics/dateRange.js'
 
 interface ProductRef { connectionId: string; externalProductId: string }
 interface SalesRow {
@@ -28,10 +28,6 @@ function parseRefs(value: unknown): ProductRef[] {
   } catch {
     return []
   }
-}
-
-function dateKey(value: string): string {
-  return new Date(value).toISOString().slice(0, 10)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -90,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const row of (data ?? []) as unknown as SalesRow[]) {
       const order = Array.isArray(row.orders) ? row.orders[0] : row.orders
       if (!order || !row.external_product_id || !allowedPairs.has(`${order.connection_id}:${row.external_product_id}`)) continue
-      const date = dateKey(order.ordered_at)
+      const date = saoPauloDateKey(order.ordered_at)
       const point = byDate.get(date) ?? { date, units: 0, revenue: 0 }
       point.units += Number(row.quantity ?? 0)
       point.revenue += Number(row.quantity ?? 0) * Number(row.unit_price ?? 0)

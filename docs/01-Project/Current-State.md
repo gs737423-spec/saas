@@ -115,6 +115,13 @@ updated: 2026-08-14
 - A migration `026_integration_continuity_and_product_identity.sql` foi aplicada e verificada no `vintec-production`: histórico 1/1, colunas 11/11, índices 2/2 e zero `NULL` inválido nos campos obrigatórios.
 - Status: **implementado localmente — aguardando deploy e smoke real. Não pronto para produção.**
 
+## Correção analítica — calendário operacional de São Paulo (2026-09-01)
+
+- Financeiro, série diária e vendas por produto agora usam uma única regra de dia operacional `America/Sao_Paulo`. Antes, parte das leituras agrupava por UTC, deslocando pedidos entre 21h00 e 23h59 BRT para o dia seguinte em gráficos, comparativos D-1/D-7/D-30/D-365 e métricas por produto.
+- A correção altera somente a leitura/agrupamento: não regrava pedidos, itens ou métricas persistidas. Limites de início/fim do dia e deslocamento de datas usam o mesmo helper centralizado.
+- Validação local: TypeScript passou; 29/29 testes focados passaram; `git diff --check` sem erro. Não existe script de lint no `package.json`.
+- Status: **implementado localmente — aguardando deploy e smoke real; não equivale à reconciliação retroativa de uma tabela materializada.**
+
 ## Stack confirmada
 - [x] Framework: React 19 + Vite 8 + React Router 7
 - [x] Linguagem: TypeScript
