@@ -133,6 +133,7 @@ updated: 2026-08-14
 
 - KPIs e ranking GMV da Visão Geral não fazem mais leituras independentes de `summary` e `finance`. A página usa uma única resposta de `finance`, que inclui total, quantidade, ticket e comparativos quando solicitada pelo Dashboard.
 - Isso impede que o topo e as linhas por marketplace sejam renderizados a partir de snapshots diferentes durante sync, atualização de período ou revalidação de cache. A leitura duplicada de pedidos pelo Dashboard também foi removida.
+- Em 2026-09-02, o componente GMV deixou de copiar essa resposta compartilhada para estado interno. Quando recebe dados do Dashboard, ele os renderiza diretamente; assim não conserva uma resposta anterior entre a atualização do KPI e do ranking.
 - Não há migration, alteração em pedidos ou mudança de integração. Relatórios e Financeiro preservam os contratos de leitura existentes.
 - Validação local: TypeScript passou; 16/16 testes focados passaram; build passou com o aviso não bloqueante já conhecido do chunk principal (~711 kB). Smoke autenticado ainda exige uma sessão de cliente.
 

@@ -95,3 +95,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - Relatórios agora recebe do banco apenas os oito produtos de maior receita, no máximo 100 itens de estoque baixo e contadores completos de estoque baixo/sem custo. Produto 360 consulta exclusivamente o par `connection_id + external_product_id`; URLs antigas por SKU continuam compatíveis, limitadas a 20 anúncios do mesmo tenant.
 - A autenticação da API continua passando por `requireCompany`, que fornece o `company_id` e as conexões autorizadas antes de qualquer RPC. Não houve escrita em dados de cliente.
 - Validação local: `npm run typecheck` passou; 33/33 testes focados passaram; `npm run build` passou. Não há script de lint no `package.json`. Smoke autenticado permanece pendente por ausência de sessão de cliente neste ambiente.
+
+## Complemento — coerência imediata entre KPI e GMV
+
+- A Visão Geral já solicitava um único snapshot financeiro. O componente GMV ainda o copiava para estado via `useEffect`, permitindo que uma resposta anterior permanecesse renderizada durante uma atualização.
+- O GMV agora usa diretamente o prop compartilhado quando o Dashboard o fornece; o estado interno permanece somente para os usos autônomos do componente. Não houve mudança em pedidos, cálculos do backend, integrações ou dados reais.
+- Validação local: TypeScript passou, 4/4 testes focados passaram e o build passou. Não há script de lint no `package.json`.

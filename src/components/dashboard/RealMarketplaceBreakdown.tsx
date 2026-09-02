@@ -107,25 +107,27 @@ function Row({ m, rank, share, revenueColumnWidth }: { m: MarketplaceFinance; ra
 export default function RealMarketplaceBreakdown({ data: suppliedData }: { data?: FinanceApiResponse | null }) {
   const [sort, setSort] = useState<SortKey>('netRevenue')
   const { period } = usePeriod()
-  const [data, setData] = useState<FinanceApiResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [fetchedData, setFetchedData] = useState<FinanceApiResponse | null>(null)
+  const [isFetching, setIsFetching] = useState(true)
 
   useEffect(() => {
-    if (suppliedData !== undefined) {
-      setData(suppliedData)
-      setLoading(false)
-      return
-    }
+    if (suppliedData !== undefined) return
     let cancelled = false
-    setLoading(true)
+    setIsFetching(true)
     apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}&include_transactions=false`).then((res) => {
       if (!cancelled) {
-        setData(res)
-        setLoading(false)
+        setFetchedData(res)
+        setIsFetching(false)
       }
     })
     return () => { cancelled = true }
   }, [period.query, suppliedData])
+
+  // No Dashboard, KPIs e GMV recebem a mesma resposta. Não copiamos esse
+  // prop para estado: uma cópia atualizada por effect pode renderizar o GMV
+  // anterior por uma janela e quebrar a coerência visual do snapshot.
+  const data = suppliedData !== undefined ? suppliedData : fetchedData
+  const loading = suppliedData === undefined ? isFetching : false
 
   if (loading) {
     return (
