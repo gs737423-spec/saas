@@ -1,4 +1,5 @@
 import type { Marketplace } from '@/data/mockData'
+import type { CategoryOption } from '@/lib/categoryAnalytics'
 
 export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria' | 'vtex'
 
@@ -165,6 +166,23 @@ export interface DashboardInventoryResponse {
   source: DashboardInventorySource
   items: DashboardInventoryItem[]
   lastSyncAt: string | null
+  /** Presente somente quando a leitura é paginada no servidor. */
+  pagination?: {
+    page: number
+    pageSize: number
+    totalRows: number
+    totalPages: number
+  }
+  categoryOptions?: CategoryOption[]
+  metrics?: {
+    totalItems: number
+    pricedItems: number
+    totalValue: number
+    stalledCount: number
+    curvaACount: number
+    totalRevenue: number
+    topCategory: { key: string; label: string; revenue: number } | null
+  }
 }
 
 export type DashboardSummarySource = 'real' | 'demo' | 'config_missing' | 'error'

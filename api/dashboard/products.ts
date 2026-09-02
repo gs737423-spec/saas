@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
-import type { DashboardProduct, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
+import type { DashboardPage, DashboardProduct, DashboardProductMetrics, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
+import type { CategoryOption } from '../../src/lib/categoryAnalytics.js'
 import type { Marketplace } from '../../src/data/mockData.js'
 import type { Provider } from '../../src/server/integrations/types.js'
 import { resolveAnalyticsDateRange } from '../../src/server/analytics/dateRange.js'
@@ -15,6 +16,39 @@ const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
   mercadolivre: 'Mercado Livre',
   shopee: 'Shopee',
   vtex: 'Loja Própria',
+}
+
+const MARKETPLACE_PROVIDER: Partial<Record<Marketplace, Provider>> = {
+  'Mercado Livre': 'mercadolivre',
+  Shopee: 'shopee',
+  Amazon: 'amazon',
+  'Loja Própria': 'vtex',
+}
+
+function queryValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function queryNumber(value: string | string[] | undefined, fallback: number): number {
+  const parsed = Number(queryValue(value))
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function queryList(value: string | string[] | undefined): string[] {
+  const raw = queryValue(value)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function asNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
 interface OrderItemAgg {
@@ -119,6 +153,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
+
+    // A tela Produtos pede explicitamente uma página. Mantemos o contrato
+    // legado sem `page` abaixo para Relatórios/Produto 360 até eles migrarem
+    // para suas próprias consultas estreitas — nunca degradamos uma rota já
+    // publicada de forma silenciosa.
+    if (queryValue(req.query.page)) {
+      const selectedMarketplaces = queryList(req.query.marketplaces) as Marketplace[]
+      const providerFilter = selectedMarketplaces
+        .map((marketplace) => MARKETPLACE_PROVIDER[marketplace])
+        .filter((provider): provider is Provider => Boolean(provider))
+      const { data, error } = await supabase.rpc('dashboard_products_page', {
+        p_company_id: auth.companyId,
+        p_connection_ids: connectionIds,
+        p_since: since,
+        p_until: until,
+        p_previous_since: prevSince,
+        p_page: queryNumber(req.query.page, 1),
+        p_page_size: Math.min(queryNumber(req.query.page_size, 100), 100),
+        p_search: queryValue(req.query.search) ?? null,
+        p_providers: providerFilter,
+        p_category_keys: queryList(req.query.categories),
+        p_sort: queryValue(req.query.sort) ?? 'revenue',
+        p_sort_dir: queryValue(req.query.direction) ?? 'desc',
+      })
+      if (error) throw new Error(error.message)
+
+      const payload = (data ?? {}) as Record<string, unknown>
+      const rawItems = Array.isArray(payload.items) ? payload.items as Record<string, unknown>[] : []
+      const items: DashboardProduct[] = rawItems.map((item) => {
+        const provider = item.provider as Provider
+        const marketplace = PROVIDER_LABEL[provider]
+        if (!marketplace) throw new Error('Provider de catálogo não suportado.')
+        return {
+          id: String(item.id),
+          connectionId: String(item.connectionId),
+          sku: typeof item.sku === 'string' ? item.sku : null,
+          name: String(item.name ?? ''),
+          marketplace,
+          categoryId: typeof item.categoryId === 'string' ? item.categoryId : null,
+          category: typeof item.category === 'string' ? item.category : null,
+          price: asNumber(item.price),
+          costPrice: asNumber(item.costPrice),
+          margin: asNumber(item.margin),
+          stock: asNumber(item.stock) ?? 0,
+          revenue: asNumber(item.revenue) ?? 0,
+          units: asNumber(item.units) ?? 0,
+          trend: asNumber(item.trend),
+          sharePct: asNumber(item.sharePct) ?? 0,
+        }
+      })
+      res.status(200).json({
+        ok: true,
+        source: 'real',
+        items,
+        pagination: payload.pagination as DashboardPage | undefined,
+        categoryOptions: payload.categoryOptions as CategoryOption[] | undefined,
+        metrics: payload.metrics as DashboardProductMetrics | undefined,
+      } satisfies ProductsApiResponse)
+      return
+    }
 
     // Catálogo, estoque e as duas janelas de vendas só compartilham o tenant
     // já resolvido acima. Rodá-los juntos remove um waterfall que, em contas

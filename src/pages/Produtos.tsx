@@ -8,28 +8,41 @@ import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplaceProm
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetch, apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
-import { categoryItemFromProduct } from '@/lib/categoryAdapters'
-import { getCategoryOptions, matchesCategoryFilter } from '@/lib/categoryAnalytics'
+
+type ProductSortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
+type ProductSortDir = 'asc' | 'desc'
 
 export default function Produtos() {
   const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
   const { period } = usePeriod()
   const [real, setReal] = useState<DashboardProductsResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<{ key: ProductSortKey; dir: ProductSortDir }>({ key: 'revenue', dir: 'desc' })
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`).then((data) => {
-      if (!cancelled) {
-        setReal(data)
-        setLoading(false)
-      }
-    })
-    return () => {
-      cancelled = true
+    // Evita uma viagem ao servidor por tecla sem adiar os filtros de clique.
+    const delay = filters.search ? window.setTimeout(load, 180) : window.setTimeout(load, 0)
+    function load() {
+      const params = new URLSearchParams(period.query)
+      params.set('page', String(page))
+      params.set('page_size', '100')
+      params.set('sort', sort.key)
+      params.set('direction', sort.dir)
+      if (filters.search.trim()) params.set('search', filters.search.trim())
+      if (filters.marketplaces.size > 0) params.set('marketplaces', JSON.stringify([...filters.marketplaces]))
+      if (filters.categories.size > 0) params.set('categories', JSON.stringify([...filters.categories]))
+      apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${params}`).then((data) => {
+        if (!cancelled) {
+          setReal(data)
+          setLoading(false)
+        }
+      })
     }
-  }, [period.query])
+    return () => { cancelled = true; window.clearTimeout(delay) }
+  }, [period.query, filters, page, sort])
 
   async function handleSetCost(product: DashboardProduct, costPrice: number) {
     const res = await apiFetch('/api/dashboard/products', {
@@ -42,24 +55,12 @@ export default function Produtos() {
     }
   }
 
-  const filteredProducts = useMemo(() => {
-    const items = real?.items ?? []
-    return items.filter((p) => {
-      if (filters.marketplaces.size > 0 && !filters.marketplaces.has(p.marketplace)) return false
-      if (!matchesCategoryFilter(categoryItemFromProduct(p), filters.categories)) return false
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
-        if (
-          !p.name.toLowerCase().includes(q) &&
-          !(p.sku ?? '').toLowerCase().includes(q) &&
-          !(p.category ?? '').toLowerCase().includes(q)
-        ) return false
-      }
-      return true
-    })
-  }, [real, filters])
+  const products = useMemo(() => real?.items ?? [], [real])
 
-  const categoryOptions = useMemo(() => getCategoryOptions((real?.items ?? []).map(categoryItemFromProduct)), [real])
+  function handleFiltersChange(next: ProductFilterState) {
+    setFilters(next)
+    setPage(1)
+  }
 
   if (loading) {
     return (
@@ -70,7 +71,7 @@ export default function Produtos() {
     )
   }
 
-  if (real?.source === 'real' && real.items.length === 0) {
+  if (real?.source === 'real' && (real.pagination?.totalRows ?? real.items.length) === 0) {
     return <ConnectMarketplacePrompt title="Catálogo ainda não disponível" description="A conexão está ativa e o catálogo real está sendo sincronizado. Nenhum produto ilustrativo será exibido enquanto isso." />
   }
 
@@ -79,18 +80,30 @@ export default function Produtos() {
   }
 
   // Sem conexão — nenhum produto ilustrativo aparece fora do modo demo.
-  if (!real || (real.source !== 'real' && real.source !== 'demo') || real.items.length === 0) {
+  if (!real || (real.source !== 'real' && real.source !== 'demo') || (real.pagination?.totalRows ?? real.items.length) === 0) {
     return <ConnectMarketplacePrompt title="Conecte um marketplace pra ver seu catálogo" description="Assim que sincronizar o Mercado Livre, seus produtos reais aparecem aqui — com estoque, vendas e tendência." />
   }
 
   return (
     <div className="workspace-page workspace-page--products">
       <div className="motion-block-in">
-        <ProductKPIs products={filteredProducts} />
+        <ProductKPIs products={products} metrics={real.metrics} />
       </div>
 
       <div className="motion-block-in motion-block-in-2 workspace-primary-panel">
-        <ProductTable allProducts={real.items} filteredProducts={filteredProducts} filters={filters} onFiltersChange={setFilters} categoryOptions={categoryOptions} editable onSetCost={handleSetCost} />
+        <ProductTable
+          allProducts={products}
+          filteredProducts={products}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          categoryOptions={real.categoryOptions ?? []}
+          editable
+          onSetCost={handleSetCost}
+          serverPage={real.pagination}
+          serverSort={sort}
+          onServerSortChange={(key, dir) => { setSort({ key, dir }); setPage(1) }}
+          onServerPageChange={setPage}
+        />
       </div>
     </div>
   )

@@ -47,6 +47,18 @@ interface FilterState {
   onlyNoRecentEntry: boolean
 }
 
+export interface InventoryServerQuery {
+  page: number
+  sort: 'revenue' | 'stock' | 'units30d' | 'coverage'
+  abc: AbcClass[]
+  marketplace: Marketplace | 'all'
+  categories: string[]
+  onlyCritical: boolean
+  onlyStalled: boolean
+  onlyLowCoverage: boolean
+  onlyExcess: boolean
+}
+
 const defaultFilters: FilterState = {
   abc: new Set(),
   onlyCritical: false,
@@ -127,15 +139,29 @@ function MarketplaceDropdown({ value, onChange }: { value: Marketplace | 'all'; 
   )
 }
 
-export default function RealInventoryTable({ items }: { items: DashboardInventoryItem[] }) {
+export default function RealInventoryTable({
+  items,
+  serverPage,
+  serverMetrics,
+  serverCategoryOptions,
+  onServerQueryChange,
+}: {
+  items: DashboardInventoryItem[]
+  serverPage?: { page: number; totalPages: number; totalRows: number; pageSize: number }
+  serverMetrics?: { totalItems: number; pricedItems: number; totalValue: number; stalledCount: number; curvaACount: number; totalRevenue: number; topCategory: { key: string; label: string; revenue: number } | null }
+  serverCategoryOptions?: { key: string; label: string }[]
+  onServerQueryChange?: (query: InventoryServerQuery) => void
+}) {
   const { theme } = useTheme()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [sort, setSort] = useState<'revenue' | 'stock' | 'units30d' | 'coverage'>('revenue')
   const [page, setPage] = useState(1)
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
   const categoryProducts = useMemo(() => items.map(categoryItemFromInventory), [items])
-  const categoryOptions = useMemo(() => getCategoryOptions(categoryProducts), [categoryProducts])
-  const topCategory = useMemo(() => getTopCategory(categoryProducts), [categoryProducts])
+  const computedCategoryOptions = useMemo(() => getCategoryOptions(categoryProducts), [categoryProducts])
+  const categoryOptions = serverCategoryOptions ?? computedCategoryOptions
+  const computedTopCategory = useMemo(() => getTopCategory(categoryProducts), [categoryProducts])
+  const topCategory = serverMetrics?.topCategory ?? computedTopCategory
   const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
 
   const enriched = useMemo(() => items.map((item) => {
@@ -154,12 +180,12 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     [items]
   )
 
-  const stalledCount = enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
+  const stalledCount = serverMetrics?.stalledCount ?? enriched.filter((e) => e.giro.label === 'Parado' || e.giro.label === 'Parado crítico').length
   const curvaA = items.filter((i) => i.abcClass === 'A')
   const pricedItems = items.filter((item) => item.price !== null && item.availableQuantity !== null)
-  const totalValue = pricedItems.reduce((sum, item) => sum + item.price! * item.availableQuantity!, 0)
+  const totalValue = serverMetrics?.totalValue ?? pricedItems.reduce((sum, item) => sum + item.price! * item.availableQuantity!, 0)
 
-  const filtered = enriched.filter(({ item, cov, giro }) => {
+  const filtered = serverPage ? enriched : enriched.filter(({ item, cov, giro }) => {
     if (filters.abc.size > 0 && (!item.abcClass || !filters.abc.has(item.abcClass))) return false
     if (filters.onlyCritical && !(cov !== null && cov < 7)) return false
     if (filters.onlyStalled && !(giro.label === 'Parado' || giro.label === 'Parado crítico')) return false
@@ -175,27 +201,43 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
     return true
   })
 
-  const sorted = [...filtered].sort((a, b) => {
+  const sorted = serverPage ? filtered : [...filtered].sort((a, b) => {
     if (sort === 'revenue') return b.item.revenue30d - a.item.revenue30d
     if (sort === 'stock') return (b.item.availableQuantity ?? -1) - (a.item.availableQuantity ?? -1)
     if (sort === 'units30d') return (b.item.soldQuantity ?? 0) - (a.item.soldQuantity ?? 0)
     return (b.cov ?? 0) - (a.cov ?? 0)
   })
   const pageSize = 100
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
-  const visibleItems = sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
+  const totalPages = serverPage?.totalPages ?? Math.max(1, Math.ceil(sorted.length / pageSize))
+  const totalRows = serverPage?.totalRows ?? sorted.length
+  const visibleItems = serverPage ? sorted : sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
 
   useEffect(() => {
     setPage(1)
   }, [filters, sort])
 
-  const totalRevenue = items.reduce((s, i) => s + i.revenue30d, 0)
+  useEffect(() => {
+    if (!serverPage || !onServerQueryChange) return
+    onServerQueryChange({
+      page,
+      sort,
+      abc: [...filters.abc],
+      marketplace: filters.marketplace,
+      categories: [...filters.categories],
+      onlyCritical: filters.onlyCritical,
+      onlyStalled: filters.onlyStalled,
+      onlyLowCoverage: filters.onlyLowCoverage,
+      onlyExcess: filters.onlyExcess,
+    })
+  }, [filters, onServerQueryChange, page, serverPage, sort])
+
+  const totalRevenue = serverMetrics?.totalRevenue ?? items.reduce((s, i) => s + i.revenue30d, 0)
 
   const kpis: { key: string; label: string; value: string; sub: string; icon: typeof Boxes; primary: string; onClick?: () => void; active?: boolean }[] = [
-    { key: 'value', label: 'Valor Estimado em Estoque', value: pricedItems.length > 0 ? `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}` : 'N/D', sub: pricedItems.length === items.length ? 'estoque × preço' : `${pricedItems.length}/${items.length} itens com preço`, icon: Wallet, primary: '#6366F1' },
-    { key: 'total', label: 'Total de SKUs', value: String(items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
+    { key: 'value', label: 'Valor Estimado em Estoque', value: (serverMetrics?.pricedItems ?? pricedItems.length) > 0 ? `R$ ${Math.round(totalValue).toLocaleString('pt-BR')}` : 'N/D', sub: (serverMetrics?.pricedItems ?? pricedItems.length) === (serverMetrics?.totalItems ?? items.length) ? 'estoque × preço' : `${serverMetrics?.pricedItems ?? pricedItems.length}/${serverMetrics?.totalItems ?? items.length} itens com preço`, icon: Wallet, primary: '#6366F1' },
+    { key: 'total', label: 'Total de SKUs', value: String(serverMetrics?.totalItems ?? items.length), sub: 'produtos ativos · clique para limpar filtros', icon: Boxes, primary: '#3A8DFF', onClick: () => setFilters(defaultFilters), active: isDefault(filters) },
     { key: 'stalled', label: 'Produtos Parados', value: String(stalledCount), sub: 'sem giro relevante', icon: PauseCircle, primary: '#9061F9', onClick: () => setFilters((f) => ({ ...defaultFilters, onlyStalled: !f.onlyStalled })), active: filters.onlyStalled },
-    { key: 'curveA', label: 'Produtos Curva A', value: String(curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
+    { key: 'curveA', label: 'Produtos Curva A', value: String(serverMetrics?.curvaACount ?? curvaA.length), sub: 'maior share de faturamento', icon: Crown, primary: '#3BE38E', onClick: () => setFilters((f) => ({ ...defaultFilters, abc: f.abc.has('A') && f.abc.size === 1 ? new Set() : new Set<AbcClass>(['A']) })), active: filters.abc.has('A') && filters.abc.size === 1 && !filters.onlyLowCoverage },
   ]
 
   return (
@@ -210,7 +252,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
         <div className="workspace-panel-header mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-semibold tracking-tight text-text-primary">Estoque por Produto</h3>
-            <p className="mt-0.5 text-xs text-text-muted">{sorted.length} de {items.length} produtos · inclui Curva ABC</p>
+            <p className="mt-0.5 text-xs text-text-muted">{totalRows} de {serverMetrics?.totalItems ?? items.length} produtos · inclui Curva ABC</p>
             {topCategory && <button type="button" onClick={() => setSelectedCategoryKey(topCategory.key)} className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-text-secondary hover:text-text-primary hover:underline" title="Maior faturamento no período">Categoria líder <strong className="text-text-primary">{topCategory.label} · R$ {brl(topCategory.revenue)}</strong><ChevronRight className="h-3 w-3" /></button>}
           </div>
           <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border-subtle bg-bg-primary/40 p-0.5">
@@ -366,7 +408,7 @@ export default function RealInventoryTable({ items }: { items: DashboardInventor
             </table>
           </DataTableViewport>
         </div>
-        <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={sorted.length} pageSize={pageSize} onPageChange={setPage} />
+        <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={totalRows} pageSize={serverPage?.pageSize ?? pageSize} onPageChange={setPage} />
       </div>
       <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>

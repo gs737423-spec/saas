@@ -1,4 +1,5 @@
 import type { Marketplace } from '@/data/mockData'
+import type { CategoryOption } from '@/lib/categoryAnalytics'
 
 export interface DashboardProduct {
   id: string
@@ -38,10 +39,31 @@ export interface ProductSalesResponse {
 
 export type DashboardProductsSource = 'real' | 'demo' | 'config_missing' | 'error'
 
+export interface DashboardPage {
+  page: number
+  pageSize: number
+  totalRows: number
+  totalPages: number
+}
+
+export interface DashboardProductMetrics {
+  active: number
+  withStock: number
+  averageMargin: number | null
+  totalUnits: number
+  totalRevenue: number
+  bestSeller: { name: string; sku: string | null; units: number; trend: number | null } | null
+  lowestTurn: { name: string; sku: string | null; units: number; trend: number | null } | null
+}
+
 export interface DashboardProductsResponse {
   ok: boolean
   source: DashboardProductsSource
   items: DashboardProduct[]
+  /** Presente apenas nas leituras paginadas da tela Produtos. */
+  pagination?: DashboardPage
+  categoryOptions?: CategoryOption[]
+  metrics?: DashboardProductMetrics
   message?: string
 }
 

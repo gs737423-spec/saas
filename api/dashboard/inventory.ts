@@ -13,6 +13,43 @@ const PROVIDER_LABEL: Partial<Record<Provider, Marketplace>> = {
   vtex: 'Loja Própria',
 }
 
+const MARKETPLACE_PROVIDER: Partial<Record<Marketplace, Provider>> = {
+  'Mercado Livre': 'mercadolivre',
+  Shopee: 'shopee',
+  Amazon: 'amazon',
+  'Loja Própria': 'vtex',
+}
+
+function queryValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+function queryNumber(value: string | string[] | undefined, fallback: number): number {
+  const parsed = Number(queryValue(value))
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function queryList(value: string | string[] | undefined): string[] {
+  const raw = queryValue(value)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function queryBoolean(value: string | string[] | undefined): boolean {
+  return queryValue(value) === 'true'
+}
+
+function asNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
 interface OrderItemAgg {
@@ -80,6 +117,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!latest || freshness > latest) return freshness
       return latest
     }, null)
+
+    // Estoque chama o modo paginado explicitamente. O modo legado fica
+    // intacto enquanto consumidores secundários fazem sua migração própria.
+    if (queryValue(req.query.page)) {
+      const selectedMarketplace = queryValue(req.query.marketplace)
+      const provider = selectedMarketplace && selectedMarketplace !== 'all'
+        ? MARKETPLACE_PROVIDER[selectedMarketplace as Marketplace]
+        : undefined
+      const { data, error } = await supabase.rpc('dashboard_inventory_page', {
+        p_company_id: auth.companyId,
+        p_connection_ids: connectionIds,
+        p_since: since30d,
+        p_page: queryNumber(req.query.page, 1),
+        p_page_size: Math.min(queryNumber(req.query.page_size, 100), 100),
+        p_abc: queryList(req.query.abc),
+        p_providers: provider ? [provider] : [],
+        p_category_keys: queryList(req.query.categories),
+        p_only_critical: queryBoolean(req.query.only_critical),
+        p_only_stalled: queryBoolean(req.query.only_stalled),
+        p_only_low_coverage: queryBoolean(req.query.only_low_coverage),
+        p_only_excess: queryBoolean(req.query.only_excess),
+        p_sort: queryValue(req.query.sort) ?? 'revenue',
+      })
+      if (error) throw new Error(error.message)
+
+      const payload = (data ?? {}) as Record<string, unknown>
+      const rawItems = Array.isArray(payload.items) ? payload.items as Record<string, unknown>[] : []
+      const items: DashboardInventoryItem[] = rawItems.map((item) => {
+        const marketplace = PROVIDER_LABEL[item.provider as Provider]
+        if (!marketplace) throw new Error('Provider de estoque não suportado.')
+        const abc = item.abcClass
+        return {
+          sku: typeof item.sku === 'string' ? item.sku : null,
+          title: String(item.title ?? ''),
+          marketplace,
+          categoryId: typeof item.categoryId === 'string' ? item.categoryId : null,
+          categoryName: typeof item.categoryName === 'string' ? item.categoryName : null,
+          availableQuantity: asNumber(item.availableQuantity),
+          price: asNumber(item.price),
+          status: typeof item.status === 'string' ? item.status : null,
+          soldQuantity: asNumber(item.soldQuantity),
+          revenue30d: asNumber(item.revenue30d) ?? 0,
+          turnoverRate: asNumber(item.turnoverRate),
+          abcClass: abc === 'A' || abc === 'B' || abc === 'C' ? abc : null,
+          lastSyncAt: typeof item.lastSyncAt === 'string' ? item.lastSyncAt : null,
+        }
+      })
+      const response: InventoryApiResponse = {
+        ok: true,
+        source: 'real',
+        items,
+        lastSyncAt,
+        pagination: payload.pagination as DashboardInventoryResponse['pagination'],
+        categoryOptions: payload.categoryOptions as DashboardInventoryResponse['categoryOptions'],
+        metrics: payload.metrics as DashboardInventoryResponse['metrics'],
+      }
+      res.status(200).json(response)
+      return
+    }
 
     // As três leituras usam somente o mesmo tenant e a mesma lista de
     // conexões. Mantê-las paralelas elimina espera serial sem reduzir dados.

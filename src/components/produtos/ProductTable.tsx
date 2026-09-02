@@ -146,6 +146,11 @@ interface Props {
    *  em marketplace_products) — no demo não tem o que salvar. */
   editable?: boolean
   onSetCost?: (product: Product, costPrice: number) => Promise<void>
+  /** Quando presente, a ordenação e a paginação já foram feitas no banco. */
+  serverPage?: { page: number; totalPages: number; totalRows: number; pageSize: number }
+  serverSort?: { key: SortKey; dir: SortDir }
+  onServerSortChange?: (key: SortKey, dir: SortDir) => void
+  onServerPageChange?: (page: number) => void
 }
 
 const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
@@ -159,32 +164,43 @@ const columns: { key: SortKey; label: string; align?: 'right' | 'center' }[] = [
   { key: 'trend', label: 'Tendência', align: 'center' },
 ]
 
-export default function ProductTable({ allProducts, filteredProducts, filters, onFiltersChange, categoryOptions, editable = false, onSetCost }: Props) {
+export default function ProductTable({ allProducts, filteredProducts, filters, onFiltersChange, categoryOptions, editable = false, onSetCost, serverPage, serverSort, onServerSortChange, onServerPageChange }: Props) {
   const { theme } = useTheme()
-  const [sortKey, setSortKey] = useState<SortKey>('revenue')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
-  const [page, setPage] = useState(1)
+  const [localSortKey, setLocalSortKey] = useState<SortKey>('revenue')
+  const [localSortDir, setLocalSortDir] = useState<SortDir>('desc')
+  const [localPage, setLocalPage] = useState(1)
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null)
   const categoryProducts = useMemo(() => allProducts.map(categoryItemFromProduct), [allProducts])
   const closeCategory = useCallback(() => setSelectedCategoryKey(null), [])
+  const sortKey = serverSort?.key ?? localSortKey
+  const sortDir = serverSort?.dir ?? localSortDir
+  const page = serverPage?.page ?? localPage
 
   function handleSort(key: SortKey) {
+    const nextDir: SortDir = sortKey === key
+      ? (sortDir === 'asc' ? 'desc' : 'asc')
+      : (key === 'name' || key === 'sku' || key === 'marketplace' ? 'asc' : 'desc')
+    if (serverSort && onServerSortChange) {
+      onServerSortChange(key, nextDir)
+      return
+    }
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      setLocalSortDir(nextDir)
     } else {
-      setSortKey(key)
-      setSortDir(key === 'name' || key === 'sku' || key === 'marketplace' ? 'asc' : 'desc')
+      setLocalSortKey(key)
+      setLocalSortDir(nextDir)
     }
   }
 
-  const sorted = sortProducts(filteredProducts, sortKey, sortDir)
+  const sorted = serverPage ? filteredProducts : sortProducts(filteredProducts, sortKey, sortDir)
   const pageSize = 100
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
-  const visibleProducts = sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
+  const totalPages = serverPage?.totalPages ?? Math.max(1, Math.ceil(sorted.length / pageSize))
+  const totalRows = serverPage?.totalRows ?? sorted.length
+  const visibleProducts = serverPage ? sorted : sorted.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize)
 
   useEffect(() => {
-    setPage(1)
-  }, [filters, sortKey, sortDir])
+    if (!serverPage) setLocalPage(1)
+  }, [filters, sortKey, sortDir, serverPage])
 
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -198,11 +214,15 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
       <div className="workspace-panel-header mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Catalogo de Produtos</h3>
-          <p className="mt-0.5 text-xs text-text-muted">{filteredProducts.length} produtos · vendas, estoque, margem e tendencia</p>
+          <p className="mt-0.5 text-xs text-text-muted">{totalRows} produtos · vendas, estoque, margem e tendencia</p>
         </div>
         <button
           type="button"
-          onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+          onClick={() => {
+            const nextDir: SortDir = sortDir === 'asc' ? 'desc' : 'asc'
+            if (serverSort && onServerSortChange) onServerSortChange(sortKey, nextDir)
+            else setLocalSortDir(nextDir)
+          }}
           title="Inverter ordem"
           className="control-active motion-chip hidden cursor-pointer items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-card/60 px-3 py-1.5 text-[11px] font-medium text-text-secondary hover:border-border-default hover:text-text-primary sm:inline-flex"
         >
@@ -313,10 +333,13 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
         </DataTableViewport>
       </div>
 
-      {sorted.length === 0 && (
+      {totalRows === 0 && (
         <div className="py-12 text-center text-sm text-text-muted">Nenhum produto encontrado com os filtros aplicados.</div>
       )}
-      <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={sorted.length} pageSize={pageSize} onPageChange={setPage} />
+      <PaginationBar page={Math.min(page, totalPages)} totalPages={totalPages} totalRows={totalRows} pageSize={serverPage?.pageSize ?? pageSize} onPageChange={(nextPage) => {
+        if (serverPage && onServerPageChange) onServerPageChange(nextPage)
+        else setLocalPage(nextPage)
+      }} />
       <CategoryDrawer categoryKey={selectedCategoryKey} products={categoryProducts} onClose={closeCategory} />
     </div>
   )

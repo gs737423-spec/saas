@@ -80,3 +80,11 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - A navegação global fazia uma leitura integral de Produtos para alertas de estoque, e a busca repetia a mesma leitura ao abrir. Em catálogo VTEX grande, essas chamadas competiam com a navegação mesmo fora de Produtos/Estoque.
 - Alertas passaram a buscar somente seis itens críticos; busca virou consulta por termo, limitada a seis resultados e iniciada somente após dois caracteres.
 - Essa é a redução imediata de carga. Produtos e Estoque ainda precisam de paginação e agregação no banco para eliminar a transferência do catálogo completo de suas próprias telas.
+
+## Complemento — paginação no servidor para Produtos e Estoque
+
+- A etapa estrutural foi implementada em 2026-09-02: `Produtos.tsx` e `Estoque.tsx` solicitam páginas de 100 registros, com filtros e ordenação enviados ao servidor.
+- A migration `030_paged_catalog_dashboard_reads.sql` foi confirmada no Supabase. Ela cria dois índices de leitura e duas funções `security definer` sem permissão para `anon`/`authenticated`; apenas a API, via `service_role`, as executa após `requireCompany` resolver o tenant.
+- Produtos agrega vendas do período e anterior, tendência, margem e participação por SKU no banco. Estoque agrega vendas de 30 dias, cobertura, giro e Curva ABC no banco. Os metadados retornam totais e categorias sem transferir o catálogo completo.
+- Relatórios e Produto 360 continuam intencionalmente no contrato legado nesta entrega, para não reduzir seus dados silenciosamente. A migração deles para consultas estreitas permanece a próxima etapa.
+- Validação local: `npm run typecheck` passou; 16/16 testes focados passaram. O build local iniciou `tsc && vite build`, mas a execução do ambiente não devolveu o encerramento completo do Vite; a validação definitiva ocorrerá no build de produção do deploy.
