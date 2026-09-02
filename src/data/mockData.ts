@@ -666,6 +666,8 @@ export interface OverviewKpi {
   context: string
   /** Micro-tag de transparência de dado (ex.: "estimado"). */
   tag?: string
+  /** A API já calculou o valor para o período selecionado; não reescalar na UI. */
+  isReal?: boolean
   /** Impede que ausência de cobertura financeira seja renderizada como zero. */
   unavailable?: boolean
   tone: KpiTone

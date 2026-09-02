@@ -15,10 +15,10 @@ interface ResolvedKpi extends OverviewKpi {
   resolvedRaw: number
 }
 
-/** Scales a 30-day baseline KPI to the selected period. Dado real (tag
- *  'real') já vem exato pro período pedido — não escala/reamostra de novo. */
+/** Escala apenas baselines ilustrativos de 30 dias. Dados reais já chegam
+ *  exatos para o período solicitado e nunca são reamostrados na interface. */
 function resolveKpi(kpi: OverviewKpi, period: PeriodOption): ResolvedKpi {
-  if (kpi.tag === 'dado real') {
+  if (kpi.isReal) {
     return { ...kpi, resolvedRaw: kpi.raw }
   }
   const scale = kpi.scalesWithPeriod ? (period.days / BASELINE_DAYS) * period.jitter : period.jitter

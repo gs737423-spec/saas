@@ -200,6 +200,8 @@ updated: 2026-08-14
 
 ## Desempenho de catálogos grandes
 
+- Em 2026-09-02, foi corrigida a escala indevida dos KPIs reais da Visão Geral: a API já retorna o total exato do período solicitado, mas os cards o tratavam como baseline de 30 dias. KPI, pedidos, ticket e GMV agora representam o mesmo snapshot e o mesmo intervalo, sem reamostragem no navegador.
+
 - Em 2026-09-02, Produtos e Estoque passaram a usar paginação e agregação no Postgres quando as respectivas telas pedem `page`. A interface recebe no máximo 100 linhas por consulta, além de totais, opções de categoria e KPIs necessários.
 - A migration `030_paged_catalog_dashboard_reads.sql` cria somente índices de leitura e as funções restritas a `service_role` `dashboard_products_page` e `dashboard_inventory_page`; foi aplicada no Supabase vinculado.
 - Em 2026-09-02, Relatórios e Produto 360 também deixaram de consumir o contrato integral: Relatórios pede somente os oito produtos por receita, até 100 alertas de baixo estoque e os dois contadores completos; Produto 360 busca somente a referência exata `connection_id + external_product_id` ou, em URLs legadas, até 20 anúncios do SKU.

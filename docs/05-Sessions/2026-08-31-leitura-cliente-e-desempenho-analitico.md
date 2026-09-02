@@ -101,3 +101,8 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - A Visão Geral já solicitava um único snapshot financeiro. O componente GMV ainda o copiava para estado via `useEffect`, permitindo que uma resposta anterior permanecesse renderizada durante uma atualização.
 - O GMV agora usa diretamente o prop compartilhado quando o Dashboard o fornece; o estado interno permanece somente para os usos autônomos do componente. Não houve mudança em pedidos, cálculos do backend, integrações ou dados reais.
 - Validação local: TypeScript passou, 4/4 testes focados passaram e o build passou. Não há script de lint no `package.json`.
+
+## Complemento — escala indevida dos KPIs reais
+
+- A auditoria read-only de 2026-09-02 confirmou que o banco retorna o total mensal que aparece no GMV. O erro restante era exclusivamente de apresentação: `KPICards` escala valores sem a tag `dado real` como se fossem um baseline ilustrativo de 30 dias.
+- `Dashboard.tsx` agora marca todos os KPIs vindos de `/api/dashboard/finance` como dados reais. Assim, faturamento, pedidos e ticket não sofrem multiplicação por `days / 30`; nenhum pedido ou dado de integração foi modificado.

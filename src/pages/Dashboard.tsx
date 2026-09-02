@@ -18,10 +18,10 @@ const brl = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2,
 // disputar espaço com o número que o cliente veio consultar.
 function buildRealKpis(s: NonNullable<FinanceApiResponse>['overview']): OverviewKpi[] {
   return [
-    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct ?? null, context: '', tone: 'cyan', hero: true },
-    { key: 'orders', label: 'Pedidos', value: (s.ordersCount ?? 0).toLocaleString('pt-BR'), raw: s.ordersCount ?? 0, scalesWithPeriod: true, change: s.ordersCountChangePct ?? null, context: 'Volume consolidado', tone: 'blue' },
-    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket ?? 0), raw: s.averageTicket ?? 0, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', tone: 'violet' },
-    { key: 'returns', label: 'Estornos e Devoluções', value: brl(s.refunds), raw: s.refunds, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.refundDataStatus === 'known' ? `${(s.returnsCount ?? 0).toLocaleString('pt-BR')} pedidos` : 'A integração não informou reembolsos', tone: 'neutral', unavailable: s.refundDataStatus !== 'known' },
+    { key: 'gross', label: 'Faturamento Bruto', value: brl(s.grossRevenue), raw: s.grossRevenue, scalesWithPeriod: true, prefix: 'R$', change: s.grossRevenueChangePct ?? null, context: '', isReal: true, tone: 'cyan', hero: true },
+    { key: 'orders', label: 'Pedidos', value: (s.ordersCount ?? 0).toLocaleString('pt-BR'), raw: s.ordersCount ?? 0, scalesWithPeriod: true, change: s.ordersCountChangePct ?? null, context: 'Volume consolidado', isReal: true, tone: 'blue' },
+    { key: 'ticket', label: 'Ticket Médio', value: brl(s.averageTicket ?? 0), raw: s.averageTicket ?? 0, scalesWithPeriod: false, prefix: 'R$', change: null, context: 'Bruto por pedido', isReal: true, tone: 'violet' },
+    { key: 'returns', label: 'Estornos e Devoluções', value: brl(s.refunds), raw: s.refunds, scalesWithPeriod: true, prefix: 'R$', change: null, context: s.refundDataStatus === 'known' ? `${(s.returnsCount ?? 0).toLocaleString('pt-BR')} pedidos` : 'A integração não informou reembolsos', isReal: true, tone: 'neutral', unavailable: s.refundDataStatus !== 'known' },
   ]
 }
 

@@ -20,4 +20,11 @@ describe('dashboard financial snapshot', () => {
     expect(source).toContain('ordersCount: includeDashboardSummary ? ordersCount : undefined')
     expect(source).toContain('grossRevenueChangePct: includeDashboardSummary ? grossRevenueChangePct : undefined')
   })
+
+  it('does not rescale real financial KPIs with the selected period', async () => {
+    const dashboard = await readFile(new URL('../src/pages/Dashboard.tsx', import.meta.url), 'utf8')
+    const kpiCards = await readFile(new URL('../src/components/dashboard/KPICards.tsx', import.meta.url), 'utf8')
+    expect(dashboard).toContain('isReal: true')
+    expect(kpiCards).toContain('if (kpi.isReal)')
+  })
 })
