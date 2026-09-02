@@ -74,3 +74,9 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - A divergência visual de setembro (KPI com R$ 30 mil/11 pedidos versus linhas GMV acima de R$ 900 mil) expôs que a Visão Geral combinava duas respostas independentes, sujeitas a cache e sincronização em momentos diferentes.
 - A rota financeira passou a incluir os campos de KPI somente quando o Dashboard solicita; a página repassa exatamente essa mesma resposta ao ranking GMV. Não há mais segunda leitura de pedidos na Visão Geral.
 - Validação local: TypeScript passou, 16/16 testes focados passaram e build passou. Smoke autenticado permanece pendente por ausência de sessão de cliente no ambiente de diagnóstico.
+
+## Complemento — leituras pesadas da barra global
+
+- A navegação global fazia uma leitura integral de Produtos para alertas de estoque, e a busca repetia a mesma leitura ao abrir. Em catálogo VTEX grande, essas chamadas competiam com a navegação mesmo fora de Produtos/Estoque.
+- Alertas passaram a buscar somente seis itens críticos; busca virou consulta por termo, limitada a seis resultados e iniciada somente após dois caracteres.
+- Essa é a redução imediata de carga. Produtos e Estoque ainda precisam de paginação e agregação no banco para eliminar a transferência do catálogo completo de suas próprias telas.

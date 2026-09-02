@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Search, X, Package } from 'lucide-react'
 import { LayoutDashboard, Store, Boxes, Wallet, Link2, FileBarChart2, Settings } from 'lucide-react'
 import { apiFetchJson } from '@/lib/apiFetch'
-import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
+
+interface ProductSearchResult {
+  id: string
+  connectionId: string
+  sku: string | null
+  name: string
+  category: string | null
+}
 
 const pages = [
   { icon: LayoutDashboard, label: 'Visão Geral', to: '/app' },
@@ -22,7 +29,7 @@ export default function SearchMenu() {
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const [real, setReal] = useState<DashboardProductsResponse | null>(null)
+  const [products, setProducts] = useState<ProductSearchResult[]>([])
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -37,30 +44,34 @@ export default function SearchMenu() {
     else setQuery('')
   }, [open])
 
-  // Busca produto real (não mock) quando a empresa tem marketplace
-  // sincronizado — carrega só na primeira vez que o usuário abre a busca.
+  // A busca só consulta quando existe termo suficiente; abrir o menu não
+  // transfere mais catálogo, estoque e histórico de vendas inteiros.
   useEffect(() => {
-    if (!open || real) return
-    apiFetchJson<DashboardProductsResponse>('/api/dashboard/products?days=30').then(setReal)
-  }, [open, real])
+    const term = query.trim()
+    if (!open || term.length < 2) {
+      setProducts([])
+      return
+    }
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      apiFetchJson<{ ok: boolean; items: ProductSearchResult[] }>(`/api/dashboard/product-search?q=${encodeURIComponent(term)}`).then((data) => {
+        if (!cancelled) setProducts(data?.ok ? data.items : [])
+      })
+    }, 180)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [open, query])
 
   const q = query.trim().toLowerCase()
 
   // O modo demonstração é explícito e usa o mesmo contrato do catálogo;
   // nele a pesquisa deve continuar útil, sem inventar uma fonte paralela.
-  const searchableProducts: Pick<DashboardProduct, 'id' | 'sku' | 'name' | 'category' | 'marketplace'>[] =
-    real?.source === 'real' || real?.source === 'demo' ? real.items : []
-
   const matchedPages = useMemo(
     () => (q ? pages.filter((p) => p.label.toLowerCase().includes(q)) : pages),
     [q]
   )
   const matchedProducts = useMemo(
-    () =>
-      q
-        ? searchableProducts.filter((p) => [p.name, p.sku, p.category, p.marketplace].some((value) => value?.toLowerCase().includes(q))).slice(0, 6)
-        : [],
-    [q, searchableProducts]
+    () => (q.length >= 2 ? products : []),
+    [q, products]
   )
 
   function go(to: string) {
@@ -129,7 +140,7 @@ export default function SearchMenu() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-text-primary">{p.name}</span>
                       <span className="block truncate font-mono text-[10px] text-text-muted">
-                        {[p.sku ?? p.id, p.category, p.marketplace].filter(Boolean).join(' · ')}
+                        {[p.sku ?? p.id, p.category].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                   </button>

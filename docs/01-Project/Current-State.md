@@ -30,6 +30,13 @@ updated: 2026-08-14
 - Cliente: Produtos/Estoque não persistem o catálogo no cache do navegador; as tabelas renderizam 100 linhas por página. Todos os itens e filtros seguem disponíveis. Erros de leitura/configuração deixam de se apresentar como “conecte um marketplace”. A próxima etapa é paginação no servidor para reduzir também o payload inicial.
 - Validações locais: TypeScript passou; 19/19 testes focados passaram; build passou. A performance remota requer medição autenticada após deploy.
 
+## Desempenho — leituras globais de catálogo (2026-09-02)
+
+- O diagnóstico encontrou duas leituras ocultas de catálogo completo: notificações eram montadas em toda sessão e baixavam `/api/dashboard/products?days=30`; a busca fazia o mesmo ao ser aberta. Em tenant VTEX com ~17,8 mil SKUs e histórico grande, isso concorria com as telas reais e explicava parte importante da espera geral.
+- Notificações agora usam uma consulta tenant-scoped limitada a seis itens de estoque crítico. Busca só consulta após dois caracteres e recebe no máximo seis resultados do endpoint dedicado; não baixa estoque, vendas nem catálogo inteiro.
+- Próxima etapa: paginação/agrupamento no banco para Produtos e Estoque. A alteração é estrutural porque precisa preservar totais, filtros, ordenação e Curva ABC sem transferir milhares de linhas ao navegador.
+- Validação local: TypeScript e 4/4 testes focados passaram. O executor local não devolveu a saída final do Vite nesta rodada, sem erro reportado.
+
 ## Correção VTEX — preço calculado e janela incremental (2026-08-31)
 
 - Evidência remota: o conector obteve resposta de preço-base para 6.260 SKUs e zero falhas de Pricing nos últimos lotes; os demais 11.534 SKUs retornaram ausência de preço-base (`404`), não `403`. Portanto, o campo legado `permissions.pricing=false` não comprova falta de permissão e pode estar desatualizado.
