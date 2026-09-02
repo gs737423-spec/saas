@@ -88,3 +88,10 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 - Produtos agrega vendas do período e anterior, tendência, margem e participação por SKU no banco. Estoque agrega vendas de 30 dias, cobertura, giro e Curva ABC no banco. Os metadados retornam totais e categorias sem transferir o catálogo completo.
 - Relatórios e Produto 360 continuam intencionalmente no contrato legado nesta entrega, para não reduzir seus dados silenciosamente. A migração deles para consultas estreitas permanece a próxima etapa.
 - Validação local: `npm run typecheck` passou; 16/16 testes focados passaram. A execução local do Vite não devolveu o encerramento completo no ambiente, mas o deploy automático do Vercel Pro para o commit `e7fcfa6` concluiu com sucesso em 2026-09-02; `https://www.mktonline.com.br/` respondeu HTTP 200.
+
+## Complemento — Relatórios e Produto 360 com leituras direcionadas
+
+- A migration `031_targeted_dashboard_product_reads.sql` foi aplicada no Supabase vinculado. Ela cria somente um índice de leitura e duas RPCs `security definer`, com `search_path` vazio e execução exclusiva da `service_role`.
+- Relatórios agora recebe do banco apenas os oito produtos de maior receita, no máximo 100 itens de estoque baixo e contadores completos de estoque baixo/sem custo. Produto 360 consulta exclusivamente o par `connection_id + external_product_id`; URLs antigas por SKU continuam compatíveis, limitadas a 20 anúncios do mesmo tenant.
+- A autenticação da API continua passando por `requireCompany`, que fornece o `company_id` e as conexões autorizadas antes de qualquer RPC. Não houve escrita em dados de cliente.
+- Validação local: `npm run typecheck` passou; 33/33 testes focados passaram; `npm run build` passou. Não há script de lint no `package.json`. Smoke autenticado permanece pendente por ausência de sessão de cliente neste ambiente.

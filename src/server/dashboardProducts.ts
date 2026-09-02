@@ -67,6 +67,18 @@ export interface DashboardProductsResponse {
   message?: string
 }
 
+export interface DashboardProductReportResponse {
+  ok: boolean
+  source: DashboardProductsSource
+  topProducts: DashboardProduct[]
+  lowStockProducts: DashboardProduct[]
+  metrics?: {
+    lowStockCount: number
+    withoutCostCount: number
+  }
+  message?: string
+}
+
 export function selectDashboardProductMatches(
   items: DashboardProduct[],
   legacyIdentifier: string | undefined,

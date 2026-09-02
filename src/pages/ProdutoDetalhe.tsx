@@ -168,7 +168,17 @@ export default function ProdutoDetalhe() {
 
   useEffect(() => {
     let cancelled = false
-    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`).then((data) => {
+    const params = new URLSearchParams(period.query)
+    params.set('lookup', '1')
+    if (exactReference.connectionId && exactReference.externalProductId) {
+      params.set('connection', exactReference.connectionId)
+      params.set('product', exactReference.externalProductId)
+    } else if (sku) {
+      // URLs antigos só possuem SKU; o backend devolve todos os anúncios
+      // daquele SKU, ainda isolados no tenant e limitados a 20 referências.
+      params.set('sku', sku)
+    }
+    apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${params}`).then((data) => {
       if (!cancelled) {
         setReal(data)
         setLoadingReal(false)
@@ -177,7 +187,7 @@ export default function ProdutoDetalhe() {
     return () => {
       cancelled = true
     }
-  }, [period.query])
+  }, [period.query, exactReference.connectionId, exactReference.externalProductId, sku])
 
   useEffect(() => {
     if (!real?.ok) return

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
-import type { DashboardPage, DashboardProduct, DashboardProductMetrics, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
+import type { DashboardPage, DashboardProduct, DashboardProductMetrics, DashboardProductReportResponse, DashboardProductsResponse } from '../../src/server/dashboardProducts.js'
 import type { CategoryOption } from '../../src/lib/categoryAnalytics.js'
 import type { Marketplace } from '../../src/data/mockData.js'
 import type { Provider } from '../../src/server/integrations/types.js'
@@ -49,6 +49,35 @@ function asNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null
   const number = Number(value)
   return Number.isFinite(number) ? number : null
+}
+
+function mapRawProducts(rawItems: unknown): DashboardProduct[] {
+  const items = Array.isArray(rawItems) ? rawItems as Record<string, unknown>[] : []
+  return items.map((item) => {
+    const marketplace = PROVIDER_LABEL[item.provider as Provider]
+    if (!marketplace) throw new Error('Provider de catálogo não suportado.')
+    return {
+      id: String(item.id),
+      connectionId: String(item.connectionId),
+      sku: typeof item.sku === 'string' ? item.sku : null,
+      name: String(item.name ?? ''),
+      marketplace,
+      categoryId: typeof item.categoryId === 'string' ? item.categoryId : null,
+      category: typeof item.category === 'string' ? item.category : null,
+      price: asNumber(item.price),
+      costPrice: asNumber(item.costPrice),
+      margin: asNumber(item.margin),
+      stock: asNumber(item.stock) ?? 0,
+      revenue: asNumber(item.revenue) ?? 0,
+      units: asNumber(item.units) ?? 0,
+      trend: asNumber(item.trend),
+      sharePct: asNumber(item.sharePct) ?? 0,
+    }
+  })
+}
+
+function isUuid(value: string | undefined): value is string {
+  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))
 }
 
 interface OrderItemAgg {
@@ -154,6 +183,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
+    if (queryValue(req.query.view) === 'report') {
+      const { data, error } = await supabase.rpc('dashboard_report_products', {
+        p_company_id: auth.companyId,
+        p_connection_ids: connectionIds,
+        p_since: since,
+        p_until: until,
+        p_previous_since: prevSince,
+      })
+      if (error) throw new Error(error.message)
+      const payload = (data ?? {}) as Record<string, unknown>
+      res.status(200).json({
+        ok: true,
+        source: 'real',
+        topProducts: mapRawProducts(payload.topProducts),
+        lowStockProducts: mapRawProducts(payload.lowStockProducts),
+        metrics: payload.metrics as DashboardProductReportResponse['metrics'],
+      } satisfies DashboardProductReportResponse)
+      return
+    }
+
+    if (queryValue(req.query.lookup)) {
+      const connectionId = queryValue(req.query.connection)
+      const externalProductId = queryValue(req.query.product)
+      const sku = queryValue(req.query.sku)
+      const exactLookup = isUuid(connectionId) && Boolean(externalProductId)
+      if (!exactLookup && (!sku || sku.length > 300)) {
+        res.status(200).json({ ok: true, source: 'real', items: [] } satisfies ProductsApiResponse)
+        return
+      }
+      const { data, error } = await supabase.rpc('dashboard_product_lookup', {
+        p_company_id: auth.companyId,
+        p_connection_ids: connectionIds,
+        p_since: since,
+        p_until: until,
+        p_previous_since: prevSince,
+        p_connection_id: exactLookup ? connectionId : null,
+        p_external_product_id: exactLookup ? externalProductId : null,
+        p_sku: exactLookup ? null : sku,
+      })
+      if (error) throw new Error(error.message)
+      const payload = (data ?? {}) as Record<string, unknown>
+      res.status(200).json({ ok: true, source: 'real', items: mapRawProducts(payload.items) } satisfies ProductsApiResponse)
+      return
+    }
+
     // A tela Produtos pede explicitamente uma página. Mantemos o contrato
     // legado sem `page` abaixo para Relatórios/Produto 360 até eles migrarem
     // para suas próprias consultas estreitas — nunca degradamos uma rota já
@@ -180,29 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw new Error(error.message)
 
       const payload = (data ?? {}) as Record<string, unknown>
-      const rawItems = Array.isArray(payload.items) ? payload.items as Record<string, unknown>[] : []
-      const items: DashboardProduct[] = rawItems.map((item) => {
-        const provider = item.provider as Provider
-        const marketplace = PROVIDER_LABEL[provider]
-        if (!marketplace) throw new Error('Provider de catálogo não suportado.')
-        return {
-          id: String(item.id),
-          connectionId: String(item.connectionId),
-          sku: typeof item.sku === 'string' ? item.sku : null,
-          name: String(item.name ?? ''),
-          marketplace,
-          categoryId: typeof item.categoryId === 'string' ? item.categoryId : null,
-          category: typeof item.category === 'string' ? item.category : null,
-          price: asNumber(item.price),
-          costPrice: asNumber(item.costPrice),
-          margin: asNumber(item.margin),
-          stock: asNumber(item.stock) ?? 0,
-          revenue: asNumber(item.revenue) ?? 0,
-          units: asNumber(item.units) ?? 0,
-          trend: asNumber(item.trend),
-          sharePct: asNumber(item.sharePct) ?? 0,
-        }
-      })
+      const items = mapRawProducts(payload.items)
       res.status(200).json({
         ok: true,
         source: 'real',

@@ -201,7 +201,8 @@ updated: 2026-08-14
 
 - Em 2026-09-02, Produtos e Estoque passaram a usar paginação e agregação no Postgres quando as respectivas telas pedem `page`. A interface recebe no máximo 100 linhas por consulta, além de totais, opções de categoria e KPIs necessários.
 - A migration `030_paged_catalog_dashboard_reads.sql` cria somente índices de leitura e as funções restritas a `service_role` `dashboard_products_page` e `dashboard_inventory_page`; foi aplicada no Supabase vinculado.
-- O contrato antigo, sem `page`, permanece temporariamente para Relatórios e Produto 360. Isso evita regressão funcional enquanto esses consumidores recebem consultas específicas e estreitas em uma etapa posterior.
+- Em 2026-09-02, Relatórios e Produto 360 também deixaram de consumir o contrato integral: Relatórios pede somente os oito produtos por receita, até 100 alertas de baixo estoque e os dois contadores completos; Produto 360 busca somente a referência exata `connection_id + external_product_id` ou, em URLs legadas, até 20 anúncios do SKU.
+- A migration `031_targeted_dashboard_product_reads.sql` adiciona índice de leitura por SKU e as funções restritas a `service_role` `dashboard_report_products` e `dashboard_product_lookup`. Ela foi aplicada no Supabase vinculado. O contrato antigo sem `page` permanece apenas por compatibilidade de API, sem consumidor de interface ativo.
 - Curva ABC, cobertura, giro, filtros, ordenação e totais são calculados no banco dentro do escopo `company_id` + conexões autorizadas. Não há cache de catálogo completo no navegador.
 | `listUsers` só buscava página 1 (1000 usuários) ao resolver convite de e-mail já cadastrado | `api/admin/invite.ts`, `api/team.ts` | Médio — quebraria convite passando de 1000 usuários na plataforma | **Corrigido em 2026-08-12** (commit `e7d868d`, `findUserIdByEmail` pagina até achar) |
 

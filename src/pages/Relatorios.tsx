@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Boxes, FileBarChart2, LayoutDashboard, Loader2, PackageSearch, Printer } from 'lucide-react'
 import { usePeriod } from '@/contexts/PeriodContext'
 import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplacePrompt'
 import RealMarketplaceBreakdown from '@/components/dashboard/RealMarketplaceBreakdown'
 import { apiFetchJson } from '@/lib/apiFetch'
 import type { DashboardSummary } from '@/server/integrations/types'
-import type { DashboardProduct, DashboardProductsResponse } from '@/server/dashboardProducts'
+import type { DashboardProduct, DashboardProductReportResponse } from '@/server/dashboardProducts'
 
 type ReportType = 'executive' | 'products' | 'inventory'
 
@@ -21,7 +21,7 @@ const LOW_STOCK_THRESHOLD = 10
 export default function Relatorios() {
   const { period } = usePeriod()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
-  const [products, setProducts] = useState<DashboardProductsResponse | null>(null)
+  const [products, setProducts] = useState<DashboardProductReportResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [reportType, setReportType] = useState<ReportType>('executive')
@@ -32,7 +32,7 @@ export default function Relatorios() {
     setLoadError(false)
     Promise.all([
       apiFetchJson<DashboardSummary>(`/api/dashboard/summary?${period.query}`),
-      apiFetchJson<DashboardProductsResponse>(`/api/dashboard/products?${period.query}`),
+      apiFetchJson<DashboardProductReportResponse>(`/api/dashboard/products?${period.query}&view=report`),
     ]).then(([summaryResponse, productsResponse]) => {
       if (cancelled) return
       setSummary(summaryResponse)
@@ -43,15 +43,8 @@ export default function Relatorios() {
     return () => { cancelled = true }
   }, [period.query])
 
-  const productItems = useMemo(() => products?.items ?? [], [products])
-  const topProducts = useMemo(
-    () => [...productItems].sort((a, b) => b.revenue - a.revenue).slice(0, 8),
-    [productItems],
-  )
-  const lowStockProducts = useMemo(
-    () => productItems.filter((product) => product.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock),
-    [productItems],
-  )
+  const topProducts = products?.topProducts ?? []
+  const lowStockProducts = products?.lowStockProducts ?? []
 
   if (loading) {
     return (
@@ -90,16 +83,16 @@ export default function Relatorios() {
         </div>
       )}
 
-      {reportType === 'executive' && <ExecutiveReport summary={summary} productItems={productItems} periodLabel={period.label} />}
+      {reportType === 'executive' && <ExecutiveReport summary={summary} productMetrics={products?.metrics} periodLabel={period.label} />}
       {reportType === 'products' && <ProductsReport products={topProducts} />}
       {reportType === 'inventory' && <InventoryReport products={lowStockProducts} />}
     </div>
   )
 }
 
-function ExecutiveReport({ summary, productItems, periodLabel }: { summary: DashboardSummary; productItems: DashboardProduct[]; periodLabel: string }) {
-  const lowStock = productItems.filter((product) => product.stock <= LOW_STOCK_THRESHOLD).length
-  const withoutCost = productItems.filter((product) => product.costPrice === null).length
+function ExecutiveReport({ summary, productMetrics, periodLabel }: { summary: DashboardSummary; productMetrics: DashboardProductReportResponse['metrics']; periodLabel: string }) {
+  const lowStock = productMetrics?.lowStockCount ?? 0
+  const withoutCost = productMetrics?.withoutCostCount ?? 0
   const metrics = [
     ['Faturamento bruto', `R$ ${brl(summary.grossRevenue)}`],
     ['Pedidos', summary.ordersCount.toLocaleString('pt-BR')],
