@@ -33,6 +33,12 @@ describe('VTEX cron fairness', () => {
     expect(cron).toContain('recoveringDenseFullRun || recoveringOmsWindowRun')
   })
 
+  it('never requests the OMS page 31 when an incremental bucket exceeds its documented limit', () => {
+    expect(sync).toContain('const MAX_VTEX_OMS_ORDER_PAGES = 30')
+    expect(sync).toContain("if (page === 1 && sourceTotalPages > MAX_VTEX_OMS_ORDER_PAGES)")
+    expect(sync).toContain("throw new Error('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')")
+  })
+
   it('does not require a closed breaker to select or resume an already active run', () => {
     expect(cron).toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(lockAvailable\)/)
     expect(cron).not.toMatch(/activeRunCompanyIds\.length > 0[\s\S]{0,240}\.or\(circuitClosed\)/)

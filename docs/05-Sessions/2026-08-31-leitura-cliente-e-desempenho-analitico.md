@@ -111,3 +111,8 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 
 - Os percentuais D-1/D-7/D-30/D-365 comparavam o dia corrente, ainda parcial, contra pontos históricos completos. Isso explicava quedas artificiais de `-100%` quando o canal ainda não tinha venda ou sync no dia.
 - A API usa agora o último dia fechado como referência e o selo visual não afirma mais `Crescimento` de forma fixa: ele sinaliza alta, queda, estabilidade ou ausência de base. Não houve alteração em pedidos ou integrações.
+
+## Complemento — bloqueio de paginação OMS VTEX
+
+- A auditoria read-only confirmou que a conexão VTEX estava em erro desde 30/08. O incremental repetia 900 pedidos e tentava a página 31 da listagem OMS; a VTEX limita esse endpoint a 30 páginas e respondia HTTP 400.
+- O runtime agora detecta o limite antes de requisitar a página inválida. Quando um bucket de `lastChange` continua denso no menor intervalo aceito, o cron agenda a recuperação em carga full por `creationDate`, que é imutável. A alteração não apaga nem regrava pedidos fora dos upserts idempotentes da sincronização normal.

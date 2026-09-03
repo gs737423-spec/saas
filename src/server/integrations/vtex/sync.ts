@@ -17,12 +17,9 @@ import type { VtexSyncCheckpoint, VtexSyncCounts } from './types.js'
 
 const SKU_BATCH_SIZE = 40
 const ORDER_PAGE_SIZE = 30
-// A janela temporal continua sendo reduzida ate caber em uma pagina. Se a
-// precisao de timestamp da OMS agrupar mais de 30 pedidos no menor intervalo
-// possivel, percorremos esse bucket congelado na mesma invocacao. O offset
-// nunca e persistido entre crons: timeout reinicia a microjanela e os upserts
-// canonicos deduplicam o que ja entrou.
-const SINGLE_PAGE_ORDER_WINDOW = 1
+// A OMS aceita no máximo 30 páginas. A janela temporal é reduzida até caber
+// nesse limite; nunca pedimos a página 31, que a VTEX rejeita com HTTP 400.
+const MAX_VTEX_OMS_ORDER_PAGES = 30
 const ORDER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 // A OMS rejeita intervalos de `lastChange` de 1 ms (400). Um segundo ainda
 // permite isolar picos densos sem gerar filtro de data inválido.
@@ -935,9 +932,9 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       checkpoint.orderTargetEnd = targetEnd.toISOString()
       checkpoint.orderHistoryStart = checkpoint.orderHistoryStart ?? initialFrom.toISOString()
       while (true) {
-        // Primeiro divide por tempo até caber em uma página. Se um bucket de
-        // creationDate for indivisível e denso, a carga full pode continuar
-        // da página persistida porque a ordenação é imutável.
+        // Primeiro divide por tempo até caber no limite de páginas da OMS.
+        // Se um bucket de creationDate for indivisível e denso, a carga full
+        // pode continuar da página persistida porque a ordenação é imutável.
         const initialPage = vtexOrderResumePage(run.mode, checkpoint.orderPage)
         let page = initialPage
         checkpoint.orderPage = page
@@ -951,7 +948,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
         const pageStartedAt = Date.now()
         const list = await client.listOrders(`orderBy=${orderBy}&page=${page}&per_page=${ORDER_PAGE_SIZE}&${filterName}=${encodeURIComponent(dateFilter)}`)
         sourceTotalPages = Number(list.paging?.pages ?? page)
-        if (page === 1 && sourceTotalPages > SINGLE_PAGE_ORDER_WINDOW && windowEnd.getTime() - windowStart.getTime() > MIN_ORDER_WINDOW_MS) {
+        if (page === 1 && sourceTotalPages > MAX_VTEX_OMS_ORDER_PAGES && windowEnd.getTime() - windowStart.getTime() > MIN_ORDER_WINDOW_MS) {
           // Mantém a metade MAIS RECENTE e tenta de novo nesta mesma
           // invocação. Antes, cada halving devolvia `queued` e desperdiçava
           // um ciclo inteiro do cron (5-15 min) sem importar um pedido.
@@ -968,6 +965,16 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             return { ...run, checkpoint, counts, errors, status: 'queued' }
           }
           continue
+        }
+        // `lastChange` pode concentrar milhares de atualizações no mesmo
+        // segundo. A OMS não aceita uma janela menor e limita a paginação a
+        // 30 páginas; insistir na página 31 só repete os mesmos 900 pedidos.
+        // Marcamos a condição explicitamente para o cron reiniciar em full,
+        // onde `creationDate` é imutável e distribui esses pedidos sem pular
+        // registros. Nenhum pedido existente é modificado nesse fallback.
+        if (page === 1 && sourceTotalPages > MAX_VTEX_OMS_ORDER_PAGES) {
+          if (run.mode === 'incremental') throw new Error('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
+          throw new Error('VTEX_ORDER_CREATION_WINDOW_DENSE_PAGE_LIMIT')
         }
         if (page === initialPage) totalPages = sourceTotalPages
         await logSyncEvent({ companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info', message: 'VTEX order page started', payload: { stage: 'orders', windowStart: checkpoint.orderWindowStart, windowEnd: checkpoint.orderWindowEnd, page, items: (list.list ?? []).length } })

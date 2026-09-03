@@ -42,12 +42,13 @@ describe('VTEX recent-first bootstrap', () => {
     expect(progress.processed).toBe(500)
   })
 
-  it('reduz janelas congestionadas dentro da mesma invocação e avança para trás', async () => {
+  it('reduz janelas congestionadas até o limite OMS e recupera overflow incremental em full', async () => {
     const source = await readFile(new URL('../src/server/integrations/vtex/sync.ts', import.meta.url), 'utf8')
     expect(source).toMatch(/ORDER_WINDOW_SHRUNK[\s\S]{0,700}continue/)
     expect(source).toMatch(/const nextEnd = windowStart[\s\S]{0,300}Math\.max\(backfillFloor/)
     expect(source).toMatch(/if \(ranOutOfTime\) \{[\s\S]{0,500}checkpoint\.orderPage = run\.mode === 'full' \? page : 1/)
-    expect(source).not.toContain('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')
+    expect(source).toContain('const MAX_VTEX_OMS_ORDER_PAGES = 30')
+    expect(source).toContain("if (run.mode === 'incremental') throw new Error('VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT')")
     expect(source).toContain('const MIN_ORDER_WINDOW_MS = 1_000')
     expect(source).toContain("code: 'ORDER_WINDOW_CLAMPED'")
     expect(source).toContain('const nextWindowMs = Math.max(MIN_ORDER_WINDOW_MS, Math.ceil(currentWindowMs / 2))')
