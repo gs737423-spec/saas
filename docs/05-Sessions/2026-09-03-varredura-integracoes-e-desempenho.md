@@ -34,8 +34,8 @@ status: audit-complete-findings-open
 - Estorno conhecido segue no mesmo lote do pedido correspondente; o histórico não é truncado. A interface informa total, intervalo e páginas e permite voltar ao ponto já consultado pelo cache tenant/user-scoped.
 - O filtro por marketplace passou a enviar a chave canônica ao servidor. Canais legados não confiáveis permanecem no único balde `Canal não identificado`, sem reatribuição de receita.
 - Sem migration e sem escrita em dados reais.
-- Validação local: TypeScript passou; 27/27 testes focados passaram; build passou (somente o aviso preexistente de chunk principal acima de 500 kB). Deploy e smoke autenticado pendentes desta etapa.
+- Validação local: TypeScript passou; 27/27 testes focados passaram; build passou (somente o aviso preexistente de chunk principal acima de 500 kB). Commit `2e6402b` foi enviado para `main` e acionou o deploy automático da Vercel; o estado `Ready` e o smoke autenticado continuam pendentes de confirmação externa.
 
 ## Próxima ação
 
-Revisar o diff, publicar e fazer smoke autenticado do Financeiro paginado em produção.
+Confirmar o deploy automático e fazer smoke autenticado do Financeiro paginado em produção.
