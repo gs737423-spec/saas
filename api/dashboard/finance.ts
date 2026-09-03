@@ -26,9 +26,11 @@ function pctChange(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100
 }
 
-/** D-1/D-7/D-30/D-365 compara cinco dias exatos. Buscar um ano inteiro de
- * pedidos para responder quatro comparativos tornava cada troca de filtro
- * proporcional ao histórico completo da empresa. */
+/** D-1/D-7/D-30/D-365 compara o último dia fechado contra os respectivos
+ * dias fechados de referência. Nunca usa o dia corrente, ainda parcial, para
+ * não transformar atraso de sincronização ou vendas intradiárias em -100%.
+ * Buscar um ano inteiro de pedidos para responder quatro comparativos tornava
+ * cada troca de filtro proporcional ao histórico completo da empresa. */
 async function computeGrowthByChannel(
   supabase: Awaited<ReturnType<typeof getSupabaseAdmin>>,
   companyId: string,
@@ -36,7 +38,7 @@ async function computeGrowthByChannel(
   providerByConnectionId: Map<string, string>,
   trustedChannels: ReadonlySet<string>,
 ): Promise<Map<StoredSalesChannel, MarketplaceGrowth>> {
-  const dayKeys = [0, 1, 7, 30, 365].map((days) => saoPauloDaysAgoKey(days))
+  const dayKeys = [1, 2, 8, 31, 366].map((days) => saoPauloDaysAgoKey(days))
   const snapshots = await Promise.all(dayKeys.map(async (day) => {
     const bounds = saoPauloDayBounds(day)
     const { data, error } = await fetchAllRows((from, to) =>
@@ -68,15 +70,15 @@ async function computeGrowthByChannel(
     revenueByChannelDay.set(channel, byDay)
   }
 
-  const todayKey = saoPauloDaysAgoKey(0)
+  const latestClosedDayKey = saoPauloDaysAgoKey(1)
   const result = new Map<StoredSalesChannel, MarketplaceGrowth>()
   for (const [channel, byDay] of revenueByChannelDay.entries()) {
-    const today = byDay.get(todayKey) ?? 0
+    const latestClosedDay = byDay.get(latestClosedDayKey) ?? 0
     result.set(channel, {
-      d1: pctChange(today, byDay.get(saoPauloDaysAgoKey(1)) ?? 0),
-      d7: pctChange(today, byDay.get(saoPauloDaysAgoKey(7)) ?? 0),
-      d30: pctChange(today, byDay.get(saoPauloDaysAgoKey(30)) ?? 0),
-      d365: pctChange(today, byDay.get(saoPauloDaysAgoKey(365)) ?? 0),
+      d1: pctChange(latestClosedDay, byDay.get(saoPauloDaysAgoKey(2)) ?? 0),
+      d7: pctChange(latestClosedDay, byDay.get(saoPauloDaysAgoKey(8)) ?? 0),
+      d30: pctChange(latestClosedDay, byDay.get(saoPauloDaysAgoKey(31)) ?? 0),
+      d365: pctChange(latestClosedDay, byDay.get(saoPauloDaysAgoKey(366)) ?? 0),
     })
   }
   return result

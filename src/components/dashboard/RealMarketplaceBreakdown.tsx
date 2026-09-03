@@ -3,6 +3,7 @@ import { Crown, Loader2 } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance } from '@/data/financeShapes'
 import { apiFetchJson } from '@/lib/apiFetch'
+import { getMarketplaceGrowthPresentation } from '@/lib/marketplaceGrowth'
 import { usePeriod } from '@/contexts/PeriodContext'
 
 export interface FinanceApiResponse {
@@ -23,13 +24,16 @@ const brl = (v: number) => v.toLocaleString('pt-BR')
 const brl2 = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const pct = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
-// Sempre "Crescimento" — os percentuais D-1/D-7/D-30/D-365 já são o que
-// importa; a cor não muda porque não temos um "status" de canal calculado
-// pra dado real (era mock antes, ver 'Saudável/Atenção/Crítico').
-function StatusBadge() {
+function StatusBadge({ growth }: { growth: MarketplaceFinance['growth'] }) {
+  const { status, label } = getMarketplaceGrowthPresentation(growth)
+  const className = status === 'up'
+    ? 'bg-accent-emerald/12 text-accent-emerald'
+    : status === 'down'
+      ? 'bg-accent-rose/12 text-accent-rose'
+      : 'bg-bg-primary/45 text-text-muted'
   return (
-    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold text-accent-emerald" style={{ background: 'rgba(43,214,160,0.12)' }}>
-      Crescimento
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${className}`} title="Comparação baseada no último dia fechado">
+      {label}
     </span>
   )
 }
@@ -94,7 +98,7 @@ function Row({ m, rank, share, revenueColumnWidth }: { m: MarketplaceFinance; ra
       </div>
 
       <div className="ml-auto shrink-0">
-        <StatusBadge />
+        <StatusBadge growth={m.growth} />
       </div>
     </div>
   )

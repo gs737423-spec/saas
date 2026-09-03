@@ -21,6 +21,12 @@ describe('dashboard financial snapshot', () => {
     expect(source).toContain('grossRevenueChangePct: includeDashboardSummary ? grossRevenueChangePct : undefined')
   })
 
+  it('uses only closed days for marketplace comparisons', async () => {
+    const source = await readFile(new URL('../api/dashboard/finance.ts', import.meta.url), 'utf8')
+    expect(source).toContain('[1, 2, 8, 31, 366]')
+    expect(source).toContain('const latestClosedDayKey = saoPauloDaysAgoKey(1)')
+  })
+
   it('does not rescale real financial KPIs with the selected period', async () => {
     const dashboard = await readFile(new URL('../src/pages/Dashboard.tsx', import.meta.url), 'utf8')
     const kpiCards = await readFile(new URL('../src/components/dashboard/KPICards.tsx', import.meta.url), 'utf8')

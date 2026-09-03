@@ -106,3 +106,8 @@ Remover metadado técnico exposto ao cliente, impedir barras sobre números exte
 
 - A auditoria read-only de 2026-09-02 confirmou que o banco retorna o total mensal que aparece no GMV. O erro restante era exclusivamente de apresentação: `KPICards` escala valores sem a tag `dado real` como se fossem um baseline ilustrativo de 30 dias.
 - `Dashboard.tsx` agora marca todos os KPIs vindos de `/api/dashboard/finance` como dados reais. Assim, faturamento, pedidos e ticket não sofrem multiplicação por `days / 30`; nenhum pedido ou dado de integração foi modificado.
+
+## Complemento — comparativos de marketplace por dia fechado
+
+- Os percentuais D-1/D-7/D-30/D-365 comparavam o dia corrente, ainda parcial, contra pontos históricos completos. Isso explicava quedas artificiais de `-100%` quando o canal ainda não tinha venda ou sync no dia.
+- A API usa agora o último dia fechado como referência e o selo visual não afirma mais `Crescimento` de forma fixa: ele sinaliza alta, queda, estabilidade ou ausência de base. Não houve alteração em pedidos ou integrações.

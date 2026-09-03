@@ -2,9 +2,8 @@ export type FinanceSource = 'demo' | 'real' | 'estimated'
 export type FeeDataStatus = 'known' | 'partial' | 'unknown'
 export type RefundDataStatus = 'known' | 'partial' | 'unknown'
 
-/** Faturamento do dia de hoje vs faturamento de exatamente N dias atrás
- *  (não soma de período — comparação dia-a-dia mesmo). null quando não há
- *  pedido pago naquele dia de referência pra comparar. */
+/** Último dia fechado vs o dia fechado de N dias antes (não soma de período).
+ *  null quando não há pedido pago no dia de referência para comparar. */
 export interface MarketplaceGrowth {
   d1: number | null
   d7: number | null
