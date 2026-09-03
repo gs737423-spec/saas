@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { fetchAllRows, getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
+import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
 import { requireCompany } from '../../src/server/auth/requireCompany.js'
-import type { Provider } from '../../src/server/integrations/types.js'
-import { loadTrustedAnalyticsChannels, providerDefaultChannel, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
+import { loadTrustedAnalyticsChannels, resolveEffectiveAnalyticsChannel, type StoredSalesChannel } from '../../src/server/analytics/channels.js'
 import { resolveAnalyticsDateRange, saoPauloDateKey, saoPauloDateLabel, shiftSaoPauloDate } from '../../src/server/analytics/dateRange.js'
 
 export interface DailyRevenuePoint {
@@ -22,6 +21,12 @@ interface DailyApiResponse {
   days: DailyRevenuePoint[]
   channels: Array<{ key: string; label: string }>
   message?: string
+}
+
+interface DailyAggregateRow {
+  order_day: string
+  sales_channel: string
+  gross_revenue: number | string
 }
 
 function emptyDays(totalDays: number, endExclusive = new Date()): DailyRevenuePoint[] {
@@ -81,7 +86,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const providerByConnectionId = new Map(connections.map((c) => [c.id, c.provider as Provider]))
     const connectionIds = connections.map((c) => c.id)
 
     const [{ data: registeredChannels, error: channelError }, trustedChannels] = await Promise.all([
@@ -91,28 +95,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (channelError) throw new Error(channelError.message)
     const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
 
-    const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
-      supabase
-        .from('orders')
-        .select('connection_id, sales_channel, total_amount, ordered_at')
-        .in('connection_id', connectionIds)
-        .eq('company_id', auth.companyId)
-        .eq('status', 'paid')
-        .eq('analytics_included', true)
-        .gte('ordered_at', since)
-        .lt('ordered_at', until)
-        .range(from, to)
-    )
-    if (ordersError) throw new Error(ordersError.message)
+    const { data: rows, error: aggregateError } = await supabase.rpc('dashboard_finance_daily_aggregate', {
+      p_company_id: auth.companyId,
+      p_connection_ids: connectionIds,
+      p_since: since,
+      p_until: until,
+    })
+    if (aggregateError) throw new Error(aggregateError.message)
 
     const byDay = new Map<string, DailyRevenuePoint>()
     const template = emptyDays(totalDays, range.to)
     for (const t of template) byDay.set(t.date, t)
 
     const displayNameByEffectiveKey = new Map<string, string>()
-    for (const o of orders ?? []) {
-      const provider = providerByConnectionId.get(o.connection_id)
-      const storedChannel = (o.sales_channel as StoredSalesChannel | null) ?? (provider ? providerDefaultChannel(provider) : null)
+    for (const row of (rows ?? []) as DailyAggregateRow[]) {
+      const storedChannel = (row.sales_channel as StoredSalesChannel | null) || 'external:vtex:unmapped'
       if (!storedChannel) continue
       // Agregação usa o canal EFETIVO, não o bruto — pedidos antigos presos
       // em canônicos legados fabricados (external:vtex:mzn-...) caem todos
@@ -120,10 +117,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // separados. `orders`/`sales_channels` não são alterados.
       const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
       displayNameByEffectiveKey.set(effectiveChannel, displayName)
-      const key = saoPauloDateKey(o.ordered_at)
+      const key = String(row.order_day)
       const point = byDay.get(key)
       if (!point) continue
-      const amount = Number(o.total_amount ?? 0)
+      const amount = Number(row.gross_revenue ?? 0)
       point.channels[effectiveChannel] = (point.channels[effectiveChannel] ?? 0) + amount
       const field: 'mercadolivre' | 'shopee' | 'amazon' | 'lojapropria' | null = effectiveChannel === 'loja_propria'
         ? 'lojapropria'

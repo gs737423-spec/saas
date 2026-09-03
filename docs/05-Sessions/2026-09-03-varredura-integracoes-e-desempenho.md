@@ -25,7 +25,8 @@ status: audit-complete-findings-open
 - Migration `032` aplicada no Supabase: RPC agregada para Financeiro sem extrato e índices para pedidos/logs.
 - Preço calculado VTEX agora aceita política/tabela comercial válida quando a política `1` não estiver presente, sem fabricar zero.
 - Dashboard e Marketplaces usam a RPC agregada quando `include_transactions=false`.
+- A série diária de receita passou a usar agregação SQL tenant-scoped (`033`).
 
 ## Próxima ação
 
-Otimizar o extrato detalhado e a série diária em lote separado, preservando paginação/contratos antes de alterar a UI.
+Otimizar o extrato detalhado em lote separado, preservando paginação/contratos antes de alterar a UI.
