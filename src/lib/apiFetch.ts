@@ -31,6 +31,7 @@ let dashboardCacheGeneration = 0
 function isCacheableDashboardResponse(url: string): boolean {
   return url.startsWith('/api/dashboard/summary')
     || url.startsWith('/api/dashboard/finance-daily')
+    || url.startsWith('/api/dashboard/finance-transactions')
     || (url.startsWith('/api/dashboard/finance') && url.includes('include_transactions=false'))
 }
 
@@ -134,6 +135,16 @@ function demoInterceptFor(url: string): unknown | null {
   if (url.startsWith('/api/dashboard/inventory')) return demoDashboardInventory()
   if (url.startsWith('/api/dashboard/finance-daily')) {
     return { ok: true, source: 'demo', days: demoFinanceDaily(days + Math.max(days, 30)) }
+  }
+  if (url.startsWith('/api/dashboard/finance-transactions')) {
+    const pageSize = Number(new URL(url, 'http://x').searchParams.get('page_size')) || 100
+    const page = Number(new URL(url, 'http://x').searchParams.get('page')) || 1
+    const transactions = demoFinanceTransactions()
+    return {
+      ok: true,
+      transactions: transactions.slice((page - 1) * pageSize, page * pageSize),
+      pagination: { page, pageSize, totalOrders: transactions.length, totalPages: Math.ceil(transactions.length / pageSize) },
+    }
   }
   if (url.startsWith('/api/dashboard/finance')) {
     // Mesmo days do summary — senão o card do topo (Dashboard/Relatórios)

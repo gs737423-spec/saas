@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Search } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import type { FinanceTransaction, FinanceTransactionType } from '@/data/financeShapes'
 import { getMarketplaceColor } from '@/data/mockData'
 import DataTableViewport from '@/components/common/DataTableViewport'
@@ -21,7 +21,21 @@ function formatDate(dateStr: string): string {
 
 const typeOptions: FinanceTransactionType[] = ['Venda', 'Tarifa', 'Estorno', 'Devolução', 'Ajuste']
 
-export default function TransactionsLedger({ transactions }: { transactions: FinanceTransaction[] }) {
+interface LedgerPagination {
+  page: number
+  pageSize: number
+  totalOrders: number
+  totalPages: number
+}
+
+interface Props {
+  transactions: FinanceTransaction[]
+  pagination: LedgerPagination
+  loading?: boolean
+  onPageChange: (page: number) => void
+}
+
+export default function TransactionsLedger({ transactions, pagination, loading = false, onPageChange }: Props) {
   const [open, setOpen] = useState(false)
   const [activeTypes, setActiveTypes] = useState<Set<FinanceTransactionType>>(new Set())
   const [query, setQuery] = useState('')
@@ -59,7 +73,9 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
         <div className="text-left">
           <h3 className="text-base font-semibold tracking-tight text-text-primary">Movimentações Financeiras</h3>
           <p className="mt-0.5 text-xs text-text-muted">
-            {activeTypes.size === 0 && !query ? `${transactions.length} lançamentos` : `${filtered.length} de ${transactions.length} lançamentos`} · somente eventos financeiros confirmados
+            {loading
+              ? 'Atualizando extrato…'
+              : `${pagination.totalOrders.toLocaleString('pt-BR')} pedidos confirmados · página ${pagination.totalPages ? pagination.page : 0} de ${pagination.totalPages}`}
           </p>
         </div>
         <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -160,6 +176,34 @@ export default function TransactionsLedger({ transactions }: { transactions: Fin
               </tbody>
             </table>
           </DataTableViewport>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle/70 pt-3 text-[11px] text-text-muted">
+            <span>
+              {pagination.totalOrders === 0
+                ? 'Nenhum pedido confirmado no período.'
+                : `Exibindo pedidos ${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(pagination.page * pagination.pageSize, pagination.totalOrders)} de ${pagination.totalOrders.toLocaleString('pt-BR')}`}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="Página anterior do extrato"
+                disabled={loading || pagination.page <= 1}
+                onClick={() => onPageChange(pagination.page - 1)}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition-colors hover:border-border-default hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-14 text-center tabular-nums">{pagination.totalPages ? `${pagination.page} / ${pagination.totalPages}` : '0 / 0'}</span>
+              <button
+                type="button"
+                aria-label="Próxima página do extrato"
+                disabled={loading || pagination.totalPages === 0 || pagination.page >= pagination.totalPages}
+                onClick={() => onPageChange(pagination.page + 1)}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition-colors hover:border-border-default hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -27,6 +27,15 @@ status: audit-complete-findings-open
 - Dashboard e Marketplaces usam a RPC agregada quando `include_transactions=false`.
 - A série diária de receita passou a usar agregação SQL tenant-scoped (`033`).
 
+## Extrato Financeiro paginado (em validação local)
+
+- `Financeiro` deixou de solicitar o extrato integral junto com os KPIs: a visão geral usa `finance?include_transactions=false`, que já é agregada no Postgres.
+- O novo endpoint `finance-transactions` lê no máximo 100 pedidos pagos por página, sempre filtrando `company_id`, conexões autorizadas, período e canal selecionado antes de ordenar e paginar.
+- Estorno conhecido segue no mesmo lote do pedido correspondente; o histórico não é truncado. A interface informa total, intervalo e páginas e permite voltar ao ponto já consultado pelo cache tenant/user-scoped.
+- O filtro por marketplace passou a enviar a chave canônica ao servidor. Canais legados não confiáveis permanecem no único balde `Canal não identificado`, sem reatribuição de receita.
+- Sem migration e sem escrita em dados reais.
+- Validação local: TypeScript passou; 27/27 testes focados passaram; build passou (somente o aviso preexistente de chunk principal acima de 500 kB). Deploy e smoke autenticado pendentes desta etapa.
+
 ## Próxima ação
 
-Otimizar o extrato detalhado em lote separado, preservando paginação/contratos antes de alterar a UI.
+Revisar o diff, publicar e fazer smoke autenticado do Financeiro paginado em produção.

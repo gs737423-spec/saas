@@ -12,7 +12,7 @@ describe('service-role tenant scope regressions', () => {
   })
 
   it.each([
-    'api/dashboard/summary.ts', 'api/dashboard/finance.ts', 'api/dashboard/inventory.ts',
+    'api/dashboard/summary.ts', 'api/dashboard/finance.ts', 'api/dashboard/finance-transactions.ts', 'api/dashboard/inventory.ts',
     'api/dashboard/products.ts', 'api/integrations/status.ts', 'api/integrations/logs.ts',
   ])('%s carries an explicit company_id scope', (file) => {
     const source = readFileSync(resolve(file), 'utf8')

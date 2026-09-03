@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { getMarketplaceColor } from '@/data/mockData'
 
-function MarketplaceDropdown({ value, options, onChange }: { value: string | 'all'; options: string[]; onChange: (v: string | 'all') => void }) {
+export interface MarketplaceOption {
+  value: string
+  label: string
+}
+
+function MarketplaceDropdown({ value, options, onChange }: { value: string | 'all'; options: MarketplaceOption[]; onChange: (v: string | 'all') => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -14,7 +19,7 @@ function MarketplaceDropdown({ value, options, onChange }: { value: string | 'al
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [])
 
-  const label = value === 'all' ? 'Todos os canais' : value
+  const label = value === 'all' ? 'Todos os canais' : options.find((option) => option.value === value)?.label ?? 'Canal selecionado'
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -40,17 +45,17 @@ function MarketplaceDropdown({ value, options, onChange }: { value: string | 'al
             {value === 'all' && <Check className="h-3.5 w-3.5 shrink-0" />}
           </button>
           <div className="mx-3 border-t border-border-subtle" />
-          {options.map((mp) => (
+          {options.map((option) => (
             <button
-              key={mp}
+              key={option.value}
               type="button"
-              onClick={() => { onChange(mp); setOpen(false) }}
+              onClick={() => { onChange(option.value); setOpen(false) }}
               className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-[12.5px] font-medium transition-colors ${
-                value === mp ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                value === option.value ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
               }`}
             >
-              <span className="h-2 w-2 rounded-full" style={{ background: getMarketplaceColor(mp) }} />
-              {mp}
+              <span className="h-2 w-2 rounded-full" style={{ background: getMarketplaceColor(option.label) }} />
+              {option.label}
             </button>
           ))}
         </div>
@@ -61,7 +66,7 @@ function MarketplaceDropdown({ value, options, onChange }: { value: string | 'al
 
 interface Props {
   marketplaceFilter: string | 'all'
-  marketplaceOptions: string[]
+  marketplaceOptions: MarketplaceOption[]
   onMarketplaceFilterChange: (v: string | 'all') => void
   lastUpdated: string
 }

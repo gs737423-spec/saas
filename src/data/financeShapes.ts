@@ -12,6 +12,8 @@ export interface MarketplaceGrowth {
 }
 
 export interface MarketplaceFinance {
+  /** Chave canônica usada para filtrar o extrato no servidor. */
+  channel?: string
   marketplace: string
   grossRevenue: number
   fees: number

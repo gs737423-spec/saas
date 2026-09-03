@@ -9,6 +9,7 @@ import ConnectMarketplacePrompt from '@/components/common/ConnectMarketplaceProm
 import { fillAllMarketplaces, type FinanceOverview, type MarketplaceFinance, type FinanceTransaction } from '@/data/financeShapes'
 import { usePeriod } from '@/contexts/PeriodContext'
 import { apiFetchJson } from '@/lib/apiFetch'
+import type { MarketplaceOption } from '@/components/financeiro/FinanceHeader'
 
 interface FinanceApiResponse {
   ok: boolean
@@ -16,6 +17,18 @@ interface FinanceApiResponse {
   byMarketplace: MarketplaceFinance[]
   transactions: FinanceTransaction[]
   lastSyncAt: string | null
+}
+
+interface TransactionsApiResponse {
+  ok: boolean
+  transactions: FinanceTransaction[]
+  pagination: { page: number; pageSize: number; totalOrders: number; totalPages: number }
+}
+
+const EMPTY_LEDGER: TransactionsApiResponse = {
+  ok: true,
+  transactions: [],
+  pagination: { page: 1, pageSize: 100, totalOrders: 0, totalPages: 0 },
 }
 
 function freshnessLabel(response: FinanceApiResponse): string {
@@ -30,12 +43,15 @@ export default function Financeiro() {
   const { period } = usePeriod()
   const [marketplaceFilter, setMarketplaceFilter] = useState<string | 'all'>('all')
   const [real, setReal] = useState<FinanceApiResponse | null>(null)
+  const [ledger, setLedger] = useState<TransactionsApiResponse>(EMPTY_LEDGER)
+  const [transactionPage, setTransactionPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [ledgerLoading, setLedgerLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}`).then((data) => {
+    apiFetchJson<FinanceApiResponse>(`/api/dashboard/finance?${period.query}&include_transactions=false`).then((data) => {
       if (!cancelled) {
         setReal(data)
         setLoading(false)
@@ -46,23 +62,39 @@ export default function Financeiro() {
     }
   }, [period.query])
 
-  const marketplaceOptions = useMemo(() => [...new Set([
-    ...(real?.byMarketplace ?? []).map((row) => row.marketplace),
-    ...(real?.transactions ?? []).map((row) => row.marketplace),
-  ])].sort((a, b) => a.localeCompare(b, 'pt-BR')), [real])
+  const marketplaceOptions = useMemo<MarketplaceOption[]>(() => (real?.byMarketplace ?? [])
+    .map((row) => ({ value: row.channel ?? row.marketplace, label: row.marketplace }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')), [real])
 
   useEffect(() => {
-    if (marketplaceFilter !== 'all' && !marketplaceOptions.includes(marketplaceFilter)) setMarketplaceFilter('all')
+    if (marketplaceFilter !== 'all' && !marketplaceOptions.some((option) => option.value === marketplaceFilter)) setMarketplaceFilter('all')
   }, [marketplaceFilter, marketplaceOptions])
+
+  useEffect(() => {
+    setTransactionPage(1)
+  }, [period.query, marketplaceFilter])
+
+  useEffect(() => {
+    let cancelled = false
+    setLedgerLoading(true)
+    const query = new URLSearchParams(period.query)
+    query.set('page', String(transactionPage))
+    query.set('page_size', '100')
+    if (marketplaceFilter !== 'all') query.set('channel', marketplaceFilter)
+    apiFetchJson<TransactionsApiResponse>(`/api/dashboard/finance-transactions?${query.toString()}`).then((data) => {
+      if (!cancelled) {
+        setLedger(data?.ok ? data : EMPTY_LEDGER)
+        setLedgerLoading(false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [period.query, marketplaceFilter, transactionPage])
 
   const filtered = useMemo(() => {
     const source = fillAllMarketplaces(real?.byMarketplace ?? [])
-    return marketplaceFilter === 'all' ? source : source.filter((m) => m.marketplace === marketplaceFilter)
-  }, [real, marketplaceFilter])
-
-  const transactions = useMemo(() => {
-    const source = real?.transactions ?? []
-    return marketplaceFilter === 'all' ? source : source.filter((t) => t.marketplace === marketplaceFilter)
+    return marketplaceFilter === 'all' ? source : source.filter((m) => (m.channel ?? m.marketplace) === marketplaceFilter)
   }, [real, marketplaceFilter])
 
   if (loading) {
@@ -99,7 +131,12 @@ export default function Financeiro() {
         <MarketplaceFinanceTable items={filtered} />
       </div>
 
-      <TransactionsLedger transactions={transactions} />
+      <TransactionsLedger
+        transactions={ledger.transactions}
+        pagination={ledger.pagination}
+        loading={ledgerLoading}
+        onPageChange={setTransactionPage}
+      />
     </div>
   )
 }

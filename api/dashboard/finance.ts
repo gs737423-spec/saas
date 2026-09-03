@@ -211,6 +211,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const EMPTY_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
       const byMarketplace: MarketplaceFinance[] = Array.from(grouped.entries()).map(([channel, row]) => ({
+        channel,
         marketplace: row.displayName, grossRevenue: row.grossRevenue, fees: row.fees,
         feeDataStatus: row.ordersCount > 0 && row.feeKnownOrders === row.ordersCount ? 'known' : row.feeKnownOrders > 0 || row.feePartialOrders > 0 ? 'partial' : 'unknown',
         refunds: row.refunds,
@@ -342,6 +343,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ? 'partial' as const
             : 'unknown' as const
         return {
+          channel,
           marketplace,
           grossRevenue: acc.grossRevenue,
           fees: acc.fees,
