@@ -7,6 +7,14 @@ updated: 2026-08-14
 
 # Estado atual
 
+## Correção VTEX — preço calculado e agregação financeira (2026-09-03)
+
+- A leitura de preço VTEX não depende mais exclusivamente da política comercial `1`: mantém o preço-base quando existir e, quando a conta só devolver preços calculados em outras tabelas/políticas, persiste uma referência determinística retornada pela própria VTEX. Valor ausente continua `null`; `null` não pode ser convertido em zero.
+- A migration `032_dashboard_finance_aggregate_and_log_index.sql` foi aplicada no remoto. Ela adiciona somente índices e a RPC tenant-scoped `dashboard_finance_aggregate`; não altera pedidos, produtos ou conexões existentes.
+- Dashboard e Marketplaces, que não exibem extrato, passam a receber um snapshot agregado no Postgres em vez de transferir todos os pedidos para agregação no runtime. O extrato detalhado e a série diária continuam no caminho legado e permanecem pendência de otimização separada.
+- A consulta de logs de integração ganhou índice composto por empresa e data. Não há remoção de logs históricos nesta mudança.
+- Validações locais: TypeScript passou; 66/66 testes VTEX/dashboard focados passaram; build Vite passou com o aviso conhecido de chunk principal acima de 500 kB.
+
 > Este documento deve conter apenas fatos confirmados no código, nos testes ou na infraestrutura.
 
 ## Restauração visual do login (2026-08-31)

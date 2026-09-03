@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canonicalOrderKey, classifyVtexChannel, flattenVtexCategories, normalizeVtexOrder, normalizeVtexOrderStatus, normalizeVtexSku, priceFromDefaultVtexPolicy } from '../src/server/integrations/vtex/normalize'
+import { canonicalOrderKey, classifyVtexChannel, flattenVtexCategories, normalizeVtexOrder, normalizeVtexOrderStatus, normalizeVtexSku, priceFromComputedVtexPolicies } from '../src/server/integrations/vtex/normalize'
 import { directCanonicalOrderKey, planCanonicalReconciliation } from '../src/server/integrations/orderIdentity'
 import { providerDefaultChannel } from '../src/server/analytics/channels'
 
@@ -92,11 +92,15 @@ describe('VTEX normalization', () => {
     expect(normalizeVtexSku(sku, null, { balance: [{ warehouseId: '1', totalQuantity: 8, reservedQuantity: 3 }] }).inventory.available_quantity).toBe(5)
   })
 
-  it('uses only the default policy when recovering a computed VTEX price', () => {
-    expect(priceFromDefaultVtexPolicy([
+  it('prefers the default policy and recovers a deterministic catalog reference from other valid policies', () => {
+    expect(priceFromComputedVtexPolicies([
       { tradePolicyId: 'marketplace-a', sellingPrice: 77 },
       { tradePolicyId: '1', sellingPrice: 59.9, listPrice: 69.9, costPrice: 20 },
     ])).toEqual({ basePrice: 59.9, listPrice: 69.9, costPrice: 20 })
-    expect(priceFromDefaultVtexPolicy([{ tradePolicyId: 'marketplace-a', sellingPrice: 77 }])).toBeNull()
+    expect(priceFromComputedVtexPolicies([
+      { tradePolicyId: 'marketplace-b', sellingPrice: 77 },
+      { tradePolicyId: 'marketplace-a', sellingPrice: 59.9 },
+    ])).toEqual({ basePrice: 59.9, listPrice: null, costPrice: null })
+    expect(priceFromComputedVtexPolicies([{ tradePolicyId: 'marketplace-a', sellingPrice: null }])).toBeNull()
   })
 })

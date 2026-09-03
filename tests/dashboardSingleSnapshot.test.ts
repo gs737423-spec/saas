@@ -21,6 +21,18 @@ describe('dashboard financial snapshot', () => {
     expect(source).toContain('grossRevenueChangePct: includeDashboardSummary ? grossRevenueChangePct : undefined')
   })
 
+  it('uses the compact SQL aggregate whenever the transaction ledger is not requested', async () => {
+    const [source, migration] = await Promise.all([
+      readFile(new URL('../api/dashboard/finance.ts', import.meta.url), 'utf8'),
+      readFile(new URL('../supabase/migrations/032_dashboard_finance_aggregate_and_log_index.sql', import.meta.url), 'utf8'),
+    ])
+    expect(source).toContain("rpc('dashboard_finance_aggregate'")
+    expect(source).toContain('if (!includeTransactions)')
+    expect(migration).toContain('create or replace function public.dashboard_finance_aggregate')
+    expect(migration).toContain('orders_company_connection_paid_analytics_ordered_idx')
+    expect(migration).toContain('sync_logs_company_created_at_idx')
+  })
+
   it('uses only closed days for marketplace comparisons', async () => {
     const source = await readFile(new URL('../api/dashboard/finance.ts', import.meta.url), 'utf8')
     expect(source).toContain('[1, 2, 8, 31, 366]')

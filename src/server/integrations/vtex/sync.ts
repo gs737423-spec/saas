@@ -9,7 +9,7 @@ import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
 import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexAffiliatesFromSalesChannels, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
-import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku, priceFromDefaultVtexPolicy } from './normalize.js'
+import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku, priceFromComputedVtexPolicies } from './normalize.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { findCanonicalChannel } from './channelResolution.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -739,7 +739,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
             const computedResult = await Promise.allSettled([client.getComputedPrices(skuId)])
             const computed = computedResult[0]
             if (computed.status === 'fulfilled') {
-              const computedPrice = priceFromDefaultVtexPolicy(computed.value)
+              const computedPrice = priceFromComputedVtexPolicies(computed.value)
               if (computedPrice) {
                 price = computedPrice
                 priceRequestFailed = false

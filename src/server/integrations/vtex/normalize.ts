@@ -15,16 +15,25 @@ export function normalizeVtexOrderStatus(status: string): string {
   return normalized || 'unknown'
 }
 
-/** A tabela/política `1` é a política comercial padrão da VTEX. Como a
- * entidade interna possui um único preço por SKU, nunca escolhemos o preço
- * de uma política específica de marketplace por heurística. */
-export function priceFromDefaultVtexPolicy(prices: VtexComputedPrice[]): VtexPrice | null {
-  const defaultPrice = prices.find((price) => String(price.tradePolicyId ?? '') === '1')
-  if (!defaultPrice || !Number.isFinite(Number(defaultPrice.sellingPrice))) return null
+/**
+ * A VTEX pode não ter `basePrice` e ainda assim devolver preços calculados
+ * válidos em tabelas/políticas comerciais. Preferimos a política padrão 1,
+ * mas não descartamos o catálogo inteiro quando a conta só expõe outra
+ * política. O fallback é determinístico: menor preço calculado válido.
+ *
+ * O campo interno é uma referência de catálogo, não uma promessa de preço
+ * contextual ao comprador. Preço zero nunca é fabricado: só entra valor
+ * finito retornado pela VTEX.
+ */
+export function priceFromComputedVtexPolicies(prices: VtexComputedPrice[]): VtexPrice | null {
+  const valid = prices.filter((price) => price.sellingPrice != null && Number.isFinite(Number(price.sellingPrice)) && Number(price.sellingPrice) >= 0)
+  if (valid.length === 0) return null
+  const defaultPrice = valid.find((price) => String(price.tradePolicyId ?? '') === '1' || String(price.priceTable ?? '') === '1')
+    ?? [...valid].sort((a, b) => Number(a.sellingPrice) - Number(b.sellingPrice) || String(a.tradePolicyId ?? a.priceTable ?? '').localeCompare(String(b.tradePolicyId ?? b.priceTable ?? '')))[0]
   return {
     basePrice: Number(defaultPrice.sellingPrice),
-    listPrice: Number.isFinite(Number(defaultPrice.listPrice)) ? Number(defaultPrice.listPrice) : null,
-    costPrice: Number.isFinite(Number(defaultPrice.costPrice)) ? Number(defaultPrice.costPrice) : null,
+    listPrice: defaultPrice.listPrice != null && Number.isFinite(Number(defaultPrice.listPrice)) ? Number(defaultPrice.listPrice) : null,
+    costPrice: defaultPrice.costPrice != null && Number.isFinite(Number(defaultPrice.costPrice)) ? Number(defaultPrice.costPrice) : null,
   }
 }
 

@@ -16,6 +16,24 @@ interface FinanceApiResponse {
   message?: string
 }
 
+interface AggregateChannelRow {
+  salesChannel: string
+  ordersCount: number | string
+  grossRevenue: number | string
+  fees: number | string
+  feeKnownOrders: number | string
+  feePartialOrders: number | string
+  refunds: number | string
+  refundKnownOrders: number | string
+  refundPartialOrders: number | string
+  refundedOrders: number | string
+}
+
+interface FinanceAggregateResult {
+  channels?: AggregateChannelRow[]
+  previous?: { ordersCount?: number | string; grossRevenue?: number | string }
+}
+
 const EMPTY_OVERVIEW: FinanceOverview = { grossRevenue: 0, fees: 0, feeDataStatus: 'unknown', refunds: 0, refundDataStatus: 'unknown', netValue: 0, source: 'demo' }
 
 // Rótulo de exibição por provider — mesmo texto usado em toda a UI (cards de
@@ -135,6 +153,75 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ])
     if (channelError) throw new Error(channelError.message)
     const channelNameByKey = new Map((registeredChannels ?? []).map((channel) => [String(channel.canonical_key), String(channel.display_name)]))
+
+    // Dashboard e Marketplaces não renderizam extrato. Para esses caminhos,
+    // o Postgres devolve poucas linhas agregadas por canal em vez de enviar
+    // dezenas de milhares de pedidos ao runtime a cada troca de filtro.
+    if (!includeTransactions) {
+      const previousFrom = includeDashboardSummary
+        ? new Date(range.from.getTime() - (range.to.getTime() - range.from.getTime())).toISOString()
+        : null
+      const { data: aggregateData, error: aggregateError } = await supabase.rpc('dashboard_finance_aggregate', {
+        p_company_id: auth.companyId,
+        p_connection_ids: connectionIds,
+        p_since: since,
+        p_until: until,
+        p_previous_since: previousFrom,
+      })
+      if (aggregateError) throw new Error(aggregateError.message)
+      const aggregate = (aggregateData ?? {}) as FinanceAggregateResult
+      const rows = aggregate.channels ?? []
+      const growthByChannel = await computeGrowthByChannel(supabase, auth.companyId, connectionIds, providerByConnectionId, trustedChannels)
+      const grouped = new Map<StoredSalesChannel, { grossRevenue: number; fees: number; refunds: number; ordersCount: number; feeKnownOrders: number; feePartialOrders: number; refundKnownOrders: number; refundPartialOrders: number; refundedOrders: number; displayName: string }>()
+
+      for (const row of rows) {
+        const storedChannel = row.salesChannel || 'external:vtex:unmapped'
+        const { effectiveChannel, displayName } = resolveEffectiveAnalyticsChannel(storedChannel, trustedChannels, channelNameByKey.get(storedChannel))
+        const acc = grouped.get(effectiveChannel) ?? { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, feeKnownOrders: 0, feePartialOrders: 0, refundKnownOrders: 0, refundPartialOrders: 0, refundedOrders: 0, displayName }
+        acc.grossRevenue += Number(row.grossRevenue ?? 0)
+        acc.fees += Number(row.fees ?? 0)
+        acc.refunds += Number(row.refunds ?? 0)
+        acc.ordersCount += Number(row.ordersCount ?? 0)
+        acc.feeKnownOrders += Number(row.feeKnownOrders ?? 0)
+        acc.feePartialOrders += Number(row.feePartialOrders ?? 0)
+        acc.refundKnownOrders += Number(row.refundKnownOrders ?? 0)
+        acc.refundPartialOrders += Number(row.refundPartialOrders ?? 0)
+        acc.refundedOrders += Number(row.refundedOrders ?? 0)
+        grouped.set(effectiveChannel, acc)
+      }
+
+      const totals = Array.from(grouped.values()).reduce((acc, row) => ({
+        grossRevenue: acc.grossRevenue + row.grossRevenue, fees: acc.fees + row.fees, refunds: acc.refunds + row.refunds,
+        ordersCount: acc.ordersCount + row.ordersCount, feeKnownOrders: acc.feeKnownOrders + row.feeKnownOrders,
+        feePartialOrders: acc.feePartialOrders + row.feePartialOrders, refundKnownOrders: acc.refundKnownOrders + row.refundKnownOrders,
+        refundPartialOrders: acc.refundPartialOrders + row.refundPartialOrders, refundedOrders: acc.refundedOrders + row.refundedOrders,
+      }), { grossRevenue: 0, fees: 0, refunds: 0, ordersCount: 0, feeKnownOrders: 0, feePartialOrders: 0, refundKnownOrders: 0, refundPartialOrders: 0, refundedOrders: 0 })
+      const feeDataStatus = totals.ordersCount > 0 && totals.feeKnownOrders === totals.ordersCount ? 'known' as const : totals.feeKnownOrders > 0 || totals.feePartialOrders > 0 ? 'partial' as const : 'unknown' as const
+      const refundDataStatus = totals.ordersCount > 0 && totals.refundKnownOrders === totals.ordersCount ? 'known' as const : totals.refundKnownOrders > 0 || totals.refundPartialOrders > 0 ? 'partial' as const : 'unknown' as const
+      const previousGrossRevenue = Number(aggregate.previous?.grossRevenue ?? 0)
+      const previousOrdersCount = Number(aggregate.previous?.ordersCount ?? 0)
+      const overview: FinanceOverview = {
+        grossRevenue: totals.grossRevenue, fees: totals.fees, feeDataStatus, refunds: totals.refunds, refundDataStatus,
+        netValue: totals.grossRevenue - totals.fees - totals.refunds, source: 'real',
+        ordersCount: includeDashboardSummary ? totals.ordersCount : undefined,
+        averageTicket: includeDashboardSummary ? (totals.ordersCount > 0 ? totals.grossRevenue / totals.ordersCount : 0) : undefined,
+        grossRevenueChangePct: includeDashboardSummary ? pctChange(totals.grossRevenue, previousGrossRevenue) : undefined,
+        ordersCountChangePct: includeDashboardSummary ? pctChange(totals.ordersCount, previousOrdersCount) : undefined,
+        returnsCount: includeDashboardSummary ? totals.refundedOrders : undefined,
+      }
+      const EMPTY_GROWTH: MarketplaceGrowth = { d1: null, d7: null, d30: null, d365: null }
+      const byMarketplace: MarketplaceFinance[] = Array.from(grouped.entries()).map(([channel, row]) => ({
+        marketplace: row.displayName, grossRevenue: row.grossRevenue, fees: row.fees,
+        feeDataStatus: row.ordersCount > 0 && row.feeKnownOrders === row.ordersCount ? 'known' : row.feeKnownOrders > 0 || row.feePartialOrders > 0 ? 'partial' : 'unknown',
+        refunds: row.refunds,
+        refundDataStatus: row.ordersCount > 0 && row.refundKnownOrders === row.ordersCount ? 'known' : row.refundKnownOrders > 0 || row.refundPartialOrders > 0 ? 'partial' : 'unknown',
+        netValue: row.grossRevenue - row.fees - row.refunds, ordersCount: row.ordersCount,
+        averageTicket: row.ordersCount > 0 ? row.grossRevenue / row.ordersCount : 0,
+        growth: growthByChannel.get(channel) ?? EMPTY_GROWTH, source: 'real',
+      }))
+      res.status(200).json({ ok: true, overview, byMarketplace, transactions: [], lastSyncAt } satisfies FinanceApiResponse)
+      return
+    }
 
     const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
       supabase
