@@ -23,7 +23,8 @@ export interface CategoryMetrics extends CategoryOption {
   productCount: number
   revenue: number
   units: number
-  stock: number
+  /** null quando ao menos um produto da categoria não possui saldo conhecido. */
+  stock: number | null
 }
 
 export function categoryLabel(item: Pick<CategorySourceItem, 'categoryName'>): string {
@@ -62,7 +63,11 @@ export function getCategoryMetrics(items: CategorySourceItem[], key: string): Ca
     productCount: products.length,
     revenue: products.reduce((sum, item) => sum + item.revenue, 0),
     units: products.reduce((sum, item) => sum + (item.units ?? 0), 0),
-    stock: products.reduce((sum, item) => sum + (item.stock ?? 0), 0),
+    // Um subtotal só é verdadeiro se todos os seus componentes forem
+    // conhecidos. Somar `null` como zero reduz artificialmente o estoque.
+    stock: products.some((item) => item.stock === null)
+      ? null
+      : products.reduce((sum, item) => sum + (item.stock ?? 0), 0),
   }
 }
 

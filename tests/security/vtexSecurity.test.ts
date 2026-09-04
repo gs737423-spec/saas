@@ -51,10 +51,17 @@ describe('VTEX integration security boundaries', () => {
   })
 
   it('keeps unresolved orders out of every central analytics query', () => {
-    for (const file of ['summary.ts', 'finance.ts', 'finance-daily.ts', 'products.ts', 'inventory.ts']) {
+    for (const file of ['summary.ts', 'finance.ts', 'products.ts', 'inventory.ts']) {
       const source = readFileSync(resolve('api/dashboard', file), 'utf8')
       expect(source, file).toMatch(/\.eq\(['"](?:orders\.)?analytics_included['"], true\)/)
     }
+
+    // A série diária foi movida para uma RPC para não transferir o histórico
+    // inteiro ao runtime. A garantia de elegibilidade continua no SQL.
+    const dailyApi = readFileSync(resolve('api/dashboard/finance-daily.ts'), 'utf8')
+    const dailyAggregate = readFileSync(resolve('supabase/migrations/033_dashboard_finance_daily_aggregate.sql'), 'utf8')
+    expect(dailyApi).toContain("rpc('dashboard_finance_daily_aggregate'")
+    expect(dailyAggregate).toContain('o.analytics_included = true')
   })
 
   it('preserves stored mappings and accepts dynamic canonical channels', () => {

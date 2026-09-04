@@ -103,7 +103,9 @@ export interface VtexOrderItem {
 export interface VtexOrderTotal {
   id: string
   name?: string
-  value: number
+  /** Total em centavos. A OMS normalmente o fornece, mas payload parcial não
+   * pode ser interpretado como pedido de valor zero. */
+  value?: number | null
 }
 
 export interface VtexOrder {
@@ -114,7 +116,8 @@ export interface VtexOrder {
   salesChannel?: string | null
   origin?: string | null
   status: string
-  value: number
+  /** Total em centavos. Payload parcial pode omiti-lo; nunca é inferido. */
+  value: number | null
   creationDate: string
   lastChange?: string
   items: VtexOrderItem[]

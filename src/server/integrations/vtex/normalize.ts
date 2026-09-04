@@ -89,8 +89,13 @@ export function canonicalOrderKey(order: Pick<VtexOrder, 'orderId' | 'marketplac
 
 export function normalizeVtexOrder(order: VtexOrder, mappings: VtexChannelMappings = {}): VtexNormalizedOrder {
   const resolution = resolveVtexChannel(order, mappings)
-  const analyticsIncluded = true
-  const totalAmount = Number(order.value ?? 0) / 100
+  // Zero explícito é um total válido; ausência, NaN e número negativo não
+  // são. Persistimos o pedido para rastreabilidade, mas nunca deixamos um
+  // payload parcial reduzir faturamento/ticket como se fosse uma venda R$ 0.
+  const rawTotal = order.value
+  const hasKnownTotal = typeof rawTotal === 'number' && Number.isFinite(rawTotal) && rawTotal >= 0
+  const analyticsIncluded = hasKnownTotal
+  const totalAmount = hasKnownTotal ? rawTotal / 100 : 0
   return {
     canonicalOrderKey: canonicalOrderKey(order, resolution.canonicalChannel, resolution.resolutionStatus),
     channel: resolution.canonicalChannel,
@@ -104,7 +109,9 @@ export function normalizeVtexOrder(order: VtexOrder, mappings: VtexChannelMappin
     identifierValue: resolution.identifierValue,
     resolutionSource: resolution.resolutionSource,
     analyticsIncluded,
-    unavailableReason: resolution.resolutionStatus === 'unresolved' ? 'VTEX_CHANNEL_MAPPING_REQUIRED' : null,
+    unavailableReason: !hasKnownTotal
+      ? 'VTEX_ORDER_TOTAL_UNAVAILABLE'
+      : resolution.resolutionStatus === 'unresolved' ? 'VTEX_CHANNEL_MAPPING_REQUIRED' : null,
     externalOrderId: String(order.orderId),
     marketplaceOrderId: order.marketplaceOrderId ? String(order.marketplaceOrderId) : null,
     affiliateId: order.affiliateId ? String(order.affiliateId) : null,
@@ -145,18 +152,26 @@ function mostSpecificCategory(categories?: Record<string, string>): { id: string
   return { id: last.id, name: last.name.split('/').filter(Boolean).pop() ?? last.name, path: entries }
 }
 
+function knownNonNegativeNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
+
 export function normalizeVtexSku(sku: VtexSkuContext, price: VtexPrice | null, inventory: VtexInventoryResponse | null) {
   const category = mostSpecificCategory(sku.ProductCategories)
   const balances = inventory?.balance ?? []
   const hasUnlimitedQuantity = balances.some((balance) => balance.hasUnlimitedQuantity)
+  const balancesAreComplete = balances.every((balance) => balance.hasUnlimitedQuantity
+    || (knownNonNegativeNumber(balance.totalQuantity) !== null && knownNonNegativeNumber(balance.reservedQuantity) !== null))
   const availableQuantity = inventory === null || hasUnlimitedQuantity
     ? null
+    : !balancesAreComplete
+      ? null
     : balances.reduce((sum, balance) => {
-        const total = Number(balance.totalQuantity ?? 0)
-        const reserved = Number(balance.reservedQuantity ?? 0)
+        const total = knownNonNegativeNumber(balance.totalQuantity) ?? 0
+        const reserved = knownNonNegativeNumber(balance.reservedQuantity) ?? 0
         return sum + Math.max(0, total - reserved)
       }, 0)
-  const sourceMetadata = { vtexSkuId: String(sku.Id), vtexProductId: String(sku.ProductId), priceAvailable: price !== null, inventoryAvailable: inventory !== null }
+  const sourceMetadata = { vtexSkuId: String(sku.Id), vtexProductId: String(sku.ProductId), priceAvailable: price !== null, inventoryAvailable: inventory !== null && balancesAreComplete }
   return {
     product: {
       external_product_id: String(sku.Id),
@@ -184,14 +199,18 @@ export function normalizeVtexSku(sku: VtexSkuContext, price: VtexPrice | null, i
       sold_quantity_30d: null,
       raw_payload: null,
     },
-    warehouseRows: balances.map((balance) => ({
-      external_product_id: String(sku.Id),
-      warehouse_id: String(balance.warehouseId),
-      warehouse_name: balance.warehouseName ?? null,
-      total_quantity: balance.totalQuantity ?? null,
-      reserved_quantity: balance.reservedQuantity ?? null,
-      available_quantity: balance.hasUnlimitedQuantity ? null : Math.max(0, Number(balance.totalQuantity ?? 0) - Number(balance.reservedQuantity ?? 0)),
-      unlimited_quantity: Boolean(balance.hasUnlimitedQuantity),
-    })),
+    warehouseRows: balances.map((balance) => {
+      const total = knownNonNegativeNumber(balance.totalQuantity)
+      const reserved = knownNonNegativeNumber(balance.reservedQuantity)
+      return {
+        external_product_id: String(sku.Id),
+        warehouse_id: String(balance.warehouseId),
+        warehouse_name: balance.warehouseName ?? null,
+        total_quantity: total,
+        reserved_quantity: reserved,
+        available_quantity: balance.hasUnlimitedQuantity || total === null || reserved === null ? null : Math.max(0, total - reserved),
+        unlimited_quantity: Boolean(balance.hasUnlimitedQuantity),
+      }
+    }),
   }
 }

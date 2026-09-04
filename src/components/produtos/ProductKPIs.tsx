@@ -30,7 +30,7 @@ export default function ProductKPIs({ products, metrics }: { products: Product[]
   const avgTicket = totalUnits > 0 ? totalRevenue / totalUnits : 0
 
   const cards: Card[] = [
-    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${metrics?.withStock ?? products.filter((p) => p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3A8DFF' },
+    { label: 'Produtos Ativos', value: active, format: (v) => String(Math.round(v)), sub: `${metrics?.withStock ?? products.filter((p) => p.stock !== null && p.stock > 0).length} com estoque`, icon: Boxes, primary: '#3A8DFF' },
     { label: 'Mais Vendido', value: bestSeller.name, title: bestSeller.name, sub: `${bestSeller.units} un. · ${bestSeller.sku ?? 'SKU não informado'}`, change: bestSeller.trend, icon: Flame, primary: '#3BE38E' },
     { label: 'Menor Giro', value: lowestTurn.name, title: lowestTurn.name, sub: `${lowestTurn.units} un. · ${lowestTurn.sku ?? 'SKU não informado'}`, change: lowestTurn.trend, icon: Snowflake, primary: '#FF5E7D' },
     { label: 'Margem Média', value: avgMargin ?? '—', format: avgMargin !== null ? (v) => `${Math.round(v)}%` : undefined, sub: avgMargin !== null ? 'todos os produtos' : 'defina o custo dos produtos', icon: Percent, primary: '#194B9B' },

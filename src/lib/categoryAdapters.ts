@@ -26,6 +26,8 @@ export function categoryItemFromInventory(item: DashboardInventoryItem): Categor
     categoryName: item.categoryName,
     revenue: item.revenue30d,
     units: item.soldQuantity,
-    stock: item.availableQuantity ?? 0,
+    // `null` significa que a integração não informou saldo. Mantê-lo evita
+    // que a categoria apresente uma soma de estoque inventada.
+    stock: item.availableQuantity,
   }
 }

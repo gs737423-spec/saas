@@ -125,9 +125,11 @@ describe('canais reais e marketplace dinâmico', () => {
       readFile(new URL('../src/pages/Financeiro.tsx', import.meta.url), 'utf8'),
       readFile(new URL('../src/components/financeiro/FinanceHeader.tsx', import.meta.url), 'utf8'),
     ])
-    expect(page).toMatch(/real\?\.byMarketplace[\s\S]{0,200}real\?\.transactions/)
+    expect(page).toContain('real?.byMarketplace')
+    expect(page).toContain('/api/dashboard/finance-transactions?')
+    expect(page).toContain('marketplaceFilter !== \'all\'')
     expect(page).toMatch(/marketplaceOptions=\{marketplaceOptions\}/)
-    expect(header).toMatch(/options\.map\(\(mp\)/)
+    expect(header).toMatch(/options\.map\(\(option\)/)
     expect(header).not.toMatch(/const marketplaces:/)
   })
 

@@ -78,6 +78,14 @@ describe('VTEX normalization', () => {
     expect(normalizeVtexOrderStatus('canceled')).toBe('cancelled')
   })
 
+  it('never turns a missing VTEX order total into a real zero-value sale', () => {
+    const missingTotal = normalizeVtexOrder({ ...baseOrder, value: null })
+    const explicitZero = normalizeVtexOrder({ ...baseOrder, value: 0 })
+
+    expect(missingTotal).toMatchObject({ totalAmount: 0, analyticsIncluded: false, unavailableReason: 'VTEX_ORDER_TOTAL_UNAVAILABLE' })
+    expect(explicitZero).toMatchObject({ totalAmount: 0, analyticsIncluded: true, unavailableReason: null })
+  })
+
   it('preserves category hierarchy', () => {
     expect(flattenVtexCategories([{ id: 1, name: 'Casa', children: [{ id: 2, name: 'Cozinha' }] }])).toEqual([
       expect.objectContaining({ externalCategoryId: '1', parentExternalId: null, level: 1 }),
@@ -90,6 +98,15 @@ describe('VTEX normalization', () => {
     expect(normalizeVtexSku(sku, null, null).inventory.available_quantity).toBeNull()
     expect(normalizeVtexSku(sku, null, { balance: [{ warehouseId: '1', hasUnlimitedQuantity: true }] }).inventory.available_quantity).toBeNull()
     expect(normalizeVtexSku(sku, null, { balance: [{ warehouseId: '1', totalQuantity: 8, reservedQuantity: 3 }] }).inventory.available_quantity).toBe(5)
+  })
+
+  it('does not convert a partial VTEX warehouse balance into zero stock', () => {
+    const sku = { Id: 1, ProductId: 10, ProductName: 'Produto' }
+    const normalized = normalizeVtexSku(sku, null, { balance: [{ warehouseId: '1', totalQuantity: null, reservedQuantity: 3 }] })
+
+    expect(normalized.inventory.available_quantity).toBeNull()
+    expect(normalized.product.source_metadata.inventoryAvailable).toBe(false)
+    expect(normalized.warehouseRows[0]).toMatchObject({ total_quantity: null, reserved_quantity: 3, available_quantity: null })
   })
 
   it('prefers the default policy and recovers a deterministic catalog reference from other valid policies', () => {

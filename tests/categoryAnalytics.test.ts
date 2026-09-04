@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { categoryKey, getCategoryMetrics, getCategoryOptions, getCategoryProducts, getTopCategory, matchesCategoryFilter, UNCATEGORISED_KEY } from '../src/lib/categoryAnalytics'
 
-const item = (id: string, categoryId: string | null, categoryName: string | null, revenue: number, units = 1, stock = 1) => ({ id, name: id, sku: id, marketplace: 'Mercado Livre', categoryId, categoryName, revenue, units, stock })
+const item = (id: string, categoryId: string | null, categoryName: string | null, revenue: number, units = 1, stock: number | null = 1) => ({ id, name: id, sku: id, marketplace: 'Mercado Livre', categoryId, categoryName, revenue, units, stock })
 
 describe('category analytics', () => {
   const items = [
@@ -25,6 +25,11 @@ describe('category analytics', () => {
 
   it('aggregates revenue, sales and inventory correctly', () => {
     expect(getCategoryMetrics(items, 'id:CAT-1')).toMatchObject({ revenue: 350, units: 10, stock: 14 })
+  })
+
+  it('does not fabricate a category stock total when a product has no inventory data', () => {
+    const withUnknownInventory = [...items, item('unknown', 'CAT-1', 'Acessórios', 20, 1, null)]
+    expect(getCategoryMetrics(withUnknownInventory, 'id:CAT-1')).toMatchObject({ stock: null })
   })
 
   it('exposes uncategorised products as a filterable option', () => {

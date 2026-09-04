@@ -67,7 +67,8 @@ function mapRawProducts(rawItems: unknown): DashboardProduct[] {
       price: asNumber(item.price),
       costPrice: asNumber(item.costPrice),
       margin: asNumber(item.margin),
-      stock: asNumber(item.stock) ?? 0,
+      // A ausência de saldo é uma lacuna da origem, não estoque zerado.
+      stock: asNumber(item.stock),
       revenue: asNumber(item.revenue) ?? 0,
       units: asNumber(item.units) ?? 0,
       trend: asNumber(item.trend),

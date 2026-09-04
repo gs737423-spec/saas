@@ -33,7 +33,7 @@ interface Props {
   score: number
   breakdown: Breakdown[]
   coverageDays: number | null
-  stock: number
+  stock: number | null
 }
 
 export default function ProdutoHealthScore({ status, score, breakdown, coverageDays, stock }: Props) {
@@ -93,7 +93,7 @@ export default function ProdutoHealthScore({ status, score, breakdown, coverageD
           </div>
           <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
             <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Estoque</p>
-            <p className="mt-0.5 font-mono text-sm font-bold text-text-primary">{stock}</p>
+            <p className="mt-0.5 font-mono text-sm font-bold text-text-primary">{stock?.toLocaleString('pt-BR') ?? 'N/D'}</p>
           </div>
           <div className="rounded-lg border border-border-subtle/60 bg-bg-primary/30 px-2.5 py-2">
             <p className="text-[9.5px] uppercase tracking-wider text-text-muted">Risco</p>

@@ -25,13 +25,13 @@ const statusConfig: Record<ProductStatus, { color: string; bg: string; border: s
 // de src/components/estoque/RealInventoryTable.tsx, campo real derivado,
 // nunca fabricado.
 function coverageDays(p: DashboardProduct, periodDays: number): number | null {
-  if (p.units <= 0) return null
+  if (p.stock === null || p.units <= 0) return null
   const dailyRate = p.units / periodDays
   return dailyRate > 0 ? p.stock / dailyRate : null
 }
 
 function classifyStatus(p: DashboardProduct, cov: number | null): ProductStatus {
-  if (p.units === 0 && p.stock > 0) return 'Parado'
+  if (p.stock !== null && p.units === 0 && p.stock > 0) return 'Parado'
   if (cov !== null && cov < 7) return 'Crítico'
   if (cov !== null && cov < 15) return 'Atenção'
   return 'Saudável'
@@ -94,7 +94,7 @@ function ProdutoKPIs({ product, cov }: { product: DashboardProduct; cov: number 
     { label: 'Pedidos', value: product.units.toLocaleString('pt-BR'), context: 'unidades vendidas', icon: ShoppingCart, primary: '#3BE38E', secondary: '#6366F1' },
     { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2)}`, context: 'média por pedido', icon: Tag, primary: '#194B9B', secondary: '#3A8DFF' },
     { label: 'Margem', value: product.margin !== null ? `${product.margin.toFixed(0)}%` : '—', context: product.margin !== null ? 'sobre o faturamento' : 'defina o custo do produto', icon: Percent, primary: '#FFC95A', secondary: '#FFC95A' },
-    { label: 'Estoque Atual', value: String(product.stock), context: 'unidades disponíveis', icon: Boxes, primary: '#6366F1', secondary: '#3A8DFF' },
+    { label: 'Estoque Atual', value: product.stock?.toLocaleString('pt-BR') ?? 'N/D', context: product.stock === null ? 'saldo não informado pela integração' : 'unidades disponíveis', icon: Boxes, primary: '#6366F1', secondary: '#3A8DFF' },
     { label: 'Cobertura', value: cov !== null ? `${Math.round(cov)} dias` : '—', context: 'no ritmo de venda do período', icon: Clock, primary: '#FF5E7D', secondary: '#FF5E7D' },
     { label: 'Tendência', value: product.trend !== null ? `${positive ? '+' : ''}${product.trend.toFixed(1)}%` : '—', context: 'vs período anterior', icon: positive ? TrendingUp : TrendingDown, primary: positive ? '#3BE38E' : '#FF5E7D', secondary: '#FFC95A' },
     { label: 'Participação', value: `${product.sharePct.toFixed(1)}%`, context: 'do faturamento do catálogo', icon: PieChart, primary: '#194B9B', secondary: '#6366F1' },
@@ -121,7 +121,7 @@ function ProdutoKPIs({ product, cov }: { product: DashboardProduct; cov: number 
 }
 
 function buildSummary(product: DashboardProduct, status: ProductStatus, cov: number | null): string {
-  if (status === 'Parado') return `Sem venda no período, com ${product.stock} unidades em estoque. Vale revisar preço, anúncio ou visibilidade neste canal.`
+  if (status === 'Parado') return `Sem venda no período, com ${product.stock?.toLocaleString('pt-BR')} unidades em estoque. Vale revisar preço, anúncio ou visibilidade neste canal.`
   if (status === 'Crítico') return `Estoque cobre só ${cov !== null ? Math.round(cov) : '—'} dias no ritmo de venda atual — risco real de ruptura, considere repor.`
   if (status === 'Atenção') return `Cobertura de estoque apertada (${cov !== null ? Math.round(cov) : '—'} dias). Fique de olho antes que vire crítico.`
   return `Vendendo de forma saudável — R$ ${product.revenue.toLocaleString('pt-BR')} no período, ${product.units} unidades.`

@@ -67,7 +67,7 @@ export default function CategoryDrawer({ categoryKey, products, onClose }: Props
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Metric label="Faturamento" value={money.format(metrics.revenue)} />
             <Metric label="Vendas" value={metrics.units.toLocaleString('pt-BR')} />
-            <Metric label="Estoque" value={metrics.stock.toLocaleString('pt-BR')} />
+            <Metric label="Estoque" value={metrics.stock?.toLocaleString('pt-BR') ?? 'N/D'} />
             <Metric label="Produtos" value={metrics.productCount.toLocaleString('pt-BR')} />
           </div>
           {metrics.products.length > 8 && (

@@ -15,7 +15,8 @@ export interface DashboardProduct {
   costPrice: number | null
   /** null até o cliente informar costPrice — nunca estimada. */
   margin: number | null
-  stock: number
+  /** null = a origem não informou saldo; nunca apresentar como zero. */
+  stock: number | null
   revenue: number
   units: number
   /** null quando não há venda no período anterior pra comparar (sem base pra %). */

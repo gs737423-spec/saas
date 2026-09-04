@@ -57,17 +57,19 @@ const DEMO_INVENTORY: DashboardInventoryItem[] = DEMO_PRODUCTS.map((p, i) => ({
   categoryName: p.category,
   availableQuantity: p.stock,
   price: p.price,
-  status: p.stock < 10 ? 'baixo' : 'ativo',
+  // O catálogo de demonstração declara todos os saldos; o fallback só
+  // satisfaz o contrato amplo usado pelo catálogo real (onde pode ser null).
+  status: (p.stock ?? 0) < 10 ? 'baixo' : 'ativo',
   soldQuantity: p.units,
   revenue30d: p.revenue,
-  turnoverRate: p.stock > 0 ? p.units / p.stock : null,
+  turnoverRate: p.stock !== null && p.stock > 0 ? p.units / p.stock : null,
   abcClass: i < 2 ? 'A' : i < 4 ? 'B' : 'C',
   lastSyncAt: new Date().toISOString(),
   // Dados de compra/fornecedor — só existem em Modo Demonstração (sem
   // tabela de purchase orders/NF real ainda, ver types.ts).
   manufacturerCode: `FAB-${10000 + i * 1000 + p.sku!.length * 37}`,
   lastEntryAt: new Date(Date.now() - (5 + i * 9) * 86400000).toISOString(),
-  entryQty: Math.round(p.stock * 1.6),
+  entryQty: Math.round((p.stock ?? 0) * 1.6),
   lastInvoiceNumber: `NF-${20000 + i * 41}`,
   freightValue: Math.round((p.price ?? 0) * 0.6 * 100) / 100,
 }))

@@ -16,13 +16,12 @@ import { exactProductPath } from '@/lib/routes'
 type SortKey = 'sku' | 'name' | 'marketplace' | 'units' | 'stock' | 'revenue' | 'margin' | 'trend'
 type SortDir = 'asc' | 'desc'
 
-/** null vira "sem dado" — nunca menor nem maior que os demais na ordenação,
- *  sempre vai pro fim independente da direção. */
-function compareNullable(a: number | null, b: number | null): number {
+/** `null` vira "sem dado" e sempre vai pro fim, independente da direção. */
+function compareNullable(a: number | null, b: number | null, dir: SortDir): number {
   if (a === null && b === null) return 0
-  if (a === null) return -1
-  if (b === null) return 1
-  return a - b
+  if (a === null) return 1
+  if (b === null) return -1
+  return dir === 'asc' ? a - b : b - a
 }
 
 function TrendBadge({ trend }: { trend: number | null }) {
@@ -112,7 +111,8 @@ function MarginCell({ product, editable, onSetCost }: { product: Product; editab
   )
 }
 
-function stockTone(stock: number) {
+function stockTone(stock: number | null) {
+  if (stock === null) return 'text-text-muted'
   if (stock <= 25) return 'text-accent-rose'
   if (stock <= 60) return 'text-accent-amber'
   return 'text-text-secondary'
@@ -126,10 +126,10 @@ function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[
       case 'name': cmp = a.name.localeCompare(b.name); break
       case 'marketplace': cmp = a.marketplace.localeCompare(b.marketplace); break
       case 'units': cmp = a.units - b.units; break
-      case 'stock': cmp = a.stock - b.stock; break
+      case 'stock': return compareNullable(a.stock, b.stock, dir)
       case 'revenue': cmp = a.revenue - b.revenue; break
-      case 'margin': cmp = compareNullable(a.margin, b.margin); break
-      case 'trend': cmp = compareNullable(a.trend, b.trend); break
+      case 'margin': return compareNullable(a.margin, b.margin, dir)
+      case 'trend': return compareNullable(a.trend, b.trend, dir)
     }
     return dir === 'asc' ? cmp : -cmp
   })
@@ -269,7 +269,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">Estoque</p>
-                  <p className={`mt-0.5 font-mono text-[13px] ${stockTone(p.stock)}`}>{p.stock}</p>
+                  <p className={`mt-0.5 font-mono text-[13px] ${stockTone(p.stock)}`}>{p.stock ?? 'N/D'}</p>
                 </div>
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function ProductTable({ allProducts, filteredProducts, filters, o
                     </span>
                   </td>
                   <td className="py-3.5 pr-4 text-center font-mono text-[13px] font-medium text-text-secondary">{p.units.toLocaleString('pt-BR')}</td>
-                  <td className={`py-3.5 pr-4 text-center font-mono text-[13px] font-medium ${stockTone(p.stock)}`}>{p.stock}</td>
+                  <td className={`py-3.5 pr-4 text-center font-mono text-[13px] font-medium ${stockTone(p.stock)}`}>{p.stock ?? 'N/D'}</td>
                   <td className="py-3.5 pr-4 text-center font-mono text-[14px] font-semibold text-text-primary">R$ {p.revenue.toLocaleString('pt-BR')}</td>
                   <td className="py-3.5 pr-4 text-center"><MarginCell product={p} editable={editable} onSetCost={onSetCost} /></td>
                   <td className="py-3.5 text-center">
