@@ -1,6 +1,6 @@
 import { VtexApiError } from './errors.js'
 import { buildVtexBaseUrl, buildVtexPricingBaseUrl, sanitizeVtexPath } from './validation.js'
-import type { VtexCategoryNode, VtexComputedPrice, VtexCredentials, VtexInventoryResponse, VtexOrder, VtexOrderListResponse, VtexPrice, VtexSkuContext } from './types.js'
+import type { VtexCategoryNode, VtexComputedPrice, VtexCredentials, VtexInventoryResponse, VtexOrder, VtexOrderListResponse, VtexPaymentTransactionDetails, VtexPrice, VtexSkuContext } from './types.js'
 
 const REQUEST_TIMEOUT_MS = 15_000
 const MAX_TRANSIENT_RETRIES = 3
@@ -36,6 +36,7 @@ export class VtexClient {
    *  detectado porque o erro cai no `Promise.allSettled` do lote de SKU e é
    *  tratado como "sem preço" em vez de "endpoint errado"). */
   private readonly pricingBaseUrl: string
+  private readonly paymentsBaseUrl: string
   private readonly fetchImpl: typeof fetch
   private readonly sleep: (ms: number) => Promise<void>
   private readonly random: () => number
@@ -44,6 +45,7 @@ export class VtexClient {
   constructor(private readonly credentials: VtexCredentials, deps: VtexClientDependencies = {}) {
     this.baseUrl = buildVtexBaseUrl(credentials.accountName)
     this.pricingBaseUrl = buildVtexPricingBaseUrl(credentials.accountName)
+    this.paymentsBaseUrl = `https://${credentials.accountName}.vtexpayments.com.br`
     this.fetchImpl = deps.fetchImpl ?? fetch
     this.sleep = deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)))
     this.random = deps.random ?? Math.random
@@ -148,6 +150,14 @@ export class VtexClient {
   getAffiliates() { return this.request<unknown>('/api/fulfillment/pvt/affiliates') }
   listOrders(query: string) { return this.request<VtexOrderListResponse>(`/api/oms/pvt/orders?${query}`) }
   getOrder(orderId: string) { return this.request<VtexOrder>(`/api/oms/pvt/orders/${encodeURIComponent(orderId)}`) }
+  getPaymentTransactionDetails(transactionId: string) {
+    return this.request<VtexPaymentTransactionDetails>(
+      `/api/pvt/transactions/${encodeURIComponent(transactionId)}`,
+      {},
+      0,
+      this.paymentsBaseUrl,
+    )
+  }
   getFeedConfig() { return this.request<Record<string, unknown>>('/api/orders/feed/config') }
   retrieveFeed(maxLot = 10) { return this.request<Array<{ eventId: string; handle: string; domain: string; orderId: string; state?: string }>>(`/api/orders/feed?maxLot=${maxLot}`) }
 }

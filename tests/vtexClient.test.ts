@@ -39,4 +39,11 @@ describe('VTEX client resilience', () => {
     await client.getComputedPrices(123)
     expect(fetchImpl).toHaveBeenCalledWith('https://api.vtex.com/minha-loja/pricing/prices/123/computed', expect.any(Object))
   })
+
+  it('uses the dedicated Payments Gateway host for transaction details', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ totalRefunds: 0 }), { status: 200 }))
+    const client = new VtexClient(credentials, { fetchImpl: fetchImpl as typeof fetch })
+    await client.getPaymentTransactionDetails('transaction-1')
+    expect(fetchImpl).toHaveBeenCalledWith('https://minha-loja.vtexpayments.com.br/api/pvt/transactions/transaction-1', expect.any(Object))
+  })
 })

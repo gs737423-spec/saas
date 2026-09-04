@@ -9,7 +9,8 @@ import { VtexClient } from './client.js'
 import { credentialsFromConnection, loadVtexConnection } from './connection.js'
 import { autoResolveVtexAffiliatesFromRegistry, autoResolveVtexAffiliatesFromSalesChannels, autoResolveVtexSalesChannelsFromRegistry, ensureBaseSalesChannels, loadVtexChannelMappings, persistVtexChannelResolution, type VtexChannelResolutionCache } from './channelRegistry.js'
 import { buildVtexRunConfig, normalizeVtexCheckpoint, vtexCatalogNeedsRevalidation, VTEX_CATALOG_DISCOVERY_VERSION, VTEX_CHECKPOINT_VERSION } from './checkpoint.js'
-import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexSku, priceFromComputedVtexPolicies } from './normalize.js'
+import { flattenVtexCategories, normalizeVtexOrder, normalizeVtexOrderStatus, normalizeVtexSku, priceFromComputedVtexPolicies } from './normalize.js'
+import { UNKNOWN_VTEX_REFUND, vtexPaymentTransactionIds, vtexRefundSnapshot } from './refunds.js'
 import { normalizeVtexChannelMappings } from './validation.js'
 import { findCanonicalChannel } from './channelResolution.js'
 import { assertVtexCircuitClosed, isVtexSyncDue, nextVtexFailureState, nextVtexSyncAt, VtexSyncNotDueError } from './schedule.js'
@@ -45,6 +46,9 @@ export function vtexOrderQueryMode(mode: 'full' | 'incremental'): {
 export const DEFAULT_HISTORY_MONTHS = 3
 export const MAX_INITIAL_HISTORY_MONTHS = 6
 const DAY_MS = 24 * 60 * 60 * 1000
+// O Gateway financeiro é uma chamada adicional. A janela cobre os filtros
+// operacionais usuais sem dobrar o custo de um backfill histórico inteiro.
+const VTEX_REFUND_ENRICHMENT_WINDOW_MS = 90 * DAY_MS
 
 export function resolveVtexHistoryMonths(providerMetadata: Record<string, unknown> | null | undefined): number {
   const raw = Number((providerMetadata as { historyMonths?: unknown } | null | undefined)?.historyMonths)
@@ -112,6 +116,12 @@ export function nextVtexStageAfterCatalog(checkpoint: Pick<VtexCatalogCheckpoint
 
 export function isMissingVtexSku(error: unknown): boolean {
   return error instanceof VtexApiError && error.status === 404
+}
+
+export function shouldEnrichVtexRefund(order: { status: string; creationDate: string }, now = Date.now()): boolean {
+  if (normalizeVtexOrderStatus(order.status) !== 'paid') return false
+  const createdAt = Date.parse(order.creationDate)
+  return Number.isFinite(createdAt) && createdAt >= now - VTEX_REFUND_ENRICHMENT_WINDOW_MS
 }
 
 export function vtexOrderResumePage(mode: 'full' | 'incremental', checkpointPage: number | undefined): number {
@@ -931,6 +941,11 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
       checkpoint.orderWindowEnd = windowEnd.toISOString()
       checkpoint.orderTargetEnd = targetEnd.toISOString()
       checkpoint.orderHistoryStart = checkpoint.orderHistoryStart ?? initialFrom.toISOString()
+      // Uma credencial sem `View Payment Data` retorna 403 no Gateway. O
+      // estado é local à execução: evita repetir chamadas negadas, sem marcar
+      // a integração operacional como falha.
+      let paymentDataAvailable = true
+      let paymentDataPermissionLogged = false
       while (true) {
         // Primeiro divide por tempo até caber no limite de páginas da OMS.
         // Se um bucket de creationDate for indivisível e denso, a carga full
@@ -991,6 +1006,30 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
           try {
             const order = await client.getOrder(summary.orderId)
             const normalized = normalizeVtexOrder(order, mappings)
+            let refund = UNKNOWN_VTEX_REFUND
+            if (paymentDataAvailable && shouldEnrichVtexRefund(order)) {
+              const transactionIds = vtexPaymentTransactionIds(order)
+              if (transactionIds.length > 0) {
+                try {
+                  const details = await Promise.all(transactionIds.map((transactionId) => client.getPaymentTransactionDetails(transactionId)))
+                  refund = vtexRefundSnapshot(details)
+                } catch (paymentError) {
+                  if (paymentError instanceof VtexApiError && paymentError.status === 403) {
+                    paymentDataAvailable = false
+                    if (!paymentDataPermissionLogged) {
+                      paymentDataPermissionLogged = true
+                      await logSyncEvent({
+                        companyId, connectionId: connection.id, provider: 'vtex', eventType: 'sync_stage', status: 'info',
+                        message: 'VTEX financial refund enrichment skipped because the credential cannot view payment data',
+                        payload: { code: 'VTEX_PAYMENT_DATA_PERMISSION_REQUIRED', stage: 'orders' },
+                      })
+                    }
+                  }
+                  // 404, rate limit e resposta incompleta não são prova de
+                  // reembolso zero. O pedido continua com cobertura unknown.
+                }
+              }
+            }
             const channel = await persistVtexChannelResolution(supabase, companyId, connection.id, normalized, channelResolutionCache)
             const effectiveDefinition = findCanonicalChannel(channel.canonicalChannel)
             if (channel.discovered) {
@@ -1019,7 +1058,7 @@ export async function processVtexSyncRun(companyId: string, runId: string): Prom
               salesChannelType: effectiveDefinition?.channelType ?? (channel.canonicalChannel === normalized.channel ? normalized.channelType : 'marketplace'),
               status: normalized.status, totalAmount: normalized.totalAmount,
               feeAmount: normalized.feeAmount, feeStatus: 'unknown', currency: normalized.currency, orderedAt: normalized.orderedAt,
-              refundAmount: null, refundStatus: 'unknown', refundUpdatedAt: null,
+              refundAmount: refund.refundAmount, refundStatus: refund.refundStatus, refundUpdatedAt: refund.refundUpdatedAt,
               sourceUpdatedAt: normalized.sourceUpdatedAt, analyticsIncluded: normalized.analyticsIncluded,
               unavailableReason: normalized.unavailableReason,
               items: normalized.items.map((item) => ({ external_product_id: item.externalProductId, sku: item.sku, title: item.title, quantity: item.quantity, unit_price: item.unitPrice })),

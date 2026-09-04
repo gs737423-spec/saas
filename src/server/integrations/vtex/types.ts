@@ -1,4 +1,4 @@
-export type VtexDomain = 'account' | 'orders' | 'catalog' | 'pricing' | 'inventory' | 'feed'
+export type VtexDomain = 'account' | 'orders' | 'catalog' | 'pricing' | 'inventory' | 'payments' | 'feed'
 
 export interface VtexCredentials {
   accountName: string
@@ -119,7 +119,20 @@ export interface VtexOrder {
   lastChange?: string
   items: VtexOrderItem[]
   totals?: VtexOrderTotal[]
+  paymentData?: {
+    transactions?: Array<{
+      transactionId?: string | null
+      isActive?: boolean | null
+    }>
+  }
   storePreferencesData?: { currencyCode?: string; currencyLocale?: number; currencySymbol?: string }
+}
+
+/** Resposta mínima do Payments Gateway. Campos sensíveis da transação não são
+ * persistidos nem registrados; para o financeiro só importa o reembolso. */
+export interface VtexPaymentTransactionDetails {
+  totalRefunds?: number | null
+  refundingDate?: string | null
 }
 
 /** Tenant-scoped canonical channel -> external VTEX affiliate ids or stable
