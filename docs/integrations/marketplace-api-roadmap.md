@@ -1,6 +1,8 @@
 # Marketplace API Integration Roadmap
 
-Status: **planning only** — no backend or API logic implemented yet. This document describes the intended architecture for direct marketplace connections (Mercado Livre, Shopee, Amazon, Loja Própria), which today are represented in the UI as disabled/"em breve" states with mock data only.
+**Histórico/desatualizado (2026-08-12)** — este doc descreve o plano ANTES da implementação. Mercado Livre e Shopee já têm OAuth + sync real (produtos, estoque, pedidos) implementados — ver `marketplace-integrations.md` e `mercadolivre-sync.md` pro estado atual. Mantido só como registro da intenção original; Amazon e Loja Própria continuam apenas planejados, sem código.
+
+Status original (na época): **planning only** — no backend or API logic implemented yet. This document describes the intended architecture for direct marketplace connections (Mercado Livre, Shopee, Amazon, Loja Própria), which today are represented in the UI as disabled/"em breve" states with mock data only.
 
 ## Goals
 

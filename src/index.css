@@ -14,33 +14,207 @@
      só este arquivo (o que tem `@import "tailwindcss"`) registra tokens. */
   --breakpoint-nav: 1100px;
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Geist — fonte única oficial do dashboard (13/08, substitui
+     Manrope/Sora/Inter Tight). Um family só pra tudo — corpo, marca,
+     números — por pedido explícito ("não introduza uma segunda família
+     tipográfica"). .font-mono/--font-numeric continuam existindo como
+     tokens (usados por ~37 componentes) só pra manter font-variant-numeric
+     tabular-nums em valores/KPIs, mas apontam pra esta mesma família, não
+     pra uma família separada. Site institucional (site.css, --vintec-*)
+     fica de fora — namespace isolado, não faz parte deste rebrand. */
+  --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-sans);
+  --font-interface: var(--font-sans);
+  --font-numeric: var(--font-sans);
+  --font-mono: var(--font-numeric);
 
-  --color-bg-primary: #060A16;
-  --color-bg-secondary: #0A0F1E;
-  --color-bg-card: #0C1324;
-  --color-bg-card-hover: #111A30;
-  --color-bg-elevated: #131D34;
-  --color-border-subtle: #1A2542;
-  --color-border-default: #26345A;
+  /* Pesos do dashboard (/app): usa a escala padrão do Tailwind (font-medium
+     500 / font-semibold 600 / font-bold 700 / font-extrabold 800) — Manrope
+     só tem degraus estáticos em 400/500/600/700/800 mesmo, e sobrescrever
+     --font-weight-bold aqui colidiria com a utility font-bold do próprio
+     Tailwind (é o mesmo namespace de token, gera as classes font-*). */
 
-  --color-text-primary: #F4F7FD;
-  --color-text-secondary: #97A3BD;
-  --color-text-muted: #59688A;
+  /* Identidade visual definitiva (31/07, versão consolidada final — ver
+     docs/04-Audits). Tokens alimentam Tailwind `bg-*`/`text-*`
+     (background-color só aceita sólido — por isso ficam aqui como sólidos
+     distintos; os GRADIENTES obrigatórios ficam nas classes de superfície:
+     .overview-hero-card, .overview-glass*, .glass-panel, .topnav-surface).
+     Namespace isolado do site institucional (--vintec-*). */
+  /* Identidade navy do tema ESCURO (padrão). O tema claro sobrescreve os
+     mesmos tokens em :root[data-theme="light"], sem sistema paralelo. */
+  --color-bg-primary: #09131F;
+  --color-bg-secondary: #0E1B2A;
+  --color-bg-highlight: #132235;
+  --color-bg-card: #16283C;
+  --color-bg-card-hover: #1B3047;
+  --color-bg-elevated: #1B3047;
+  --color-bg-header: #20262D;
 
-  --color-accent-cyan: #22D3EE;
-  --color-accent-blue: #4C82F7;
-  --color-accent-blue-hover: #3B6FE6;
-  --color-accent-emerald: #16C784;
-  --color-accent-amber: #F5C24B;
-  --color-accent-rose: #F4436C;
-  --color-accent-violet: #9061F9;
+  --color-border-subtle: #1C3044;
+  --color-border-default: #263B50;
+  --color-border-strong: #334B63;
+  --color-border-active: #274B79;
 
-  --color-ml-orange: #FFE600;
-  --color-shopee-orange: #EE4D2D;
-  --color-amazon-orange: #FF9900;
-  --color-loja-blue: #4C82F7;
+  --color-text-primary: #F3F7FA;
+  --color-text-secondary: #BBC7D4;
+  --color-text-tertiary: #8FA0B2;
+  --color-text-muted: #718399;
+  --color-text-disabled: #536579;
+
+  --color-primary-700: #285FCC;
+  --color-primary-600: #356FE8;
+  --color-primary-500: #4A7FEA;
+  --color-primary-200: #274B79;
+  --color-primary-100: #1A3556;
+  --color-primary-50: #12283F;
+  --color-cyan-soft: var(--color-primary-50);
+
+  --color-success: #35B987;
+  --color-success-bg: #102E27;
+  --color-success-border: #1D5848;
+  --color-danger: #EB6B7C;
+  --color-danger-bg: #351A22;
+  --color-danger-border: #65303D;
+  --color-warning: #DFA64B;
+  --color-warning-bg: #332817;
+  --color-warning-border: #66502A;
+
+  --status-good-bg: var(--color-success-bg);
+  --status-good-text: var(--color-success);
+  --status-danger-bg: var(--color-danger-bg);
+  --status-danger-text: var(--color-danger);
+  --status-neutral-bg: var(--color-bg-highlight);
+  --status-neutral-text: var(--color-text-tertiary);
+
+  /* Aliases compatíveis com as utilities já usadas pela plataforma. */
+  --color-accent-primary: var(--color-primary-600);
+  --color-accent-primary-hover: var(--color-primary-500);
+  --color-accent-primary-deep: var(--color-primary-700);
+  --color-accent-blue: var(--color-primary-500);
+  --color-accent-blue-hover: var(--color-primary-600);
+  --color-accent-blue-deep: var(--color-primary-700);
+  --color-accent-emerald: var(--color-success);
+  --color-accent-amber: var(--color-warning);
+  --color-accent-warning: var(--color-warning);
+  --color-accent-rose: var(--color-danger);
+  --color-accent-info: var(--color-primary-500);
+  --color-accent-violet: var(--color-primary-500);
+
+  --color-chart-grid: #1C3044;
+  --color-chart-axis: #718399;
+
+  --color-marketplace-mercadolivre: #E3B900;
+  --color-marketplace-shopee: #EE5A3F;
+  --color-marketplace-amazon: #E98A15;
+  --color-marketplace-own: #4285F4;
+  --color-ml-orange: var(--color-marketplace-mercadolivre);
+  --color-shopee-orange: var(--color-marketplace-shopee);
+  --color-amazon-orange: var(--color-marketplace-amazon);
+  --color-loja-blue: var(--color-marketplace-own);
+
+  /* Border radius — só estes 5 valores na plataforma inteira (sobrescreve
+     a escala padrão do Tailwind, então rounded-lg/xl/2xl etc já herdam sem
+     precisar tocar em cada componente). */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+}
+
+/* Tema CLARO — sobrescreve os tokens do bloco @theme acima quando
+   <html data-theme="light">. Especificidade de atributo em :root vence a
+   declaração base sem precisar de !important. Site institucional
+   (--vintec-*) fica de fora, não usa nenhum destes tokens. */
+:root[data-theme='light'] {
+  /* Neutral editorial: profundidade por rampa tonal, sem branco como base. */
+  --light-app-bg: #D1D4D0;
+  --light-section-bg: #DDE0DC;
+  --light-card-bg: #EEF0ED;
+  --light-raised-bg: #F7F8F6;
+  --light-muted-bg: #D4D8D3;
+  --light-table-header: #C9CDC8;
+  --light-hover-bg: #E4E7E3;
+  --light-primary-soft: #E3EAF9;
+  --light-charcoal: #272927;
+  --light-charcoal-hover: #323532;
+  --light-charcoal-active: #202120;
+  --light-on-charcoal: #F7F8F6;
+  --light-bg-app: var(--light-app-bg);
+  --light-surface-section: var(--light-section-bg);
+  --light-surface-card: var(--light-card-bg);
+  --light-surface-raised: var(--light-raised-bg);
+  --light-surface-muted: var(--light-muted-bg);
+  --light-surface-subtle: var(--light-hover-bg);
+  --light-surface-hover: var(--light-hover-bg);
+  --light-surface-selected: var(--light-charcoal);
+
+  /* App → section → card → row → elevated: branco nunca é o padrão. */
+  --color-bg-primary: var(--light-app-bg);
+  --color-bg-secondary: var(--light-section-bg);
+  --color-bg-highlight: var(--light-hover-bg);
+  --color-bg-card: var(--light-card-bg);
+  --color-bg-card-hover: var(--light-hover-bg);
+  --color-bg-elevated: var(--light-raised-bg);
+  --color-bg-header: var(--light-table-header);
+
+  --light-border-subtle: #CDD1CC;
+  --light-border-default: #BDC3BC;
+  --light-border-strong: #ADB5AD;
+  --color-border-subtle: var(--light-border-subtle);
+  --color-border-default: var(--light-border-default);
+  --color-border-strong: var(--light-border-strong);
+  --color-border-active: #9CB6ED;
+
+  --color-text-primary: #171917;
+  --color-text-secondary: #505650;
+  --color-text-tertiary: #767D76;
+  --color-text-muted: #747B74;
+  --color-text-disabled: #929991;
+
+  --color-primary-700: #2558C9;
+  --color-primary-600: #326BE0;
+  --color-primary-500: #477CE7;
+  --color-primary-200: #B7C8EF;
+  --color-primary-100: #D0DCF4;
+  --color-primary-50: var(--light-primary-soft);
+  --color-cyan-soft: var(--color-primary-50);
+
+  --color-success: #138A63;
+  --color-success-bg: #E9F6F1;
+  --color-success-border: #BDE9D7;
+  --color-danger: #D64D61;
+  --color-danger-bg: #FDEEEF;
+  --color-danger-border: #F6CBD1;
+  --color-warning: #C98218;
+  --color-warning-bg: #FFF5E5;
+  --color-warning-border: #F2D7A6;
+
+  --status-good-bg: var(--color-success-bg);
+  --status-good-text: var(--color-success);
+  --status-danger-bg: var(--color-danger-bg);
+  --status-danger-text: var(--color-danger);
+  --status-neutral-bg: var(--light-muted-bg);
+  --status-neutral-text: var(--color-text-secondary);
+
+  --color-chart-grid: var(--light-border-subtle);
+  --color-chart-axis: var(--color-text-tertiary);
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(23, 25, 23, 0.03);
+  --shadow-floating: 0 8px 24px rgba(23, 25, 23, 0.13);
+}
+
+/* A escala compacta é exclusiva do conteúdo do light mode. TopNav e
+   BottomNav mantêm os seus valores próprios já aprovados. */
+:root[data-theme='light'] .app-main {
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
 }
 
 * {
@@ -52,6 +226,62 @@ html {
   background: var(--color-bg-primary);
 }
 
+/* Sobrescreve a utilidade Tailwind .font-mono (usada em ~34 componentes pra
+   alinhar valores financeiros/percentuais): mantém alinhamento numérico via
+   tabular-nums, mas sem cara de terminal — a fonte já é Manrope pelo token
+   --font-mono acima, isto só adiciona o feature-setting. */
+.font-mono {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Classes utilitárias oficiais da spec de numeração (31/07) — .font-mono
+   acima já cobre os ~37 componentes existentes; estas ficam disponíveis
+   para KPIs novos que queiram tamanho/peso já resolvidos. */
+.numeric-value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  line-height: 1;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.numeric-value--hero { font-size: 44px; font-weight: 800; letter-spacing: -0.045em; }
+.numeric-value--kpi { font-size: 32px; font-weight: 700; letter-spacing: -0.04em; }
+.numeric-value--table { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; }
+.numeric-value--compact { font-size: 14px; font-weight: 600; letter-spacing: -0.015em; }
+
+@media (max-width: 640px) {
+  .numeric-value--hero { font-size: 38px; }
+  .numeric-value--kpi { font-size: 28px; }
+  .numeric-value--table { font-size: 17px; }
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+/* Degradê e brilho do ciano — pra uso pontual em destaque forte (CTA
+   principal, ícone/indicador ativo), nunca em área grande (mesma regra do
+   token: ciano é acento). .text-gradient-cyan pra headline curta. */
+.bg-gradient-cyan {
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-primary-deep));
+}
+.text-gradient-cyan {
+  background: linear-gradient(135deg, var(--color-accent-primary-hover), var(--color-accent-primary-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.glow-cyan {
+  box-shadow: 0 0 24px -6px var(--color-accent-primary);
+}
+
 body {
   margin: 0;
   color: var(--color-text-primary);
@@ -61,33 +291,113 @@ body {
   letter-spacing: -0.011em;
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(1200px 620px at 8% -10%, rgba(34, 96, 200, 0.16), transparent 58%),
-    radial-gradient(1000px 640px at 100% -6%, rgba(76, 130, 247, 0.12), transparent 55%),
-    radial-gradient(1100px 720px at 50% 128%, rgba(34, 211, 238, 0.06), transparent 60%);
+    radial-gradient(circle at 82% -8%, color-mix(in srgb, var(--color-primary-600) 14%, transparent), transparent 32%),
+    radial-gradient(circle at 12% 105%, color-mix(in srgb, var(--color-primary-500) 7%, transparent), transparent 34%),
+    linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 48%, var(--color-bg-elevated) 100%);
+  background-attachment: fixed;
   background-repeat: no-repeat;
+}
+/* Claro: fundo praticamente sólido, só uma luz quase imperceptível no
+   topo — o gradiente colorido/diagonal do escuro (acima) NÃO se aplica
+   aqui, era chamativo demais pro pedido de "sofisticado, não gamer". */
+:root[data-theme='light'] body {
+  background-image: none;
+}
+
+/* ==========================================================================
+   Sistema responsivo da plataforma (/app) — faixas conceituais:
+   360–479 mobile · 480–767 mobile grande · 768–1023 tablet ·
+   1024–1279 tablet horizontal/notebook pequeno · 1280–1439 notebook ·
+   1440–1599 desktop · 1600+ desktop grande.
+   Container e altura do header já eram centralizados em um único ponto
+   (App.tsx envolve todas as 9 rotas com o mesmo wrapper) — os tokens abaixo
+   só formalizam isso, sem duplicar regra por página.
+   ========================================================================== */
+:root {
+  /* 14px de respiro acima + ilha desktop de 64px. */
+  --app-header-height: 78px;
+  --space-page-x: 24px;
+  --space-page-y: 18px;
+  --space-section: 18px;
+  --space-panel: 16px;
+  --space-card: 14px;
+  --space-grid: 12px;
+  --app-content-max-width: 1600px;
+}
+@media (max-width: 1279px) {
+  :root {
+    --app-header-height: 78px;
+    --space-page-x: 20px;
+    --space-page-y: 16px;
+    --space-section: 16px;
+    --space-panel: 14px;
+    --space-card: 12px;
+    --space-grid: 10px;
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --space-page-x: 16px;
+    --space-page-y: 14px;
+  }
+}
+@media (max-width: 767px) {
+  :root { --app-header-height: 58px; }
+}
+@media (max-width: 479px) {
+  :root {
+    --space-page-x: 12px;
+    --space-page-y: 12px;
+    --space-section: 12px;
+    --space-panel: 12px;
+    --space-grid: 8px;
+  }
+}
+
+@layer utilities {
+  /* Piso de peso pro dashboard inteiro — Manrope 400 (padrão do browser)
+     lia fina/frágil demais no fundo escuro. Qualquer classe Tailwind de peso
+     explícita (font-medium, font-bold etc.) continua vencendo em cima disto,
+     isto só cobre texto sem peso declarado. */
+  .app-shell { min-height: 100vh; min-height: 100dvh; width: 100%; font-weight: var(--font-weight-medium); }
+  .app-main { width: 100%; min-width: 0; }
+  .app-page-container {
+    width: min(100%, 1600px);
+    margin-inline: auto;
+    padding-inline: var(--space-page-x);
+  }
 }
 
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #33334a; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-active); }
 
 @layer utilities {
-  /* Premium glass panel — promovido para a linguagem de profundidade validada
-     na Visão Geral. Agora padrão global (todas as páginas herdam). */
+  /* Painel padrão (nível 2) — reconstrução 31/07: toda superfície principal
+     usa gradiente, nunca cor sólida (ver docs/04-Audits). */
   .glass-panel {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
-      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
-    border: 1px solid #2C3E66;
+    background: linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg-card) 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 4px 8px -2px rgba(0, 0, 0, 0.55),
-      0 16px 32px -12px rgba(0, 0, 0, 0.62),
-      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  /* Claro: painel estrutural neutro, sem glassmorphism. */
+  :root[data-theme='light'] .glass-panel {
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-none);
+  }
+
+  /* Painel admin — tom mais escuro/flat que o .glass-panel padrão (que é
+     azulado/gradiente), pra bater com a referência "dark navy premium" do
+     dono. Escopado só na área /app/admin — não mexe no resto da plataforma. */
+  .admin-panel-bg { background: #0B1121; }
+  .admin-card {
+    background: #151C2C;
+    border-color: #262F40;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
   }
 
   /* Baseline untouched — shared by pages outside Stage 2's validated scope
@@ -96,23 +406,22 @@ body {
      additive override on the specific in-scope card instead. */
   .glass-panel-hover {
     transition:
-      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.3s ease,
-      border-color 0.3s ease;
+      transform 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
   }
   .glass-panel-hover:hover {
-    transform: translateY(-4px);
-    border-color: #43578A;
+    transform: translateY(-1px);
+    background-color: var(--color-bg-card-hover);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 6px 12px -2px rgba(0, 0, 0, 0.55),
-      0 28px 56px -14px rgba(0, 0, 0, 0.74),
-      0 84px 134px -40px rgba(4, 10, 30, 0.96);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .glow-blue {
-    box-shadow: 0 0 0 1px rgba(76, 130, 247, 0.25), 0 12px 40px -12px rgba(76, 130, 247, 0.45);
+    box-shadow: 0 0 0 1px rgba(82, 115, 230, 0.25), 0 12px 40px -12px rgba(82, 115, 230, 0.45);
   }
 
   .text-gradient {
@@ -149,22 +458,25 @@ body {
     pointer-events: none;
     overflow: hidden;
   }
+  :root[data-theme='light'] .app-bg-subtle {
+    display: none;
+  }
+  /* Glows ambiente — família azul institucional (sem roxo, sem ciano neon). */
   .app-bg-subtle::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(1300px 780px at 8% -8%, rgba(76, 130, 247, 0.32), transparent 62%),
-      radial-gradient(1200px 760px at 100% 0%, rgba(144, 97, 249, 0.26), transparent 60%),
-      radial-gradient(1100px 700px at 50% 118%, rgba(34, 211, 238, 0.14), transparent 62%);
+      radial-gradient(1300px 780px at 8% -8%, color-mix(in srgb, var(--color-primary-600) 14%, transparent), transparent 62%),
+      radial-gradient(1100px 700px at 100% 0%, color-mix(in srgb, var(--color-primary-500) 8%, transparent), transparent 60%);
   }
   .app-bg-subtle::after {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(150, 180, 240, 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(150, 180, 240, 0.07) 1px, transparent 1px);
+      linear-gradient(color-mix(in srgb, var(--color-primary-500) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--color-primary-500) 4%, transparent) 1px, transparent 1px);
     background-size: 52px 52px, 52px 52px;
     -webkit-mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
     mask-image: radial-gradient(150% 130% at 50% 0%, #000 0%, transparent 85%);
@@ -174,31 +486,26 @@ body {
     position: absolute;
     border-radius: 50%;
   }
-  /* Sem filter:blur — a suavidade vem só do radial-gradient com borda
-     transparente. Estático: nenhuma animação, nenhum will-change. */
   .bg-glow-static {
     width: 820px;
     height: 820px;
     top: -14%;
     left: -10%;
-    background: radial-gradient(circle, rgba(144, 97, 249, 0.5) 0%, rgba(144, 97, 249, 0.12) 45%, rgba(144, 97, 249, 0) 72%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-600) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary-600) 5%, transparent) 45%, transparent 72%);
   }
-  /* Terceiro glow — estático, sem custo de animação. Cobre o canto oposto
-     pra plataforma não ficar "vazia" fora da área dos dois glows acima. */
   .bg-glow-accent {
     width: 620px;
     height: 620px;
     bottom: -16%;
     left: 8%;
-    background: radial-gradient(circle, rgba(22, 199, 132, 0.22) 0%, rgba(22, 199, 132, 0) 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-500) 8%, transparent) 0%, transparent 70%);
   }
-  /* Único elemento animado do modo subtle — translate + opacity apenas. */
   .bg-glow-moving {
     width: 780px;
     height: 780px;
     bottom: -18%;
     right: -10%;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.48) 0%, rgba(76, 130, 247, 0.16) 45%, rgba(34, 211, 238, 0) 72%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary-500) 11%, transparent) 0%, color-mix(in srgb, var(--color-primary-600) 5%, transparent) 45%, transparent 72%);
     animation: bg-glow-drift 40s ease-in-out infinite;
   }
   @keyframes bg-glow-drift {
@@ -219,54 +526,46 @@ body {
      Nível 3 (hero): -hero-card. Cada nível = mais luz superior, borda mais
      definida, sombra de contato + longa mais forte → mais "flutuando". */
 
-  /* Nível 1 — painel estrutural */
+  /* Nível 2 — painel estrutural. Gradiente oficial do card. */
   .overview-glass {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0) 52%),
-      linear-gradient(180deg, #15223C 0%, #0C1424 100%);
-    border: 1px solid #2C3E66;
+    background: linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg-card) 100%);
+    border: 1px solid var(--color-border-subtle);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.13),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.65),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 4px 8px -2px rgba(0, 0, 0, 0.55),
-      0 16px 32px -12px rgba(0, 0, 0, 0.62),
-      0 46px 84px -32px rgba(2, 6, 20, 0.9);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  /* Claro: card separado da seção por surface e borda. */
+  :root[data-theme='light'] .overview-glass {
+    background: var(--color-bg-card);
+    box-shadow: var(--shadow-none);
   }
 
-  /* Nível 2 — painel primário (comparativo, painel de decisão) */
+  /* Nível 3 — card elevado. Um tom acima, borda com o azul da paleta. */
   .overview-glass-elevated {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.025) 22%, rgba(255, 255, 255, 0) 58%),
-      radial-gradient(130% 90% at 50% -12%, rgba(76, 130, 247, 0.15), transparent 60%),
-      linear-gradient(180deg, #1A2846 0%, #0D1629 100%);
-    border: 1px solid #3A4F7C;
+    background: linear-gradient(160deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-      inset 0 -18px 36px -22px rgba(0, 0, 0, 0.6),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 5px 10px -2px rgba(0, 0, 0, 0.55),
-      0 22px 46px -14px rgba(0, 0, 0, 0.68),
-      0 62px 108px -36px rgba(4, 10, 30, 0.92);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+  /* Claro: grandes containers usam a seção e deixam as linhas mais claras. */
+  :root[data-theme='light'] .overview-glass-elevated {
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-none);
   }
 
-  /* Nível 3 — hero (Faturamento Líquido): mais elevado, rim emerald */
+  /* Hero — card com mais luz da plataforma. Destaque vem da superfície,
+     não de borda colorida. */
   .overview-hero-card {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.025) 24%, rgba(255, 255, 255, 0) 60%),
-      radial-gradient(150% 110% at 50% -16%, rgba(22, 199, 132, 0.22), transparent 58%),
-      linear-gradient(180deg, #142C43 0%, #0B1A2B 100%);
-    border: 1px solid #2A625A;
+    background: linear-gradient(135deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
-      inset 0 -18px 38px -22px rgba(0, 0, 0, 0.55),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 5px 10px -2px rgba(0, 0, 0, 0.55),
-      0 24px 50px -14px rgba(0, 0, 0, 0.68),
-      0 66px 116px -36px rgba(4, 26, 20, 0.9);
+      0 16px 40px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -24px 40px -24px rgba(0, 0, 0, 0.4);
   }
 
   /* Hover tátil — elevação + borda aquece + glow (todos os níveis).
@@ -277,106 +576,102 @@ body {
   /* Linha de marketplace — card executivo sobre o painel pai */
   .overview-marketplace-row {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 46%),
-      linear-gradient(180deg, #12203A 0%, #0B1324 100%);
-    border: 1px solid #26365A;
+    background: linear-gradient(180deg, var(--color-bg-card) 0%, var(--color-bg-secondary) 100%);
+    border: 1px solid var(--color-border-subtle);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
-      0 1px 1px 0 rgba(0, 0, 0, 0.5),
-      0 10px 24px -12px rgba(0, 0, 0, 0.62);
+      0 12px 32px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-marketplace-row:hover {
-    border-color: #3B4F79;
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.11),
-      0 8px 20px -10px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  /* Canal Nº1 — dominante, mais corpo e luz */
+  /* Canal Nº1 — dominante, mais corpo e luz, gradiente mais rico */
   .overview-marketplace-row-lead {
     position: relative;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%),
-      radial-gradient(130% 110% at 50% -22%, rgba(76, 130, 247, 0.14), transparent 62%),
-      linear-gradient(180deg, #172E4E 0%, #0C1628 100%);
-    border: 1px solid #3F547E;
+    background: linear-gradient(135deg, var(--color-bg-highlight) 0%, var(--color-bg-elevated) 55%, var(--color-bg-card) 100%);
+    border: 1px solid var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      inset 0 -16px 32px -22px rgba(0, 0, 0, 0.5),
-      0 1px 1px 0 rgba(0, 0, 0, 0.55),
-      0 18px 40px -12px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+  :root[data-theme='light'] .overview-hero-card {
+    background: var(--color-bg-card);
+    border-color: var(--color-border-default);
+    box-shadow: var(--shadow-none) !important;
   }
 
-  /* Trilho das barras de participação */
+  /* No claro, a profundidade vem da rampa tonal: página → seção → linha. */
+  :root[data-theme='light'] .overview-marketplace-row,
+  :root[data-theme='light'] .overview-marketplace-row-lead {
+    background: var(--color-bg-card);
+    border-color: var(--color-border-subtle);
+    box-shadow: var(--shadow-none);
+  }
+  :root[data-theme='light'] .overview-marketplace-row:hover {
+    background: var(--color-bg-card-hover);
+    border-color: var(--color-border-default);
+    box-shadow: var(--shadow-none);
+  }
+
+  /* Trilho das barras de participação — o mais escuro da hierarquia */
   .overview-track {
-    background: linear-gradient(180deg, #050912 0%, #0A1120 100%);
-    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.25), inset 0 0 0 1px var(--color-border-subtle);
   }
 
-  /* ---- Sidebar premium ----------------------------------------------------
-     Item de navegação com hover vivo (glow + shift), ativo sofisticado, e
-     foco acessível — elimina o outline branco padrão do browser. */
+  /* Item de navegação compartilhado pela TopNav de cliente e admin. */
   .rail-item {
     position: relative;
     outline: none;
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-hover),
       color var(--motion-duration-fast) var(--motion-ease-hover),
-      box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:hover {
-    background: linear-gradient(180deg, rgba(76, 130, 247, 0.12), rgba(76, 130, 247, 0.04));
+    background: rgba(255, 255, 255, 0.055);
+    color: #FFFFFF;
     transform: translateY(-1px);
-    box-shadow:
-      inset 0 0 0 1px rgba(76, 130, 247, 0.16),
-      0 0 20px -6px rgba(76, 130, 247, 0.45);
   }
   .rail-item:active {
-    transform: translateY(-1px) scale(0.985);
-  }
-  .rail-item:hover :is(svg) {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 6px rgba(76, 130, 247, 0.5));
+    transform: scale(var(--motion-scale-active));
   }
   .rail-item :is(svg) {
-    transition: transform var(--motion-duration-fast) var(--motion-ease-hover), filter var(--motion-duration-fast) var(--motion-ease-standard);
+    color: #91A6B7;
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .rail-item:focus-visible {
-    box-shadow: 0 0 0 2px rgba(76, 130, 247, 0.55), 0 0 20px -6px rgba(76, 130, 247, 0.5);
+    box-shadow: 0 0 0 2px rgba(114, 160, 245, 0.52);
   }
-  /* Base do sublinhado ativo — sempre presente, opacity/scale animam a
-     entrada/saída ao trocar de página em vez de aparecer/sumir abrupto. */
-  .rail-item::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 9999px;
-    background: linear-gradient(90deg, #6FA0FF, #4C82F7);
-    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
-    opacity: 0;
-    transform: scaleX(0.6);
-    transition: opacity var(--motion-duration-normal) var(--motion-ease-standard),
-                transform var(--motion-duration-normal) var(--motion-ease-standard);
+  .rail-item.topnav-item-active {
+    background: rgba(53, 111, 232, 0.14);
+    color: #FFFFFF;
+    box-shadow: inset 0 0 0 1px rgba(101, 149, 245, 0.16);
   }
-  .rail-item.topnav-item-active::after {
-    opacity: 1;
-    transform: scaleX(1);
+  .rail-item:hover :is(svg) {
+    color: #DCE8F0;
+  }
+  .rail-item.topnav-item-active :is(svg) {
+    color: #4A7FEA;
   }
   .rail-item-active {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 60%),
-      linear-gradient(180deg, rgba(76, 130, 247, 0.14), rgba(76, 130, 247, 0.04));
+      linear-gradient(180deg, rgba(82, 115, 230, 0.14), rgba(82, 115, 230, 0.04));
     box-shadow:
       inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-      inset 0 0 0 1px rgba(76, 130, 247, 0.22),
-      0 4px 14px -6px rgba(76, 130, 247, 0.4);
+      inset 0 0 0 1px rgba(82, 115, 230, 0.22),
+      0 4px 14px -6px rgba(82, 115, 230, 0.4);
   }
   /* Barra de acento do item ativo — interna, com glow (sem sobrar pra fora) */
   .rail-item-active::before {
@@ -388,8 +683,8 @@ body {
     width: 3px;
     transform: translateY(-50%);
     border-radius: 9999px;
-    background: linear-gradient(180deg, #6FA0FF, #4C82F7);
-    box-shadow: 0 0 10px 0 rgba(76, 130, 247, 0.8);
+    background: linear-gradient(180deg, var(--color-accent-primary), var(--color-accent-blue));
+    box-shadow: 0 0 10px 0 rgba(58, 95, 219, 0.8);
   }
 
   /* Superfície da própria sidebar — camada com profundidade + glow ambiental.
@@ -411,7 +706,7 @@ body {
     inset: 0 0 auto 0;
     height: 220px;
     pointer-events: none;
-    background: radial-gradient(130% 100% at 50% -10%, rgba(76, 130, 247, 0.12), transparent 72%);
+    background: radial-gradient(130% 100% at 50% -10%, rgba(82, 115, 230, 0.12), transparent 72%);
   }
   .rail-surface::after {
     content: '';
@@ -419,48 +714,429 @@ body {
     inset: auto 0 0 0;
     height: 200px;
     pointer-events: none;
-    background: radial-gradient(120% 100% at 50% 120%, rgba(144, 97, 249, 0.08), transparent 74%);
+    background: radial-gradient(120% 100% at 50% 120%, rgba(91, 141, 239, 0.08), transparent 74%);
   }
 
-  /* Brand mark — transparent cutout icon, subtle ambient glow so it reads
-     as an integrated part of the topbar instead of a pasted square. */
+  /* Brand independente da cápsula, com sombra neutra e sem glow cromático. */
   .brand-mark {
-    filter:
-      drop-shadow(0 0 10px rgba(76, 130, 247, 0.4))
-      drop-shadow(0 0 22px rgba(96, 111, 249, 0.18))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.34));
   }
   .motion-brand-mark {
     transition: transform var(--motion-duration-fast) var(--motion-ease-hover);
   }
+  :root[data-theme='light'] .overview-track {
+    background: var(--light-surface-muted);
+    box-shadow: none;
+  }
   .group:hover .brand-mark {
-    filter:
-      drop-shadow(0 0 14px rgba(76, 130, 247, 0.55))
-      drop-shadow(0 0 28px rgba(96, 111, 249, 0.28))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.4));
   }
 
-  /* ---- Top nav (substitui a sidebar) --------------------------------------
-     Mesma linguagem visual do rail antigo (glass + glow ambiental), só que
-     horizontal e fixa no topo. */
+  /* No mobile, a barra superior permanece estrutural e full-width. No
+     desktop, o próprio header vira a única ilha flutuante da aplicação. */
   .topnav-surface {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
-      linear-gradient(180deg, rgba(12, 20, 36, 0.82) 0%, rgba(10, 17, 32, 0.86) 100%);
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 40;
+    display: flex;
+    width: 100%;
+    height: var(--app-header-height);
+    align-items: center;
+    gap: 6px;
+    padding-inline: 12px;
+    background: #151C24;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-      inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
-      0 12px 28px -16px rgba(0, 0, 0, 0.8);
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 8px 24px rgba(0, 0, 0, 0.16);
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #DCE8F0;
+    --color-text-muted: #AFC0CF;
+    --color-border-subtle: rgba(255, 255, 255, 0.09);
+    --color-border-default: rgba(255, 255, 255, 0.14);
+    --color-bg-card: rgba(255, 255, 255, 0.045);
+    --color-bg-card-hover: rgba(255, 255, 255, 0.085);
+    --color-bg-elevated: rgba(255, 255, 255, 0.045);
+    --color-accent-primary: #72A0F5;
+    --color-accent-blue: #72A0F5;
+    transition: background 240ms cubic-bezier(.2, .8, .2, 1), border-color 240ms cubic-bezier(.2, .8, .2, 1), box-shadow 240ms cubic-bezier(.2, .8, .2, 1), color 240ms cubic-bezier(.2, .8, .2, 1);
   }
-  .topnav-surface::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(60% 160% at 8% 50%, rgba(76, 130, 247, 0.1), transparent 70%);
+  :root[data-theme='light'] .topnav-surface {
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #ECEFEC;
+    --color-text-muted: #A9B0AA;
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+    --color-border-default: rgba(255, 255, 255, 0.08);
+    --color-bg-card: rgba(255, 255, 255, 0.045);
+    --color-bg-card-hover: rgba(255, 255, 255, 0.085);
+    --color-bg-elevated: rgba(255, 255, 255, 0.045);
+    --color-accent-primary: #477CE7;
+    --color-accent-blue: #477CE7;
+    background: linear-gradient(110deg, #202120 0%, #272927 34%, #2D2F2D 52%, #272927 70%, #202120 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+      0 7px 20px rgba(22, 25, 23, 0.13);
+  }
+  @media (min-width: 768px) {
+    .topnav-surface {
+      inset: 14px auto auto 50%;
+      width: min(var(--app-content-max-width), calc(100vw - (var(--space-page-x) * 2)));
+      max-width: none;
+      height: calc(var(--app-header-height) - 14px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 12px;
+      padding: 10px 18px;
+      isolation: isolate;
+      border: 1px solid rgba(151, 177, 198, 0.14);
+      border-radius: 14px;
+      background: linear-gradient(115deg, #111A23 0%, #16212C 42%, #1A2733 58%, #111A23 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.075),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        0 8px 20px rgba(18, 30, 41, 0.16);
+      transform: translateX(-50%);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .topnav-surface::before {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      content: '';
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 36%),
+        radial-gradient(circle at 30% -55%, rgba(139, 176, 214, 0.15), transparent 46%),
+        radial-gradient(circle at 92% 130%, rgba(0, 0, 0, 0.15), transparent 55%);
+    }
+    .topnav-surface::after {
+      position: absolute;
+      right: 14px;
+      bottom: 0;
+      left: 14px;
+      z-index: 0;
+      height: 1px;
+      content: '';
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(158, 185, 207, 0.14), transparent);
+    }
+    :root[data-theme='light'] .topnav-surface {
+      --color-text-primary: #FFFFFF;
+      --color-text-secondary: #ECEFEC;
+      --color-text-muted: #A9B0AA;
+      --color-border-subtle: rgba(255, 255, 255, 0.08);
+      --color-border-default: rgba(255, 255, 255, 0.08);
+      --color-bg-card: rgba(255, 255, 255, 0.045);
+      --color-bg-card-hover: rgba(255, 255, 255, 0.085);
+      --color-bg-elevated: rgba(255, 255, 255, 0.045);
+      --color-accent-primary: #477CE7;
+      --color-accent-blue: #477CE7;
+      background: linear-gradient(110deg, #202120 0%, #272927 34%, #2D2F2D 52%, #272927 70%, #202120 100%);
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+        0 7px 20px rgba(22, 25, 23, 0.13);
+    }
+    :root[data-theme='light'] .topnav-surface::before {
+      background:
+        radial-gradient(circle at 36% -70%, rgba(255, 255, 255, 0.075), transparent 46%),
+        radial-gradient(circle at 92% 130%, rgba(0, 0, 0, 0.12), transparent 55%);
+    }
+    :root[data-theme='light'] .topnav-surface::after {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.075), transparent);
+    }
+    .topnav-brand-zone,
+    .topnav-navigation-zone,
+    .topnav-utilities { position: relative; z-index: 1; }
+    .topnav-brand-zone { display: flex; min-width: 0; align-items: center; gap: 12px; justify-self: start; }
+    .topnav-navigation-zone { min-width: 0; justify-self: center; }
+    .topnav-utilities { min-width: 0; justify-self: end; }
+    .topnav-surface .topnav-group-divider { display: block; width: 1px; height: 24px; flex: none; background: rgba(255, 255, 255, 0.065); }
+    .topnav-admin-navigation {
+      flex: 0 1 auto;
+      max-width: 100%;
+    }
   }
 
-  /* Indicador do item ativo — ver .rail-item::after / .rail-item.topnav-item-active::after
-     acima, que já cobre o sublinhado com transição de entrada/saída. */
+  /* Navegação transparente dentro da ilha. Apenas a placa ativa cria uma
+     segunda camada visual, evitando três cápsulas independentes. */
+  .topnav-dock {
+    --dock-item-size: 42px;
+    position: relative;
+    grid-template-columns: repeat(8, var(--dock-item-size));
+    gap: 4px;
+    flex: none;
+  }
+  .topnav-dock-indicator {
+    position: absolute;
+    inset: 0 auto auto 0;
+    z-index: 0;
+    width: var(--dock-item-size);
+    height: var(--dock-item-size);
+    border: 1px solid rgba(104, 153, 246, 0.34);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(64, 121, 235, 0.32), rgba(45, 92, 190, 0.20));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 3px 8px rgba(27, 68, 150, 0.12);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(var(--dock-indicator-x), 0, 0);
+    transition:
+      transform 260ms cubic-bezier(.22, .8, .24, 1),
+      opacity var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+  .topnav-dock[data-active-index='1'] { --dock-indicator-x: 46px; }
+  .topnav-dock[data-active-index='2'] { --dock-indicator-x: 92px; }
+  .topnav-dock[data-active-index='3'] { --dock-indicator-x: 138px; }
+  .topnav-dock[data-active-index='4'] { --dock-indicator-x: 184px; }
+  .topnav-dock[data-active-index='5'] { --dock-indicator-x: 230px; }
+  .topnav-dock[data-active-index='6'] { --dock-indicator-x: 276px; }
+  .topnav-dock[data-active-index='7'] { --dock-indicator-x: 322px; }
+  .topnav-dock--has-active .topnav-dock-indicator {
+    opacity: 1;
+  }
+  .topnav-dock-item {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    width: var(--dock-item-size);
+    height: var(--dock-item-size);
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: #96A8B6;
+    outline: none;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      transform 160ms cubic-bezier(.2, .8, .2, 1);
+  }
+  .topnav-dock-item:hover {
+    color: #E3EBF1;
+    background: rgba(255, 255, 255, 0.045);
+    transform: translateY(-1px);
+  }
+  .topnav-dock-item:focus-visible {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.045);
+    box-shadow: 0 0 0 2px rgba(82, 132, 235, 0.30);
+  }
+  .topnav-dock-item:active {
+    transform: scale(0.95);
+    transition-duration: 90ms;
+  }
+  .topnav-dock-item-active {
+    color: #FFFFFF;
+  }
+  .topnav-group-divider { display: none; }
+  .topnav-dock-tooltip {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 50%;
+    z-index: 2;
+    width: max-content;
+    max-width: 180px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    background: rgba(21, 26, 32, 0.98);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -3px);
+    transition:
+      opacity var(--motion-duration-fast) var(--motion-ease-hover),
+      transform var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  .topnav-dock-item:is(:hover, :focus-visible) .topnav-dock-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .topnav-item {
+    color: #96A8B6;
+  }
+
+  /* Controles utilitários ficam abaixo da navegação na hierarquia. */
+  .topnav-surface .motion-header-control {
+    color: #96A8B6;
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+  .topnav-surface .motion-header-control:hover {
+    color: #E3EBF1;
+    background-color: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+
+  .topnav-surface .topnav-popover {
+    background: rgba(21, 26, 32, 0.98);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 38px rgba(2, 12, 20, 0.32);
+  }
+
+  :root[data-theme='light'] .topnav-dock-indicator {
+    border-color: rgba(91, 137, 233, 0.30);
+    background: rgba(50, 107, 224, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  :root[data-theme='light'] .topnav-dock-item { color: #A9B0AA; }
+  :root[data-theme='light'] .topnav-dock-item:hover,
+  :root[data-theme='light'] .topnav-dock-item:focus-visible { color: #ECEFEC; background: rgba(255, 255, 255, 0.045); }
+  :root[data-theme='light'] .topnav-dock-item-active { color: #FFFFFF; }
+  :root[data-theme='light'] .topnav-dock-tooltip,
+  :root[data-theme='light'] .topnav-surface .topnav-popover { background: var(--light-raised-bg); border-color: var(--light-border-default); box-shadow: 0 16px 38px rgba(23, 25, 23, 0.20); color: #171917; }
+  :root[data-theme='light'] .topnav-surface .search-menu-panel {
+    --color-text-primary: #171917;
+    --color-text-secondary: #505650;
+    --color-text-tertiary: #767D76;
+    --color-text-muted: #747B74;
+    --color-border-subtle: var(--light-border-default);
+    --color-bg-card: var(--light-raised-bg);
+    --color-bg-card-hover: var(--light-hover-bg);
+    color: var(--color-text-primary);
+    background: var(--light-raised-bg);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-input {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    caret-color: var(--color-text-primary);
+    -webkit-text-fill-color: var(--color-text-primary);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-input::placeholder {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    opacity: 1;
+    -webkit-text-fill-color: var(--color-text-secondary);
+  }
+  :root[data-theme='light'] .topnav-surface .search-menu-item:hover {
+    color: var(--color-text-primary);
+    background: var(--light-hover-bg);
+  }
+  :root[data-theme='light'] .topnav-surface .motion-header-control { color: #A9B0AA; }
+  :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #ECEFEC; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.08); }
+
+  /* Mobile continua com a barra estrutural existente; a releitura frost é
+     exclusiva da island desktop. */
+  @media (max-width: 767px) {
+    :root[data-theme='light'] .topnav-surface .motion-header-control { color: #A9B0AA; background-color: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.08); }
+    :root[data-theme='light'] .topnav-surface .motion-header-control:hover { color: #FFFFFF; background-color: rgba(255, 255, 255, 0.085); border-color: rgba(255, 255, 255, 0.14); }
+    :root[data-theme='light'] .topnav-surface .topnav-popover { background: var(--light-raised-bg); border-color: var(--light-border-default); box-shadow: 0 16px 38px rgba(23, 25, 23, 0.20); color: #171917; }
+  }
+
+  @media (min-width: 768px) {
+    .topnav-brand-symbol {
+      width: 26px;
+      height: 26px;
+    }
+    .topnav-surface .motion-header-control {
+      width: 40px;
+      height: 40px;
+      border-color: transparent;
+      background-color: transparent;
+    }
+    .topnav-status-control {
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      padding: 0;
+      border-radius: 10px;
+    }
+    .topnav-status-control .topnav-status-label,
+    .topnav-status-control .topnav-status-dismiss,
+    .topnav-status-control .topnav-status-switch {
+      display: none;
+    }
+    .topnav-status-control-active {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.07) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .topnav-status-control > svg {
+      width: 18px;
+      height: 18px;
+    }
+    .topnav-status-control-active > svg {
+      color: #FFFFFF;
+    }
+    :root[data-theme='light'] .topnav-status-control-active { color: #FFFFFF; background: rgba(255, 255, 255, 0.07) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    :root[data-theme='light'] .topnav-status-control-active > svg { color: #FFFFFF; }
+  }
+
+  @media (min-width: 768px) and (max-width: 1279px) {
+    .topnav-surface {
+      padding: 10px 12px;
+    }
+    .topnav-dock {
+      --dock-item-size: 38px;
+      gap: 2px;
+    }
+    .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 40px; }
+    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 80px; }
+    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 120px; }
+    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 160px; }
+    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 200px; }
+    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 240px; }
+    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 280px; }
+    .topnav-utilities {
+      gap: 2px;
+    }
+    .topnav-surface .motion-header-control,
+    .topnav-status-control {
+      width: 38px;
+      height: 38px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 899px) {
+    .topnav-surface {
+      gap: 4px;
+    }
+    .topnav-group-divider {
+      margin-inline: 0;
+    }
+    .topnav-dock {
+      --dock-item-size: 36px;
+      gap: 1px;
+    }
+    .topnav-dock[data-active-index='0'] { --dock-indicator-x: 0px; }
+    .topnav-dock[data-active-index='1'] { --dock-indicator-x: 37px; }
+    .topnav-dock[data-active-index='2'] { --dock-indicator-x: 74px; }
+    .topnav-dock[data-active-index='3'] { --dock-indicator-x: 111px; }
+    .topnav-dock[data-active-index='4'] { --dock-indicator-x: 148px; }
+    .topnav-dock[data-active-index='5'] { --dock-indicator-x: 185px; }
+    .topnav-dock[data-active-index='6'] { --dock-indicator-x: 222px; }
+    .topnav-dock[data-active-index='7'] { --dock-indicator-x: 259px; }
+    .topnav-utilities {
+      gap: 1px;
+    }
+    .topnav-surface .motion-header-control,
+    .topnav-status-control {
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .topnav-dock-indicator,
+    .topnav-dock-item,
+    .topnav-dock-tooltip {
+      transition: none;
+    }
+    .topnav-dock-item:hover,
+    .topnav-dock-item:active {
+      transform: none;
+    }
+  }
 
   /* Esconde a scrollbar da nav horizontal sem perder a rolagem por toque/scroll */
   .hide-scrollbar {
@@ -494,27 +1170,37 @@ body {
     transform: scale(0.985);
   }
 
-  /* KPI-style small cards — max 2px lift, tokenized timing */
+  /* KPI-style small cards — max 1px lift, leve iluminação de superfície */
   .overview-card-hover {
     transition:
       transform var(--motion-duration-fast) var(--motion-ease-hover),
+      background-color var(--motion-duration-fast) var(--motion-ease-hover),
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover),
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .overview-card-hover:hover {
-    transform: translateY(-2px);
-    border-color: #3A4E78;
+    transform: translateY(-1px);
+    background-color: var(--color-bg-highlight);
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
+  :root[data-theme='light'] .overview-card-hover:hover {
+    transform: none;
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-default);
+    box-shadow: var(--shadow-none);
+  }
+  /* Card principal (Faturamento Líquido) já tem gradiente próprio — no
+     hover só intensifica a borda (sem rim colorido, sem trocar de fundo). */
   .overview-hero-card.overview-card-hover:hover {
-    border-color: #2E6A5F;
-    box-shadow:
-      inset 0 1px 0 0 rgba(190, 255, 232, 0.26),
-      0 3px 6px -1px rgba(0, 0, 0, 0.5),
-      0 22px 44px -16px rgba(4, 26, 20, 0.75);
+    background-color: transparent;
+    border-color: var(--color-border-active);
+  }
+  :root[data-theme='light'] .overview-hero-card.overview-card-hover:hover {
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-default);
   }
   /* Highlight superior — visível sempre em baixa opacidade, reforça no hover */
   .overview-card-hover::before {
@@ -522,10 +1208,13 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+    background: linear-gradient(90deg, transparent, rgba(95, 194, 232, 0.24), transparent);
     opacity: 0.5;
     pointer-events: none;
     transition: opacity var(--motion-duration-fast) var(--motion-ease-hover);
+  }
+  :root[data-theme='light'] .overview-card-hover::before {
+    display: none;
   }
   .overview-card-hover:hover::before {
     opacity: 1;
@@ -543,12 +1232,16 @@ body {
       border-color var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .glass-panel-hover.motion-card-tight:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    background-color: var(--color-bg-card-hover);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      0 1px 1px 0 rgba(0, 0, 0, 0.6),
-      0 6px 12px -2px rgba(0, 0, 0, 0.55),
-      0 20px 40px -16px rgba(0, 0, 0, 0.72);
+      0 12px 32px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  :root[data-theme='light'] .glass-panel-hover.motion-card-tight:hover {
+    transform: none;
+    background-color: var(--color-bg-card);
+    box-shadow: var(--shadow-none);
   }
 
   /* Big panels (GMV, Receita por Marketplace, Catálogo, Estoque, filtros) —
@@ -559,11 +1252,13 @@ body {
       box-shadow var(--motion-duration-fast) var(--motion-ease-hover);
   }
   .motion-panel:hover {
-    border-color: #3A4E78;
+    border-color: var(--color-border-default);
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-      0 1px 1px 0 rgba(0, 0, 0, 0.55),
-      0 24px 48px -20px rgba(0, 0, 0, 0.7);
+      0 12px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  :root[data-theme='light'] .motion-panel:hover {
+    box-shadow: var(--shadow-none);
   }
 
   /* Table rows — background/border only, never transform */
@@ -617,12 +1312,12 @@ body {
     }
   }
 
-  /* Glow concentrado no número/ícone principal (hero, líder) */
+  /* Número/ícone principal (hero, líder) — sem glow, só contraste */
   .num-glow {
-    text-shadow: 0 0 20px rgba(185, 212, 255, 0.22);
+    text-shadow: none;
   }
   .icon-halo {
-    filter: drop-shadow(0 0 8px rgba(22, 199, 132, 0.45));
+    filter: none;
   }
 
   /* ---- Transição de página --------------------------------------------
@@ -662,6 +1357,54 @@ body {
     }
   }
 
+  /* ---- Progresso de sincronização VTEX -----------------------------------
+     Trilho neutro + preenchimento animado. Determinado: width real, muda
+     suave (transition), nunca salta seco. Indeterminado: bloco deslizando —
+     usado só quando o backend genuinamente não sabe o total ainda (nunca
+     progresso fake por timer). */
+  .vtex-progress-track {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-bg-highlight);
+    overflow: hidden;
+  }
+  .vtex-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-accent-primary-deep, var(--color-accent-primary)), var(--color-accent-primary));
+    transition: width var(--motion-duration-normal, 240ms) var(--motion-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+  .vtex-progress-fill--indeterminate {
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    animation: vtex-progress-slide 1.4s ease-in-out infinite;
+  }
+  @keyframes vtex-progress-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vtex-progress-fill { transition: none; }
+    .vtex-progress-fill--indeterminate { animation: none; left: 0; width: 100%; opacity: 0.5; }
+  }
+
+  /* Timeline de estágios — bolinha preenchida/ativa/pendente + linha. */
+  .vtex-stage-dot {
+    transition: background-color var(--motion-duration-fast, 160ms) ease, border-color var(--motion-duration-fast, 160ms) ease, transform var(--motion-duration-fast, 160ms) ease;
+  }
+  .vtex-stage-dot--active {
+    animation: vtex-stage-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes vtex-stage-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-primary) 45%, transparent); }
+    50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent-primary) 12%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vtex-stage-dot--active { animation: none; }
+  }
+
   /* ==========================================================================
      DataTableViewport — wrapper padronizado de scroll interno + cabeçalho
      sticky para tabelas longas (ver src/components/common/DataTableViewport.tsx).
@@ -674,7 +1417,7 @@ body {
     min-height: 0;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    scrollbar-color: var(--color-border-default) transparent;
   }
   .data-table-viewport::-webkit-scrollbar {
     width: 8px;
@@ -684,11 +1427,12 @@ body {
     background: transparent;
   }
   .data-table-viewport::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--color-border-default);
     border-radius: 999px;
   }
   .data-table-viewport:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-accent-primary);
+    opacity: 0.5;
   }
   .data-table-viewport:focus-visible {
     outline: 2px solid var(--color-accent-blue);
@@ -717,5 +1461,397 @@ body {
     padding-top: 10px;
     background: var(--color-bg-elevated);
     box-shadow: 0 1px 0 0 var(--color-border-subtle);
+  }
+  :root[data-theme='light'] .data-table-viewport--sticky thead th {
+    background: var(--light-table-header);
+  }
+
+  /* Enterprise neutral: controles definidos, tabelas sem cardception. */
+  :root[data-theme='light'] .app-shell .motion-input {
+    border-radius: var(--radius-sm);
+    background-color: var(--light-surface-raised);
+    border-color: var(--color-border-default);
+  }
+  :root[data-theme='light'] .app-shell .motion-input:focus-within {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-600) 10%, transparent);
+  }
+  :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
+    border-radius: var(--radius-sm);
+    background-color: var(--light-surface-raised);
+    border-color: var(--color-border-default);
+    color: var(--color-text-primary);
+  }
+  :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea)::placeholder {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    opacity: 1;
+  }
+  :root[data-theme='light'] .app-shell .motion-input input {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+  :root[data-theme='light'] .app-shell :is(input:not([type='checkbox']):not([type='radio']), textarea, select):focus {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-600) 10%, transparent);
+  }
+  :root[data-theme='light'] .app-shell .control-active,
+  :root[data-theme='light'] .motion-chip[class*='bg-accent-blue'] {
+    border-radius: var(--radius-sm);
+    background-color: var(--light-charcoal);
+    border-color: var(--light-charcoal);
+    color: var(--light-on-charcoal);
+  }
+  :root[data-theme='light'] .app-shell .control-active:hover,
+  :root[data-theme='light'] .motion-chip[class*='bg-accent-blue']:hover {
+    background-color: var(--light-charcoal-hover);
+    border-color: var(--light-charcoal-hover);
+    color: #FFFFFF;
+  }
+  :root[data-theme='light'] .app-shell .control-active > svg {
+    color: var(--light-on-charcoal);
+  }
+  :root[data-theme='light'] .app-shell .control-inactive {
+    background-color: var(--light-muted-bg);
+    border-color: var(--light-border-default);
+    color: var(--color-text-secondary);
+  }
+  :root[data-theme='light'] .app-shell .control-inactive:hover {
+    background-color: var(--light-hover-bg);
+    border-color: var(--light-border-strong);
+    color: var(--color-text-primary);
+  }
+  :root[data-theme='light'] .enterprise-filter-surface {
+    background: var(--color-bg-card);
+    border-color: var(--color-border-subtle);
+    box-shadow: var(--shadow-none);
+  }
+  :root[data-theme='light'] .enterprise-table thead th {
+    background: var(--light-table-header);
+    color: var(--color-text-secondary);
+    box-shadow: 0 1px 0 0 var(--color-border-subtle);
+  }
+  :root[data-theme='light'] .enterprise-table tbody tr {
+    background: transparent;
+  }
+  :root[data-theme='light'] .enterprise-table tbody tr:hover {
+    background: var(--light-surface-subtle) !important;
+  }
+  :root[data-theme='light'] .enterprise-table tbody td {
+    border-color: var(--light-border-subtle);
+  }
+  :root[data-theme='light'] .app-panel-section {
+    background: var(--light-section-bg);
+    border: 1px solid var(--light-border-subtle);
+    box-shadow: none;
+  }
+  :root[data-theme='light'] .app-raised-control {
+    background: var(--light-raised-bg);
+    border-color: var(--light-border-default);
+  }
+  :root[data-theme='light'] .connection-card {
+    background: var(--color-bg-card);
+    border-color: var(--color-border-default);
+    box-shadow: var(--shadow-none);
+  }
+  :root[data-theme='light'] .connection-card--disabled {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-subtle);
+    color: var(--color-text-tertiary);
+  }
+  :root[data-theme='light'] .app-shell .hover\:bg-white\/5:hover,
+  :root[data-theme='light'] .app-shell .hover\:bg-white\/\[0\.03\]:hover {
+    background-color: var(--light-hover-bg);
+  }
+}
+
+/* ---- Relatórios (Relatorios.tsx) — Report Center contínuo + impressão ----
+   Na impressão, o shell e a toolbar somem; as seções analíticas permanecem
+   legíveis em alto contraste e sem simular páginas de apresentação. */
+.report-center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.report-center__section { break-inside: avoid; }
+.report-center__metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.enterprise-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.enterprise-section { padding: clamp(12px, 1.5vw, 16px); }
+.enterprise-kpi { min-height: 88px; padding: 12px; }
+.enterprise-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+@media (min-width: 768px) {
+  .report-center__metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Desktop workspace: the four operational views use the viewport as their
+   layout boundary. Mobile keeps the document flow and BottomNav behavior. */
+@media (min-width: 768px) {
+  :root {
+    --workspace-gap: clamp(6px, 1dvh, 10px);
+    --workspace-panel-padding-y: clamp(8px, 1.55dvh, 16px);
+    --workspace-panel-padding-x: clamp(12px, 1.75dvw, 20px);
+    --workspace-kpi-min-height: clamp(76px, 10.5dvh, 98px);
+    --workspace-kpi-padding-y: clamp(7px, 1.15dvh, 11px);
+    --workspace-control-height: clamp(34px, 4.7dvh, 40px);
+    --workspace-table-row-padding-y: clamp(7px, 1.05dvh, 9px);
+    --workspace-table-header-padding-y: clamp(7px, 0.95dvh, 9px);
+  }
+
+  .app-shell--workspace {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .app-shell--workspace .app-main,
+  .app-shell--workspace .app-page-container--workspace,
+  .app-shell--workspace .page-transition--workspace {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .app-shell--workspace .app-main {
+    height: 100%;
+    flex-direction: column;
+  }
+
+  .app-shell--workspace .app-page-container--workspace,
+  .app-shell--workspace .page-transition--workspace {
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .app-shell--workspace .app-page-container--workspace {
+    padding-top: var(--workspace-gap);
+    padding-bottom: var(--workspace-gap);
+  }
+
+  .workspace-page {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--workspace-gap);
+    overflow: hidden;
+  }
+
+  .workspace-page > .motion-block-in {
+    flex: 0 0 auto;
+  }
+
+  .workspace-kpi-grid {
+    gap: var(--workspace-gap);
+  }
+
+  .workspace-kpi-card {
+    min-height: var(--workspace-kpi-min-height) !important;
+    padding-top: var(--workspace-kpi-padding-y) !important;
+    padding-bottom: var(--workspace-kpi-padding-y) !important;
+  }
+
+  .workspace-kpi-card .mb-1\.5 {
+    margin-bottom: clamp(4px, 0.7dvh, 7px);
+  }
+
+  .workspace-kpi-card .mt-2\.5 {
+    margin-top: clamp(4px, 0.7dvh, 7px);
+  }
+
+  .workspace-page > .workspace-primary-panel,
+  .workspace-marketplace-analysis > .workspace-primary-panel {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .workspace-page--overview .workspace-primary-panel > .workspace-gmv-panel {
+    height: 100%;
+  }
+
+  .workspace-gmv-panel {
+    min-height: 0;
+    padding-top: var(--workspace-panel-padding-y);
+    padding-bottom: var(--workspace-panel-padding-y);
+  }
+
+  .workspace-gmv-rows {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .workspace-gmv-rows > * {
+    min-height: 54px;
+    padding-top: clamp(7px, 1.25dvh, 14px) !important;
+    padding-bottom: clamp(7px, 1.25dvh, 14px) !important;
+  }
+
+  .workspace-marketplace-analysis {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--workspace-gap);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  /* Marketplaces prioriza a leitura integral do gráfico. Em telas baixas,
+     a página rola dentro do shell em vez de encolher ou encobrir o plot com
+     o resumo abaixo. */
+  .workspace-page--marketplaces {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .workspace-page--marketplaces .workspace-marketplace-analysis,
+  .workspace-page--marketplaces .workspace-primary-panel {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .workspace-marketplace-chart {
+    display: flex;
+    min-height: clamp(330px, 46dvh, 390px);
+    height: auto;
+    flex-direction: column;
+    padding-top: var(--workspace-panel-padding-y);
+    padding-bottom: var(--workspace-panel-padding-y);
+  }
+
+  .workspace-channel-cards {
+    flex: 0 0 auto;
+  }
+
+  .workspace-chart-plot {
+    height: auto !important;
+    min-height: clamp(190px, 28dvh, 270px);
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .workspace-channel-summary {
+    flex: 0 0 auto;
+    padding-top: var(--workspace-kpi-padding-y);
+    padding-bottom: var(--workspace-kpi-padding-y);
+  }
+
+  .workspace-page--products > .workspace-primary-panel,
+  .workspace-page--inventory > .workspace-inventory,
+  .workspace-inventory > .workspace-table-panel,
+  .workspace-product-table {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .workspace-table-panel {
+    padding-top: var(--workspace-panel-padding-y);
+    padding-bottom: var(--workspace-panel-padding-y);
+    padding-inline: var(--workspace-panel-padding-x);
+  }
+
+  .workspace-panel-header {
+    margin-bottom: var(--workspace-gap) !important;
+    gap: var(--workspace-gap) !important;
+  }
+
+  .workspace-filter-slot,
+  .workspace-inventory-toolbar {
+    margin-bottom: var(--workspace-gap) !important;
+  }
+
+  .workspace-product-filters,
+  .workspace-inventory-toolbar {
+    padding-top: clamp(7px, 1.1dvh, 10px) !important;
+    padding-bottom: clamp(7px, 1.1dvh, 10px) !important;
+    gap: clamp(6px, 0.9dvh, 9px) !important;
+  }
+
+  .workspace-product-filters > div {
+    gap: clamp(7px, 1dvh, 10px) !important;
+  }
+
+  .workspace-product-filters .motion-input,
+  .workspace-product-filters button.motion-input,
+  .workspace-inventory-toolbar .motion-input {
+    height: var(--workspace-control-height) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .workspace-inventory-toolbar .motion-chip {
+    padding-top: clamp(4px, 0.65dvh, 6px) !important;
+    padding-bottom: clamp(4px, 0.65dvh, 6px) !important;
+  }
+
+  .workspace-table-area {
+    display: flex !important;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .workspace-table-area .data-table-viewport {
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
+    overscroll-behavior: contain;
+  }
+
+  .workspace-data-table thead th {
+    padding-top: var(--workspace-table-header-padding-y) !important;
+    padding-bottom: var(--workspace-table-header-padding-y) !important;
+  }
+
+  .workspace-data-table tbody td {
+    padding-top: var(--workspace-table-row-padding-y) !important;
+    padding-bottom: var(--workspace-table-row-padding-y) !important;
+  }
+
+  .workspace-data-table tbody td :is(.py-1, .py-0\.5) {
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+}
+
+@media print {
+  .app-shell > *:not(main),
+  .report-toolbar {
+    display: none !important;
+  }
+  .app-main { padding-top: 0 !important; }
+  .app-page-container { width: 100% !important; padding: 0 !important; }
+  .report-center { display: block; }
+  .report-center__section {
+    margin-bottom: 12px;
+    border: 1px solid #ddd !important;
+    box-shadow: none;
+    background: #fff !important;
+    color: #0A1828;
+  }
+  .report-center__section * {
+    color: #0A1828 !important;
+    -webkit-text-fill-color: #0A1828 !important;
   }
 }

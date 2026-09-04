@@ -1,23 +1,21 @@
 import { Link } from 'react-router-dom'
-import markUrl from '@/assets/acelera-mark.png'
+import MKTOnlineLogo from '@/components/brand/MKTOnlineLogo'
 
-// Brand block for the top nav: icon mark + wordmark. Kept as its own
-// component so the identity (sizing, glow, type hierarchy) lives in one
-// place instead of being inlined and re-tweaked inside TopNav.
+// Marca do topo — símbolo oficial (arquivo, ver src/components/brand) +
+// wordmark textual. Sora (única exceção de família na interface — todo o
+// resto é Manrope, ver --font-brand em index.css). "MKT" 700 branco,
+// "Online" 600 num cinza-azulado discreto. Sem espaço entre as partes.
 export default function Brand() {
   return (
-    <Link to="/app" className="group flex shrink-0 items-center gap-2.5">
-      <img
-        src={markUrl}
-        alt="Vintec"
-        draggable={false}
-        className="brand-mark motion-brand-mark h-9 w-9 shrink-0 object-contain group-hover:scale-[1.03] md:h-10 md:w-10"
-      />
-      <div className="hidden min-w-0 flex-col justify-center gap-0.5 sm:flex">
-        <span className="truncate text-[15px] font-bold leading-none tracking-tight text-text-primary md:text-base">
-          Vintec
-        </span>
-      </div>
+    <Link to="/app" className="flex shrink-0 items-center gap-2">
+      <MKTOnlineLogo mode="symbol" size="sm" className="topnav-brand-symbol" />
+      <span
+        className="truncate font-brand text-[18px] leading-none sm:text-[20px]"
+        style={{ letterSpacing: '-0.045em' }}
+      >
+        <span style={{ fontWeight: 700, color: '#F2F6FC' }}>MKT</span>
+        <span style={{ fontWeight: 600, color: '#9EB7D3' }}>Online</span>
+      </span>
     </Link>
   )
 }

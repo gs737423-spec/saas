@@ -9,7 +9,7 @@ export default function WhatWeDo() {
   return (
     <section style={{ background: 'var(--s-surface)', borderTop: '1px solid var(--s-line)' }}>
       <div className="site-container py-8 md:py-11">
-        <SectionHeader align="center" label="O que a Vintec faz" title="O que ela resolve, na prática." />
+        <SectionHeader align="center" label="O que a MKTOnline faz" title="O que ela resolve, na prática." />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {whatWeDo.map((item, i) => {
             const Icon = icons[i]

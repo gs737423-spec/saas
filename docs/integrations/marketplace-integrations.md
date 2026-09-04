@@ -1,13 +1,13 @@
 # Marketplace Integrations — Architecture
 
-Status: **Mercado Livre in progress (real OAuth + minimal sync).** Shopee, Amazon, Magalu, Loja Própria are prepared as providers in the schema/types only — no OAuth or sync implemented for them yet.
+Status (atualizado 2026-08-12): **Mercado Livre e Shopee com OAuth + sync completo real** (produtos, estoque, pedidos, auto-refresh de token). Sync recorrente automático via Vercel Cron (`api/cron/sync-all.ts`, diário) além do botão manual. Amazon, Magalu, Loja Própria continuam só como providers no schema/types — sem OAuth/sync implementado, mostram "não implementado" na UI (nunca sucesso falso).
 
 ## Stack
 
 - Frontend: Vite + React (unchanged, no migration to Next.js).
 - Backend: Vercel Serverless Functions under `api/**`. Vite does not serve these — Vercel builds each `api/*.ts` as an independent function, separate from the `tsc && vite build` pipeline that only type-checks `src/`.
 - Database: Supabase Postgres. Access from serverless functions only, via the **service role key** (bypasses RLS). The anon/public key is never used for these tables — there is no client-side Supabase usage for integration data.
-- Scheduled/recurring sync: deferred to Trigger.dev, added after the manual sync flow is proven (see "Not yet implemented" below).
+- Scheduled/recurring sync: **implementado via Vercel Cron** (`api/cron/sync-all.ts`, `vercel.json` → `crons`, diário às 06:00 UTC), não Trigger.dev — mais simples pro volume atual, sem infra extra. Itera toda `marketplace_connections` com `status='connected'`, chama o sync de cada provider sequencialmente, isola falha por conexão. Protegido por `CRON_SECRET` (env var — só o Cron da Vercel consegue disparar). **Limitação conhecida**: sequencial dentro de 300s por disparo — se o número de conexões conectadas crescer a ponto de estourar isso, migrar pra fila (Trigger.dev/Vercel Queues) quando o volume real pedir, não antes.
 
 ## Why Vercel Serverless Functions (not Next.js, not Supabase Edge Functions)
 
@@ -21,7 +21,7 @@ Status: **Mercado Livre in progress (real OAuth + minimal sync).** Shopee, Amazo
 type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria'
 ```
 
-Only `mercadolivre` has a real connector (`src/server/integrations/mercadolivre/`). The others exist only as entries in this union and in `marketplace_connections.provider` — attempting to connect them should surface "not implemented yet", never a fake success.
+`mercadolivre` (`src/server/integrations/mercadolivre/`) e `shopee` (`src/server/integrations/shopee/`) têm conector real. Amazon/Magalu/Loja Própria existem só como entradas nesse union e em `marketplace_connections.provider` — tentar conectar deve mostrar "não implementado ainda", nunca sucesso falso.
 
 ## Data flow (current scope: products + inventory)
 
@@ -66,10 +66,11 @@ See `supabase/migrations/create_marketplace_integrations.sql` for the authoritat
 - `marketplace_products`
 - `marketplace_inventory`
 
-## Not yet implemented (documented, deferred — see individual docs for detail)
+## Tables (atualizado)
 
-- `marketplace_orders`, `marketplace_order_items`, `marketplace_daily_metrics`, `product_daily_metrics` — deferred until the orders endpoint is validated against a real token (see `mercadolivre-sync.md`).
-- `/api/dashboard/overview`, `/api/dashboard/marketplaces`, `/api/dashboard/products` — deferred; only `/api/dashboard/inventory` ships in this phase.
-- Shopee / Amazon / Magalu / Loja Própria connectors.
-- Trigger.dev recurring sync (manual `POST /sync` only, for now).
-- Token auto-refresh inside the sync call (`refresh-token.ts` ships as a stub with a TODO — wiring it into `sync.ts` is next phase).
+`orders` e `order_items` (migration `007_orders.sql`) também implementadas e em uso — pedidos reais de ML/Shopee, base do faturamento/ticket médio/tendência de produto. `marketplace_daily_metrics`/`product_daily_metrics` nunca chegaram a ser criadas como tabela própria — os agregados por dia (D-1/D-7/D-30/D-365) são calculados on-the-fly em `api/dashboard/finance.ts` a partir de `orders`, sem tabela de cache separada (suficiente pro volume atual).
+
+## Ainda não implementado
+
+- Amazon / Magalu / Loja Própria connectors — sem OAuth/sync, só enum no schema/types.
+- `/api/dashboard/overview`, `/api/dashboard/marketplaces` como endpoints dedicados — hoje `finance.ts`/`products.ts`/`summary.ts` cobrem esse espaço.

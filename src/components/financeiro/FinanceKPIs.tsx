@@ -1,5 +1,5 @@
-import { DollarSign, Percent, RotateCcw, Wallet } from 'lucide-react'
-import type { FinanceOverview } from '@/data/financeData'
+import { DollarSign, RotateCcw, Wallet } from 'lucide-react'
+import { hasKnownNetValue, type FinanceOverview } from '@/data/financeShapes'
 import AnimatedNumber from '@/components/common/AnimatedNumber'
 
 const brl = (v: number) => Math.round(v).toLocaleString('pt-BR')
@@ -12,6 +12,8 @@ interface CardDef {
   context: string
   icon: typeof DollarSign
   tone: string
+  unavailable?: boolean
+  unavailableContext?: string
 }
 
 export default function FinanceKPIs({ overview }: { overview: FinanceOverview }) {
@@ -23,16 +25,10 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Total vendido no período',
       icon: DollarSign,
-      tone: '#22D3EE',
-    },
-    {
-      key: 'fees',
-      label: 'Comissão',
-      raw: overview.fees,
-      format: (v) => `R$ ${brl(v)}`,
-      context: 'Retido pelos canais de venda',
-      icon: Percent,
-      tone: '#F5C24B',
+      // Neutro/azul institucional, não semântico — faturamento bruto não é
+      // "positivo" nem "negativo" por si, é o dado principal (spec: ícone
+      // decorativo usa azul institucional, não uma cor por KPI).
+      tone: '#356FE8',
     },
     {
       key: 'refunds',
@@ -41,36 +37,39 @@ export default function FinanceKPIs({ overview }: { overview: FinanceOverview })
       format: (v) => `R$ ${brl(v)}`,
       context: 'Vendas canceladas ou devolvidas',
       icon: RotateCcw,
-      tone: '#F4436C',
+      tone: '#FF5E7D',
+      unavailable: overview.refundDataStatus !== 'known',
+      unavailableContext: 'A integração não informou reembolsos confirmados',
     },
     {
       key: 'net',
       label: 'Valor Líquido Estimado',
       raw: overview.netValue,
       format: (v) => `R$ ${brl(v)}`,
-      context: 'Bruto menos comissão e estornos',
+      context: 'Após deduções operacionais',
       icon: Wallet,
-      tone: '#16C784',
+      tone: '#138A63',
+      unavailable: !hasKnownNetValue(overview),
+      unavailableContext: 'Taxas ou reembolsos ainda estão incompletos',
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
       {cards.map((c) => {
         const Icon = c.icon
         return (
-          <div key={c.key} className="overview-glass overview-card-hover relative flex h-full min-h-[128px] flex-col overflow-hidden rounded-2xl p-3.5">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${c.tone}66, transparent)` }} />
+          <div key={c.key} className="enterprise-kpi overview-glass overview-card-hover relative flex h-full flex-col overflow-hidden rounded-md">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{c.label}</span>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${c.tone}16`, boxShadow: `inset 0 0 0 1px ${c.tone}33` }}>
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md" style={{ background: `${c.tone}14`, boxShadow: `inset 0 0 0 1px ${c.tone}2b` }}>
                 <Icon className="h-4 w-4" style={{ color: c.tone }} />
               </div>
             </div>
-            <div className="mt-2.5 font-mono text-[26px] font-bold leading-none tracking-tight text-text-primary">
-              <AnimatedNumber value={c.raw} format={c.format} />
+            <div className="mt-1.5 font-mono text-[24px] font-bold leading-none tracking-tight text-text-primary">
+              {c.unavailable ? <span className="text-[18px] text-text-secondary">Indisponível</span> : <AnimatedNumber value={c.raw} format={c.format} />}
             </div>
-            <div className="mt-auto pt-2.5 text-xs text-text-muted">{c.context}</div>
+            <div className="mt-auto pt-1.5 text-[11px] text-text-muted">{c.unavailable ? c.unavailableContext : c.context}</div>
           </div>
         )
       })}

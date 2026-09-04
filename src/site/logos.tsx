@@ -22,34 +22,32 @@ function Wrap({ children, title }: { children: React.ReactNode; title: string })
   )
 }
 
-export function LogoMercadoLivre() {
+// Arquivos reais fornecidos pelo dono do produto (public/site/logos/), não
+// mais recriação em SVG. Preenche 100% do container do consumidor (nunca um
+// tamanho/raio fixo aqui) — quem usa decide o tamanho e se é redondo/
+// quadrado via className no wrapper (ex: rounded-full overflow-hidden).
+// Tamanho fixo aqui sobrescrevia esse wrapper e deixava a logo pequena e
+// deslocada dentro de um container maior.
+function LogoImg({ src, title }: { src: string; title: string }) {
   return (
-    <Wrap title="Mercado Livre">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#FFE600" />
-      <path d="M8 15c1.8-2.2 5.4-2.2 7.2 0 1.8 2.2 5.4 2.2 7.2 0" fill="none" stroke="#2D3277" strokeWidth="2.2" strokeLinecap="round" />
-    </Wrap>
+    <img
+      src={src}
+      alt={title}
+      style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+    />
   )
+}
+
+export function LogoMercadoLivre() {
+  return <LogoImg src="/site/logos/mercadolivre.png" title="Mercado Livre" />
 }
 
 export function LogoShopee() {
-  return (
-    <Wrap title="Shopee">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#EE4D2D" />
-      <path d="M8.5 12h11l-1 10.5a1.6 1.6 0 0 1-1.6 1.4h-5.8a1.6 1.6 0 0 1-1.6-1.4L8.5 12z" fill="none" stroke="#fff" strokeWidth="1.8" />
-      <path d="M11.5 12a2.5 2.5 0 0 1 5 0" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-    </Wrap>
-  )
+  return <LogoImg src="/site/logos/shopee.jpg" title="Shopee" />
 }
 
 export function LogoAmazon() {
-  return (
-    <Wrap title="Amazon">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#131921" />
-      <text x={SIZE / 2} y="17" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="700" fill="#fff">a</text>
-      <path d="M7 20c5 3 11 3 15 0.3" fill="none" stroke="#FF9900" strokeWidth="2" strokeLinecap="round" />
-      <path d="M19.5 20.3l-2.3-0.8 1 2.3" fill="#FF9900" />
-    </Wrap>
-  )
+  return <LogoImg src="/site/logos/amazon.jpg" title="Amazon" />
 }
 
 // Leroy Merlin: a marca é um WORDMARK (não há símbolo/ícone oficial). Recriação
@@ -107,10 +105,19 @@ export function LogoWooCommerce() {
 
 export function LogoLojaPropria() {
   return (
-    <Wrap title="Loja Própria">
-      <rect width={SIZE} height={SIZE} rx="8" fill="#EAF0FF" />
-      <path d="M7 12l1.4-4h11.2l1.4 4v1a2.4 2.4 0 0 1-4.8 0 2.4 2.4 0 0 1-4.8 0 2.4 2.4 0 0 1-4.8 0v-1z" fill="none" stroke="#3D74F0" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M8.5 14.5v6.5h11v-6.5" fill="none" stroke="#3D74F0" strokeWidth="1.7" strokeLinejoin="round" />
-    </Wrap>
+    <svg role="img" aria-label="Loja Própria" viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" height="100%" style={{ display: 'block' }}>
+      <title>Loja Própria</title>
+      <defs>
+        <linearGradient id="lojapropria-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4A9DFF" />
+          <stop offset="100%" stopColor="#8A5CF6" />
+        </linearGradient>
+      </defs>
+      <rect width={SIZE} height={SIZE} rx="8" fill="url(#lojapropria-grad)" />
+      <path d="M8 11.5l1-3.5h10l1 3.5v0.6a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0v-0.6z" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M9 13.5v7.5h10v-7.5" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+      <circle cx="14" cy="17.5" r="1.6" fill="none" stroke="#fff" strokeWidth="1.2" />
+      <circle cx="14" cy="17.1" r="0.5" fill="#fff" />
+    </svg>
   )
 }

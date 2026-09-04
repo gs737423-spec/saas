@@ -17,8 +17,8 @@ function getStateSecret(): string {
 
 /** Signs a self-contained state payload — no server-side state storage needed
  *  (serverless functions have no shared memory between the authorize and callback requests). */
-export function signState(): string {
-  const payload: OAuthStatePayload = { nonce: randomBytes(16).toString('hex'), issuedAt: Date.now() }
+export function signState(companyId: string): string {
+  const payload: OAuthStatePayload = { nonce: randomBytes(16).toString('hex'), issuedAt: Date.now(), companyId }
   const payloadB64 = base64url(JSON.stringify(payload))
   const signature = createHmac('sha256', getStateSecret()).update(payloadB64).digest()
   return `${payloadB64}.${base64url(signature)}`
@@ -39,6 +39,11 @@ export function verifyState(state: string | undefined | null): OAuthStatePayload
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as OAuthStatePayload
     if (Date.now() - payload.issuedAt > STATE_MAX_AGE_MS) return null
+    // Formato antigo (pré 01/08) não tinha companyId — rejeita em vez de
+    // deixar callback.ts salvar company_id undefined. Só afeta um fluxo
+    // OAuth iniciado antes do deploy e finalizado depois; usuário só clica
+    // "Conectar" de novo.
+    if (!payload.companyId) return null
     return payload
   } catch {
     return null
@@ -92,8 +97,9 @@ export async function exchangeCodeForToken(code: string): Promise<MLTokenRespons
   return (await res.json()) as MLTokenResponse
 }
 
-/** Refreshes an expired access token. TODO: not yet wired into sync.ts automatically —
- *  see docs/integrations/mercadolivre-oauth.md, section "Refresh token". */
+/** Refreshes an expired access token. Called automatically by
+ *  `ensureValidAccessToken` in sync.ts before every sync — see
+ *  docs/integrations/mercadolivre-oauth.md, section "Refresh token". */
 export async function refreshAccessToken(refreshToken: string): Promise<MLTokenResponse> {
   const { clientId, clientSecret } = getClientCredentials()
 

@@ -33,6 +33,8 @@ export default function PeriodDropdown({ options, selectedKey, onChange, variant
       <button
         type="button"
         title={selected.label}
+        aria-label={`Período: ${selected.label}`}
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={
           isField
@@ -53,7 +55,7 @@ export default function PeriodDropdown({ options, selectedKey, onChange, variant
         {!isIcon && <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-1.5 w-60 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover absolute right-0 top-full z-30 mt-1.5 w-60 overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           {options.map((opt) => (
             <button
               key={opt.key}

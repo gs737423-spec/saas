@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, AlertTriangle, AlertCircle, Info } from 'lucide-react'
-import { getExecutiveAlerts, type ExecutiveAlertSeverity } from '@/data/mockData'
+import type { ExecutiveAlertSeverity, ExecutiveAlert } from '@/data/mockData'
+import { apiFetchJson } from '@/lib/apiFetch'
 
 const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
   danger: AlertTriangle,
@@ -10,16 +11,38 @@ const severityIcon: Record<ExecutiveAlertSeverity, typeof AlertTriangle> = {
 }
 
 const severityColor: Record<ExecutiveAlertSeverity, string> = {
-  danger: '#F4436C',
-  warning: '#F5C24B',
-  info: '#4C82F7',
+  danger: '#FF5E7D',
+  warning: '#FFC95A',
+  info: '#5B8DEF',
+}
+
+// Notificações reais (estoque zerado/baixo dos produtos sincronizados) quando
+// a empresa tem marketplace conectado — mock só como demonstração quando não
+// tem nada real ainda. Busca uma vez ao montar (barra do topo, vive em toda
+// página) — não precisa ser em tempo real.
+function useAlerts(): ExecutiveAlert[] {
+  const [alerts, setAlerts] = useState<ExecutiveAlert[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetchJson<{ ok: boolean; alerts: ExecutiveAlert[] }>('/api/dashboard/alerts').then((data) => {
+      if (!cancelled) setAlerts(data?.ok ? data.alerts : [])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Sem conexão/sync ainda — sem alerta nenhum, nunca mock (sino aparece em
+  // toda página, inclusive no primeiro login de um vendedor real).
+  return alerts
 }
 
 export default function NotificationsMenu() {
   const [open, setOpen] = useState(false)
   const [read, setRead] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const alerts = getExecutiveAlerts()
+  const alerts = useAlerts()
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -33,6 +56,8 @@ export default function NotificationsMenu() {
     <div ref={ref} className="relative">
       <button
         title="Notificações"
+        aria-label="Notificações"
+        aria-expanded={open}
         onClick={() => { setOpen((o) => !o); setRead(true) }}
         className="motion-header-control relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-card/60 text-text-muted hover:text-text-primary"
       >
@@ -43,7 +68,7 @@ export default function NotificationsMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
+        <div className="topnav-popover absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-border-subtle bg-bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">Notificações</p>
             <span className="text-[11px] text-text-muted">{alerts.length} alertas</span>
@@ -64,8 +89,9 @@ export default function NotificationsMenu() {
                   </div>
                 </div>
               )
-              return a.sku ? (
-                <Link key={a.id} to={`/app/produto/${a.sku}`} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
+              const href = a.sku ? `/app/produto/${a.sku}` : a.marketplace ? '/app/marketplaces' : null
+              return href ? (
+                <Link key={a.id} to={href} onClick={() => setOpen(false)} className="block border-b border-border-subtle/60 last:border-0">
                   {content}
                 </Link>
               ) : (

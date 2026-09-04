@@ -7,7 +7,7 @@ import { marketplaces } from '@/site/content'
 export default function MarketplaceRail() {
   return (
     <div className="mp-rail-wrap">
-      <span className="mp-rail-label">Integrações diretas</span>
+      <span className="mp-rail-label">Especialistas nas principais plataformas do mercado</span>
       <div className="mp-rail">
         {marketplaces.map((m) => (
           <div key={m.name} className="mp-rail__cell" title={m.name}>

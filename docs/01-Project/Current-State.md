@@ -2,44 +2,237 @@
 type: current-state
 project: SaaS E-commerce
 status: needs-audit
-updated: 2026-07-15
+updated: 2026-08-14
 ---
 
 # Estado atual
 
+## Correção VTEX — preço calculado e agregação financeira (2026-09-03)
+
+- A leitura de preço VTEX não depende mais exclusivamente da política comercial `1`: mantém o preço-base quando existir e, quando a conta só devolver preços calculados em outras tabelas/políticas, persiste uma referência determinística retornada pela própria VTEX. Valor ausente continua `null`; `null` não pode ser convertido em zero.
+- A migration `032_dashboard_finance_aggregate_and_log_index.sql` foi aplicada no remoto. Ela adiciona somente índices e a RPC tenant-scoped `dashboard_finance_aggregate`; não altera pedidos, produtos ou conexões existentes.
+- Dashboard e Marketplaces, que não exibem extrato, passam a receber um snapshot agregado no Postgres em vez de transferir todos os pedidos para agregação no runtime. A série diária também agrupa no Postgres; o extrato detalhado continua pendência de paginação explícita, sem corte de histórico.
+- A consulta de logs de integração ganhou índice composto por empresa e data. Não há remoção de logs históricos nesta mudança.
+- Validações locais: TypeScript passou; 66/66 testes VTEX/dashboard focados passaram; build Vite passou com o aviso conhecido de chunk principal acima de 500 kB.
+
 > Este documento deve conter apenas fatos confirmados no código, nos testes ou na infraestrutura.
 
+## Restauração visual do login (2026-08-31)
+
+- O layout de acesso introduzido como composição enterprise foi rejeitado visualmente e removido. O login voltou à composição anterior: card central estático MKTOnline, fundo navy atmosférico e formulário direto.
+- A camada de autenticação foi preservada: Supabase Auth, MFA, recuperação anti-enumeração, cooldown, mensagens, loading e redirecionamento continuam em `Login.tsx` sem mudança de lógica.
+- O CSS exclusivo do layout rejeitado (`login-enterprise.css`) foi removido após confirmar que não possuía outro consumidor. Validações locais: TypeScript e build passaram; revisão humana da rota autenticada permanece pendente.
+
+## Correção de leitura do cliente e desempenho analítico (2026-08-31)
+
+- Removido o selo técnico `DADO REAL` dos KPIs da visão do cliente. A origem do dado permanece no contrato da API; não é mais apresentada como rótulo que concorre com a métrica.
+- Barras de participação do Dashboard e rankings de Marketplaces não usam mais coluna monetária de largura fixa. Valor, barra e percentual têm áreas independentes; em falta de espaço, a faixa quebra sem atravessar números, inclusive para valores monetários longos.
+- Leituras `/api/dashboard/*` agora têm cache curto em memória, isolado por usuário e URL/tenant, com deduplicação de requisições em voo. Uma atualização de conexão invalida o cache; nenhuma resposta é compartilhada entre sessões ou empresas.
+- O endpoint financeiro deixou de buscar todo o histórico de 366 dias para calcular D-1/D-7/D-30/D-365: consulta somente os cinco dias necessários. Dashboard e Marketplaces também omitem o extrato de transações que não exibem, reduzindo payload e trabalho de serialização.
+- Validações locais: `npm run typecheck` passou; 16/16 testes focados passaram; `npm run build` passou. Revisão visual autenticada ainda depende de uma sessão de cliente.
+
+## Produtos e Estoque — catálogo grande (2026-09-01)
+
+- Evidência read-only no Supabase: a única conexão VTEX possui 17.803 produtos e 17.803 registros de estoque ativos; a conexão está em `error` por uma janela OMS de pedidos, mas o último catálogo/estoque sincronizado permanece persistido.
+- As APIs de Produtos e Estoque ainda liam catálogo, estoque e até 82.431 itens de pedido integralmente, em páginas sequenciais, antes de responder. As páginas são buscadas em lotes pequenos concorrentes e leituras independentes dos endpoints são iniciadas juntas, sem modificar o recorte por tenant nem omitir linhas.
+- Cliente: Produtos/Estoque não persistem o catálogo no cache do navegador; as tabelas renderizam 100 linhas por página. Todos os itens e filtros seguem disponíveis. Erros de leitura/configuração deixam de se apresentar como “conecte um marketplace”. A próxima etapa é paginação no servidor para reduzir também o payload inicial.
+- Validações locais: TypeScript passou; 19/19 testes focados passaram; build passou. A performance remota requer medição autenticada após deploy.
+
+## Desempenho — leituras globais de catálogo (2026-09-02)
+
+- O diagnóstico encontrou duas leituras ocultas de catálogo completo: notificações eram montadas em toda sessão e baixavam `/api/dashboard/products?days=30`; a busca fazia o mesmo ao ser aberta. Em tenant VTEX com ~17,8 mil SKUs e histórico grande, isso concorria com as telas reais e explicava parte importante da espera geral.
+- Notificações agora usam uma consulta tenant-scoped limitada a seis itens de estoque crítico. Busca só consulta após dois caracteres e recebe no máximo seis resultados do endpoint dedicado; não baixa estoque, vendas nem catálogo inteiro.
+- Próxima etapa: paginação/agrupamento no banco para Produtos e Estoque. A alteração é estrutural porque precisa preservar totais, filtros, ordenação e Curva ABC sem transferir milhares de linhas ao navegador.
+- Validação local: TypeScript e 4/4 testes focados passaram. O executor local não devolveu a saída final do Vite nesta rodada, sem erro reportado.
+
+## Correção VTEX — preço calculado e janela incremental (2026-08-31)
+
+- Evidência remota: o conector obteve resposta de preço-base para 6.260 SKUs e zero falhas de Pricing nos últimos lotes; os demais 11.534 SKUs retornaram ausência de preço-base (`404`), não `403`. Portanto, o campo legado `permissions.pricing=false` não comprova falta de permissão e pode estar desatualizado.
+- Implementado localmente: quando `GET /pricing/prices/{sku}` não possui preço-base, o conector consulta o endpoint oficial de preços calculados e aceita somente a política comercial padrão `1`. Preço específico de outro marketplace não é escolhido por heurística; quando nenhuma fonte válida existe, o valor continua `null`.
+- Implementado localmente: uma leitura autenticada bem-sucedida de Pricing atualiza a flag de permissão persistida para evitar falso alerta na UI.
+- Implementado localmente: a janela incremental de pedidos não é mais reduzida a 1 ms. A OMS rejeitou esse intervalo com HTTP 400 em 2026-08-31; o piso agora é 1 segundo e a paginação continua quando houver densidade acima disso.
+- Validações locais: TypeScript passou; 29/29 testes VTEX focados passaram; build Vite passou com o aviso conhecido do chunk principal (~710 kB). A suíte completa foi iniciada, mas o executor local não retornou seu resumo antes desta atualização.
+- Status: **commitado e validado localmente — aguardando deploy e smoke remoto.**
+
+## Correção VTEX — recuperação OMS e auditoria de continuidade (2026-09-01)
+
+- Evidência remota: o redutor de janela incremental podia persistir 908 ms ao dividir uma janela de 1,7 s. A OMS rejeita janelas abaixo de 1 segundo, retornando `VTEX_VALIDATION_ERROR:400` na rota de pedidos; isso acumulou 79 runs incrementais falhas e abriu o circuito, sem apagar o snapshot de catálogo/estoque.
+- Corrigido localmente: toda redução usa `max(1 s, ceil(janela / 2))`; checkpoints legados abaixo de 1 segundo são expandidos para trás antes da consulta. A sobreposição é idempotente e não avança watermark/cursor.
+- Corrigido localmente: o cron libera somente o padrão exato de erro OMS incremental comprovado após esse reparo, sem liberar outros `400`, erros de credencial ou de permissão.
+- Auditoria read-only: 17.810 produtos e 17.810 estoques ativos estão pareados; nenhum item de estoque está sem produto, nenhum pedido está sem itens, e nenhum pedido pago elegível está sem total. Dos produtos, 6.260 têm preço e 11.550 estão explicitamente marcados pela origem como preço indisponível; não há preço zero fabricado. A permissão de Pricing está ativa.
+- Validações locais: TypeScript passou; 63/63 testes VTEX focados passaram. Falta deploy e smoke do próximo cron para confirmar recuperação do circuito e avanço de `orders_last_sync_at`.
+
+## Correção VTEX — leitura parcial e cache de período aberto (2026-09-01)
+
+- Evidência read-only: durante uma execução incremental em andamento, a conexão VTEX tinha apenas uma parcela dos pedidos do dia persistida. O Dashboard podia apresentar essa parcela como total; em uma captura exibiu 8 pedidos/R$ 22 mil, enquanto a mesma base já continha 224 pedidos pagos/R$ 616,9 mil no dia. A origem externa ainda tinha mais pedidos a percorrer.
+- Incrementais novos agora percorrem `categories → orders → catalog → finalize`; a carga completa mantém `categories → catalog → orders → finalize`. Ao terminar pedidos, `orders_last_sync_at` é atualizado sem avançar o watermark definitivo antes do finalize. Nenhum pedido é removido; os upserts seguem idempotentes.
+- O cache de dashboard de períodos abertos (fim próximo ao presente) foi reduzido de cinco minutos para 20 segundos. Períodos fechados preservam cinco minutos de cache, deduplicação e isolamento por sessão/tenant.
+- Validações locais: TypeScript passou; 51/51 testes focados passaram; build gerou `dist/` sem erro. Aguarda deploy e verificação do próximo incremental real.
+
+## Correção de integridade Mercado Livre/Shopee — lote 7 (2026-08-24)
+
+- Shopee agora exige `SHOPEE_API_HOST=https://partner.shopeemobile.com` explicitamente. Não existe fallback silencioso para sandbox; authorize, callback, sync manual e cron usam a validação compartilhada e falham fechados quando o host está ausente ou não é o de produção.
+- Mercado Livre preserva preço e estoque ausentes como `null` na normalização e omite esses campos no upsert, evitando converter ausência em zero ou sobrescrever um snapshot válido anterior. Zero explícito continua válido.
+- Shopee mantém `TO_RETURN` e `RETURNED` na classificação financeira `paid` enquanto a cobertura de refund permanece `unknown`; o status original continua disponível no payload normalizado. Cancelamentos explícitos continuam `cancelled`.
+- Checkpoints de catálogo ML/Shopee continuam baseados em listagens mutáveis entre invocações: ML recompõe IDs e retoma por índice; Shopee retoma por offset. Para impedir falso negativo, esses conectores não desativam mais produtos ausentes até existir snapshot/cursor estável comprovado; travessia íntegra ainda atualiza freshness.
+- Validação local: 45/45 testes direcionados passaram e TypeScript passou. Sem deploy, migração ou alteração de ambiente.
+
+## Correção de integrações — lote 8, concorrência e conclusão VTEX (2026-08-24)
+
+- Rollout final do runtime: commit `a9a943a`, deployment Vercel Pro `dpl_CRTzQiK8vPQ4WiBRRPepcLnHF2tf`, domínio `https://www.mktonline.com.br` em estado Ready.
+- Evidência pós-deploy: a auto-recuperação alterou a conexão de `error` para `syncing`, zerou `failure_count` de 59 para 0, removeu o breaker e iniciou uma run `full`. Dois checkpoints observados avançaram de 992 para 3.072/17.729 SKUs com `errors=[]`; a conclusão do catálogo/pedidos depende dos próximos ticks de 5 minutos.
+- A migration `029_atomic_canonical_orders_and_catalog_reconciliation.sql` foi aplicada e confirmada no Supabase; `db lint --linked` não encontrou erros. A persistência de pedido canônico, precedência do conector direto, proveniência e itens agora ocorre em uma RPC única, serializada por tenant + chave canônica.
+- Reconciliação de produto/estoque VTEX também é transacional e só roda após travessia comprovadamente completa, sem erro. SKUs falhos, a descoberta completa e a cauda ainda não processada são preservados em timeout para retry, inclusive em catálogos de até 40 SKUs; catálogo parcial não é promovido para completo.
+- Descoberta VTEX por sales channel propaga incompletude para o fallback global; 401/403 não fica mais indefinidamente em `queued`. A conexão precisa ser atualizada com escopo de tenant antes de a run registrar sucesso.
+- O stale threshold VTEX é maior que o runtime máximo da função, evitando reclaim de um worker ainda válido. Falhas precoces do cron persistem backoff para não bloquear as demais conexões. O cron VTEX processa uma conexão por tick, priorizando run ativa e depois a mais vencida.
+- Smoke remoto encontrou um SKU removido entre a listagem VTEX e a leitura de detalhe (`404`). Esse churn agora é tratado como ausência reconciliável: não entra em retry/erro e o snapshot antigo é desativado pela reconciliação ao final da travessia completa. Quando um retry resolve uma falha anterior, somente a mensagem/contagem desse SKU é removida; falhas ainda ativas e erros não relacionados permanecem.
+- A carga full VTEX não falha mais quando uma microjanela indivisível ultrapassa 20 páginas. Como `creationDate` é imutável, a página é persistida e retomada entre invocações; o modo incremental, baseado em `lastChange` mutável, continua reiniciando a microjanela para não pular deslocamentos.
+- O cron VTEX inicia `full` enquanto não existe `last_success_at`, preserva `full` ao recuperar o erro removido de janela densa mesmo se houver sucesso antigo, permite retomar runs ativas independentemente do breaker e limpa automaticamente o breaker somente para `VTEX_ORDER_WINDOW_DENSE_PAGE_LIMIT`. O reset é tenant/provider-scoped e não afeta falhas externas vigentes.
+- Gates finais locais: TypeScript passou; 321/321 testes passaram; scan da fronteira de service role passou; build passou com o aviso conhecido do chunk principal (~710 kB); `git diff --check` passou com avisos LF/CRLF. Não existe script de lint.
+- Infraestrutura: migrations 001–029 alinhadas no remoto. Produção possui somente uma conexão real VTEX. Shopee continua externamente bloqueada porque as variáveis `SHOPEE_*` não existem no Vercel Pro; Mercado Livre está configurado no ambiente, mas não possui conexão real nesta base; Amazon não possui conector nativo. O runtime Shopee expõe `config_missing` e nunca usa sandbox silenciosamente.
+
+## Correção de integrações — lote 6, reembolsos Mercado Livre (2026-08-24)
+
+- Implementado contrato order-level de reembolso com `refund_amount`, `refund_status` e `refund_updated_at`. A migration aditiva `027_order_refund_quality.sql` foi aplicada e confirmada no histórico remoto em 2026-08-24.
+- O mapper Mercado Livre passou a consumir `payments[].transaction_amount_refunded`, campo documentado oficialmente. Ausência continua `unknown`; cobertura mista vira `partial`; zero só é conhecido quando o campo vem explicitamente.
+- Pedidos `partially_refunded` ou com valor reembolsado continuam classificados como receita capturada (`paid`), enquanto a dedução é registrada separadamente. APIs financeiras agregam somente snapshots comprovados e criam lançamento de estorno apenas para `refund_status=known` com valor positivo.
+- VTEX e Shopee permanecem com reembolso `unknown`: VTEX exige consulta adicional à transação de pagamento por pedido; o contrato Shopee disponível no projeto ainda não foi confirmado contra documentação oficial autenticada.
+- A migration `028_correct_mercadolivre_fee_quality.sql` corrigiu registros históricos do Mercado Livre de `known` para `partial`, preservando os valores importados; `sale_fee` por item não comprova todas as deduções do pedido.
+- Validação local posterior: TypeScript passou; 296/296 testes passaram; scan da fronteira de service role passou; build passou com aviso conhecido do chunk principal em aproximadamente 710 kB. Não existe script de lint.
+- Status: **migrations 027/028 aplicadas e verificadas; runtime aguardando commit/deploy e smoke real.**
+
+## Correção de integrações — lote 5 financeiro P0 (2026-08-24)
+
+- Implementado localmente: pedidos `cancelled` não são mais convertidos em estornos/devoluções. Sem evento financeiro explícito de reembolso, APIs e interface retornam cobertura `unknown` e exibem `Indisponível`, nunca `R$ 0` como se fosse valor confirmado.
+- O valor líquido só é apresentado quando taxas e reembolsos possuem cobertura `known`; rankings por canal voltam ao faturamento bruto enquanto qualquer dedução estiver incompleta.
+- A taxa `sale_fee` do Mercado Livre passou a ser persistida como cobertura `partial`, pois não comprova todas as deduções do pedido. Registros históricos já salvos como `known` só serão corrigidos por nova sincronização ou por backfill futuro autorizado.
+- O extrato real deixou de fabricar lançamentos de estorno a partir de cancelamentos. Fixtures do Modo Demonstração preservam cobertura conhecida e permanecem isoladas dos dados reais.
+- Validação local: TypeScript passou; 287/287 testes passaram; build passou com o aviso não bloqueante já conhecido do chunk principal em aproximadamente 710 kB. Não existe script de lint no `package.json`.
+- Status: **implementado localmente — sem commit, push ou deploy; aguardando próximo lote e smoke real posterior. Não pronto para produção.**
+
+## Correção de integrações — lote 1 (2026-08-24)
+
+- Implementado localmente, ainda sem deploy: Shopee não fabrica mais preço, estoque ou taxas zero; data e status de pedidos são normalizados; tokens renovados só são declarados persistidos após sucesso no banco.
+- VTEX acumula SKUs entre retomadas da paginação e grava como watermark o fim realmente consultado.
+- Mercado Livre/Shopee não avançam `last_sync_at` em execução parcial; falhas entram em retry com backoff e o cron respeita `next_sync_at`.
+- Custo de produto é isolado por `connection_id`; itens de pedido são substituídos por RPC transacional.
+- Consultas analíticas deixam de aceitar truncamento/falha parcial como zero; períodos usam datas reais e a tabela de produtos não fabrica D-1/D-7/D-365.
+- Migrations `024`, `025` e `026` aplicadas e verificadas no `vintec-production`.
+- Status: **implementado localmente — aguardando conclusão dos próximos lotes e validação em ambiente real. Não pronto para produção.**
+
+## Correção de integrações — lote 3 (2026-08-24)
+
+- Implementados localmente checkpoints persistentes de catálogo e histórico de pedidos para Mercado Livre e Shopee. O Mercado Livre refaz o scan efêmero de IDs e retoma o lote de detalhes por índice persistido; a Shopee retoma pelo `next_offset` oficial.
+- Pedidos avançam por janelas congeladas (Mercado Livre: 30 dias até 365 dias; Shopee: 15 dias até 90 dias). Janelas truncadas reduzem progressivamente até uma hora sem avançar o período; erros também não avançam o checkpoint. Depois do backfill completo, as execuções mantêm a atualização da janela recente sem perder o marcador histórico.
+- Reconciliação de catálogo é não destrutiva (`active=false`), isolada por `company_id + connection_id` e só ocorre após travessia completa sem erro em nenhum lote do ciclo. Respostas parciais de detalhe também bloqueiam reconciliação.
+- Freshness independente (`catalog_last_sync_at`, `inventory_last_sync_at`, `orders_last_sync_at`) passou a ser gravada pelos syncs e exposta pela API de status. Produtos e estoque inativos deixam de entrar em contagens e leituras operacionais; analytics financeiro usa freshness de pedidos.
+- Validação deste lote: TypeScript passou; 279/279 testes passaram; scan da fronteira de service role passou; build passou com o aviso não bloqueante já conhecido do chunk principal em aproximadamente 707 kB. Não existe script de lint no `package.json`.
+- A migration `026_integration_continuity_and_product_identity.sql` foi aplicada e verificada no `vintec-production`: histórico 1/1, colunas 11/11, índices 2/2 e zero `NULL` inválido nos campos obrigatórios.
+- Status: **implementado localmente — aguardando deploy e smoke real. Não pronto para produção.**
+
+## Correção analítica — calendário operacional de São Paulo (2026-09-01)
+
+- Financeiro, série diária e vendas por produto agora usam uma única regra de dia operacional `America/Sao_Paulo`. Antes, parte das leituras agrupava por UTC, deslocando pedidos entre 21h00 e 23h59 BRT para o dia seguinte em gráficos, comparativos D-1/D-7/D-30/D-365 e métricas por produto.
+- A correção altera somente a leitura/agrupamento: não regrava pedidos, itens ou métricas persistidas. Limites de início/fim do dia e deslocamento de datas usam o mesmo helper centralizado.
+- Validação local: TypeScript passou; 29/29 testes focados passaram; `git diff --check` sem erro. Não existe script de lint no `package.json`.
+- Status: **implementado localmente — aguardando deploy e smoke real; não equivale à reconciliação retroativa de uma tabela materializada.**
+
+## Correção analítica — snapshot único da Visão Geral (2026-09-01)
+
+- KPIs e ranking GMV da Visão Geral não fazem mais leituras independentes de `summary` e `finance`. A página usa uma única resposta de `finance`, que inclui total, quantidade, ticket e comparativos quando solicitada pelo Dashboard.
+- Isso impede que o topo e as linhas por marketplace sejam renderizados a partir de snapshots diferentes durante sync, atualização de período ou revalidação de cache. A leitura duplicada de pedidos pelo Dashboard também foi removida.
+- Em 2026-09-02, o componente GMV deixou de copiar essa resposta compartilhada para estado interno. Quando recebe dados do Dashboard, ele os renderiza diretamente; assim não conserva uma resposta anterior entre a atualização do KPI e do ranking.
+- Não há migration, alteração em pedidos ou mudança de integração. Relatórios e Financeiro preservam os contratos de leitura existentes.
+- Validação local: TypeScript passou; 16/16 testes focados passaram; build passou com o aviso não bloqueante já conhecido do chunk principal (~711 kB). Smoke autenticado ainda exige uma sessão de cliente.
+
 ## Stack confirmada
-- [ ] Framework:
-- [ ] Linguagem:
-- [ ] Banco:
-- [ ] Autenticação:
-- [ ] Hospedagem:
-- [ ] Testes:
-- [ ] Integrações:
+- [x] Framework: React 19 + Vite 8 + React Router 7
+- [x] Linguagem: TypeScript
+- [x] Banco: Supabase Postgres — sempre server-side (`service_role`, `api/**`). Tabelas de negócio reais e em uso: `companies`, `company_members`, `platform_admins`, `marketplace_connections`, `marketplace_products`, `marketplace_inventory`, `orders`, `order_items`, `sync_logs`, `support_tickets`, `support_messages`, `leads`, `rate_limits`. RLS habilitado em todas, com policy por `company_id`/`is_platform_admin()` (auditado em 2026-08-12). APIs aceitam `VITE_SUPABASE_URL` como fallback seguro para a URL pública, mas exigem `SUPABASE_SERVICE_ROLE_KEY` exclusivamente no servidor.
+- [x] Autenticação: Supabase Auth (`signInWithPassword`/`onAuthStateChange`), migrado em 2026-07-23 — ver decisão `docs/02-Decisions/2026-07-23 - Migracao do login para Supabase Auth real.md`. Sessão em `sessionStorage` (não sobrevive a fechar a aba/navegador).
+- [x] Hospedagem: Vercel (projeto "saas", deploy via push em `main`)
+- [x] Testes: Vitest configurado na baseline candidate de segurança de 2026-08-13 (`test:run`, `test:security`, `security:check`), cobrindo RBAC, tenant context, cross-tenant, rate-limit, delete seguro e OAuth state.
+- [x] Integrações: Mercado Livre e Shopee (OAuth + sync completo: produtos, estoque, pedidos, auto-refresh de token), server-side via `api/integrations/{provider}/*`. Sync agendado diário via Vercel Cron (`api/cron/sync-all.ts`) desde 2026-08-12, além do botão manual. Amazon/Magalu/Loja Própria só enum, sem OAuth real. Env vars de produção não confirmadas como configuradas (ver "Próximas validações")
+- [x] Concorrência de sync: Mercado Livre e Shopee usam a mesma trava atômica por conexão (`sync_started_at`). Sem a migration `015_connection_sync_lock.sql`, os endpoints respondem `503 migration_pending` e não gravam sem essa proteção.
 
 ## Funcionalidades confirmadas
-- [ ] Visão Geral
-- [ ] Produtos
-- [ ] Produto 360
-- [ ] Login
-- [ ] Multiempresa
-- [ ] Demais módulos
+- [x] Migrations `024`, `025` e `026` aplicadas e verificadas no `vintec-production` em 2026-08-24: taxas/estoque preservam ausência como `NULL`, `orders.fee_status` diferencia valor conhecido/desconhecido/parcial, e `replace_order_items_atomic(text, uuid, jsonb)` substitui itens transacionalmente. A função usa `SECURITY DEFINER`, `search_path` vazio e concede execução somente à `service_role`; `anon` e `authenticated` não possuem execução. A `026` registrou histórico, 11 colunas e 2 índices, sem `NULL` inválido nos campos obrigatórios.
+- [x] Integridade de conexão e identidade de catálogo — lote 2 local (2026-08-24): callbacks Mercado Livre/Shopee e endpoints VTEX bloqueiam troca silenciosa da conta externa por trás de uma conexão existente, preservando o histórico do tenant; reconexão da mesma conta continua permitida. Produtos normalizam marca oficial quando a origem fornece, registram `last_seen_at`/`active`, e o Produto 360 usa referência exata `connection_id + external_product_id` nos links novos, mantendo fallback legado por SKU. O catálogo Mercado Livre passou a usar o `search_type=scan`/`scroll_id` oficial para atravessar o limite de 1.000 itens. A migration aditiva `026` foi aplicada e verificada.
+- [x] Resolução automática VTEX por relação oficial (2026-08-20): identifiers `affiliate_id` ainda pendentes podem ser associados ao nome oficial do `salesChannel` retornado pela própria VTEX quando os pedidos reais comprovam uma relação inequívoca. Siglas não são inferidas; ambiguidade permanece pendente; mapping manual vence por compare-and-set. A descoberta roda antes do catálogo, com orçamento próprio, e o catálogo usa concorrência limitada de 32 workers. Validação local: typecheck PASS, 256/256 testes PASS e build PASS.
+- [x] Gate técnico de prontidão local (2026-08-20, working tree): locks ML/Shopee usam lease com compare-on-release; cron compartilhado processa uma conexão por tick de 5 minutos e continua pela mais antiga; Shopee possui retry/backoff/Retry-After e sinaliza truncamento; analytics de Produto 360 e freshness financeiro usam dados reais; MFA de platform admin e provisionamento atômico do primeiro owner foram implementados; CI, `/api/health` e runbook de incidentes foram adicionados. A migration aditiva `023` foi aplicada e verificada no projeto `vintec-production`; uma auditoria read-only comprovou 23/23 contratos físicos e o histórico remoto foi reconciliado com 001–023. Validação do mesmo snapshot: typecheck PASS, 250/250 testes PASS, 75/75 testes de segurança PASS, service-role scan PASS, build PASS e `npm audit --omit=dev` sem vulnerabilidades. Ainda requer commit/push/deploy e smokes reais antes de produção; os 3 platform admins existentes precisam cadastrar TOTP antes de usar as APIs administrativas protegidas.
+- [x] Freshness e analytics sem fabricação (2026-08-20, working tree): Produto 360 consulta série diária real de `orders`/`order_items`, isolada por tenant e pelos pares conexão/produto; vazio e falha têm estados explícitos. Curva sintética existe somente no Modo Demonstração e é rotulada como ilustrativa. Financeiro usa `marketplace_connections.last_sync_at` retornado pelo backend, sem texto de atualização hardcoded. Validação local: 245/246 testes passaram (2/2 novos passaram); 1 falha preexistente em `tests/security/tenantScope.test.ts`/`syncLock.ts`. Typecheck bloqueado por erro preexistente em `src/server/integrations/vtex/sync.ts:897`, fora do escopo desta alteração.
+- [x] Hardening VTEX de dados reais (2026-08-20, working tree): bootstrap de pedidos passa a priorizar janelas recentes e retrocede até o piso do backfill; runs v2 migram sem apagar pedidos. Redução de janela ocorre dentro da mesma invocação e cada microjanela OMS precisa caber em uma única página, eliminando offset mutável. Catálogo v6 revalida SKUs idempotentemente e falhas de Pricing/Logistics não sobrescrevem valores válidos com `null`; preço ausente não é apresentado como zero. Canais são criados somente quando observados e resolvidos por nome confiável retornado pela VTEX; analytics real, inclusive vazio, não injeta marketplaces de demo. Validação local: typecheck PASS, 230/230 testes PASS e build PASS. Ainda não commitado/pushado/deployado.
+- [x] Migrations 001–023 confirmadas e reconciliadas em 2026-08-20: auditoria read-only verificou os objetos centrais de cada versão no schema remoto, a `023_platform_admin_mfa_and_owner_provisioning.sql` foi aplicada e verificada, e `supabase migration repair` registrou 001–023 como aplicadas. `supabase migration list --linked` confirmou correspondência integral local/remota.
+- [x] Integração nativa VTEX read-only finalizada localmente em 2026-08-14: application keys criptografadas, validação de permissões, full sync D-365 em stages/chunks, incremental por `lastChange`, catálogo/estoque/pedidos, deduplicação canônica e canais universais. O cron acorda a cada 15 minutos, mas carrega somente conexões vencidas por `next_sync_at`, com credenciais, breaker fechado e lock livre/obsoleto; o intervalo por conta permanece 24h. AUTO e MANUAL respeitam o breaker persistente (5 falhas/60min), enquanto MANUAL ignora apenas a agenda. A UI lista mappings descobertos dinamicamente e exige full sync explícita após resolução para reclassificar histórico. Typecheck, 118 testes, 65 testes de segurança, scan de service role, `security:check` e build passaram. O runtime segue no working tree sem stage/commit/push/deploy; o comando literal `git diff --check` não iniciou por saturação do executor, embora a varredura equivalente dos 29 arquivos tracked modificados não tenha encontrado problemas. Status formal de handoff: **NOT READY FOR ENV + DEPLOY** até repetir esse gate; env vars, teste RLS real com dois tenants e smoke test VTEX autorizado também permanecem pendentes para as fases seguintes.
+- [x] Pre-freeze security validation (2026-08-13) — React Router corrigido de 7.18.1 para 7.18.2, `npm audit --omit=dev` zerado, scoping de service-role reforçado e scan estático adicionado. Status permanece **NOT READY FOR FREEZE**: testes reais de migrations/RLS/RPC não rodaram por ausência de Docker/Supabase CLI local e ownership segue sem fonte determinística.
+- [x] Security Hardening Phase 2 — RBAC central por capabilities, contexto multiempresa explícito, rate-limit fail-closed em endpoints críticos, equipe scoped por tenant, request IDs/audit events e hard delete transacional bloqueado por dependências. A migration `018_security_hardening_phase2.sql` foi aplicada manualmente e verificada segundo o usuário; owner existente continua sem fonte determinística e não foi inventado.
+- [x] Revisão final local das migrations `018` e `019` (2026-08-14) — ambas foram encapsuladas em transações; funções `SECURITY DEFINER` herdadas receberam `search_path` endurecido e grants mínimos; relações operacionais novas e existentes passaram a comprovar tenant/provider por FKs compostas; checks de integridade JSON/quantidade foram adicionados. Pre-flights e verificadores somente leitura estão em `supabase/manual/`. O estado posterior é a aplicação manual confirmada pelo usuário no item acima; os arquivos aplicados permanecem imutáveis.
+- [x] Correção source/channel inicial da migration `019` (2026-08-14) — esta passagem introduziu `unknown_marketplace` e exclusão analítica, mas essa regra foi explicitamente superada no mesmo dia pelo adendo de registry universal abaixo. A migration `018` permaneceu inalterada e nenhum SQL foi executado.
+- [x] VTEX Universal Channel Registry (2026-08-14) — `sales_channels` e `vtex_channel_mappings` tornam a dimensão de canal extensível e tenant-scoped. Affiliate novo cria identidade `external:vtex:*`, não falha o sync, mantém receita elegível nos totais globais e nunca vira Loja Própria. Breakdown/receita diária aceitam canais dinâmicos e apresentam Top 3 + Outros quando houver mais de quatro; proveniência permite reclassificação posterior sem duplicação analítica. A migration `019` foi aplicada manualmente segundo o usuário; o código runtime correspondente ainda não foi staged, committed ou pushed.
+- [x] Densidade adaptativa do workspace desktop — em 2026-08-13, as quatro rotas do shell usam tokens fluidos de gap, padding, KPI, controles e tabela. Em alturas menores, o chrome diminui moderadamente; em alturas maiores, a area adicional e destinada a mais dados e ao grafico. Produtos e Estoque preservam scroll interno e header sticky, sem body scroll desktop. Dark e mobile nao foram estruturalmente alterados. Ver decisao `docs/02-Decisions/2026-08-13 - Densidade adaptativa do workspace.md`.
+- [x] Light mode Neutral Editorial Enterprise — refinado em 2026-08-13 para ampliar a separação estrutural: `#D1D4D0` (canvas), `#DDE0DC` (section), `#EEF0ED` (card), `#F7F8F6` (raised) e `#D4D8D3` (toolbar/muted), com header de tabela `#C9CDC8`. A TopNav continua charcoal neutral `#202120` → `#272927` → `#2D2F2D`; filtros e ordenação ativos reutilizam `#272927`. A busca global no light mode redefine localmente os tokens herdados da TopNav para texto `#171917`, placeholder `#505650` e ícones escuros. Dark mode, layout e arquitetura de viewport não foram alterados. Ver decisão `docs/02-Decisions/2026-08-13 - Contraste estrutural e controles charcoal no light mode.md`.
+- [x] Semântica visual de Estoque — Cobertura apresenta `Saudável` em verde e `Baixa`/`Excesso` em vermelho. Giro apresenta `Alto` em verde, `Normal` neutro e `Baixo`/estados parados em vermelho. Os thresholds existentes foram preservados; somente nomenclatura e apresentação foram centralizadas em `src/lib/inventoryStatus.ts`, com testes de fronteira.
+- [x] Consolidação UX product-wide no light mode — Financeiro foi compactado; Relatórios deixou o carousel e passou a Report Center contínuo; Marketplaces usa quatro faixas de microbarras independentes com comparação em delta; Conexões remove mensagens de infraestrutura e centraliza falhas; Produtos/Estoque/Admin receberam toolbars e tabelas mais densas. O Admin não fabrica mais status, alertas ou CNPJ ausente. Login, dark mode, contratos de API, RBAC, tenancy e migrations não foram alterados. A validação autenticada em navegador permanece pendente por ausência de sessão de teste; `typecheck`, 60 testes, 49 testes de segurança, scan de service role e build passaram.
+- [x] Shell desktop das rotas `/app`, `/app/marketplaces`, `/app/produtos` e `/app/estoque` — em `md+`, o conteudo operacional ocupa o viewport disponivel abaixo da TopNav. Dashboard comprime o painel GMV com overflow interno apenas em altura extrema; Marketplaces permite rolagem vertical dentro da propria pagina quando a altura nao comporta o grafico completo, preserva plot e resumo sem corte, e exibe tooltip acima dos paineis seguintes usando os tokens do tema ativo; Produtos e Estoque mantem filtros/cabecalhos fixos e rolam somente o viewport das tabelas (incluindo overflow horizontal do Estoque). Mobile preserva fluxo e BottomNav. Corrigido em 2026-08-13; validado por `tsc && vite build`.
+- [x] Tema da plataforma e navegação desktop — 2026-08-12: light mode usa Soft Slate `#E3E8EE` (canvas) → `#EEF2F6` (section) → `#F7F9FB` (card) → `#FFFFFF` (raised/control), com header de tabela `#E8EDF2`, bordas `#CDD5DE`/`#BEC8D2` e linhas transparentes. A Floating Navigation Island mantém 64px e content width aprovados e usa material graphite/blue-steel: `#1A2430` → `#223241` → `#263747` no light e `#111A23` → `#16212C` → `#1A2733` no dark, com dois separadores internos. O indicador único continua em `transform` (260ms); mobile e `BottomNav` permanecem estruturalmente inalterados. Ver decisão `docs/02-Decisions/2026-08-12 - Light mode soft slate e topbar material.md`.
+- [x] Visão Geral (Dashboard) — os 5 KPIs (`KPICards`) leem `orders`/`order_items` reais via `/api/dashboard/summary` quando a empresa tem marketplace conectado e sincronizado; sem conexão/sync, cai em `source:'demo'` com banner explícito avisando que é mock. Requer migration `010_order_fee_amount.sql` aplicada no Supabase — ainda não confirmado como aplicada em produção. `RealMarketplaceBreakdown.tsx` (substituiu o antigo `MarketplaceComparison` mock) já lê D-1/D-7/D-30/D-365 real de `api/dashboard/finance.ts`, calculado on-the-fly a partir de `orders` — **não é mais mock** (correção de 2026-08-12, doc anterior estava desatualizado).
+- [x] Inteligência de categorias em Produtos e Estoque — `category_id` é a identidade preferencial e `category_name` é apresentação, ambos já existentes em `marketplace_products`. Os endpoints expõem esses campos sem migration nova; filtros são dinâmicos e combináveis, Produtos e Estoque abrem o mesmo drawer analítico, e itens sem categoria permanecem visíveis em `Sem categoria`. Em modo demo, os dados continuam explicitamente demonstrativos.
+- [x] Comparação temporal de receita por marketplace — as quatro faixas independentes exibem período atual e anterior por barras sobrepostas na mesma escala de cada canal, com legenda, resumo, delta e tooltip acessível. O alinhamento é feito por data deslocada conforme `Ontem`, `Semana passada` ou `Mês passado`; períodos longos são agregados em buckets sem descartar valores. Nenhuma biblioteca de gráfico ou dado artificial foi adicionada.
+- [ ] Produtos — UI e dimensão de categoria integradas; demais métricas continuam usando a fonte real quando disponível e o fallback demo explícito
+- [ ] Produto 360 — não auditado nesta rodada
+- [x] MFA administrativo: opt-in para `platform_admins`; quando há fator TOTP verificado, `requireAdmin` consulta fatores pela API administrativa oficial do Supabase e exige claim JWT `aal2` em todas as APIs administrativas. O login mantém o desafio visível enquanto a sessão está em AAL1.
+- [x] Login — real (Supabase Auth); credencial inválida e recuperação de senha já foram testadas por chamada de rede real (login **válido** ponta a ponta ainda não testado, sem senha real). Em 2026-08-13 o acesso passou a usar uma **composição enterprise estática**: background navy institucional, duas malhas lineares discretas, utilities superiores, card central sólido, logo real, formulário imediatamente visível e rodapé legal. Não há cadastro, landing page, partículas, painel diagonal ou animação ornamental. A **lógica de auth permanece em `Login.tsx`** (signIn/resetPassword/MFA/cooldown/soft-limit/anti-enumeração/loading/erro/redirect) e chega aos componentes visuais por `bridge`; o redesenho não alterou backend, sessão, Supabase ou regras de segurança. Ajuda usa WhatsApp quando configurado e e-mail institucional como fallback. Ver decisão `docs/02-Decisions/2026-08-13 - Login enterprise access composition.md`.
+- [x] Multiempresa — **implementada e auditada em 2026-08-12** (estava marcada como pendente por engano — a auditoria anterior não tinha lido `supabase/migrations/003-005/007` nem `src/server/auth/requireCompany.ts`). `companies` + `company_members` reais, com RLS (`003_companies_and_members.sql`). `requireCompany.ts` resolve `company_id` via `company_members`, nunca aceita da URL pra cliente comum; `platform_admins`/`requireAdmin` pra equipe interna, exige `?company_id=` explícito. 25/25 endpoints de `api/**` auditados usam `requireCompany`/`requireAdmin` + filtro `.eq('company_id', ...)`. `company_id = 'default-company'` (migration `002`) é só DEFAULT legado de coluna, não usado em nenhuma query de aplicação. Fluxo completo de criar empresa (`api/admin/companies.ts`) e convidar membro (`api/admin/invite.ts`, `api/team.ts`) funcionando. **Pendente**: teste real (não só auditoria estática) com 2+ empresas simultâneas — fica para a fase de testes.
+- [x] Suporte (tickets) — 2026-08-06: cliente abre chamado em `/app/suporte` (lista + thread de mensagens), admin responde/muda status em `/app/admin/suporte`. Tabelas `support_tickets`/`support_messages` — migration renumerada em 2026-08-12 pra `016_support_tickets.sql`/`017_support_tickets_length_limits.sql` (colidia de número com `013_leads.sql`/`014_company_logo.sql`); ainda **não confirmada como aplicada em produção** — rodar manualmente. Endpoints `api/support/tickets.ts` (tenant, `requireCompany`) e `api/admin/support-tickets.ts` (admin, `requireAdmin`), isolamento por `company_id` no código + RLS real (`company_id::text in user_company_ids()`). Sem notificação por e-mail. Não testado ponta a ponta em navegador (sem credencial de teste disponível) — só `tsc --noEmit` e `vite build` confirmados limpos.
+- [ ] Demais módulos — não auditados nesta rodada
 
 ## Dados atuais
-- Origem:
-- Mocks:
-- Banco:
-- APIs:
-- Estado de sincronização:
+- Origem: mockada (`src/services/api.ts`, todo método usa `delay()` + array fixo)
+- Mocks: sim, é a fonte de dado principal do dashboard hoje
+- Banco: Supabase Postgres existe e está configurado, mas só alimenta a integração Mercado Livre server-side
+- APIs: `api/integrations/mercadolivre/*` (Vercel serverless), `api/leads.ts`, `api/dashboard/inventory.ts`, `api/integrations/logs.ts`
+- Estado de sincronização: não confirmado se as env vars de produção (`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/`ML_*`) estão de fato configuradas na Vercel — usuário relatou não encontrar `SUPABASE_URL` lá numa checagem anterior
 
 ## Problemas conhecidos
 | Problema | Evidência | Impacto | Status |
 |---|---|---|---|
+| Primeira carga VTEX bloqueada por janela OMS densa | Conexão remota estava em `error`, `last_error=VTEX_ORDER_WINDOW_DENSE_TIMESTAMP_UNSUPPORTED`, sem freshness em catálogo/estoque/pedidos (2026-08-24) | Alto — nenhuma sincronização real concluída | **Correção implantada em 2026-08-24** (`dpl_9ayTQ5GRUmCnjnCw7cVQvoo1qeke`) — aguarda comprovação no ciclo real do cron |
+| Maioria do catálogo VTEX sem preço | 11.477/17.727 produtos com `price IS NULL`, todos com `source_metadata.priceAvailable=false`; conexão registra `pricing:false` | Alto — produto aparece sem preço e análises de margem ficam incompletas | **Bloqueio externo agora explícito em produção** — conceder leitura de Pricing à chave VTEX e reprocessar catálogo ainda depende da conta VTEX |
+| Taxas VTEX desconhecidas não chegam como qualidade explícita ao Financeiro | 22.951/22.951 pedidos com `fee_status <> 'known'`; leitores financeiros agregavam `fee_amount NULL` como zero | Alto — podia aparentar taxa zero quando a origem não forneceu taxa | **Corrigido e implantado em 2026-08-24** — API propaga cobertura `known/partial/unknown`; Financeiro oculta tarifa/líquido incompletos e exibe indisponibilidade |
+| Marcadores de continuidade ainda não preenchidos nos dados antigos | 17.727 produtos e 17.727 estoques com `last_seen_at IS NULL` logo após a 026 | Médio — reconciliação/freshness ainda não comprovadas em produção | Aberto — requer deploy do runtime novo e ciclo completo bem-sucedido |
+| Contratos de payload Shopee ainda não validados contra resposta real da conta parceira | `src/server/integrations/shopee/types.ts` mantém TODO explícito | Alto — preço/estoque/pedidos podem divergir do payload real | Aberto — validar com documentação autenticada e fixture anonimizada |
+| Isolamento multiempresa nunca testado com dados reais (só auditoria estática de código) | — | Médio | Aberto — fica pra fase de testes |
+| MFA de admin ainda não validado com conta real TOTP | Enforcement estático no login + `requireAdmin` (2026-08-13) | Médio | Aberto — requer teste ponta a ponta |
+| Hashes SHA-256 do login antigo no histórico do git | Commits anteriores a 2026-07-23 | Baixo/médio | Aberto — ninguém externo teve acesso ao repo até 2026-08-12; rewrite adiado por decisão do usuário até haver colaborador externo/repo público |
+| `.env.example` pode ainda listar `VITE_DEMO_EMAIL`/`VITE_DEMO_PASSWORD_HASH` (não usadas mais) | Não confirmado | Baixo | Não verificado |
+
+## Desempenho de catálogos grandes
+
+- Em 2026-09-02, foi corrigida a escala indevida dos KPIs reais da Visão Geral: a API já retorna o total exato do período solicitado, mas os cards o tratavam como baseline de 30 dias. KPI, pedidos, ticket e GMV agora representam o mesmo snapshot e o mesmo intervalo, sem reamostragem no navegador.
+- Em 2026-09-03, os comparativos por marketplace deixaram de usar o dia corrente, que é parcial e pode estar com sync em curso. D-1/D-7/D-30/D-365 partem do último dia fechado; o selo do canal agora reflete queda, alta, estabilidade ou ausência de base, em vez de afirmar crescimento fixamente.
+- Auditoria VTEX em 2026-09-03 encontrou sync incremental bloqueado: a OMS limita a listagem a 30 páginas e a rotina tentava a página 31 após reprocessar 900 pedidos. O sync agora interrompe essa condição antes da chamada inválida e troca o próximo ciclo para full por `creationDate`, preservando os pedidos existentes e evitando lacuna no histórico.
+
+- Em 2026-09-02, Produtos e Estoque passaram a usar paginação e agregação no Postgres quando as respectivas telas pedem `page`. A interface recebe no máximo 100 linhas por consulta, além de totais, opções de categoria e KPIs necessários.
+- Em 2026-09-03, Financeiro passou a separar o resumo agregado do extrato detalhado: KPIs/GMV usam a RPC compacta e `finance-transactions` lê no máximo 100 pedidos confirmados por página, com total, navegação e filtro de canal executados no servidor dentro do `company_id`. Estornos conhecidos permanecem junto do pedido; nenhum histórico é ocultado ou reduzido artificialmente. A validação local passou em TypeScript, 27 testes focados e build. O commit `2e6402b` foi enviado para `main` e acionou deploy automático; falta somente confirmar o `Ready` e executar smoke autenticado.
+- Em 2026-09-04, pedidos VTEX pagos e recentes passaram a enriquecer o snapshot de reembolso usando o `transactionId` já presente no pedido e a leitura oficial do Payments Gateway. Apenas `totalRefunds` explícito é persistido; ausência, 404, limite de requisição ou falta de `View Payment Data` permanecem como `unknown`, sem transformar ausência em zero. A leitura é limitada a 90 dias e não consulta catálogo nem roda no carregamento do cliente. A migration `034_preserve_confirmed_order_financial_snapshots.sql` foi aplicada no Supabase vinculado para impedir que uma resposta posterior `unknown` apague um reembolso já confirmado. Taxas/comissões de canais externos continuam fora do contrato VTEX de pedidos e exigem uma fonte financeira própria do marketplace antes que líquido seja exibido.
+- Em 2026-09-04, a auditoria de integridade eliminou mais conversões silenciosas de ausência em zero: pedido VTEX sem total fica persistido para rastreabilidade, porém fora de analytics; saldo VTEX parcial/ilimitado e saldo ausente em Produtos, Relatórios e Categorias permanecem `N/D`. A migration `035_preserve_unknown_stock_in_product_reports.sql` foi aplicada no Supabase vinculado e faz o relatório ignorar saldos desconhecidos nos alertas e contadores de estoque baixo, sem regravar dados. TypeScript, 361 testes, scan de service role, build e lint do banco passaram.
+- A migration `030_paged_catalog_dashboard_reads.sql` cria somente índices de leitura e as funções restritas a `service_role` `dashboard_products_page` e `dashboard_inventory_page`; foi aplicada no Supabase vinculado.
+- Em 2026-09-02, Relatórios e Produto 360 também deixaram de consumir o contrato integral: Relatórios pede somente os oito produtos por receita, até 100 alertas de baixo estoque e os dois contadores completos; Produto 360 busca somente a referência exata `connection_id + external_product_id` ou, em URLs legadas, até 20 anúncios do SKU.
+- A migration `031_targeted_dashboard_product_reads.sql` adiciona índice de leitura por SKU e as funções restritas a `service_role` `dashboard_report_products` e `dashboard_product_lookup`. Ela foi aplicada no Supabase vinculado. O contrato antigo sem `page` permanece apenas por compatibilidade de API, sem consumidor de interface ativo.
+- Curva ABC, cobertura, giro, filtros, ordenação e totais são calculados no banco dentro do escopo `company_id` + conexões autorizadas. Não há cache de catálogo completo no navegador.
+| `listUsers` só buscava página 1 (1000 usuários) ao resolver convite de e-mail já cadastrado | `api/admin/invite.ts`, `api/team.ts` | Médio — quebraria convite passando de 1000 usuários na plataforma | **Corrigido em 2026-08-12** (commit `e7d868d`, `findUserIdByEmail` pagina até achar) |
 
 ## Próximas validações
 - [ ] Auditar estrutura de pastas.
 - [ ] Mapear rotas.
 - [ ] Mapear serviços e fontes de dados.
-- [ ] Verificar isolamento por tenant.
-- [ ] Verificar código duplicado ou possivelmente obsoleto.
+- [ ] Verificar isolamento por tenant (Fase 2 do Supabase Auth).
+- [x] Verificar código duplicado ou possivelmente obsoleto — feito em 2026-07-23: removidos `DifferentialRow.tsx`, `outcomes.ts`, `EcosystemMarquee.tsx`, `PlatformCardSection.tsx` e CSS órfão associado (`.services-panel`, `.diff-row*`).
+- [x] Verificar isolamento por tenant — auditoria estática feita em 2026-08-12 (ver "Multiempresa" acima); nenhum vazamento cross-tenant encontrado em 25 endpoints revisados.
+- [ ] Testar isolamento por tenant com dados reais (2+ empresas simultâneas) — fica pra fase de testes.
+- [ ] Confirmar login válido de ponta a ponta com as contas reais criadas no Supabase.
+- [ ] Confirmar se "Confirm email" está habilitado no Supabase Auth.
+- [ ] Confirmar env vars de produção das integrações (ML_*, SHOPEE_*) na Vercel.
+- [ ] Confirmar migrations `010_order_fee_amount.sql` e `016/017_support_tickets*.sql` aplicadas em produção.
+- [x] Migration `015_connection_sync_lock.sql` aplicada e confirmada no Supabase em 2026-08-13 (`sync_started_at timestamptz`).
+- [ ] Configurar `CRON_SECRET` na Vercel (novo, 2026-08-12) — sem essa env var, `api/cron/sync-all.ts` responde 503 e o sync agendado não roda (endpoint recusa disparo sem o secret, por design — nunca falha aberto).

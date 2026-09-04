@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getMissingEnvVars, getSupabaseAdmin, CORE_ENV_VARS } from '../../src/server/integrations/supabaseAdmin.js'
-import { DEFAULT_COMPANY_ID, type SanitizedSyncLogEntry } from '../../src/server/integrations/types.js'
+import type { SanitizedSyncLogEntry } from '../../src/server/integrations/types.js'
+import { requireCapability } from '../../src/server/auth/authorization.js'
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -13,6 +14,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
+    const auth = await requireCapability(req, res, 'marketplaces.read')
+    if (!auth) return
+
     const limit = Math.min(MAX_LIMIT, Math.max(1, Number(req.query.limit) || DEFAULT_LIMIT))
     const provider = typeof req.query.provider === 'string' ? req.query.provider : undefined
 
@@ -20,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let query = supabase
       .from('sync_logs')
       .select('id, provider, event_type, status, message, created_at')
-      .eq('company_id', DEFAULT_COMPANY_ID)
+      .eq('company_id', auth.companyId)
       .order('created_at', { ascending: false })
       .limit(limit)
 

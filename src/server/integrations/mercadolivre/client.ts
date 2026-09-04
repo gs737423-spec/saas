@@ -1,13 +1,30 @@
-import type { MLItemDetail, MLItemSearchResponse } from './types.js'
+import type { MLCategoryDetail, MLItemDetail, MLItemSearchResponse, MLOrder, MLOrderSearchResponse } from './types.js'
 
 const BASE_URL = 'https://api.mercadolibre.com'
 
-/** First-sync safety cap — avoids hammering a large catalog (and the 1500 req/min
- *  per-seller rate limit) before the pipeline has been proven end-to-end. Raise once
- *  pagination/backoff have been validated against a real account. */
-export const MAX_ITEMS_FIRST_SYNC = 200
-const ITEMS_PAGE_SIZE = 50
+/** Teto de segurança (não "primeiro sync só" — todo sync repassa o catálogo
+ *  inteiro hoje, não tem sync incremental por data ainda). Alto o bastante
+ *  pra cobrir a esmagadora maioria dos catálogos reais sem estourar o rate
+ *  limit de 1500 req/min por vendedor (a paginação já tem backoff em 429). */
+export const MAX_ITEMS_FIRST_SYNC = 2000
+const MAX_ITEM_IDS_SCAN = 50000
+const ITEMS_PAGE_SIZE = 100
+// Teto de segurança bem mais alto que o de itens — pedido é o dado que o
+// cliente mais precisa completo (histórico de faturamento/produto campeão
+// depende disso), e o filtro por data abaixo já limita o volume real na
+// prática. Só existe pra nunca rodar indefinidamente se algo vier errado.
+export const MAX_ORDERS_FIRST_SYNC = 10000
+const ORDERS_PAGE_SIZE = 50
+// Garante pelo menos 1 ano de histórico mesmo se o vendedor tiver volume
+// alto — sem isso, "só os N pedidos mais recentes" podia cortar antes de
+// chegar em meses anteriores num catálogo com muito movimento.
 const MAX_429_RETRIES = 3
+const MAX_TRANSIENT_RETRIES = 2
+// Sem isso uma chamada travada (rede degradada, ML sem responder) prendia a
+// serverless function até o maxDuration inteiro de 300s antes de qualquer
+// retry/erro aparecer — agora falha rápido e conta como erro do item, não
+// trava o sync inteiro.
+const REQUEST_TIMEOUT_MS = 15000
 
 export class MercadoLivreApiError extends Error {
   constructor(message: string, public status: number, public path: string) {
@@ -19,16 +36,42 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-  })
+async function mlFetch<T>(path: string, accessToken: string, attempt = 0, transientAttempt = 0): Promise<T> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: controller.signal,
+    })
+  } catch (err) {
+    // Timeout ou rede instável — 1 rajada ruim não pode derrubar o item pra
+    // sempre até o próximo sync manual, mesmo padrão de retry que já existe
+    // pra 429.
+    if (transientAttempt < MAX_TRANSIENT_RETRIES) {
+      clearTimeout(timeout)
+      await sleep(500 * (transientAttempt + 1))
+      return mlFetch<T>(path, accessToken, attempt, transientAttempt + 1)
+    }
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new MercadoLivreApiError(`Mercado Livre API timeout (${REQUEST_TIMEOUT_MS}ms) on ${path}`, 0, path)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (res.status === 429 && attempt < MAX_429_RETRIES) {
     // Simple exponential backoff — per docs, exceeding 1500 req/min per seller
     // returns an empty 429 body.
     await sleep(500 * (attempt + 1))
-    return mlFetch<T>(path, accessToken, attempt + 1)
+    return mlFetch<T>(path, accessToken, attempt + 1, transientAttempt)
+  }
+
+  if (res.status >= 500 && transientAttempt < MAX_TRANSIENT_RETRIES) {
+    await sleep(500 * (transientAttempt + 1))
+    return mlFetch<T>(path, accessToken, attempt, transientAttempt + 1)
   }
 
   if (!res.ok) {
@@ -40,27 +83,78 @@ async function mlFetch<T>(path: string, accessToken: string, attempt = 0): Promi
 }
 
 /**
- * Paginates GET /users/{user_id}/items/search up to MAX_ITEMS_FIRST_SYNC.
- * TODO: validate paging.total behavior against a real large catalog — the
- * official docs example only covers small result sets.
+ * Uses the provider's scan cursor because offset pagination is not supported
+ * past 1,000 seller items. The cursor expires quickly, so the whole ID scan is
+ * intentionally completed inside one invocation.
  */
-export async function searchUserItemIds(userId: string, accessToken: string): Promise<string[]> {
-  const ids: string[] = []
-  let offset = 0
+export interface SearchItemIdsResult {
+  ids: string[]
+  complete: boolean
+}
 
-  while (ids.length < MAX_ITEMS_FIRST_SYNC) {
-    const page = await mlFetch<MLItemSearchResponse>(
-      `/users/${userId}/items/search?offset=${offset}&limit=${ITEMS_PAGE_SIZE}`,
+export async function searchUserItemIds(userId: string, accessToken: string): Promise<SearchItemIdsResult> {
+  const ids: string[] = []
+  let scrollId: string | null = null
+
+  while (ids.length < MAX_ITEM_IDS_SCAN) {
+    const scrollQuery: string = scrollId ? `&scroll_id=${encodeURIComponent(scrollId)}` : ''
+    const page: MLItemSearchResponse = await mlFetch<MLItemSearchResponse>(
+      `/users/${userId}/items/search?search_type=scan&limit=${ITEMS_PAGE_SIZE}${scrollQuery}`,
       accessToken
     )
     ids.push(...page.results)
-    offset += page.results.length
-    if (page.results.length === 0 || offset >= page.paging.total) break
+    scrollId = page.scroll_id ?? null
+    if (page.results.length === 0 || !scrollId) break
   }
 
-  return ids.slice(0, MAX_ITEMS_FIRST_SYNC)
+  return {
+    ids: ids.slice(0, MAX_ITEM_IDS_SCAN),
+    complete: ids.length < MAX_ITEM_IDS_SCAN || !scrollId,
+  }
 }
 
 export async function getItemDetail(itemId: string, accessToken: string): Promise<MLItemDetail> {
   return mlFetch<MLItemDetail>(`/items/${itemId}`, accessToken)
+}
+
+/** Nome legível da categoria — /items/{id} só devolve o category_id (ex.
+ *  "MLB1055"), o nome vem de um endpoint público separado. Chamador deve
+ *  cachear por categoria dentro do sync (poucas dezenas de categorias
+ *  distintas por catálogo, não um lookup por produto). */
+export async function getCategory(categoryId: string, accessToken: string): Promise<MLCategoryDetail> {
+  return mlFetch<MLCategoryDetail>(`/categories/${categoryId}`, accessToken)
+}
+
+export interface SearchOrdersResult {
+  orders: MLOrder[]
+  /** true quando a API tinha mais pedidos dentro da janela de 1 ano do que
+   *  MAX_ORDERS_FIRST_SYNC trouxe — nunca fica silencioso, sync.ts anexa
+   *  isso em errors[] pro admin ver. */
+  truncated: boolean
+}
+
+/**
+ * Paginates GET /orders/search dentro da janela de ORDERS_HISTORY_DAYS
+ * (1 ano), mais recente primeiro, até MAX_ORDERS_FIRST_SYNC. Unlike items,
+ * the search response already contains the full order (items, amounts,
+ * buyer, status) — no per-order detail call needed.
+ */
+export async function searchOrders(sellerId: string, accessToken: string, dateFrom: string, dateTo: string): Promise<SearchOrdersResult> {
+  const orders: MLOrder[] = []
+  let offset = 0
+  let total = 0
+
+  while (orders.length < MAX_ORDERS_FIRST_SYNC) {
+    const page = await mlFetch<MLOrderSearchResponse>(
+      `/orders/search?seller=${sellerId}&sort=date_desc&offset=${offset}&limit=${ORDERS_PAGE_SIZE}` +
+        `&order.date_created.from=${encodeURIComponent(dateFrom)}&order.date_created.to=${encodeURIComponent(dateTo)}`,
+      accessToken
+    )
+    orders.push(...page.results)
+    offset += page.results.length
+    total = page.paging.total
+    if (page.results.length === 0 || offset >= total) break
+  }
+
+  return { orders: orders.slice(0, MAX_ORDERS_FIRST_SYNC), truncated: total > MAX_ORDERS_FIRST_SYNC }
 }

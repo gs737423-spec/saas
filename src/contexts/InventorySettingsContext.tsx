@@ -10,7 +10,7 @@ export interface GiroThresholds {
 
 export interface GiroColors {
   Normal: string
-  Lento: string
+  Baixo: string
   Parado: string
   'Parado crítico': string
 }
@@ -51,8 +51,8 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
   giro: {
     thresholds: { normalMaxDays: 20, lentoMaxDays: 45, paradoMaxDays: 90 },
     colors: {
-      Normal: '#16C784',
-      Lento: '#F5A524',
+      Normal: '#3BE38E',
+      Baixo: '#EB6B7C',
       Parado: '#9061F9',
       'Parado crítico': '#8B2942',
     },
@@ -60,10 +60,10 @@ export const DEFAULT_INVENTORY_SETTINGS: InventorySettings = {
   coverage: {
     thresholds: { criticoMaxDays: 7, atencaoMaxDays: 20, saudavelMaxDays: 45 },
     colors: {
-      'Crítico': '#F4436C',
-      'Atenção': '#F5C24B',
-      'Saudável': '#16C784',
-      'Excesso': '#22D3EE',
+      'Crítico': '#FF5E7D',
+      'Atenção': '#FFC95A',
+      'Saudável': '#3BE38E',
+      'Excesso': '#6366F1',
     },
   },
   stock: {
@@ -137,7 +137,7 @@ export function InventorySettingsProvider({ children }: { children: ReactNode })
   const classifyGiro = (coverageDays: number): TurnoverStatus => {
     const { normalMaxDays, lentoMaxDays, paradoMaxDays } = settings.giro.thresholds
     if (coverageDays <= normalMaxDays) return 'Normal'
-    if (coverageDays <= lentoMaxDays) return 'Lento'
+    if (coverageDays <= lentoMaxDays) return 'Baixo'
     if (coverageDays <= paradoMaxDays) return 'Parado'
     return 'Parado crítico'
   }

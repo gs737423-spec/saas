@@ -1,14 +1,17 @@
-export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria'
+import type { Marketplace } from '@/data/mockData'
+import type { CategoryOption } from '@/lib/categoryAnalytics'
+
+export type Provider = 'mercadolivre' | 'shopee' | 'amazon' | 'magalu' | 'loja_propria' | 'vtex'
 
 /**
- * No real auth/multi-tenant system exists yet. Every row is scoped to this
- * fixed id so the schema/queries never mix tenants once real workspaces
- * exist — swapping this constant for a real `workspace_id` from an auth
- * session is the only change needed later.
+ * Removido (01/08) — company_id agora vem sempre de `requireCompany()`
+ * (src/server/auth/requireCompany.ts), resolvido a partir da sessão
+ * autenticada via `company_members`. Nenhuma query deve mais usar um valor
+ * fixo — se este import quebrar em algum arquivo, é sinal de que aquele
+ * ponto ainda precisa da migração.
  */
-export const DEFAULT_COMPANY_ID = 'default-company'
 
-export type ConnectionStatus = 'disconnected' | 'pending' | 'connected' | 'error' | 'expired'
+export type ConnectionStatus = 'disconnected' | 'pending' | 'connecting' | 'connected' | 'syncing' | 'requires_attention' | 'error' | 'expired'
 
 /** Extra status the UI can show that is never persisted in the DB — computed when required env vars are missing. */
 export type SanitizedConnectionStatus = ConnectionStatus | 'config_missing'
@@ -26,7 +29,14 @@ export interface MarketplaceConnectionRow {
   scopes: string | null
   sync_interval_minutes: number
   last_sync_at: string | null
+  catalog_last_sync_at?: string | null
+  inventory_last_sync_at?: string | null
+  orders_last_sync_at?: string | null
+  catalog_checkpoint?: Record<string, unknown>
+  orders_checkpoint?: Record<string, unknown>
   last_error: string | null
+  last_success_at?: string | null
+  next_sync_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -36,10 +46,39 @@ export interface SanitizedConnectionStatusResponse {
   provider: Provider
   status: SanitizedConnectionStatus
   lastSyncAt: string | null
+  catalogLastSyncAt?: string | null
+  inventoryLastSyncAt?: string | null
+  ordersLastSyncAt?: string | null
+  catalogComplete?: boolean
+  ordersHistoryComplete?: boolean
   externalAccountId: string | null
   productsCount: number
   inventoryCount: number
+  ordersCount: number
   lastError: string | null
+  lastSuccessAt?: string | null
+  nextSyncAt?: string | null
+  permissions?: Record<string, boolean>
+  channelMappings?: Record<string, string[]>
+  historyMonths?: number
+  activeSync?: {
+    id: string
+    status: string
+    stage: string
+    mode: string
+    counts: Record<string, number>
+    errorCount: number
+    history: { start: string | null; end: string | null }
+    progress: { percent: number | null; processed: number; total: number | null }
+    lastHeartbeatAt: string | null
+    isStale: boolean
+    /** Prova de validação de catálogo desta run — nunca inferida de `stage`.
+     *  'unknown' inclusive para runs legadas sem o campo no checkpoint. A UI
+     *  NUNCA deve mostrar "Produtos e estoque OK" só porque `stage==='orders'`;
+     *  precisa checar este campo. Ver src/server/integrations/vtex/checkpoint.ts. */
+    catalogStatus?: 'unknown' | 'validating' | 'completed' | 'empty' | 'partial' | 'blocked'
+    catalogSkuTotal?: number | null
+  } | null
 }
 
 export interface SanitizedSyncLogEntry {
@@ -63,20 +102,62 @@ export type SyncLogEventType =
   | 'validation_error'
   | 'config_missing'
   | 'connection_missing'
+  | 'connection_tested'
+  | 'credentials_rotated'
+  | 'connection_disconnected'
+  | 'sync_queued'
+  | 'sync_stage'
+  | 'channel_discovered'
+  | 'provider_rate_limited'
+  | 'credentials_invalid'
+  | 'catalog_validation_started'
+  | 'catalog_sku_ids_loaded'
+  | 'catalog_empty_validated'
+  | 'catalog_permission_denied'
+  | 'catalog_payload_invalid'
+  | 'catalog_batch_progress'
+  | 'catalog_completed'
 
 export type SyncLogStatus = 'info' | 'success' | 'error'
 
 export type SyncSource = 'real' | 'demo' | 'config_missing' | 'error'
 
+export type AbcClass = 'A' | 'B' | 'C'
+
 export interface DashboardInventoryItem {
   sku: string | null
   title: string
-  marketplace: 'Mercado Livre'
-  availableQuantity: number
+  marketplace: Marketplace
+  /** Metadados oficiais do produto persistido em marketplace_products. */
+  categoryId: string | null
+  categoryName: string | null
+  /** null means the provider did not expose a finite inventory quantity. */
+  availableQuantity: number | null
   price: number | null
   status: string | null
+  /** Unidades vendidas nos últimos 30 dias — calculado de order_items real,
+   *  nunca fabricado. null só quando não há pedido pago no período. */
   soldQuantity: number | null
+  /** Faturamento dos últimos 30 dias pra este produto — base da Curva ABC. */
+  revenue30d: number
+  /** Giro = unidades vendidas em 30d / estoque disponível. null quando
+   *  estoque é 0 (divisão indefinida, não é giro zero). */
+  turnoverRate: number | null
+  /** A = produtos que somam até 80% do faturamento acumulado (ordenado do
+   *  maior pro menor), B = até 95%, C = resto — classificação clássica de
+   *  gestão de estoque. null quando o produto não teve nenhuma venda no
+   *  período (sem base pra classificar). */
+  abcClass: AbcClass | null
   lastSyncAt: string | null
+  /** Dados de compra/fornecedor — não existe fonte real hoje (sem tabela de
+   *  purchase orders/NF), então a API real nunca preenche. Opcionais só pra
+   *  não quebrar o contrato quando existirem de verdade; hoje só o Modo
+   *  Demonstração popula (ver src/lib/demoData.ts). */
+  manufacturerCode?: string | null
+  lastEntryAt?: string | null
+  entryQty?: number | null
+  lastInvoiceNumber?: string | null
+  freightValue?: number | null
 }
 
 export type DashboardInventorySource = 'real' | 'demo' | 'config_missing' | 'error'
@@ -85,11 +166,51 @@ export interface DashboardInventoryResponse {
   source: DashboardInventorySource
   items: DashboardInventoryItem[]
   lastSyncAt: string | null
+  /** Presente somente quando a leitura é paginada no servidor. */
+  pagination?: {
+    page: number
+    pageSize: number
+    totalRows: number
+    totalPages: number
+  }
+  categoryOptions?: CategoryOption[]
+  metrics?: {
+    totalItems: number
+    pricedItems: number
+    totalValue: number
+    stalledCount: number
+    curvaACount: number
+    totalRevenue: number
+    topCategory: { key: string; label: string; revenue: number } | null
+  }
+}
+
+export type DashboardSummarySource = 'real' | 'demo' | 'config_missing' | 'error'
+
+/** Agregado real de `orders`/`order_items` no período pedido. Pedido
+ * cancelado não entra no faturamento e também não prova reembolso: devoluções
+ * só podem ser exibidas quando houver uma fonte financeira explícita. */
+export interface DashboardSummary {
+  source: DashboardSummarySource
+  grossRevenue: number
+  ordersCount: number
+  averageTicket: number
+  feesTotal: number
+  feeDataStatus: 'known' | 'partial' | 'unknown'
+  returnsCount: number
+  returnsAmount: number
+  refundDataStatus: 'known' | 'partial' | 'unknown'
+  lastSyncAt: string | null
+  /** % vs período anterior de mesma duração — null quando não há pedido
+   *  pago no período anterior pra comparar (sem base, não é 0% de verdade). */
+  grossRevenueChangePct: number | null
+  ordersCountChangePct: number | null
 }
 
 export interface SyncSummary {
   productsImported: number
   inventoryUpdated: number
+  ordersImported: number
   errors: string[]
   durationMs: number
   source: SyncSource
@@ -104,4 +225,45 @@ export interface MarketplaceConnector {
   getAuthorizationUrl(state: string): string
   handleCallback(code: string): Promise<{ externalAccountId: string; accessToken: string; refreshToken: string; expiresInSeconds: number; scopes: string }>
   sync(connectionId: string): Promise<SyncSummary>
+}
+
+export type SupportTicketStatus = 'aberto' | 'em_andamento' | 'resolvido' | 'fechado'
+export type SupportTicketPriority = 'baixa' | 'normal' | 'alta' | 'urgente'
+export type SupportMessageAuthorRole = 'cliente' | 'admin'
+
+export interface SupportMessage {
+  id: string
+  ticketId: string
+  authorId: string
+  authorRole: SupportMessageAuthorRole
+  body: string
+  createdAt: string
+}
+
+export interface SupportTicket {
+  id: string
+  companyId: string
+  companyName?: string
+  subject: string
+  status: SupportTicketStatus
+  priority: SupportTicketPriority
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SupportTicketDetail extends SupportTicket {
+  messages: SupportMessage[]
+}
+
+export interface SupportTicketListResponse {
+  ok: boolean
+  tickets: SupportTicket[]
+  message?: string
+}
+
+export interface SupportTicketDetailResponse {
+  ok: boolean
+  ticket: SupportTicketDetail | null
+  message?: string
 }
