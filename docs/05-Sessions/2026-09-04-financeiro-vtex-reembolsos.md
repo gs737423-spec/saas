@@ -2,7 +2,7 @@
 type: session
 project: SaaS E-commerce
 date: 2026-09-04
-status: implemented-local
+status: published-awaiting-vercel-confirmation
 ---
 
 # Financeiro VTEX — enriquecimento de reembolsos
@@ -32,6 +32,7 @@ Comissões/taxas dos marketplaces que chegam via VTEX não estão presentes no c
 - `npm run build`: concluiu sem saída de erro.
 - `git diff --check`: passou.
 - Migration `034_preserve_confirmed_order_financial_snapshots.sql`: aplicada no Supabase vinculado em 2026-09-04.
+- Commit `e762549` enviado para `origin/main`; o deploy automático da Vercel foi acionado. A confirmação visual de `Ready` permanece pendente porque a sessão de validação não está autenticada na conta Vercel correta.
 
 ## Próxima ação
 
